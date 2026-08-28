@@ -1,0 +1,144 @@
+package integration
+
+import (
+	"testing"
+
+	"github.com/wicanr2/chengshi_cht/internal/sim"
+)
+
+// 正常玩家路徑：蓋電廠、拉電線、鋪路、劃分區，然後讓城市自己長。
+//
+// 這是唯一會同時走過工具層、接線層、電力、交通、分區成長、普查、預算與
+// 訊息系統的測試。單元測試各自綠著、城市卻長不起來——那是最常見的
+// 「零件都對、整台不動」，只有端到端跑一次才抓得到。
+func TestPlaythroughCityGrows(t *testing.T) {
+	w := sim.NewWorld(12345)
+	w.GenerateMap(12345, sim.DefaultTerrainParams())
+	w.DoSimInit()
+	w.NoDisasters = true // 成長測試不要被隨機災難干擾
+	w.SimSpeed = 3
+
+	// 找一塊夠大的可建地。地形是隨機的，寫死座標會在換種子時莫名其妙失敗。
+	ox, oy, ok := findFlatArea(w, 20, 16)
+	if !ok {
+		t.Fatal("種子 12345 的地圖上找不到夠大的可建地 —— 地形產生可能壞了")
+	}
+	t.Logf("在 (%d,%d) 建城", ox, oy)
+
+	build := func(tool sim.Tool, x, y int) {
+		t.Helper()
+		if r := w.ApplyTool(tool, x, y); r != sim.ToolOK {
+			t.Fatalf("%v 蓋在 (%d,%d) 失敗，回傳 %d（資金 %d）", tool, x, y, r, w.TotalFunds)
+		}
+	}
+
+	// 佈局。三件事必須同時成立，分區才會長：
+	//
+	//   1. **通電** —— 要有一條 CONDBIT 連通的路徑接到發電廠。
+	//      分區本身有 CONDBIT，所以分區碰分區也能導電。
+	//   2. **有路** —— MakeTraf 要在分區周長上找得到路（FindPRoad）。
+	//   3. **有目的地** —— 住宅要走得到商業或工業，交通才算通。
+	//
+	// 少任何一件，城市就是「蓋好了但完全不動」，而且沒有任何錯誤訊息。
+	//
+	//   x0   電線縱列（接到電廠）
+	//   x0+1..x0+3  住宅區（左緣貼電線、右緣貼道路）
+	//   x0+4 道路＋電線縱列（在路上拉電線會變成導電的路面）
+	//   x0+5..x0+7  商業區
+	//   x0+8 道路＋電線縱列
+	//   x0+9..x0+11 工業用地
+	x0, y0 := ox+5, oy+2
+	const zoneRows = 4
+
+	// 發電廠：4×4，點在 (px,py) 時佔 (px-1..px+2, py-1..py+2)，
+	// 所以右緣要剛好貼著電線縱列。
+	build(sim.ToolCoalPower, x0-3, y0+1)
+
+	for y := y0; y < y0+zoneRows*3; y++ {
+		build(sim.ToolWire, x0, y)
+		build(sim.ToolRoad, x0+4, y)
+		build(sim.ToolWire, x0+4, y) // 路面上再拉電線 → 導電的路
+		build(sim.ToolRoad, x0+8, y)
+		build(sim.ToolWire, x0+8, y)
+	}
+	for i := 0; i < zoneRows; i++ {
+		cy := y0 + 1 + i*3
+		build(sim.ToolResidential, x0+2, cy)
+		build(sim.ToolCommercial, x0+6, cy)
+		build(sim.ToolIndustrial, x0+10, cy)
+	}
+
+	spent := 20000 - w.TotalFunds
+	if spent <= 0 {
+		t.Fatal("蓋了一堆東西卻沒花錢 —— 成本沒有被扣")
+	}
+	t.Logf("建設花了 $%d，剩 $%d", spent, w.TotalFunds)
+
+	// 跑三十年。
+	//
+	// ⚠ 普查用的計數器（ResPop、PwrdZCnt…）**每一刻都會被 ClearCensus
+	// 歸零再重數**，所以不能跑完之後直接讀——收在相位 0 之後量到的是 0，
+	// 看起來像「城市沒長」。這裡取整段的峰值。
+	const years = 30
+	peak := struct{ res, com, ind, pwrd, pop, score int }{}
+	for i := 0; i < years*48*16; i++ {
+		w.Frame()
+		peak.res = max(peak.res, w.ResPop)
+		peak.com = max(peak.com, w.ComPop)
+		peak.ind = max(peak.ind, w.IndPop)
+		peak.pwrd = max(peak.pwrd, w.PwrdZCnt)
+		peak.pop = max(peak.pop, w.Eval.CityPop)
+		peak.score = max(peak.score, w.CityScore)
+	}
+
+	t.Logf("%d 年後：人口 %d（住 %d 商 %d 工 %d）資金 $%d 評分 %d",
+		years, peak.pop, peak.res, peak.com, peak.ind, w.TotalFunds, peak.score)
+	t.Logf("  通電分區 %d；地價 %d 污染 %d 犯罪 %d",
+		peak.pwrd, w.LVAverage, w.PolluteAverage, w.CrimeAverage)
+
+	if peak.pwrd == 0 {
+		t.Error("沒有任何分區通電 —— 電力傳導或電線接線壞了")
+	}
+	if peak.res == 0 {
+		t.Error("三十年後住宅區還是空的 —— 分區成長沒有在跑")
+	}
+	if peak.pop == 0 {
+		t.Error("人口是 0 —— 普查沒有在跑")
+	}
+	if peak.score == 0 {
+		t.Error("城市評分是 0 —— 評估沒有在跑")
+	}
+}
+
+// findFlatArea 找一塊 w×h 的可建地。
+//
+// ⚠ 不能只找全空地。地形產生器會撒滿樹林，種子 12345 的地圖上
+// 連 24×16 的純空地都沒有。可建地的定義要跟著遊戲走：空地或樹林都算，
+// 因為自動整地會把樹清掉（每格 $1）。水不算。
+func findFlatArea(world *sim.World, w, h int) (int, int, bool) {
+	for y := 2; y < sim.WorldY-h-2; y++ {
+		for x := 2; x < sim.WorldX-w-2; x++ {
+			if flat(world, x, y, w, h) {
+				return x, y, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
+func flat(world *sim.World, x, y, w, h int) bool {
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			t := world.TileNum(x+i, y+j)
+			if t == 0 {
+				continue
+			}
+			// 樹林（含 WOODS 系列）可以自動整地掉。
+			if t >= sim.TREEBASE && t <= sim.WOODS5 {
+				continue
+			}
+			return false
+		}
+	}
+	return true
+}

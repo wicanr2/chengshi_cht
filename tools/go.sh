@@ -2,7 +2,7 @@
 # 在 docker 裡跑 Go（不裝到系統）。用法：tools/go.sh test ./... / build ./... / vet ./...
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="golang:1.23-bookworm"
+IMAGE="${GO_IMAGE:-simcity-go:1.25}"
 mkdir -p "$ROOT/workplace/gocache" "$ROOT/workplace/gomod"
 exec docker run --rm \
   --log-opt max-size=10m --log-opt max-file=3 \

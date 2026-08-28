@@ -5,6 +5,8 @@
 // —— 那是索引，不是規則，寫進來會讓接線檢查誤判成「這份索引已經接上了」。
 package sim
 
+import "time"
+
 // Rand 是原版的亂數產生器。
 //
 // 規格：docs/spec/rng.md（READY）／證據：docs/re/02-rng.md
@@ -121,4 +123,13 @@ func RecoverState(outs []int) (state uint32, ok bool) {
 		return 0, false
 	}
 	return cands[0], true
+}
+
+// RandomSeed 產生一個隨機種子。
+//
+// 原版是 `time.tv_usec ^ time.tv_sec ^ sim_rand()`（s_sim.c:1233
+// RandomlySeedRand）。這裡用時間就夠——種子只影響地形，
+// 不影響任何需要重現的東西；要重現就用固定種子。
+func RandomSeed() uint32 {
+	return uint32(time.Now().UnixNano()) & randMask
 }

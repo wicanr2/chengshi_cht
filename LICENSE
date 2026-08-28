@@ -141,3 +141,24 @@ https://github.com/polyformproject/polyform-licenses（tag 1.0.0）
 PolyForm-Noncommercial-1.0.0.md
 SHA-256 c0ea4a896d2c8c394b29f9427589996db826cd501c512279ff0ed3ef48fabbe5
 取得日期 2026-08-29
+
+
+────────────────────────────────────────────────────────────
+第三方素材 / Third-party assets
+
+internal/textfont/assets/font24.png 與 font24.json 是從 Noto Sans CJK TC
+烘出來的點陣字型子集。Noto Sans CJK 由 Google 發行，授權為 SIL Open Font
+License 1.1（<https://scripts.sil.org/OFL>）。這份點陣子集是該字型的衍生
+作品，同樣依 OFL 1.1 散布。
+
+OFL 1.1 的保留字型名稱條款：本專案的產物**不使用**「Noto」這個名稱作為
+字型名稱。字面資訊（Noto Sans CJK TC Regular）記在 font24.json 的 `face`
+欄位，作為來源標示，不是字型名稱。
+
+重烘方式見 tools/build_font.py。
+
+The bitmap font subset in internal/textfont/assets/ is derived from Noto
+Sans CJK TC, licensed under the SIL Open Font License 1.1. The derived
+subset is distributed under the same licence. Per the OFL's Reserved Font
+Name clause, this project does not use "Noto" as a font name; the face
+string recorded in font24.json is a provenance note, not a font name.

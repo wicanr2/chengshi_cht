@@ -197,12 +197,27 @@ func pgfPixels(data []byte, q, w, h, bpp int, fl uint16) ([]uint8, int, error) {
 		if q+need > len(data) {
 			return nil, 0, fmt.Errorf("像素讀不完")
 		}
-		for pl := 0; pl < planes; pl++ {
-			base := q + pl*rowBytes*h
-			for y := 0; y < h; y++ {
+		// ⚠ 平面是**逐列交錯**的：每一列先放第 0 平面的 rowBytes 個位元組，
+		// 再放第 1 平面……而不是整張圖的第 0 平面放完再放第 1 平面。
+		//
+		// 兩種讀法用掉的位元組數一模一樣，所以長度檢查抓不到。錯的那一種
+		// 畫出來會出現規律的橫條——看起來像掃描線或隔行掃描的瑕疵，
+		// 很容易被誤判成「渲染器的縮放有問題」。
+		//
+		// ⚠ 而且平面順序是**倒著的**：一列裡第一組位元組是最高位平面。
+		// 判準是水面（圖塊 2）：它整格只有一個平面全 1。順著讀得到色號 8
+		// （深灰），倒著讀得到色號 1（藍）。水是藍的。
+		for y := 0; y < h; y++ {
+			rowBase := q + y*rowBytes*planes
+			for pl := 0; pl < planes; pl++ {
+				bit := planes - 1 - pl
+				if planes == 1 {
+					bit = 0
+				}
+				base := rowBase + pl*rowBytes
 				for x := 0; x < w; x++ {
-					if data[base+y*rowBytes+x/8]&(0x80>>uint(x%8)) != 0 {
-						out[y*w+x] |= 1 << uint(pl)
+					if data[base+x/8]&(0x80>>uint(x%8)) != 0 {
+						out[y*w+x] |= 1 << uint(bit)
 					}
 				}
 			}
