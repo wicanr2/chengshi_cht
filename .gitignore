@@ -22,6 +22,8 @@ Rare simcity.zip
 *.cty
 *.V4
 
+# 解開的 DOS 資料在 workplace/dos110/（已被 workplace/ 涵蓋）
+
 # 解壓後的工作區：原版資料、Micropolis 參考原始碼、IDA 資料庫、產生的中間檔
 workplace/
 

@@ -71,6 +71,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | 悲情城市 | 軟體世界對 SCENARIOS（八個劇本）的譯名 |
 | 圖形集 | DOS 版的六組資料片美術：ASIA／MEDI／WEST／FUSA／FEUR／MOON |
 | 逐 tick 對拍 | 同種子同操作餵進 Micropolis 與 Go 版，逐步比對 120×100 地圖與純量 |
+| 圖形集 | DOS 版的六組資料片美術：ASIA／MEDI／WEST（古城風情）、FUSA／FEUR／MOON（回到未來）|
 | 悲情城市 | 軟體世界對八個劇本（SCENARIOS）的譯名 |
 | 遊戲刻 | `CityTime`。一年 48 刻；劇本的 `CityTime = (年份−1900)×48+2` |
 
@@ -103,11 +104,17 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
    `PWRBIT` 差異全部收掉。
 10. ~~四個逐格掃描~~ **完成**：`docs/re/06-scans.md` ＋ `docs/spec/scans.md`，
     `internal/sim/scan.go`。收斂後的地價／汙染／犯罪平均值與原版相同。
-11. **交通生成**（`s_traf.c`）、**分區成長**（`s_zone.c`）、**稅收與預算**、
-    **城市評分**（`s_eval.c`）、**災難**（`s_disast.c`）、**精靈**（`w_sprite.c`）、
-    **工具**（`w_tool.c`）、**訊息**（`s_msg.c`）。
-12. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
-13. 呈現層（`internal/ui`）與 DOS 資料解碼（`internal/assets`）。
+11. ~~DOS 資料檔的共用壓縮~~ **完成**：`docs/formats/02-dos-lzss.md`，
+    `internal/assets/`。一套 LZSS 打開 `.PGF`／`.PPF`／`.PSN`／`.PSF`／`.PTF`；
+    七個訊息檔全部解出（中文化語料），八個 DOS 劇本能直接餵進模擬層。
+12. **交通生成**（`s_traf.c`）與**分區成長**（`s_zone.c`）——兩者緊密耦合，
+    要一起做，而且驗收得靠整刻對拍（單獨驗不了）。
+13. **稅收與預算**、**城市評分**（`s_eval.c`）、**災難**（`s_disast.c`）、
+    **精靈**（`w_sprite.c`）、**工具**（`w_tool.c`）、**訊息**（`s_msg.c`）。
+14. **整刻對拍骨架**：`Simulate` 的十六相位串起來之後，才驗得動 12、13。
+15. `.PGF` 圖形版面 → 呈現層（`internal/ui`）。
+16. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出
+    `translations/glossary.md` 與以序號為鍵的訊息翻譯檔。
 
 ## 7. 現行驗證入口
 
