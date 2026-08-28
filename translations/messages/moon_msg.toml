@@ -1,0 +1,834 @@
+# moon_msg 的訊息翻譯
+#
+# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，
+# 而且六個圖形集的同一個序號講同一件事、用詞不同。
+# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。
+#
+# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。
+# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。
+
+[0]
+len = 30
+mark = "\xfe\x02"
+zh = ""
+
+[1]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[2]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[3]
+len = 20
+mark = "\xfe\x02"
+zh = ""
+
+[4]
+len = 31
+mark = "\xfe\x02"
+zh = ""
+
+[5]
+len = 20
+mark = "\xfe\x04"
+zh = ""
+
+[6]
+len = 33
+mark = "\xfe\x02"
+zh = ""
+
+[7]
+len = 36
+mark = "\xfe\x02"
+zh = ""
+
+[8]
+len = 34
+mark = "\xfe\x02"
+zh = ""
+
+[9]
+len = 20
+mark = "\xfe\x03"
+zh = ""
+
+[10]
+len = 16
+mark = "\xfe\x03"
+zh = ""
+
+[11]
+len = 31
+mark = "\xfe\x03"
+zh = ""
+
+[12]
+len = 32
+mark = "\xfe\x03"
+zh = ""
+
+[13]
+len = 38
+mark = "\xfe\x03"
+zh = ""
+
+[14]
+len = 36
+mark = "\xfe\x05"
+zh = ""
+
+[15]
+len = 36
+mark = "\xfe\x03"
+zh = ""
+
+[16]
+len = 41
+mark = "\xfe\x04"
+zh = ""
+
+[17]
+len = 30
+mark = "\xfe\x03"
+zh = ""
+
+[18]
+len = 36
+mark = "\xfe\x03"
+zh = ""
+
+[19]
+len = 14
+mark = "\xfe\x06"
+zh = ""
+
+[20]
+len = 35
+mark = "\xfe\x06"
+zh = ""
+
+[21]
+len = 24
+mark = "\xfe\x06"
+zh = ""
+
+[22]
+len = 27
+mark = "\xfe\a"
+zh = ""
+
+[23]
+len = 22
+mark = "\xfe\x06"
+zh = ""
+
+[24]
+len = 26
+mark = "\xfe\x06"
+zh = ""
+
+[25]
+len = 16
+mark = "\xfe\x06"
+zh = ""
+
+[26]
+len = 21
+mark = "\xfe\x06"
+zh = ""
+
+[27]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[28]
+len = 25
+mark = "\xfe\x05"
+zh = ""
+
+[29]
+len = 38
+mark = "\xfe\x03"
+zh = ""
+
+[30]
+len = 37
+mark = "\xfe\x02"
+zh = ""
+
+[31]
+len = 20
+mark = "\xfe\x06"
+zh = ""
+
+[32]
+len = 18
+mark = "\xfe\t"
+zh = ""
+
+[33]
+len = 27
+mark = "\xfe\t"
+zh = ""
+
+[34]
+len = 20
+mark = "\xfe\x05"
+zh = ""
+
+[35]
+len = 21
+mark = "\xfe\x05"
+zh = ""
+
+[36]
+len = 21
+mark = "\xfe\x05"
+zh = ""
+
+[37]
+len = 22
+mark = "\xfe\x05"
+zh = ""
+
+[38]
+len = 22
+mark = "\xfe\x05"
+zh = ""
+
+[39]
+len = 37
+mark = "\xfe\x05"
+zh = ""
+
+[40]
+len = 23
+mark = "\xfe\b"
+zh = ""
+
+[41]
+len = 31
+mark = "\xfe\x06"
+zh = ""
+
+[42]
+len = 36
+mark = "\xfe\x06"
+zh = ""
+
+[43]
+len = 32
+mark = "\xfe\t"
+zh = ""
+
+[44]
+len = 22
+mark = "\xfe\t"
+zh = ""
+
+[45]
+len = 17
+mark = "\xfe\b"
+zh = ""
+
+[46]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[47]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[48]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[49]
+len = 2
+mark = ""
+zh = ""
+
+[50]
+len = 3
+mark = "'Dozer: $1"
+zh = ""
+
+[51]
+len = 9
+mark = "Power lines: $5"
+zh = ""
+
+[52]
+len = 10
+mark = "Park: $10"
+zh = ""
+
+[53]
+len = 17
+mark = "Commercial: $100"
+zh = ""
+
+[54]
+len = 16
+mark = "Moonpatrol station: $500"
+zh = ""
+
+[55]
+len = 18
+mark = "Low-G Rec Center: $3000"
+zh = ""
+
+[56]
+len = 30
+mark = "Rover Port: $5000"
+zh = ""
+
+[57]
+len = 20
+mark = "Nuclear power plant: $3000"
+zh = ""
+
+[58]
+len = 4
+mark = "TRAFFIC WARNING - Traffic in this\ncrater stinks like an Earthling. It\ntakes forever to get anywhere. If I\nliked sitting around going nowhere\nfor hours at a time, I would have\nstayed on Earth. Either build more\nroads and rails or learn to breathe\nin a vaccuum."
+zh = ""
+
+[59]
+len = 247
+mark = "\xfe\xf5\xffEXTRA TERRESTRIAL VIRAL CONTAMINATION\nIt seems that an E.T. virus has\nmade itself at home near one of the\npower plants. You are advised to\navoid the area until it goes away.\nThat is if it ever goes away....."
+zh = ""
+
+[60]
+len = 355
+mark = "\xfe\x9c\xffDEPORTATION NOTICE - You're a very\nnice person, and you're not a bad\nlooker (by moon standards, anyway),\nbut when it comes to city planning\nand management you don't know your\nelbow from a crater in the ground.\nNothing personal, but goof-ups like\nyou just aren't safe on a world with\nno oxygen. You're on the next earth-\nbound shuttle - and don't come back\nuntil you memorize the SimCity\nmanual."
+zh = ""
+
+[61]
+len = 277
+mark = "\xfe\xeb\xffPOLLUTION ALERT- Pollution in this\ncity has exceeded the maximum\nallowable amounts established by\nthe SimCity Interplanetary\nPollution Agency. And on a world\nthat survives on recycled air and\nwater this is serious. Either\nclean up your act or you'll be\nrecycled."
+zh = ""
+
+[62]
+len = 208
+mark = "\xfe\xd9\xffMOONTROPOLIS - Your capital city has\nnow achieved the status of moontro-\npolis. The current population is\n100,000. We'd sing you songs of\npraise, but the only songs we know\nare Lunie Tunes."
+zh = ""
+
+[63]
+len = 143
+mark = "\xfe\xdb\xffCITY- Your town has grown into a\nfull sized city, with a current\npopulation of 10,000. Not bad for\nan Earthling."
+zh = ""
+
+[64]
+len = 91
+mark = "\xfe\xdd\xffDeuterium, 2267-\nOne of the original manufacturing\ncolony cities, Deuterium was once\nthe Moon Rover manufacturing center\nof the solar system. It still is.\nUnfortunately, these Rovers last a\nlong time, so there's no demand.\nNow this city is the crime pit\nof the solar system. You have 10\nyears to reduce crime and rebuild\nthe industrial base of the city."
+zh = ""
+
+[65]
+len = 335
+mark = "\xfe\xf8\xffTycho, 2252-\nA huge indestructable alien creature\nhas stopped in for a visit and a\nquick bite of anything and anyone\nin its path. It seems to find areas\nof industrial pollution very tastey.\nTry to control those oxygen-wasting\nfires, then start rebuilding. You\nhave five years."
+zh = ""
+
+[66]
+len = 290
+mark = "\xfe\xfd\xffMoon Francisco, 2201-\nBecause of its precarious position\non the San Antares fault, this city\nwas named after its shakey counter-\npart on Earth. When things start to\nrock, control the fires first -\npreserve oxygen! Then clear the\nrubble and start re-building.\nYou have five years."
+zh = ""
+
+[67]
+len = 292
+mark = "\xfe\xff\xffBoscovitch, 2305-\nJust when you think it's safe to go\nback in the vaccuum, along comes\nanother one of those annoying\nlittle problems....like this Alien\nviral contamination thing. Can't\nlive with it, can't kill it. You\njust give it room. You have 5 years\nto rebuild around the contamination."
+zh = ""
+
+[68]
+len = 329
+mark = "\xfe\xfc\xff\xff\xfe"
+zh = ""
+
+[69]
+len = 0
+mark = "\x1e"
+zh = ""
+
+[70]
+len = 1
+mark = " Trans"
+zh = ""
+
+[71]
+len = 6
+mark = "  Fire"
+zh = ""
+
+[72]
+len = 8
+mark = "0"
+zh = ""
+
+[73]
+len = 1
+mark = "Jan"
+zh = ""
+
+[74]
+len = 3
+mark = "Mar"
+zh = ""
+
+[75]
+len = 3
+mark = "May"
+zh = ""
+
+[76]
+len = 3
+mark = "Jul"
+zh = ""
+
+[77]
+len = 3
+mark = "Sep"
+zh = ""
+
+[78]
+len = 3
+mark = "Nov"
+zh = ""
+
+[79]
+len = 3
+mark = "\x11"
+zh = ""
+
+[80]
+len = 1
+mark = "Nuclear"
+zh = ""
+
+[81]
+len = 7
+mark = "\xffW"
+zh = ""
+
+[82]
+len = 1
+mark = "dullsvil.psn"
+zh = ""
+
+[83]
+len = 11
+mark = "hamburg.psn"
+zh = ""
+
+[84]
+len = 8
+mark = "tokyo.psn"
+zh = ""
+
+[85]
+len = 11
+mark = "boston.psn"
+zh = ""
+
+[86]
+len = 7
+mark = "T"
+zh = ""
+
+[87]
+len = 1
+mark = "Population"
+zh = ""
+
+[88]
+len = 5
+mark = "Commerce"
+zh = ""
+
+[89]
+len = 9
+mark = "Industry"
+zh = ""
+
+[90]
+len = 9
+mark = "Last 10 years"
+zh = ""
+
+[91]
+len = 14
+mark = "&"
+zh = ""
+
+[92]
+len = 1
+mark = "Population Density"
+zh = ""
+
+[93]
+len = 17
+mark = "\xff\r"
+zh = ""
+
+[94]
+len = 1
+mark = "Patrol"
+zh = ""
+
+[95]
+len = 4
+mark = "\xff\xb4"
+zh = ""
+
+[96]
+len = 1
+mark = " City Form "
+zh = ""
+
+[97]
+len = 12
+mark = " Transportation "
+zh = ""
+
+[98]
+len = 20
+mark = " Traffic Density "
+zh = ""
+
+[99]
+len = 15
+mark = " Crime Map "
+zh = ""
+
+[100]
+len = 12
+mark = " Patrol Protection "
+zh = ""
+
+[101]
+len = 17
+mark = " Population Growth "
+zh = ""
+
+[102]
+len = 1
+mark = "\v"
+zh = ""
+
+[103]
+len = 21
+mark = "\xff\xff\xff\xffPatrol Protection"
+zh = ""
+
+[104]
+len = 15
+mark = "Population Growth"
+zh = ""
+
+[105]
+len = 1
+mark = "\x06"
+zh = ""
+
+[106]
+len = 6
+mark = "TOWN"
+zh = ""
+
+[107]
+len = 4
+mark = "CAPITAL"
+zh = ""
+
+[108]
+len = 12
+mark = "MEGALOPOLIS"
+zh = ""
+
+[109]
+len = 1
+mark = "\a"
+zh = ""
+
+[110]
+len = 5
+mark = "POLLUTION"
+zh = ""
+
+[111]
+len = 13
+mark = "TAXES"
+zh = ""
+
+[112]
+len = 7
+mark = "UNEMPLOYMENT"
+zh = ""
+
+[113]
+len = 5
+mark = "\x85\x01%"
+zh = ""
+
+[114]
+len = 1
+mark = "Rock"
+zh = ""
+
+[115]
+len = 9
+mark = "Craters"
+zh = ""
+
+[116]
+len = 4
+mark = "Rubble"
+zh = ""
+
+[117]
+len = 5
+mark = "E.T. Virus"
+zh = ""
+
+[118]
+len = 4
+mark = "Road"
+zh = ""
+
+[119]
+len = 10
+mark = "Rail"
+zh = ""
+
+[120]
+len = 11
+mark = "Hospital"
+zh = ""
+
+[121]
+len = 6
+mark = "Commercial"
+zh = ""
+
+[122]
+len = 5
+mark = "Commercial"
+zh = ""
+
+[123]
+len = 10
+mark = "Rover Port"
+zh = ""
+
+[124]
+len = 12
+mark = "Nuclear Power Plant"
+zh = ""
+
+[125]
+len = 12
+mark = "Moonpatrol Dept."
+zh = ""
+
+[126]
+len = 10
+mark = "Gravity Power Plant"
+zh = ""
+
+[127]
+len = 6
+mark = "Industrial"
+zh = ""
+
+[128]
+len = 13
+mark = "Industrial"
+zh = ""
+
+[129]
+len = 15
+mark = "Industrial"
+zh = ""
+
+[130]
+len = 14
+mark = "Lunes-647 Astros-732"
+zh = ""
+
+[131]
+len = 6
+mark = "Gravity Power Plant"
+zh = ""
+
+[132]
+len = 3
+mark = "*"
+zh = ""
+
+[133]
+len = 1
+mark = "Density:"
+zh = ""
+
+[134]
+len = 6
+mark = "Crime:"
+zh = ""
+
+[135]
+len = 10
+mark = "Growth:"
+zh = ""
+
+[136]
+len = 1
+mark = "\x05"
+zh = ""
+
+[137]
+len = 6
+mark = "OPTIONS"
+zh = ""
+
+[138]
+len = 9
+mark = "WINDOWS"
+zh = ""
+
+[139]
+len = 2
+mark = "\x0e"
+zh = ""
+
+[140]
+len = 15
+mark = " -"
+zh = ""
+
+[141]
+len = 6
+mark = " Load Graphics"
+zh = ""
+
+[142]
+len = 2
+mark = " Load Scenario"
+zh = ""
+
+[143]
+len = 15
+mark = " -"
+zh = ""
+
+[144]
+len = 18
+mark = " Save City as ... "
+zh = ""
+
+[145]
+len = 18
+mark = " -"
+zh = ""
+
+[146]
+len = 18
+mark = "\xffc"
+zh = ""
+
+[147]
+len = 1
+mark = " Auto-'Doze     Ctrl-A"
+zh = ""
+
+[148]
+len = 12
+mark = " Auto-Goto"
+zh = ""
+
+[149]
+len = 10
+mark = " Speed"
+zh = ""
+
+[150]
+len = 12
+mark = " Frequent animation"
+zh = ""
+
+[151]
+len = 2
+mark = "\x06"
+zh = ""
+
+[152]
+len = 11
+mark = " Fast     3"
+zh = ""
+
+[153]
+len = 11
+mark = " Slow     1"
+zh = ""
+
+[154]
+len = 11
+mark = "\xffS"
+zh = ""
+
+[155]
+len = 1
+mark = " Fire"
+zh = ""
+
+[156]
+len = 12
+mark = " Shuttle Crash"
+zh = ""
+
+[157]
+len = 14
+mark = " Moonquake"
+zh = ""
+
+[158]
+len = 8
+mark = " -"
+zh = ""
+
+[159]
+len = 9
+mark = "\xff\xc7"
+zh = ""
+
+[160]
+len = 1
+mark = " Maps          Ctrl-M"
+zh = ""
+
+[161]
+len = 21
+mark = " Budget        Ctrl-B"
+zh = ""
+
+[162]
+len = 21
+mark = " Evaluation    Ctrl-U"
+zh = ""
+
+[163]
+len = 21
+mark = " Hide          Ctrl-H"
+zh = ""
+
+[164]
+len = 21
+mark = " Resize (Edit) Ctrl-R"
+zh = ""
+

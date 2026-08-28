@@ -1,0 +1,839 @@
+# medi_msg 的訊息翻譯
+#
+# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，
+# 而且六個圖形集的同一個序號講同一件事、用詞不同。
+# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。
+#
+# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。
+# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。
+
+[0]
+len = 37
+mark = "\xfe\x02"
+zh = ""
+
+[1]
+len = 36
+mark = "\xfe\x02"
+zh = ""
+
+[2]
+len = 36
+mark = "\xfe\x02"
+zh = ""
+
+[3]
+len = 28
+mark = "\xfe\x02"
+zh = ""
+
+[4]
+len = 32
+mark = "\xfe\x02"
+zh = ""
+
+[5]
+len = 29
+mark = "\xfe\x04"
+zh = ""
+
+[6]
+len = 39
+mark = "\xfe\x02"
+zh = ""
+
+[7]
+len = 27
+mark = "\xfe\x02"
+zh = ""
+
+[8]
+len = 27
+mark = "\xfe\x02"
+zh = ""
+
+[9]
+len = 37
+mark = "\xfe\x03"
+zh = ""
+
+[10]
+len = 21
+mark = "\xfe\x03"
+zh = ""
+
+[11]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[12]
+len = 34
+mark = "\xfe\x03"
+zh = ""
+
+[13]
+len = 29
+mark = "\xfe\x03"
+zh = ""
+
+[14]
+len = 33
+mark = "\xfe\x05"
+zh = ""
+
+[15]
+len = 38
+mark = "\xfe\x03"
+zh = ""
+
+[16]
+len = 42
+mark = "\xfe\x04"
+zh = ""
+
+[17]
+len = 30
+mark = "\xfe\x03"
+zh = ""
+
+[18]
+len = 27
+mark = "\xfe\x03"
+zh = ""
+
+[19]
+len = 14
+mark = "\xfe\x06"
+zh = ""
+
+[20]
+len = 28
+mark = "\xfe\x06"
+zh = ""
+
+[21]
+len = 18
+mark = "\xfe\x06"
+zh = ""
+
+[22]
+len = 28
+mark = "\xfe\a"
+zh = ""
+
+[23]
+len = 22
+mark = "\xfe\x06"
+zh = ""
+
+[24]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[25]
+len = 16
+mark = "\xfe\x06"
+zh = ""
+
+[26]
+len = 32
+mark = "\xfe\x06"
+zh = ""
+
+[27]
+len = 28
+mark = "\xfe\x03"
+zh = ""
+
+[28]
+len = 37
+mark = "\xfe\x05"
+zh = ""
+
+[29]
+len = 38
+mark = "\xfe\x03"
+zh = ""
+
+[30]
+len = 27
+mark = "\xfe\x02"
+zh = ""
+
+[31]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[32]
+len = 30
+mark = "\xfe\t"
+zh = ""
+
+[33]
+len = 26
+mark = "\xfe\t"
+zh = ""
+
+[34]
+len = 35
+mark = "\xfe\x05"
+zh = ""
+
+[35]
+len = 39
+mark = "\xfe\x05"
+zh = ""
+
+[36]
+len = 39
+mark = "\xfe\x05"
+zh = ""
+
+[37]
+len = 41
+mark = "\xfe\x05"
+zh = ""
+
+[38]
+len = 31
+mark = "\xfe\x05"
+zh = ""
+
+[39]
+len = 33
+mark = "\xfe\x05"
+zh = ""
+
+[40]
+len = 26
+mark = "\xfe\b"
+zh = ""
+
+[41]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[42]
+len = 36
+mark = "\xfe\x06"
+zh = ""
+
+[43]
+len = 36
+mark = "\xfe\t"
+zh = ""
+
+[44]
+len = 26
+mark = "\xfe\t"
+zh = ""
+
+[45]
+len = 17
+mark = "\xfe\b"
+zh = ""
+
+[46]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[47]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[48]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[49]
+len = 2
+mark = ""
+zh = ""
+
+[50]
+len = 1
+mark = "\x10"
+zh = ""
+
+[51]
+len = 8
+mark = "Road: $10"
+zh = ""
+
+[52]
+len = 13
+mark = "Wagon Track: $20"
+zh = ""
+
+[53]
+len = 9
+mark = "Residential: $100"
+zh = ""
+
+[54]
+len = 16
+mark = "Industrial: $100"
+zh = ""
+
+[55]
+len = 18
+mark = "Fire station: $500"
+zh = ""
+
+[56]
+len = 15
+mark = "Water Wheel: $5000"
+zh = ""
+
+[57]
+len = 13
+mark = "Castle: $10000"
+zh = ""
+
+[58]
+len = 11
+mark = "\xff\xbe\x11\x15"
+zh = ""
+
+[59]
+len = 154
+mark = "\xfe\xf4\xffCRIME ALERT-  Crime in your city is\nout of hand. Angry mobs are looting\nand vandalizing the central city.\nPickpockets are having a holiday.\nTake care of it soon or we start\ntalking Magna Carta."
+zh = ""
+
+[60]
+len = 227
+mark = "\xfe\xd5\xffYOU'RE A WINNER- Your skill as a\ndesigner, city planner, and leader\nhave shown you to be a great ruler.\nThe rabble will erect monuments to\nyour glory and name their first-born\nchildren after you. Why not run for\nKing?"
+zh = ""
+
+[61]
+len = 333
+mark = "\xfe8\xffMONSTER ATTACK - A large, vile, ugly,\naccursed creature has been spotted\nin the water. There is a trail of\ndestruction wherever it goes. Just\nmaybe you shouldn't have banished\nthe monster worshippers from your\nkingdom. Oh, well, live and learn -\nor is it live and burn?"
+zh = ""
+
+[62]
+len = 254
+mark = "\xfe\xf6\xff           MEGALOPOLIS\nYou're a great Lord in times Medieval\nYou've built a kingdom from forest\n                       primeval.\nWith a half million Serfs,\nMaintaining your turf(s)\nAnd your Royal Guard stomping out\n                        evil."
+zh = ""
+
+[63]
+len = 227
+mark = "\xfe\xda\xffCAPITAL- Your current city has\nbecome a capital. You are Lord\nand master of 50,000 serfs, slaves and\npeasants, give or take a few free Sims."
+zh = ""
+
+[64]
+len = 107
+mark = "\xfe\xdc\xffTOWN - About time... Your puny village\nhas grown to town status. You now\nrule 2,000 vassals."
+zh = ""
+
+[65]
+len = 258
+mark = "\xfe\xfa\xffJohn Arrow's River, 1638-\nThis thriving land is about to be\ndeluged by a flood of near biblical\nproportions. Coastal areas will be\ndevastated by water and erosion. You\nhave 10 years to turn this swamp back\ninto a city again."
+zh = ""
+
+[66]
+len = 336
+mark = "\xfe\xfb\xffSpamelot, 1535-\nThere's been a mishap at the Wizard's\nconvention - a duel has broken out\nand bolts of lightening are pelting\nthe city. You have already seen to the\nbeheading of the minister who rented\nthe convention hall to the Wizards.\nNow you must control the fires and\nrebuild. You have five years."
+zh = ""
+
+[67]
+len = 205
+mark = "\xfe\xfe\xffCamelittle 1491-\nThis little town is boring. Nothing\nhappens here. Your goal is to build\nthis hamlet into a city that will\nhave thriving industry, bustling\ncommerce, and some famous Knights.\nCan you turn Camelittle\ninto Camelot? You have 30 Years."
+zh = ""
+
+[68]
+len = 195
+mark = "\xfe\xf9\xffBurn, 1556-\nThe roads here are becoming more\ncongested every day, and between the\nunwashed peasants and animal refuse,\nthis traffic can kill. You must do\nsomething about it. Some wagon routes\nmight help, but this would require\nmajor rezoning. You have ten years."
+zh = ""
+
+[69]
+len = 5
+mark = ""
+zh = ""
+
+[70]
+len = 1
+mark = "\x04"
+zh = ""
+
+[71]
+len = 6
+mark = "Guard"
+zh = ""
+
+[72]
+len = 6
+mark = "Tax Rate"
+zh = ""
+
+[73]
+len = 1
+mark = "\f"
+zh = ""
+
+[74]
+len = 3
+mark = "Feb"
+zh = ""
+
+[75]
+len = 3
+mark = "Apr"
+zh = ""
+
+[76]
+len = 3
+mark = "Jun"
+zh = ""
+
+[77]
+len = 3
+mark = "Aug"
+zh = ""
+
+[78]
+len = 3
+mark = "Oct"
+zh = ""
+
+[79]
+len = 3
+mark = "Dec"
+zh = ""
+
+[80]
+len = 1
+mark = "\x03"
+zh = ""
+
+[81]
+len = 4
+mark = "Water Wheel"
+zh = ""
+
+[82]
+len = 2
+mark = "\b"
+zh = ""
+
+[83]
+len = 12
+mark = "sanfran.psn"
+zh = ""
+
+[84]
+len = 11
+mark = "bern.psn"
+zh = ""
+
+[85]
+len = 9
+mark = "detroit.psn"
+zh = ""
+
+[86]
+len = 10
+mark = "rio.psn"
+zh = ""
+
+[87]
+len = 1
+mark = "\b"
+zh = ""
+
+[88]
+len = 10
+mark = "Crime"
+zh = ""
+
+[89]
+len = 8
+mark = "Cash Flow"
+zh = ""
+
+[90]
+len = 8
+mark = "Pollution"
+zh = ""
+
+[91]
+len = 13
+mark = "Last 120 years"
+zh = ""
+
+[92]
+len = 1
+mark = "\x03"
+zh = ""
+
+[93]
+len = 18
+mark = "Population Growth"
+zh = ""
+
+[94]
+len = 2
+mark = "\x03"
+zh = ""
+
+[95]
+len = 6
+mark = "Fire"
+zh = ""
+
+[96]
+len = 2
+mark = "\v"
+zh = ""
+
+[97]
+len = 11
+mark = " Water Map "
+zh = ""
+
+[98]
+len = 16
+mark = " Population Density "
+zh = ""
+
+[99]
+len = 17
+mark = " Pollution Map "
+zh = ""
+
+[100]
+len = 11
+mark = " Land Value "
+zh = ""
+
+[101]
+len = 19
+mark = " Fire Protection "
+zh = ""
+
+[102]
+len = 19
+mark = "N"
+zh = ""
+
+[103]
+len = 1
+mark = "\xff\xff\xffPopulation Density"
+zh = ""
+
+[104]
+len = 21
+mark = "Fire Protection"
+zh = ""
+
+[105]
+len = 17
+mark = "1"
+zh = ""
+
+[106]
+len = 1
+mark = "VILLAGE"
+zh = ""
+
+[107]
+len = 4
+mark = "CITY"
+zh = ""
+
+[108]
+len = 7
+mark = "METROPOLIS"
+zh = ""
+
+[109]
+len = 11
+mark = "?"
+zh = ""
+
+[110]
+len = 1
+mark = "CRIME"
+zh = ""
+
+[111]
+len = 9
+mark = "HOUSING COSTS"
+zh = ""
+
+[112]
+len = 5
+mark = "TRAFFIC"
+zh = ""
+
+[113]
+len = 12
+mark = "FIRES"
+zh = ""
+
+[114]
+len = 3
+mark = "0"
+zh = ""
+
+[115]
+len = 9
+mark = "Water"
+zh = ""
+
+[116]
+len = 6
+mark = "Park"
+zh = ""
+
+[117]
+len = 6
+mark = "Flood"
+zh = ""
+
+[118]
+len = 6
+mark = "Fire"
+zh = ""
+
+[119]
+len = 4
+mark = "Water Way"
+zh = ""
+
+[120]
+len = 11
+mark = "Residential"
+zh = ""
+
+[121]
+len = 8
+mark = "Church"
+zh = ""
+
+[122]
+len = 10
+mark = "Maxis"
+zh = ""
+
+[123]
+len = 10
+mark = "Industrial"
+zh = ""
+
+[124]
+len = 6
+mark = "Castle"
+zh = ""
+
+[125]
+len = 4
+mark = "Fire Station"
+zh = ""
+
+[126]
+len = 11
+mark = "Joust Arena"
+zh = ""
+
+[127]
+len = 11
+mark = "Bridge"
+zh = ""
+
+[128]
+len = 10
+mark = "Park Fountain"
+zh = ""
+
+[129]
+len = 10
+mark = "Small Explosion"
+zh = ""
+
+[130]
+len = 10
+mark = "Bad Smell"
+zh = ""
+
+[131]
+len = 19
+mark = "Bridge"
+zh = ""
+
+[132]
+len = 11
+mark = "???"
+zh = ""
+
+[133]
+len = 1
+mark = "\x05"
+zh = ""
+
+[134]
+len = 8
+mark = "Value:"
+zh = ""
+
+[135]
+len = 6
+mark = "Pollution:"
+zh = ""
+
+[136]
+len = 7
+mark = "\""
+zh = ""
+
+[137]
+len = 1
+mark = "SYSTEM"
+zh = ""
+
+[138]
+len = 7
+mark = "DISASTERS"
+zh = ""
+
+[139]
+len = 7
+mark = "\xff\x9e"
+zh = ""
+
+[140]
+len = 1
+mark = " About SIM CITY"
+zh = ""
+
+[141]
+len = 2
+mark = " Print"
+zh = ""
+
+[142]
+len = 14
+mark = " -"
+zh = ""
+
+[143]
+len = 14
+mark = " Start New City"
+zh = ""
+
+[144]
+len = 2
+mark = " Load City  Ctrl-L"
+zh = ""
+
+[145]
+len = 18
+mark = " Save City  Ctrl-S"
+zh = ""
+
+[146]
+len = 2
+mark = " Exit       Ctrl-X"
+zh = ""
+
+[147]
+len = 2
+mark = "\b"
+zh = ""
+
+[148]
+len = 21
+mark = " Auto-Budget"
+zh = ""
+
+[149]
+len = 10
+mark = " Sound Off"
+zh = ""
+
+[150]
+len = 6
+mark = " Animate all"
+zh = ""
+
+[151]
+len = 19
+mark = "\xff="
+zh = ""
+
+[152]
+len = 1
+mark = " Fastest  4"
+zh = ""
+
+[153]
+len = 11
+mark = " Average  2"
+zh = ""
+
+[154]
+len = 11
+mark = " Pause    0"
+zh = ""
+
+[155]
+len = 2
+mark = "\t"
+zh = ""
+
+[156]
+len = 5
+mark = " Flood"
+zh = ""
+
+[157]
+len = 13
+mark = " Tornado"
+zh = ""
+
+[158]
+len = 11
+mark = " Monster"
+zh = ""
+
+[159]
+len = 2
+mark = " Disable "
+zh = ""
+
+[160]
+len = 2
+mark = "\n"
+zh = ""
+
+[161]
+len = 21
+mark = " Graphs        Ctrl-G"
+zh = ""
+
+[162]
+len = 21
+mark = " Edit          Ctrl-E"
+zh = ""
+
+[163]
+len = 21
+mark = " Close         Ctrl-C"
+zh = ""
+
+[164]
+len = 21
+mark = " Position      Ctrl-P"
+zh = ""
+
+[165]
+len = 21
+mark = "\xff"
+zh = ""
+

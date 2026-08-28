@@ -1,0 +1,834 @@
+# feur_msg 的訊息翻譯
+#
+# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，
+# 而且六個圖形集的同一個序號講同一件事、用詞不同。
+# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。
+#
+# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。
+# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。
+
+[0]
+len = 30
+mark = "\xfe\x02"
+zh = ""
+
+[1]
+len = 39
+mark = "\xfe\x02"
+zh = ""
+
+[2]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[3]
+len = 28
+mark = "\xfe\x02"
+zh = ""
+
+[4]
+len = 23
+mark = "\xfe\x02"
+zh = ""
+
+[5]
+len = 28
+mark = "\xfe\x04"
+zh = ""
+
+[6]
+len = 37
+mark = "\xfe\x02"
+zh = ""
+
+[7]
+len = 36
+mark = "\xfe\x02"
+zh = ""
+
+[8]
+len = 33
+mark = "\xfe\x02"
+zh = ""
+
+[9]
+len = 21
+mark = "\xfe\x03"
+zh = ""
+
+[10]
+len = 22
+mark = "\xfe\x03"
+zh = ""
+
+[11]
+len = 31
+mark = "\xfe\x03"
+zh = ""
+
+[12]
+len = 34
+mark = "\xfe\x03"
+zh = ""
+
+[13]
+len = 38
+mark = "\xfe\x03"
+zh = ""
+
+[14]
+len = 36
+mark = "\xfe\x05"
+zh = ""
+
+[15]
+len = 31
+mark = "\xfe\x03"
+zh = ""
+
+[16]
+len = 42
+mark = "\xfe\x04"
+zh = ""
+
+[17]
+len = 30
+mark = "\xfe\x03"
+zh = ""
+
+[18]
+len = 34
+mark = "\xfe\x03"
+zh = ""
+
+[19]
+len = 14
+mark = "\xfe\x06"
+zh = ""
+
+[20]
+len = 28
+mark = "\xfe\x06"
+zh = ""
+
+[21]
+len = 18
+mark = "\xfe\x06"
+zh = ""
+
+[22]
+len = 28
+mark = "\xfe\a"
+zh = ""
+
+[23]
+len = 18
+mark = "\xfe\x06"
+zh = ""
+
+[24]
+len = 26
+mark = "\xfe\x06"
+zh = ""
+
+[25]
+len = 25
+mark = "\xfe\x06"
+zh = ""
+
+[26]
+len = 21
+mark = "\xfe\x06"
+zh = ""
+
+[27]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[28]
+len = 25
+mark = "\xfe\x05"
+zh = ""
+
+[29]
+len = 31
+mark = "\xfe\x03"
+zh = ""
+
+[30]
+len = 36
+mark = "\xfe\x02"
+zh = ""
+
+[31]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[32]
+len = 33
+mark = "\xfe\t"
+zh = ""
+
+[33]
+len = 29
+mark = "\xfe\t"
+zh = ""
+
+[34]
+len = 24
+mark = "\xfe\x05"
+zh = ""
+
+[35]
+len = 25
+mark = "\xfe\x05"
+zh = ""
+
+[36]
+len = 21
+mark = "\xfe\x05"
+zh = ""
+
+[37]
+len = 26
+mark = "\xfe\x05"
+zh = ""
+
+[38]
+len = 26
+mark = "\xfe\x05"
+zh = ""
+
+[39]
+len = 37
+mark = "\xfe\x05"
+zh = ""
+
+[40]
+len = 23
+mark = "\xfe\b"
+zh = ""
+
+[41]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[42]
+len = 28
+mark = "\xfe\x06"
+zh = ""
+
+[43]
+len = 31
+mark = "\xfe\t"
+zh = ""
+
+[44]
+len = 27
+mark = "\xfe\t"
+zh = ""
+
+[45]
+len = 29
+mark = "\xfe\b"
+zh = ""
+
+[46]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[47]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[48]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[49]
+len = 2
+mark = ""
+zh = ""
+
+[50]
+len = 3
+mark = "Disintegrate: $1"
+zh = ""
+
+[51]
+len = 9
+mark = "Power lines: $5"
+zh = ""
+
+[52]
+len = 13
+mark = "Park: $10"
+zh = ""
+
+[53]
+len = 17
+mark = "Commercial: $100"
+zh = ""
+
+[54]
+len = 16
+mark = "Metropol station: $500"
+zh = ""
+
+[55]
+len = 18
+mark = "3-D Soccer Stadium: $3000"
+zh = ""
+
+[56]
+len = 21
+mark = "Hovercraft Port: $5000"
+zh = ""
+
+[57]
+len = 18
+mark = "Fission power plant: $3000"
+zh = ""
+
+[58]
+len = 4
+mark = "TRAFFIC WARNING - Traffic in this\ncity is deadly. The commuters\nare getting bumper cars. Highway\nshootings are becoming the new\nsport. You better build more roads\nand monorails or get a bulletproof\nlimo."
+zh = ""
+
+[59]
+len = 220
+mark = "\xfe\xf5\xffBIO-HAZARD - A genetic manipulation\nexperiment has gotten out of control\nnear one of your power plants.\nYou are advised to avoid the area\nuntil it is safe - about 8000 years."
+zh = ""
+
+[60]
+len = 226
+mark = "\xfe\x9c\xff       IMPEACHMENT NOTICE\nIt makes me sad, but you are no\nlonger the leader of this city. In\nfact, you are no longer welcome to\nlive here. Please contact our\nEuropean distributor for a French\nor German translation of the\nmanual."
+zh = ""
+
+[61]
+len = 302
+mark = "\xfe\xeb\xffPOLLUTION ALERT- Pollution in your\ncity has exceeded the maximum\nallowable amounts established by\nthe EuroSim pollution agency. You\nare running the risk of grave\necological consequences. Either\nclean up your act or lose the Green\nParty vote at the next election."
+zh = ""
+
+[62]
+len = 234
+mark = "\xfe\xd9\xffMETROPOLIS - Your city has achieved\nthe status and rank of metro-\npolis. The current population is\n100,000. With your planning skills,\nyou should consider designing\ncomputer games."
+zh = ""
+
+[63]
+len = 127
+mark = "\xfe\xdb\xffCITY- Your town has grown into a\nfull sized city, with a current\npopulation of 10,000. Keep up the\ngood work!"
+zh = ""
+
+[64]
+len = 93
+mark = "\xfe\xdd\xffDe Troit, 2227-\nThis crime infested hamlet is the\nhome of every major criminal in\nEurope. Decent citizens lock them-\nselves in their homes all night - \nand all day. You have been elected\nmayor of this city on an anti-crime\nplatform. You have 10 years to\nreduce crime and rebuild the\nindustrial base of the city. "
+zh = ""
+
+[65]
+len = 330
+mark = "\xfe\xf8\xffMonstreville,  2212-\nA large Smog Monster with\nno taste or style and absolutely\nno fashion sense is invading from\nthe sea. Ah, yes. It must be tourist\nseason again. Try to control the\nfires, then rebuild the industrial\ncenter. You have five years."
+zh = ""
+
+[66]
+len = 299
+mark = "\xfe\xfd\xffOld Francisco, 2161-\nThis home of Wild Disco Nightlife\nis the European capital of boogie.\nNobody is sure whether the shaking\nis caused by earthquakes or loud\nsound systems.\nControl the fires, then\nclear the rubble and start re-\nbuilding. You have five years."
+zh = ""
+
+[67]
+len = 284
+mark = "\xfe\xff\xffLoston,  2265-\nYou are about to face what may\nbecome a common problem of the\nfuture: technology advancing faster\nthan common sense. Genetic\nmanipulation experiments near\nnuclear power plants may not be a\nvery good idea. Radiation leakage\ncould cause unexpected results.\nWhy worry?...maybe nothing bad\nwill happen....You have 5 years\nto get the situation under control"
+zh = ""
+
+[68]
+len = 255
+mark = "\xfe\xfc\xff\xff\xfe"
+zh = ""
+
+[69]
+len = 0
+mark = "\x1e"
+zh = ""
+
+[70]
+len = 1
+mark = " Trans"
+zh = ""
+
+[71]
+len = 6
+mark = "  Fire"
+zh = ""
+
+[72]
+len = 8
+mark = "0"
+zh = ""
+
+[73]
+len = 1
+mark = "Jan"
+zh = ""
+
+[74]
+len = 3
+mark = "Mar"
+zh = ""
+
+[75]
+len = 3
+mark = "May"
+zh = ""
+
+[76]
+len = 3
+mark = "Jul"
+zh = ""
+
+[77]
+len = 3
+mark = "Sep"
+zh = ""
+
+[78]
+len = 3
+mark = "Nov"
+zh = ""
+
+[79]
+len = 3
+mark = "\x10"
+zh = ""
+
+[80]
+len = 1
+mark = "Fission"
+zh = ""
+
+[81]
+len = 6
+mark = "\xffW"
+zh = ""
+
+[82]
+len = 1
+mark = "dullsvil.psn"
+zh = ""
+
+[83]
+len = 11
+mark = "hamburg.psn"
+zh = ""
+
+[84]
+len = 8
+mark = "tokyo.psn"
+zh = ""
+
+[85]
+len = 11
+mark = "boston.psn"
+zh = ""
+
+[86]
+len = 7
+mark = "T"
+zh = ""
+
+[87]
+len = 1
+mark = "Population"
+zh = ""
+
+[88]
+len = 5
+mark = "Commerce"
+zh = ""
+
+[89]
+len = 9
+mark = "Industry"
+zh = ""
+
+[90]
+len = 9
+mark = "Last 10 years"
+zh = ""
+
+[91]
+len = 14
+mark = "&"
+zh = ""
+
+[92]
+len = 1
+mark = "Population Density"
+zh = ""
+
+[93]
+len = 17
+mark = "\xff\x0f"
+zh = ""
+
+[94]
+len = 1
+mark = "Metropol"
+zh = ""
+
+[95]
+len = 4
+mark = "\xff\xb6"
+zh = ""
+
+[96]
+len = 1
+mark = " City Form "
+zh = ""
+
+[97]
+len = 12
+mark = " Transportation "
+zh = ""
+
+[98]
+len = 20
+mark = " Traffic Density "
+zh = ""
+
+[99]
+len = 15
+mark = " Crime Map "
+zh = ""
+
+[100]
+len = 12
+mark = " Metropol Protection "
+zh = ""
+
+[101]
+len = 17
+mark = " Population Growth "
+zh = ""
+
+[102]
+len = 1
+mark = "\v"
+zh = ""
+
+[103]
+len = 21
+mark = "\xff\xff\xff\xffMetropol Protection"
+zh = ""
+
+[104]
+len = 15
+mark = "Population Growth"
+zh = ""
+
+[105]
+len = 1
+mark = "\x06"
+zh = ""
+
+[106]
+len = 7
+mark = "TOWN"
+zh = ""
+
+[107]
+len = 4
+mark = "CAPITAL"
+zh = ""
+
+[108]
+len = 10
+mark = "MEGALOPOLIS"
+zh = ""
+
+[109]
+len = 1
+mark = "\a"
+zh = ""
+
+[110]
+len = 5
+mark = "POLLUTION"
+zh = ""
+
+[111]
+len = 13
+mark = "TAXES"
+zh = ""
+
+[112]
+len = 7
+mark = "UNEMPLOYMENT"
+zh = ""
+
+[113]
+len = 5
+mark = "\x8e\x01%"
+zh = ""
+
+[114]
+len = 1
+mark = "Open land"
+zh = ""
+
+[115]
+len = 5
+mark = "Forest"
+zh = ""
+
+[116]
+len = 4
+mark = "Rubble"
+zh = ""
+
+[117]
+len = 5
+mark = "Bio-Hazard"
+zh = ""
+
+[118]
+len = 4
+mark = "Road"
+zh = ""
+
+[119]
+len = 10
+mark = "Monorail"
+zh = ""
+
+[120]
+len = 11
+mark = "Hospital"
+zh = ""
+
+[121]
+len = 6
+mark = "Commercial"
+zh = ""
+
+[122]
+len = 5
+mark = "Commercial"
+zh = ""
+
+[123]
+len = 10
+mark = "Hovercraft Port"
+zh = ""
+
+[124]
+len = 10
+mark = "Fission Power Plant"
+zh = ""
+
+[125]
+len = 12
+mark = "Metropol Department"
+zh = ""
+
+[126]
+len = 18
+mark = "Fusion Power Plant"
+zh = ""
+
+[127]
+len = 6
+mark = "Industrial"
+zh = ""
+
+[128]
+len = 13
+mark = "Industrial"
+zh = ""
+
+[129]
+len = 15
+mark = "Industrial"
+zh = ""
+
+[130]
+len = 10
+mark = "Europe-27 Maxis-0"
+zh = ""
+
+[131]
+len = 6
+mark = "Fusion Power Plant"
+zh = ""
+
+[132]
+len = 3
+mark = "*"
+zh = ""
+
+[133]
+len = 1
+mark = "Density:"
+zh = ""
+
+[134]
+len = 6
+mark = "Crime:"
+zh = ""
+
+[135]
+len = 10
+mark = "Growth:"
+zh = ""
+
+[136]
+len = 1
+mark = "\x05"
+zh = ""
+
+[137]
+len = 6
+mark = "OPTIONS"
+zh = ""
+
+[138]
+len = 9
+mark = "WINDOWS"
+zh = ""
+
+[139]
+len = 2
+mark = "\x0e"
+zh = ""
+
+[140]
+len = 15
+mark = " -"
+zh = ""
+
+[141]
+len = 6
+mark = " Load Graphics"
+zh = ""
+
+[142]
+len = 2
+mark = " Load Scenario"
+zh = ""
+
+[143]
+len = 15
+mark = " -"
+zh = ""
+
+[144]
+len = 18
+mark = " Save City as ... "
+zh = ""
+
+[145]
+len = 18
+mark = " -"
+zh = ""
+
+[146]
+len = 18
+mark = "\xfff"
+zh = ""
+
+[147]
+len = 1
+mark = " Auto-Disintegrate Ctrl-A"
+zh = ""
+
+[148]
+len = 12
+mark = " Auto-Goto"
+zh = ""
+
+[149]
+len = 10
+mark = " Speed"
+zh = ""
+
+[150]
+len = 12
+mark = " Frequent animation"
+zh = ""
+
+[151]
+len = 2
+mark = "\x06"
+zh = ""
+
+[152]
+len = 11
+mark = " Fast     3"
+zh = ""
+
+[153]
+len = 11
+mark = " Slow     1"
+zh = ""
+
+[154]
+len = 11
+mark = "\xffD"
+zh = ""
+
+[155]
+len = 1
+mark = " Fire"
+zh = ""
+
+[156]
+len = 6
+mark = " Air Crash"
+zh = ""
+
+[157]
+len = 8
+mark = " Earthquake"
+zh = ""
+
+[158]
+len = 8
+mark = " -"
+zh = ""
+
+[159]
+len = 9
+mark = "\xff\xc7"
+zh = ""
+
+[160]
+len = 1
+mark = " Maps          Ctrl-M"
+zh = ""
+
+[161]
+len = 21
+mark = " Budget        Ctrl-B"
+zh = ""
+
+[162]
+len = 21
+mark = " Evaluation    Ctrl-U"
+zh = ""
+
+[163]
+len = 21
+mark = " Hide          Ctrl-H"
+zh = ""
+
+[164]
+len = 21
+mark = " Resize (Edit) Ctrl-R"
+zh = ""
+

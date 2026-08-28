@@ -1,0 +1,839 @@
+# west_msg 的訊息翻譯
+#
+# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，
+# 而且六個圖形集的同一個序號講同一件事、用詞不同。
+# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。
+#
+# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。
+# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。
+
+[0]
+len = 23
+mark = "\xfe\x02"
+zh = ""
+
+[1]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[2]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[3]
+len = 37
+mark = "\xfe\x02"
+zh = ""
+
+[4]
+len = 36
+mark = "\xfe\x02"
+zh = ""
+
+[5]
+len = 30
+mark = "\xfe\x04"
+zh = ""
+
+[6]
+len = 41
+mark = "\xfe\x02"
+zh = ""
+
+[7]
+len = 27
+mark = "\xfe\x02"
+zh = ""
+
+[8]
+len = 30
+mark = "\xfe\x02"
+zh = ""
+
+[9]
+len = 37
+mark = "\xfe\x03"
+zh = ""
+
+[10]
+len = 35
+mark = "\xfe\x03"
+zh = ""
+
+[11]
+len = 32
+mark = "\xfe\x03"
+zh = ""
+
+[12]
+len = 37
+mark = "\xfe\x03"
+zh = ""
+
+[13]
+len = 29
+mark = "\xfe\x03"
+zh = ""
+
+[14]
+len = 33
+mark = "\xfe\x05"
+zh = ""
+
+[15]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[16]
+len = 42
+mark = "\xfe\x04"
+zh = ""
+
+[17]
+len = 30
+mark = "\xfe\x03"
+zh = ""
+
+[18]
+len = 22
+mark = "\xfe\x03"
+zh = ""
+
+[19]
+len = 14
+mark = "\xfe\x06"
+zh = ""
+
+[20]
+len = 37
+mark = "\xfe\x06"
+zh = ""
+
+[21]
+len = 38
+mark = "\xfe\x06"
+zh = ""
+
+[22]
+len = 28
+mark = "\xfe\a"
+zh = ""
+
+[23]
+len = 18
+mark = "\xfe\x06"
+zh = ""
+
+[24]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[25]
+len = 22
+mark = "\xfe\x06"
+zh = ""
+
+[26]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[27]
+len = 35
+mark = "\xfe\x03"
+zh = ""
+
+[28]
+len = 25
+mark = "\xfe\x05"
+zh = ""
+
+[29]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[30]
+len = 37
+mark = "\xfe\x02"
+zh = ""
+
+[31]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[32]
+len = 22
+mark = "\xfe\t"
+zh = ""
+
+[33]
+len = 26
+mark = "\xfe\t"
+zh = ""
+
+[34]
+len = 36
+mark = "\xfe\x05"
+zh = ""
+
+[35]
+len = 28
+mark = "\xfe\x05"
+zh = ""
+
+[36]
+len = 39
+mark = "\xfe\x05"
+zh = ""
+
+[37]
+len = 38
+mark = "\xfe\x05"
+zh = ""
+
+[38]
+len = 36
+mark = "\xfe\x05"
+zh = ""
+
+[39]
+len = 16
+mark = "\xfe\x05"
+zh = ""
+
+[40]
+len = 30
+mark = "\xfe\b"
+zh = ""
+
+[41]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[42]
+len = 31
+mark = "\xfe\x06"
+zh = ""
+
+[43]
+len = 27
+mark = "\xfe\t"
+zh = ""
+
+[44]
+len = 23
+mark = "\xfe\t"
+zh = ""
+
+[45]
+len = 17
+mark = "\xfe\b"
+zh = ""
+
+[46]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[47]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[48]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[49]
+len = 2
+mark = ""
+zh = ""
+
+[50]
+len = 1
+mark = "\x10"
+zh = ""
+
+[51]
+len = 8
+mark = "Road: $10"
+zh = ""
+
+[52]
+len = 14
+mark = "Steam Train Track: $20"
+zh = ""
+
+[53]
+len = 9
+mark = "Residential: $100"
+zh = ""
+
+[54]
+len = 16
+mark = "Industrial: $100"
+zh = ""
+
+[55]
+len = 13
+mark = "Fire station: $500"
+zh = ""
+
+[56]
+len = 12
+mark = "Steam Water Pump: $5000"
+zh = ""
+
+[57]
+len = 13
+mark = "Gold Mine: $10000"
+zh = ""
+
+[58]
+len = 18
+mark = "\xff\xbb\x11\x15"
+zh = ""
+
+[59]
+len = 176
+mark = "\xfe\xf4\xffCRIME ALERT -  This town ain't safe\nfor man or beast. Proper folks and\ndecent horses cain't walk the\nstreets without bein' held up,\nand the bank's been robbed three\ntimes this week!"
+zh = ""
+
+[60]
+len = 231
+mark = "\xfe\xd5\xffYOU'RE A WINNER- Your mayorial skill\nand city planning expertise have\nearned you the KEY TO THE CITY. The\nlocals are throwin' a parade in your\nhonor, and namin' their first-born\nyoung'uns after you. Why not run for\ngovernor?"
+zh = ""
+
+[61]
+len = 278
+mark = "\xfe8\xffGIANT TUMBLEWEED - The biggest,\ndustiest, tumbliest, weediest\nTumbleweed either side o' the\nMississippi just rolled into town.\nIf I were you I'd foller it, put\nout the fires, restore the water,\nand hope it goes away soon. 'Course,\nI ain't you, so I'm gittin'."
+zh = ""
+
+[62]
+len = 269
+mark = "\xfe\xf6\xff        MEGALOPOLIS\nAn easterner came way out West,And at first we wasn't impressed.\nBut goldang and doggone,\nWe're 500K strong....\nAnd now we all think you're the best!"
+zh = ""
+
+[63]
+len = 188
+mark = "\xfe\xda\xffCAPITAL- Whee doggie! This here city\nis now a capital. They's 50,000\ncowpokes pokin' around this town.\nYour future looks bright."
+zh = ""
+
+[64]
+len = 133
+mark = "\xfe\xdc\xffTOWN- Grab yer fiddle - we're havin'\na hoedown! Our little village has\ngrown into a real town with\n2,000 citizens."
+zh = ""
+
+[65]
+len = 280
+mark = "\xfe\xfa\xffRio de Grande,  1996 -\nOkay, you Urban Cowboys, git ready\nfer a flood. It'll be a real doozie\n- the biggest one since Noah's time.\nThe areas of the city along the\ncoast are gonna be wasted. You will\nhave 10 years to turn this swamp\nback into a city again."
+zh = ""
+
+[66]
+len = 263
+mark = "\xfe\xfb\xffBoomtown, 1893-\nLook out! A gang of claim jumpers\nstole a few cases of dynamite from\nthe mine and are set to blow up the\nwhole town. You better control the\nfires quick as you can, then rebuild\nthe city. You have five years."
+zh = ""
+
+[67]
+len = 227
+mark = "\xfe\xfe\xffDeadwood,  1849-\nThis town is so boring, the dawgs\npray for fleas so they'll have\nsomething to do. With the right kind\nof leader, this town could amount\nto something - but then again, maybe\nnot. The job is yours if you want\nit. You have 30 years."
+zh = ""
+
+[68]
+len = 380
+mark = "\xfe\xf9\xffSaddleBern, 1914-\nThe roads here are so filled with\nhorses and cows and people and\nwagons that you can't get there\nfrom here. You might try puttin' in\na Steam Train transport system,\nbut to do that you'll have to\nrezone the downtown area. You\nhave ten years."
+zh = ""
+
+[69]
+len = 5
+mark = ""
+zh = ""
+
+[70]
+len = 1
+mark = "\x04"
+zh = ""
+
+[71]
+len = 6
+mark = "Sheriff"
+zh = ""
+
+[72]
+len = 6
+mark = "Tax Rate"
+zh = ""
+
+[73]
+len = 1
+mark = "\f"
+zh = ""
+
+[74]
+len = 3
+mark = "Feb"
+zh = ""
+
+[75]
+len = 3
+mark = "Apr"
+zh = ""
+
+[76]
+len = 3
+mark = "Jun"
+zh = ""
+
+[77]
+len = 3
+mark = "Aug"
+zh = ""
+
+[78]
+len = 3
+mark = "Oct"
+zh = ""
+
+[79]
+len = 3
+mark = "Dec"
+zh = ""
+
+[80]
+len = 1
+mark = "\x03"
+zh = ""
+
+[81]
+len = 11
+mark = "Steam Pump"
+zh = ""
+
+[82]
+len = 2
+mark = "\b"
+zh = ""
+
+[83]
+len = 12
+mark = "sanfran.psn"
+zh = ""
+
+[84]
+len = 11
+mark = "bern.psn"
+zh = ""
+
+[85]
+len = 9
+mark = "detroit.psn"
+zh = ""
+
+[86]
+len = 10
+mark = "rio.psn"
+zh = ""
+
+[87]
+len = 1
+mark = "\b"
+zh = ""
+
+[88]
+len = 10
+mark = "Crime"
+zh = ""
+
+[89]
+len = 8
+mark = "Cash Flow"
+zh = ""
+
+[90]
+len = 8
+mark = "Pollution"
+zh = ""
+
+[91]
+len = 13
+mark = "Last 120 years"
+zh = ""
+
+[92]
+len = 1
+mark = "\x03"
+zh = ""
+
+[93]
+len = 18
+mark = "Population Growth"
+zh = ""
+
+[94]
+len = 2
+mark = "\x03"
+zh = ""
+
+[95]
+len = 7
+mark = "Fire"
+zh = ""
+
+[96]
+len = 2
+mark = "\v"
+zh = ""
+
+[97]
+len = 11
+mark = " Water Map "
+zh = ""
+
+[98]
+len = 16
+mark = " Population Density "
+zh = ""
+
+[99]
+len = 17
+mark = " Pollution Map "
+zh = ""
+
+[100]
+len = 11
+mark = " Land Value "
+zh = ""
+
+[101]
+len = 20
+mark = " Fire Protection "
+zh = ""
+
+[102]
+len = 19
+mark = "O"
+zh = ""
+
+[103]
+len = 1
+mark = "\xff\xff\xffPopulation Density"
+zh = ""
+
+[104]
+len = 22
+mark = "Fire Protection"
+zh = ""
+
+[105]
+len = 17
+mark = "1"
+zh = ""
+
+[106]
+len = 1
+mark = "VILLAGE"
+zh = ""
+
+[107]
+len = 4
+mark = "CITY"
+zh = ""
+
+[108]
+len = 7
+mark = "METROPOLIS"
+zh = ""
+
+[109]
+len = 11
+mark = "?"
+zh = ""
+
+[110]
+len = 1
+mark = "CRIME"
+zh = ""
+
+[111]
+len = 9
+mark = "HOUSING COSTS"
+zh = ""
+
+[112]
+len = 5
+mark = "TRAFFIC"
+zh = ""
+
+[113]
+len = 12
+mark = "FIRES"
+zh = ""
+
+[114]
+len = 3
+mark = "0"
+zh = ""
+
+[115]
+len = 9
+mark = "Water"
+zh = ""
+
+[116]
+len = 6
+mark = "Park"
+zh = ""
+
+[117]
+len = 6
+mark = "Flood"
+zh = ""
+
+[118]
+len = 6
+mark = "Fire"
+zh = ""
+
+[119]
+len = 4
+mark = "Water Way"
+zh = ""
+
+[120]
+len = 4
+mark = "Residential"
+zh = ""
+
+[121]
+len = 8
+mark = "Church"
+zh = ""
+
+[122]
+len = 10
+mark = "Maxis"
+zh = ""
+
+[123]
+len = 10
+mark = "Industrial"
+zh = ""
+
+[124]
+len = 6
+mark = "Gold Mine"
+zh = ""
+
+[125]
+len = 11
+mark = "Fire Station"
+zh = ""
+
+[126]
+len = 16
+mark = "Rodeo"
+zh = ""
+
+[127]
+len = 16
+mark = "Bridge"
+zh = ""
+
+[128]
+len = 10
+mark = "Park Fountain"
+zh = ""
+
+[129]
+len = 10
+mark = "Small Explosion"
+zh = ""
+
+[130]
+len = 10
+mark = "Bad Smell"
+zh = ""
+
+[131]
+len = 19
+mark = "Bridge"
+zh = ""
+
+[132]
+len = 16
+mark = "???"
+zh = ""
+
+[133]
+len = 1
+mark = "\x05"
+zh = ""
+
+[134]
+len = 8
+mark = "Value:"
+zh = ""
+
+[135]
+len = 6
+mark = "Pollution:"
+zh = ""
+
+[136]
+len = 7
+mark = "\""
+zh = ""
+
+[137]
+len = 1
+mark = "SYSTEM"
+zh = ""
+
+[138]
+len = 7
+mark = "DISASTERS"
+zh = ""
+
+[139]
+len = 7
+mark = "\xff\x9e"
+zh = ""
+
+[140]
+len = 1
+mark = " About SIM CITY"
+zh = ""
+
+[141]
+len = 2
+mark = " Print"
+zh = ""
+
+[142]
+len = 14
+mark = " -"
+zh = ""
+
+[143]
+len = 14
+mark = " Start New City"
+zh = ""
+
+[144]
+len = 2
+mark = " Load City  Ctrl-L"
+zh = ""
+
+[145]
+len = 18
+mark = " Save City  Ctrl-S"
+zh = ""
+
+[146]
+len = 2
+mark = " Exit       Ctrl-X"
+zh = ""
+
+[147]
+len = 2
+mark = "\b"
+zh = ""
+
+[148]
+len = 18
+mark = " Auto-Budget"
+zh = ""
+
+[149]
+len = 10
+mark = " Sound Off"
+zh = ""
+
+[150]
+len = 6
+mark = " Animate all"
+zh = ""
+
+[151]
+len = 19
+mark = "\xff="
+zh = ""
+
+[152]
+len = 1
+mark = " Fastest  4"
+zh = ""
+
+[153]
+len = 11
+mark = " Average  2"
+zh = ""
+
+[154]
+len = 11
+mark = " Pause    0"
+zh = ""
+
+[155]
+len = 2
+mark = "\t"
+zh = ""
+
+[156]
+len = 5
+mark = " Flood"
+zh = ""
+
+[157]
+len = 14
+mark = " Twister"
+zh = ""
+
+[158]
+len = 11
+mark = " Tumbleweed"
+zh = ""
+
+[159]
+len = 2
+mark = " Disable "
+zh = ""
+
+[160]
+len = 2
+mark = "\n"
+zh = ""
+
+[161]
+len = 21
+mark = " Graphs        Ctrl-G"
+zh = ""
+
+[162]
+len = 21
+mark = " Edit          Ctrl-E"
+zh = ""
+
+[163]
+len = 21
+mark = " Close         Ctrl-C"
+zh = ""
+
+[164]
+len = 21
+mark = " Position      Ctrl-P"
+zh = ""
+
+[165]
+len = 21
+mark = "\xff"
+zh = ""
+

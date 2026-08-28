@@ -1,0 +1,839 @@
+# message 的訊息翻譯
+#
+# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，
+# 而且六個圖形集的同一個序號講同一件事、用詞不同。
+# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。
+#
+# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。
+# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。
+
+[0]
+len = 30
+mark = "\xfe\x02"
+zh = ""
+
+[1]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[2]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[3]
+len = 20
+mark = "\xfe\x02"
+zh = ""
+
+[4]
+len = 23
+mark = "\xfe\x02"
+zh = ""
+
+[5]
+len = 20
+mark = "\xfe\x04"
+zh = ""
+
+[6]
+len = 27
+mark = "\xfe\x02"
+zh = ""
+
+[7]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[8]
+len = 29
+mark = "\xfe\x02"
+zh = ""
+
+[9]
+len = 20
+mark = "\xfe\x03"
+zh = ""
+
+[10]
+len = 16
+mark = "\xfe\x03"
+zh = ""
+
+[11]
+len = 31
+mark = "\xfe\x03"
+zh = ""
+
+[12]
+len = 34
+mark = "\xfe\x03"
+zh = ""
+
+[13]
+len = 36
+mark = "\xfe\x03"
+zh = ""
+
+[14]
+len = 36
+mark = "\xfe\x05"
+zh = ""
+
+[15]
+len = 41
+mark = "\xfe\x03"
+zh = ""
+
+[16]
+len = 42
+mark = "\xfe\x04"
+zh = ""
+
+[17]
+len = 30
+mark = "\xfe\x03"
+zh = ""
+
+[18]
+len = 32
+mark = "\xfe\x03"
+zh = ""
+
+[19]
+len = 15
+mark = "\xfe\x06"
+zh = ""
+
+[20]
+len = 29
+mark = "\xfe\x06"
+zh = ""
+
+[21]
+len = 19
+mark = "\xfe\x06"
+zh = ""
+
+[22]
+len = 29
+mark = "\xfe\a"
+zh = ""
+
+[23]
+len = 21
+mark = "\xfe\x06"
+zh = ""
+
+[24]
+len = 20
+mark = "\xfe\x06"
+zh = ""
+
+[25]
+len = 17
+mark = "\xfe\x06"
+zh = ""
+
+[26]
+len = 22
+mark = "\xfe\x06"
+zh = ""
+
+[27]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[28]
+len = 25
+mark = "\xfe\x05"
+zh = ""
+
+[29]
+len = 26
+mark = "\xfe\x03"
+zh = ""
+
+[30]
+len = 16
+mark = "\xfe\x02"
+zh = ""
+
+[31]
+len = 20
+mark = "\xfe\x06"
+zh = ""
+
+[32]
+len = 33
+mark = "\xfe\t"
+zh = ""
+
+[33]
+len = 29
+mark = "\xfe\t"
+zh = ""
+
+[34]
+len = 29
+mark = "\xfe\x05"
+zh = ""
+
+[35]
+len = 30
+mark = "\xfe\x05"
+zh = ""
+
+[36]
+len = 30
+mark = "\xfe\x05"
+zh = ""
+
+[37]
+len = 31
+mark = "\xfe\x05"
+zh = ""
+
+[38]
+len = 31
+mark = "\xfe\x05"
+zh = ""
+
+[39]
+len = 37
+mark = "\xfe\x05"
+zh = ""
+
+[40]
+len = 23
+mark = "\xfe\b"
+zh = ""
+
+[41]
+len = 20
+mark = "\xfe\x06"
+zh = ""
+
+[42]
+len = 35
+mark = "\xfe\x06"
+zh = ""
+
+[43]
+len = 27
+mark = "\xfe\t"
+zh = ""
+
+[44]
+len = 23
+mark = "\xfe\t"
+zh = ""
+
+[45]
+len = 21
+mark = "\xfe\b"
+zh = ""
+
+[46]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[47]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[48]
+len = 0
+mark = "\xfe\b"
+zh = ""
+
+[49]
+len = 2
+mark = ""
+zh = ""
+
+[50]
+len = 1
+mark = "\x10"
+zh = ""
+
+[51]
+len = 12
+mark = "Road: $10"
+zh = ""
+
+[52]
+len = 15
+mark = "Railroad: $20"
+zh = ""
+
+[53]
+len = 9
+mark = "Residential: $100"
+zh = ""
+
+[54]
+len = 16
+mark = "Industrial: $100"
+zh = ""
+
+[55]
+len = 20
+mark = "Fire station: $500"
+zh = ""
+
+[56]
+len = 14
+mark = "Nuclear reactor: $5000"
+zh = ""
+
+[57]
+len = 14
+mark = "Airport: $10000"
+zh = ""
+
+[58]
+len = 23
+mark = "\xff\xbe\x12\x15"
+zh = ""
+
+[59]
+len = 182
+mark = "\xfe\xf4\xffCRIME ALERT-  Crime in your city is\nout of hand. Angry mobs are looting\nand vandalizing the central city. The\npresident will send in the national\nguard soon if you cannot control the\nproblem."
+zh = ""
+
+[60]
+len = 236
+mark = "\xfe\xd5\xffYOU'RE A WINNER- Your mayorial skill\nand city planning expertise have\nearned you the KEY TO THE CITY. Local\nresidents will erect monuments to\nyour glory and name their first-born\nchildren after you. Why not run for\ngovernor?"
+zh = ""
+
+[61]
+len = 317
+mark = "\xfe8\xffMONSTER ATTACK- A large reptilian\ncreature has been spotted in the\nwater. It seems to be attracted to \nareas of high pollution. There is a\ntrail of destruction wherever it\n goes.  You will have to wait\nuntil it leaves and then rebuild\nfrom the rubble."
+zh = ""
+
+[62]
+len = 258
+mark = "\xfe\xf6\xffMEGALOPOLIS - Congratulations, you\nhave reached the highest category\nof urban development, the mega-\nlopolis. If you manage to reach\nthis level give us a call at MAXIS\nor send us a copy of your city. We \nmight do something interesting with\nit."
+zh = ""
+
+[63]
+len = 204
+mark = "\xfe\xda\xffCAPITAL- Your current city has\nbecome a capital.  The current\npopulation here is 50,000. Your\npolitical future looks bright."
+zh = ""
+
+[64]
+len = 112
+mark = "\xfe\xdc\xffTOWN- Congratulations, your village\nhas grown to town status. You now\nhave 2,000 citizens."
+zh = ""
+
+[65]
+len = 327
+mark = "\xfe\xfa\xffRio de Janiero, Brazil 2047 -\nBy the mid-21st century, the green-\nhouse effect increased global tem-\nperatures about 4 degrees F. Polar\nicecaps melted and raised sea levels\nworldwide. Coastal areas were\ndevastated by flood and erosion. You\nhave 10 years to turn this swamp back\ninto a city again."
+zh = ""
+
+[66]
+len = 242
+mark = "\xfe\xfb\xffHamburg, Germany 1944-\nAllied fire-bombing of German cities\nin WWII caused tremendous damage and\nloss of life. People living in the\ninner cities were at greatest risk.\nYou must control the firestorms\nduring the bombing and then rebuild\nthe city after the war. You have\nfive years."
+zh = ""
+
+[67]
+len = 271
+mark = "\xfe\xfe\xffDullsville, USA 1900-\nThings haven't changed much around\nhere in the last hundred years or\nso and the residents are beginning\nto get bored. They think Dullsville\ncould be the next great city with\nthe right leader. It is your job to\nattract new growth and development,\nturning Dullsville into a\nMetropolis within 30 years."
+zh = ""
+
+[68]
+len = 285
+mark = "\xfe\xf9\xffBern, Switzerland 1965-\nThe roads here are becoming more\ncongested every day, and the\nresidents are upset. They demand\nthat you do something about it.\nSome have suggested a mass transit\nsystem as the answer, but this\nwould require major rezoning in\nthe downtown area. You have\nten years."
+zh = ""
+
+[69]
+len = 5
+mark = ""
+zh = ""
+
+[70]
+len = 1
+mark = "\x04"
+zh = ""
+
+[71]
+len = 6
+mark = "Police"
+zh = ""
+
+[72]
+len = 6
+mark = "Tax Rate"
+zh = ""
+
+[73]
+len = 1
+mark = "\f"
+zh = ""
+
+[74]
+len = 3
+mark = "Feb"
+zh = ""
+
+[75]
+len = 3
+mark = "Apr"
+zh = ""
+
+[76]
+len = 3
+mark = "Jun"
+zh = ""
+
+[77]
+len = 3
+mark = "Aug"
+zh = ""
+
+[78]
+len = 3
+mark = "Oct"
+zh = ""
+
+[79]
+len = 3
+mark = "Dec"
+zh = ""
+
+[80]
+len = 1
+mark = "\x03"
+zh = ""
+
+[81]
+len = 4
+mark = "Nuclear"
+zh = ""
+
+[82]
+len = 2
+mark = "\b"
+zh = ""
+
+[83]
+len = 12
+mark = "sanfran.psn"
+zh = ""
+
+[84]
+len = 11
+mark = "bern.psn"
+zh = ""
+
+[85]
+len = 9
+mark = "detroit.psn"
+zh = ""
+
+[86]
+len = 10
+mark = "rio.psn"
+zh = ""
+
+[87]
+len = 1
+mark = "\b"
+zh = ""
+
+[88]
+len = 10
+mark = "Crime"
+zh = ""
+
+[89]
+len = 8
+mark = "Cash Flow"
+zh = ""
+
+[90]
+len = 8
+mark = "Pollution"
+zh = ""
+
+[91]
+len = 13
+mark = "Last 120 years"
+zh = ""
+
+[92]
+len = 1
+mark = "\x03"
+zh = ""
+
+[93]
+len = 18
+mark = "Population Growth"
+zh = ""
+
+[94]
+len = 2
+mark = "\x03"
+zh = ""
+
+[95]
+len = 6
+mark = "Fire"
+zh = ""
+
+[96]
+len = 2
+mark = "\v"
+zh = ""
+
+[97]
+len = 11
+mark = " Power Grid "
+zh = ""
+
+[98]
+len = 16
+mark = " Population Density "
+zh = ""
+
+[99]
+len = 17
+mark = " Pollution Map "
+zh = ""
+
+[100]
+len = 11
+mark = " Land Value "
+zh = ""
+
+[101]
+len = 19
+mark = " Fire Protection "
+zh = ""
+
+[102]
+len = 19
+mark = "N"
+zh = ""
+
+[103]
+len = 1
+mark = "\xff\xff\xffPopulation Density"
+zh = ""
+
+[104]
+len = 21
+mark = "Fire Protection"
+zh = ""
+
+[105]
+len = 17
+mark = "1"
+zh = ""
+
+[106]
+len = 1
+mark = "VILLAGE"
+zh = ""
+
+[107]
+len = 4
+mark = "CITY"
+zh = ""
+
+[108]
+len = 7
+mark = "METROPOLIS"
+zh = ""
+
+[109]
+len = 11
+mark = "?"
+zh = ""
+
+[110]
+len = 1
+mark = "CRIME"
+zh = ""
+
+[111]
+len = 9
+mark = "HOUSING COSTS"
+zh = ""
+
+[112]
+len = 5
+mark = "TRAFFIC"
+zh = ""
+
+[113]
+len = 12
+mark = "FIRES"
+zh = ""
+
+[114]
+len = 3
+mark = "0"
+zh = ""
+
+[115]
+len = 9
+mark = "Water"
+zh = ""
+
+[116]
+len = 6
+mark = "Park"
+zh = ""
+
+[117]
+len = 6
+mark = "Flood"
+zh = ""
+
+[118]
+len = 11
+mark = "Fire"
+zh = ""
+
+[119]
+len = 4
+mark = "Power line"
+zh = ""
+
+[120]
+len = 4
+mark = "Residential"
+zh = ""
+
+[121]
+len = 8
+mark = "Church"
+zh = ""
+
+[122]
+len = 10
+mark = "Maxis"
+zh = ""
+
+[123]
+len = 10
+mark = "Industrial"
+zh = ""
+
+[124]
+len = 8
+mark = "Airport"
+zh = ""
+
+[125]
+len = 16
+mark = "Fire Station"
+zh = ""
+
+[126]
+len = 17
+mark = "Stadium"
+zh = ""
+
+[127]
+len = 19
+mark = "Bridge"
+zh = ""
+
+[128]
+len = 10
+mark = "Park Fountain"
+zh = ""
+
+[129]
+len = 10
+mark = "Small Explosion"
+zh = ""
+
+[130]
+len = 10
+mark = "Coal Smoke"
+zh = ""
+
+[131]
+len = 16
+mark = "Bridge"
+zh = ""
+
+[132]
+len = 19
+mark = "???"
+zh = ""
+
+[133]
+len = 1
+mark = "\x05"
+zh = ""
+
+[134]
+len = 8
+mark = "Value:"
+zh = ""
+
+[135]
+len = 6
+mark = "Pollution:"
+zh = ""
+
+[136]
+len = 7
+mark = "\""
+zh = ""
+
+[137]
+len = 1
+mark = "SYSTEM"
+zh = ""
+
+[138]
+len = 7
+mark = "DISASTERS"
+zh = ""
+
+[139]
+len = 7
+mark = "\xff\x9e"
+zh = ""
+
+[140]
+len = 1
+mark = " About SIM CITY"
+zh = ""
+
+[141]
+len = 2
+mark = " Print"
+zh = ""
+
+[142]
+len = 14
+mark = " -"
+zh = ""
+
+[143]
+len = 14
+mark = " Start New City"
+zh = ""
+
+[144]
+len = 2
+mark = " Load City  Ctrl-L"
+zh = ""
+
+[145]
+len = 18
+mark = " Save City  Ctrl-S"
+zh = ""
+
+[146]
+len = 2
+mark = " Exit       Ctrl-X"
+zh = ""
+
+[147]
+len = 2
+mark = "\b"
+zh = ""
+
+[148]
+len = 22
+mark = " Auto-Budget"
+zh = ""
+
+[149]
+len = 10
+mark = " Sound Off"
+zh = ""
+
+[150]
+len = 6
+mark = " Animate all"
+zh = ""
+
+[151]
+len = 19
+mark = "\xff="
+zh = ""
+
+[152]
+len = 1
+mark = " Fastest  4"
+zh = ""
+
+[153]
+len = 11
+mark = " Average  2"
+zh = ""
+
+[154]
+len = 11
+mark = " Pause    0"
+zh = ""
+
+[155]
+len = 2
+mark = "\t"
+zh = ""
+
+[156]
+len = 5
+mark = " Flood"
+zh = ""
+
+[157]
+len = 10
+mark = " Tornado"
+zh = ""
+
+[158]
+len = 11
+mark = " Monster"
+zh = ""
+
+[159]
+len = 2
+mark = " Disable "
+zh = ""
+
+[160]
+len = 2
+mark = "\n"
+zh = ""
+
+[161]
+len = 21
+mark = " Graphs        Ctrl-G"
+zh = ""
+
+[162]
+len = 21
+mark = " Edit          Ctrl-E"
+zh = ""
+
+[163]
+len = 21
+mark = " Close         Ctrl-C"
+zh = ""
+
+[164]
+len = 21
+mark = " Position      Ctrl-P"
+zh = ""
+
+[165]
+len = 21
+mark = "\xff"
+zh = ""
+
