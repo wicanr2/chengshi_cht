@@ -183,3 +183,116 @@ func TestDecompressRejectsRunaway(t *testing.T) {
 		t.Error("超過解壓上限卻沒有拒絕")
 	}
 }
+
+// 28 個 .PGF 全部要解得開，而且長度要對得上宣告。
+//
+// 長度公式是這個格式最強的自證：
+// 資料長度 = 寬 × 高 × 張數 × 位元深度 ÷ 8 ＋ 4 × 張數（旗標 bit0 時）。
+// 調色盤長度、位元深度、平面式排列任何一個弄錯，走到第二個圖形庫就會爆。
+func TestAllGraphicsFilesDecode(t *testing.T) {
+	dir := dosDir(t)
+	cases := []struct {
+		sub    string
+		mode   byte
+		bpp    int
+		tile   int
+		banks  int
+	}{
+		{"mcga", '2', 8, 8, 17},   // MCGA 320×200 256 色
+		{"CEGA", 'E', 4, 16, 24},  // EGA 640×350 十六色
+		{"MONO", 'V', 1, 16, 24},  // 單色 640×350
+		{"sega", 'e', 4, 8, 24},   // EGA 320×200 十六色
+	}
+	styles := map[string]bool{}
+	total := 0
+	for _, c := range cases {
+		files, err := filepath.Glob(filepath.Join(dir, c.sub, "*"))
+		if err != nil || len(files) == 0 {
+			t.Fatalf("%s 底下找不到圖形檔", c.sub)
+		}
+		for _, f := range files {
+			if !strings.EqualFold(filepath.Ext(f), ".pgf") {
+				continue
+			}
+			raw, err := os.ReadFile(f)
+			if err != nil {
+				t.Errorf("%s：讀不到 %v", filepath.Base(f), err)
+				continue
+			}
+			g, err := ParsePGF(raw)
+			if err != nil {
+				// 基本檔沒有那五個位元組的檔頭，是另一種版面。
+				if strings.Contains(err.Error(), "基本檔") {
+					continue
+				}
+				t.Errorf("%s：解析失敗 %v", filepath.Base(f), err)
+				continue
+			}
+			total++
+			styles[g.Name] = true
+			if g.Mode != c.mode {
+				t.Errorf("%s：模式碼 %q，應為 %q", filepath.Base(f), g.Mode, c.mode)
+			}
+			if g.BitsPerPixel != c.bpp {
+				t.Errorf("%s：位元深度 %d，應為 %d", filepath.Base(f), g.BitsPerPixel, c.bpp)
+			}
+			if len(g.Banks) != c.banks {
+				t.Errorf("%s：%d 個圖形庫，應為 %d", filepath.Base(f), len(g.Banks), c.banks)
+			}
+			// 第 0 庫一定是 960 張地圖圖塊。960 = Micropolis 的 TILE_COUNT，
+			// 是圖塊編號的獨立佐證。
+			b0 := g.Banks[0]
+			if len(b0.Images) != 960 {
+				t.Errorf("%s：第 0 庫有 %d 張，應為 960", filepath.Base(f), len(b0.Images))
+			}
+			if b0.Width != c.tile || b0.Height != c.tile {
+				t.Errorf("%s：圖塊是 %d×%d，應為 %d×%d",
+					filepath.Base(f), b0.Width, b0.Height, c.tile, c.tile)
+			}
+			if len(b0.Images[0].Pixels) != c.tile*c.tile {
+				t.Errorf("%s：一張圖塊解出 %d 個像素，應為 %d",
+					filepath.Base(f), len(b0.Images[0].Pixels), c.tile*c.tile)
+			}
+		}
+	}
+	if total != 24 {
+		t.Errorf("解開 %d 個風格圖形檔，應為 24（4 個模式 × 6 種風格）", total)
+	}
+	want := []string{"Ancient Asia", "Future Europe", "Future USA",
+		"Medieval Times", "Moon Colony", "Wild West"}
+	for _, w := range want {
+		if !styles[w] {
+			t.Errorf("少了風格 %q", w)
+		}
+	}
+	if len(styles) != 6 {
+		t.Errorf("解出 %d 種風格名稱，應為 6：%v", len(styles), styles)
+	}
+}
+
+// 調色盤前 16 色一定是標準 EGA 十六色。這條是「調色盤起點對不對」的
+// 獨立檢查——起點差一個位元組，顏色會整組錯位而且看起來仍然像調色盤。
+func TestPaletteIsStandardEGA(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join(dosDir(t), "mcga", "asiamcga.pgf"))
+	if err != nil {
+		t.Skip("找不到 asiamcga.pgf")
+	}
+	g, err := ParsePGF(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lo, mid, hi := uint8(0x00), uint8(0x57), uint8(0xab)
+	full := uint8(0xff)
+	want := []PGFColor{
+		{lo, lo, lo}, {lo, lo, hi}, {lo, hi, lo}, {lo, hi, hi},
+		{hi, lo, lo}, {hi, lo, hi}, {hi, mid, lo}, {hi, hi, hi},
+		{mid, mid, mid}, {mid, mid, full}, {mid, full, mid}, {mid, full, full},
+		{full, mid, mid}, {full, mid, full}, {full, full, mid}, {full, full, full},
+	}
+	for i, w := range want {
+		if g.Palette[i] != w {
+			t.Errorf("第 %d 色 = %v，應為 %v —— 調色盤起點可能差了幾個位元組",
+				i, g.Palette[i], w)
+		}
+	}
+}

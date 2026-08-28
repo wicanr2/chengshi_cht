@@ -108,3 +108,21 @@ IBM PC 版手冊的「LIST OF FILES ON THE DISKS」逐項列出：
 | `.PTF`／`.PSF` 的內部格式 | 讀 bytes 自證；`.PTF` 是中文化的主要目標 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 反組譯 `SIMCITY.EXE` 的檔名字串，或 DOSBox 追檔案開啟 |
 | 圖形集前綴的語意 | 從 `.PGF` 解出圖塊後看內容，或找執行檔裡的字串 |
+
+## 補充：圖形集前綴的語意（已解）
+
+`ASIA`／`MEDI`／`WEST`／`FEUR`／`FUSA`／`MOON` 六個前綴是**城市風格**，
+名稱寫在 `.PGF` 自己的檔頭裡，不必反組譯也不必猜：
+
+| 前綴 | 風格名 | 風格編號 |
+|---|---|---:|
+| `ASIA` | Ancient Asia | 1234 |
+| `MEDI` | Medieval Times | 1491 |
+| `WEST` | Wild West | 1849 |
+| `FUSA` | Future USA | 2055 |
+| `FEUR` | Future Europe | 2155 |
+| `MOON` | Moon Colony | 2195 |
+
+每個 `.PGF` 的檔頭同時列出配套的 `*_MSG.PTF`、`*_SND.PSF` 與單色版圖形檔，
+所以「哪些檔案屬於同一組」是檔案自己講的。細節見
+[`03-pgf-graphics.md`](03-pgf-graphics.md)。

@@ -124,7 +124,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 16. 逐次元對拍：微實驗完全一致；分段對拍 23 段中 9 段完全一致。
     見 `docs/re/12-tick-parity.md`。剩下的差距多半是重建不出來的
     內部狀態，不一定是實作錯誤——**繼續縮小要靠新的微實驗**。
-17. `.PGF` 圖形版面 → 呈現層（`internal/ui`）。
+17. ~~`.PGF` 圖形版面~~ **完成**：`docs/formats/03-pgf-graphics.md`，
+    `internal/assets/pgf.go`。24 個風格圖形檔（4 種顯示模式 × 6 種風格）
+    全部解開，第 0 庫一律 **960 張地圖圖塊**——與 Micropolis 的 `TILE_COUNT`
+    對得上，是圖塊編號的獨立佐證。
+    下一步：呈現層（`internal/ui`，Ebiten）。
 18. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出
     `translations/glossary.md` 與以序號為鍵的訊息翻譯檔。
 
