@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/wicanr2/chengshi_cht/internal/sim"
@@ -188,6 +190,74 @@ func TestAllScenariosLoad(t *testing.T) {
 		}
 		if zh := game.ScenarioNameZH(n); zh == "" {
 			t.Errorf("第 %d 個劇本沒有中文名", n)
+		}
+	}
+}
+
+// 存檔 → 讀檔要回到同一個狀態，而且檔案是**原版格式**。
+//
+// ⚠ 打包時要先複製整個 MiscHis 再覆蓋純量。從零開始填會讓劇本編號、
+// 城市等級、災難計時整批遺失——而**載入後看起來一切正常**，
+// 只有跑一陣子才會發現劇本判定不觸發。
+func TestSaveLoadRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	w := sim.NewWorld(4242)
+	w.GenerateMap(4242, sim.DefaultTerrainParams())
+	w.DoSimInit()
+	if _, _, ok := game.BuildStarterCity(w); !ok {
+		t.Skip("這張地圖上沒有夠大的可建地")
+	}
+	for i := 0; i < 20*48*16; i++ {
+		w.Frame()
+	}
+	w.CityTax = 11
+	w.RoadPercent = 0.75
+
+	path := filepath.Join(dir, "test.cty")
+	if err := game.SaveCity(path, w); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(raw) != sim.CityFileSize1x1 {
+		t.Fatalf("存出 %d 位元組，原版格式是 %d", len(raw), sim.CityFileSize1x1)
+	}
+
+	w2, err := game.LoadCity(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w2.CityTime != w.CityTime {
+		t.Errorf("CityTime %d ≠ %d", w2.CityTime, w.CityTime)
+	}
+	if w2.TotalFunds != w.TotalFunds {
+		t.Errorf("資金 %d ≠ %d", w2.TotalFunds, w.TotalFunds)
+	}
+	if w2.CityTax != 11 {
+		t.Errorf("稅率 %d ≠ 11", w2.CityTax)
+	}
+	diff := 0
+	for x := 0; x < sim.WorldX; x++ {
+		for y := 0; y < sim.WorldY; y++ {
+			if w2.Map[x][y] != w.Map[x][y] {
+				diff++
+			}
+		}
+	}
+	if diff != 0 {
+		t.Errorf("地圖有 %d 格對不上", diff)
+	}
+	// 存檔後 MiscHis 的其餘欄位不能被清掉
+	for i := range w.MiscHis {
+		if i >= 8 && i <= 9 || i >= 50 && i <= 63 {
+			continue // 這些是存檔時覆蓋的純量
+		}
+		if w2.MiscHis[i] != w.MiscHis[i] {
+			t.Errorf("MiscHis[%d] = %d，應為 %d —— 打包時把其餘欄位清掉了",
+				i, w2.MiscHis[i], w.MiscHis[i])
+			break
 		}
 	}
 }

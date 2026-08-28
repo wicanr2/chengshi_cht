@@ -184,3 +184,44 @@ func (w *World) LoadCityFile(cf *CityFile) {
 	// w_budget.c:83 InitFundingLevel()
 	w.PolicePercent, w.FirePercent, w.RoadPercent = 1.0, 1.0, 1.0
 }
+
+// ToCityFile 把目前的世界狀態打包成一個可存檔的城市檔。
+// s_fileio.c:325 SaveFile()
+//
+// ⚠ **存檔寫回 MiscHis，載入時也從 MiscHis 讀**。那個陣列同時是
+// 「歷史統計的一部分」與「純量的容器」——`miscCityTime` 這些索引
+// 落在歷史陣列的後段。所以打包時要先複製整個 MiscHis 再覆蓋純量，
+// 不能從零開始填：其餘欄位（劇本編號、城市等級、災難計時…）
+// 會整批遺失，而**載入後看起來一切正常**，只有跑一陣子才會發現
+// 劇本判定不觸發。
+func (w *World) ToCityFile() *CityFile {
+	cf := &CityFile{
+		ResHis:       w.ResHis,
+		ComHis:       w.ComHis,
+		IndHis:       w.IndHis,
+		CrimeHis:     w.CrimeHis,
+		PollutionHis: w.PollutionHis,
+		MoneyHis:     w.MoneyHis,
+		MiscHis:      w.MiscHis,
+		Map:          w.Map,
+	}
+	cf.setMisc32(miscCityTime, int32(w.CityTime))
+	cf.setMisc32(miscTotalFunds, int32(w.TotalFunds))
+	cf.MiscHis[miscCityTax] = int16(w.CityTax)
+	cf.MiscHis[miscSimSpeed] = int16(w.SimSpeed)
+	cf.MiscHis[miscAutoBulldoze] = boolToI16(w.AutoBulldoze)
+	cf.MiscHis[miscAutoBudget] = boolToI16(w.AutoBudget)
+	cf.MiscHis[miscAutoGo] = boolToI16(w.AutoGo)
+	// 三個編列百分比是 32 位元定點（×65536）。s_fileio.c:352
+	cf.setMisc32(miscPolicePercent, int32(w.PolicePercent*65536))
+	cf.setMisc32(miscFirePercent, int32(w.FirePercent*65536))
+	cf.setMisc32(miscRoadPercent, int32(w.RoadPercent*65536))
+	return cf
+}
+
+func boolToI16(b bool) int16 {
+	if b {
+		return 1
+	}
+	return 0
+}

@@ -101,7 +101,14 @@ type Game struct {
 
 	message  string
 	msgTimer int
+
+	// savePath 是 Ctrl-S 存檔的目標。空的話存到工作目錄下的城市名。
+	savePath string
 }
+
+// SetSavePath 設定存檔位置。
+func (g *Game) SetSavePath(p string) { g.savePath = p }
+
 
 // NewGame 建一個新遊戲。
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
@@ -258,6 +265,9 @@ func (g *Game) handleKeys() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		g.win = winNone
+	}
+	if ctrl && inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		g.save()
 	}
 	g.handleWindowKeys()
 }
@@ -557,4 +567,18 @@ func (g *Game) query(x, y int) string {
 		g.txt.S(i18n.SecQuery, 0), g.world.PopDensity[x>>1][y>>1],
 		g.txt.S(i18n.SecQuery, 1), g.world.LandValueMem[x>>1][y>>1],
 		g.txt.S(i18n.SecQuery, 2), g.world.CrimeMem[x>>1][y>>1])
+}
+
+
+// save 把城市存成原版格式的 .cty。
+func (g *Game) save() {
+	p := g.savePath
+	if p == "" {
+		p = "city.cty"
+	}
+	if err := game.SaveCity(p, g.world); err != nil {
+		g.setMessage("存檔失敗：" + err.Error())
+		return
+	}
+	g.setMessage("已存檔：" + p)
 }

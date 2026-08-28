@@ -33,6 +33,8 @@ func main() {
 	style := flag.String("style", "asia", "城市風格：asia／medi／west／fusa／feur／moon")
 	seed := flag.Int("seed", 0, "地形亂數種子（0 = 隨機）")
 	scen := flag.Int("scenario", 0, "載入第幾個悲情城市（1–8，0 = 新城市）")
+	load := flag.String("load", "", "讀取一個城市檔（.cty，原版格式）")
+	save := flag.String("save", "city.cty", "Ctrl-S 的存檔位置")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
 	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval")
@@ -72,7 +74,14 @@ func main() {
 	}
 
 	var w *sim.World
-	if *scen > 0 {
+	if *load != "" {
+		w, err = game.LoadCity(*load)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Printf("讀取城市檔：%s\n", *load)
+	} else if *scen > 0 {
 		w, err = game.LoadScenario(*data, *scen)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -106,6 +115,7 @@ func main() {
 	if *demo > 0 {
 		g.LookAt(demoX+6, demoY+6)
 	}
+	g.SetSavePath(*save)
 	if *win != "" {
 		if !g.OpenWindow(*win) {
 			fmt.Fprintf(os.Stderr, "不認得的視窗 %q\n", *win)
