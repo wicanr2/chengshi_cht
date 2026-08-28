@@ -81,12 +81,39 @@ type World struct {
 	// PowerMap 是位元圖。headers/sim.h:189 SETPOWERBIT。
 	PowerMap [PowerMapRow * WorldY]uint16
 
+	// 遊戲層的純量。sim.c:167 sim_init() 的初值；載入城市檔時由檔案覆蓋。
+	CityTime     int  // 遊戲刻。一年 48 刻（s_fileio.c:396 起的劇本表）
+	TotalFunds   int  // 市庫
+	CityTax      int  // 稅率。sim.c:182 初值 7
+	SimSpeed     int  // sim.c:194 初值 3
+	AutoBulldoze bool // sim.c:188 初值 true
+	AutoBudget   bool // sim.c:189 初值 true
+	AutoGo       bool // sim.c:181 初值 true
+
+	CityName string   // setAnyCityName()
+	Scenario Scenario // ScenarioID。0 代表不是劇本
+
+	// 撥款百分比。w_budget.c:64-68 初值 0.0，InitFundingLevel() 設成 1.0。
+	PolicePercent float64
+	FirePercent   float64
+	RoadPercent   float64
+
 	Rand *Rand
 }
 
 // NewWorld 配置一個全空的世界。
+// NewWorld 配置一個全空的世界，純量用 sim.c:167 sim_init() 的初值。
 func NewWorld(seed uint32) *World {
-	return &World{Rand: NewRand(seed)}
+	return &World{
+		CityTime:     50,   // sim.c:183
+		TotalFunds:   20000, // 實測 sim Funds；docs/re/01-oracle-harness.md §4
+		CityTax:      7,    // sim.c:182
+		SimSpeed:     3,    // sim.c:194
+		AutoBulldoze: true, // sim.c:188
+		AutoBudget:   true, // sim.c:189
+		AutoGo:       true, // sim.c:181
+		Rand:         NewRand(seed),
+	}
 }
 
 // InBounds 回報座標是否落在地圖內。

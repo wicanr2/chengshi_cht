@@ -12,8 +12,12 @@ import (
 	"testing"
 )
 
-// 表格列：| [`NN-xxx.md`](NN-xxx.md) | 主題 | 狀態 | 引用點／理由 |
-var rowRe = regexp.MustCompile(`^\|\s*\[` + "`" + `([0-9A-Za-z._-]+\.md)` + "`" + `\]\([^)]*\)\s*\|([^|]*)\|([^|]*)\|`)
+// 表格列：| [`docs/re/NN-xxx.md`](NN-xxx.md) | 主題 | 狀態 | 引用點／理由 |
+// 第一個 capture 是**儲存庫根目錄起算的路徑**，連結目標不管。
+var rowRe = regexp.MustCompile(`^\|\s*\[` + "`" + `([0-9A-Za-z._/-]+\.md)` + "`" + `\]\([^)]*\)\s*\|([^|]*)\|([^|]*)\|`)
+
+// 要被接線表涵蓋的文件目錄。
+var wiredDirs = []string{filepath.Join("docs", "re"), filepath.Join("docs", "formats")}
 
 func repoRoot(t *testing.T) string {
 	t.Helper()
@@ -83,7 +87,7 @@ func TestWiringStatus(t *testing.T) {
 
 		var citing []string
 		for path, body := range srcs {
-			if strings.Contains(body, "docs/re/"+note) {
+			if strings.Contains(body, note) {
 				citing = append(citing, path)
 			}
 		}
@@ -110,18 +114,22 @@ func TestWiringStatus(t *testing.T) {
 		t.Fatal("接線表一列都沒解析到——格式壞了")
 	}
 
-	// 反向：docs/re/ 底下的每份筆記都要在表上（00-wiring-status.md 自己除外）。
-	entries, err := os.ReadDir(filepath.Join(root, "docs", "re"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, e := range entries {
-		n := e.Name()
-		if e.IsDir() || !strings.HasSuffix(n, ".md") || n == "00-wiring-status.md" {
-			continue
+	// 反向：docs/re/ 與 docs/formats/ 底下的每份文件都要在表上
+	//（接線表自己除外）。
+	for _, dir := range wiredDirs {
+		entries, err := os.ReadDir(filepath.Join(root, dir))
+		if err != nil {
+			t.Fatalf("讀不到 %s：%v", dir, err)
 		}
-		if !listed[n] {
-			t.Errorf("docs/re/%s 沒有登記在接線表上", n)
+		for _, e := range entries {
+			n := e.Name()
+			if e.IsDir() || !strings.HasSuffix(n, ".md") || n == "00-wiring-status.md" {
+				continue
+			}
+			rel := filepath.ToSlash(filepath.Join(dir, n))
+			if !listed[rel] {
+				t.Errorf("%s 沒有登記在接線表上", rel)
+			}
 		}
 	}
 }

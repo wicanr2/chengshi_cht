@@ -71,6 +71,8 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | 悲情城市 | 軟體世界對 SCENARIOS（八個劇本）的譯名 |
 | 圖形集 | DOS 版的六組資料片美術：ASIA／MEDI／WEST／FUSA／FEUR／MOON |
 | 逐 tick 對拍 | 同種子同操作餵進 Micropolis 與 Go 版，逐步比對 120×100 地圖與純量 |
+| 悲情城市 | 軟體世界對八個劇本（SCENARIOS）的譯名 |
+| 遊戲刻 | `CityTime`。一年 48 刻；劇本的 `CityTime = (年份−1900)×48+2` |
 
 ## 5. 已被推翻的斷言
 
@@ -93,8 +95,9 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
    `internal/sim/world.go`、`tiles.go`（工具重產）。
 7. ~~地形產生~~ **完成**：`docs/re/04` ＋ `docs/spec/terrain.md`，
    `internal/sim/terrain.go`。**四顆種子、48000 格逐格對拍全部相同**（含造島分支）。
-8. **`.cty` 存檔格式**（`s_fileio.c`，27120 bytes）→ `docs/formats/01`。
-   解出來就能直接吃 X11 版的 24 個城市檔當測試資料，也才能載入八個劇本。
+8. ~~城市檔格式~~ **完成**：`docs/formats/01-city-file.md` ＋ `docs/spec/city-file.md`，
+   `internal/sim/cityfile.go`、`scenario.go`。32 個檔案逐位元組 round-trip，
+   劇本 1 對 oracle 零無法解釋的差異。
 9. **電力傳導**（`s_power.c`）——它是分區成長的前提，而且是純函式，好對拍。
 10. **每格掃描**（`s_scan.c`：人口密度、汙染、地價、犯罪）。
 11. **交通生成**（`s_traf.c`）、**分區成長**（`s_zone.c`）、**稅收與預算**、
