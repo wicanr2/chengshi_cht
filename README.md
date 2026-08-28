@@ -130,9 +130,10 @@ rose from Tokyo Bay」，CGW 也註明「the monster which attacks a city is not
 
 ### 兩個被講錯很久的數字
 
-- **稅率不是「7% 迷信」。** IBM 版手冊原文寫的是
-  「The optimum tax rate for fast growth is between 5 and 7%」——**5 到 7% 的區間**，
-  7% 只是上緣。手冊並沒有說預設值是 7%。
+- **「7% 稅率」不是迷信，它就是遊戲的預設值。** IBM 版手冊寫的是
+  「The optimum tax rate for fast growth is between 5 and 7%」——一個**區間**；
+  而原始碼把初始稅率設成 7（`sim.c:182 CityTax = 7`）。玩家記得的那個數字，
+  同時是預設值與手冊區間的上緣。
 - **Dullsville 的官方難度是 Easy。** 手冊給八個劇本的難度標示如下；
   網路上流傳「Dullsville 最難」是玩家講法，與手冊相反。
 
@@ -217,9 +218,19 @@ rose from Tokyo Bay」，CGW 也註明「the monster which attacks a city is not
 
 ### 逐 tick 對拍
 
-《模擬城市》的狀態就是一張 128×128 的格子陣列加上幾十個純量，全部可以序列化。
+《模擬城市》的狀態就是一張 **120×100** 的格子陣列加上幾十個純量，全部可以序列化。
 所以同一顆隨機種子、同一串操作可以同時餵進 Micropolis 與 Go 版，**逐 tick 比對整張地圖**。
-這是這個專案相對於前幾個重製專案最大的機會，也是第一批要建起來的東西。
+
+這已經做出來了：Micropolis 在 docker ＋ Xvfb 裡編得起來、跑得動，而且它內嵌的 Tcl
+直譯器暴露了 128 個狀態存取子指令（`sim Tile x y`、`sim Funds`、`sim Rand`…），
+可以用 pty 腳本驅動。細節與第一批已確認常數見
+[`docs/re/01-oracle-harness.md`](docs/re/01-oracle-harness.md)。
+
+> 順帶一提，這件事立刻推翻了本文上面引用過的一條二手數字：
+> Tony Chen 2002 年的規格表寫「建設範圍 128 × 128」，
+> 但原始碼是 `SimWidth 120` / `SimHeight 100`，存檔大小
+> `120 × 100 × 2 = 24000` 也對得上。**一手贏二手**，即使二手是當年的雜誌。
+> DOS 版是不是同一個尺寸還沒證實。
 
 ---
 

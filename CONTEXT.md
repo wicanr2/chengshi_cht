@@ -7,7 +7,7 @@
 
 ## 1. 目前狀態
 
-**專案剛建立，還沒有任何程式碼。** 目前完成的只有專案骨架：
+**還沒有 remake 程式碼，但 oracle 已經可用。** 目前完成的是專案骨架：
 `CLAUDE.md`（方法論）、`LICENSE`（PolyForm Noncommercial 1.0.0）、`.gitignore`、`README.md`。
 
 ### 已盤點的素材
@@ -60,7 +60,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | DUX X11 版 | DUX Software 1993 的商業 Unix 移植，Micropolis 的直接前身 |
 | 悲情城市 | 軟體世界對 SCENARIOS（八個劇本）的譯名 |
 | 圖形集 | DOS 版的六組資料片美術：ASIA／MEDI／WEST／FUSA／FEUR／MOON |
-| 逐 tick 對拍 | 同種子同操作餵進 Micropolis 與 Go 版，逐步比對 128×128 地圖與純量 |
+| 逐 tick 對拍 | 同種子同操作餵進 Micropolis 與 Go 版，逐步比對 120×100 地圖與純量 |
 
 ## 5. 已被推翻的斷言
 
@@ -70,17 +70,20 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 
 依序做，前一項沒完成不要跳下一項。
 
-1. ~~取得 Micropolis 封存~~ **完成**：commit `c98f6b0`，解到 `workplace/ref/micropolis/`。
+1. ~~取得 Micropolis 封存~~ **完成**：commit `c98f6b0`。
 2. ~~核對原始碼地圖~~ **完成**：[`docs/re/00-source-map.md`](docs/re/00-source-map.md)。
    推翻了「`s_` ＝ 規則、`w_` ＝ 介面」的假說。
-3. **建立 Micropolis headless oracle**（`rulebook/60`：先有 pass／fail 訊號再寫規則）：
-   把 `s_*.c` ＋ `w_sprite.c` ＋ `w_tool.c` ＋ `random.c` 配一支自己寫的 `main.c`
-   編成無 X11／Tcl 的 harness，能吃種子與操作序列、吐出可比對的狀態文字。
-4. **Go 專案骨架 ＋ docker 建置**（`tools/go.sh`），第一個單元是亂數重寫並對拍。
-5. **DOS 1.10 檔案時間戳分群**：分出 1991-05 原廠檔與 1996／2012 被動過的檔，
-   寫進 `docs/formats/00-dos110-inventory.md`。另尋一份未破解的 1.10 副本。
-6. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
-7. 之後照 `docs/re/00-source-map.md` 的規則層清單逐項進 G1。
+3. ~~建立可驅動的 oracle~~ **完成**：[`docs/re/01-oracle-harness.md`](docs/re/01-oracle-harness.md)。
+   docker ＋ Xvfb 編得起來、跑得動，pty 驅動 128 個 Tcl 狀態存取子指令。
+4. ~~DOS 1.10 素材盤點~~ **完成**：[`docs/formats/00-dos110-inventory.md`](docs/formats/00-dos110-inventory.md)。
+5. **Go 專案骨架 ＋ docker 建置**（`tools/go.sh`）。第一個單元是 BSD 亂數重寫，
+   驗收條件是與 `sim Rand` 的數列逐項相同。
+6. **地圖陣列與圖塊編號**：讀 `headers/sim.h` ＋ `s_alloc.c` → `docs/re/02`，
+   收攏成 READY 規格後才動 `internal/sim`。
+7. **`.cty` 存檔格式**（`s_fileio.c`，27120 bytes）→ `docs/formats/01`。
+   解出來就能直接吃 X11 版的 24 個城市檔當測試資料。
+8. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
+9. 之後照 `docs/re/00-source-map.md` 的規則層清單逐項進 G1。
 
 ## 7. 現行驗證入口
 

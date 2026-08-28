@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       libx11-dev libxext-dev libxpm-dev \
       xvfb x11-utils x11-apps imagemagick \
-      ca-certificates make gcc byacc flex \
+      ca-certificates make gcc byacc flex python3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY compat.h /opt/compat.h

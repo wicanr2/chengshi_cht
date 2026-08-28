@@ -156,11 +156,12 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 
 - **DOS 版用 DOSBox**（docker 化，可送鍵、可截圖）。`cycles` 要寫死不要用 `auto`——
   可重現性的敵人。設定先查 `~/.claude/knowledge-base/retro/dosbox-game-configs.md`。
-- **逐 tick 對拍是本專案最有力的驗收工具**：模擬城市的狀態是一張
-  128×128 的格子陣列加上幾十個純量，全部可以序列化。把同一顆隨機種子、同一串操作
-  餵進 Micropolis 與 Go 版，逐 tick 比對整張地圖與所有純量——**這件事在地下城主
-  做不到（跨引擎輸入格式對不上），在這裡做得到**，因為兩邊的狀態就是同一張陣列。
-  這是本專案相對於前幾個專案最大的機會，優先把它建起來（`rulebook/60`）。
+- **逐 tick 對拍是本專案最有力的驗收工具，而且已經建起來了**
+  （[`docs/re/01-oracle-harness.md`](docs/re/01-oracle-harness.md)）：
+  Micropolis 在 docker ＋ Xvfb 裡編得起來、跑得動，內嵌的 Tcl 直譯器暴露 128 個
+  狀態存取子指令，用 pty 腳本驅動。狀態是一張 **120×100** 的格子陣列加上幾十個純量，
+  全部可序列化——**這件事在地下城主做不到（跨引擎輸入格式對不上），在這裡做得到**。
+  ⚠ `sim -t` 的 REPL 只在 `isatty(0)` 為真時才開，用管線會靜默失效。
 - 實跑是**驗證工具，不是證據來源**：畫面對得起來只證明「這一條路徑對」，
   不能取代讀原始碼。
 
@@ -284,7 +285,7 @@ Go / Ebiten，分層照地下城主那套（已驗證過在無頭環境可測）
 
 ```
 internal/assets   純解碼（PGF／PPF／PSN／PTF／PSF／CTY），回傳 image.RGBA 與結構，不認識 Ebiten
-internal/sim      模擬規則層，不認識畫面；一張 128×128 陣列加上純量狀態
+internal/sim      模擬規則層，不認識畫面；一張 120×100 陣列加上純量狀態
 internal/ui       Ebiten 呈現層（textlayout／layout 刻意不依賴 Ebiten）
 cmd/chengshi      進入點
 tools/            go.sh（docker 建置）、對拍、抽取與整理腳本
