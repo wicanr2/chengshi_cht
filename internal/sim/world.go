@@ -98,6 +98,59 @@ type World struct {
 	FirePercent   float64
 	RoadPercent   float64
 
+	// 掃描游標。原版是全域（s_alloc.c:68-69），MapScan 每一格更新。
+	SMapX, SMapY int
+	CChr         uint16 // 目前這一格的完整字
+	CChr9        int    // 目前這一格的圖塊編號（CChr & LOMASK）
+
+	// 每一輪普查歸零、由 MapScan 累計的計數。s_sim.c:524 ClearCensus
+	PwrdZCnt, UnPwrdZCnt         int
+	FirePop                      int
+	RoadTotal, RailTotal         int
+	ResPop, ComPop, IndPop       int
+	ResZPop, ComZPop, IndZPop    int
+	HospPop, ChurchPop           int
+	PolicePop, FireStPop         int
+	StadiumPop                   int
+	CoalPop, NuclearPop          int
+	PortPop, APortPop            int
+
+	// 三態旗標：1 需要、0 剛好、−1 太多。s_sim.c:598 TakeCensus
+	NeedHosp, NeedChurch int
+
+	// 需求閥與上限。s_sim.c:414 SetValves
+	RValve, CValve, IValve int
+	ResCap, ComCap, IndCap bool
+	TotalPop, LastTotalPop int
+	EMarket                float64
+	CrimeRamp, PolluteRamp int
+	GameLevel              int
+	CityClass, CityScore   int
+
+	// 預算與撥款效果。s_sim.c:398 SetCommonInits、:641 CollectTax
+	RoadEffect, PoliceEffect, FireEffect int
+	TaxFlag                              bool
+	TaxFund, CashFlow                    int
+	AvCityTax                            int
+	RoadFund, PoliceFund, FireFund       int
+	RoadSpend, PoliceSpend, FireSpend    int
+
+	// 主迴圈的兩個計數器。s_sim.c:207 DoSimInit
+	Fcycle, Scycle int
+	NewPower       bool
+
+	// 劇本災難排程。s_sim.c:333 SimLoadInit
+	DisasterEvent, DisasterWait int
+	ScoreType, ScoreWait        int
+	NoDisasters                 bool
+
+	// 交通的走訪堆疊。s_traf.c:69
+	posStack   [maxTrafDis + 1][2]int
+	posStackN  int
+	lDir       int
+	zSource    int
+	TrafMaxX, TrafMaxY int
+
 	// 掃描的輸出。s_scan.c:69-72
 	CCx, CCy   int // 城市重心（全解析度座標）
 	CCx2, CCy2 int // 重心的半解析度座標
@@ -106,6 +159,23 @@ type World struct {
 	LVAverage      int // 地價平均
 	PolluteAverage int // 汙染平均
 	CrimeAverage   int // 犯罪平均
+
+	// MeltX/MeltY 是最近一次熔毀的位置。s_sim.c:1161
+	MeltX, MeltY int
+	// 水災與墜機的狀態。s_disast.c:68-70
+	FloodCnt       int
+	FloodX, FloodY int
+	CrashX, CrashY int
+
+	// InitSimLoad：2 ＝ 新城市、1 ＝ 剛載入、0 ＝ 已初始化。s_sim.c:213
+	InitSimLoad   int
+	DoInitialEval bool
+
+	// Eval 是最近一次城市評分的結果。s_eval.c
+	Eval Evaluation
+
+	// Sprites 是精靈系統。nil 代表沒有（見 mapscan.go 的 SpriteHooks）。
+	Sprites SpriteHooks
 
 	Rand *Rand
 }
@@ -121,6 +191,10 @@ func NewWorld(seed uint32) *World {
 		AutoBulldoze: true, // sim.c:188
 		AutoBudget:   true, // sim.c:189
 		AutoGo:       true, // sim.c:181
+		RoadEffect:   32,   // s_sim.c:401 SetCommonInits
+		PoliceEffect: 1000, // s_sim.c:402
+		FireEffect:   1000, // s_sim.c:403
+		EMarket:      6.0,  // s_sim.c:318 InitSimMemory
 		Rand:         NewRand(seed),
 	}
 }

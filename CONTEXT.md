@@ -7,7 +7,8 @@
 
 ## 1. 目前狀態
 
-**第一個垂直切片已經走完四道閘門**（亂數：讀原始碼 → READY 規格 → Go 實作 →
+**模擬規則層大致完整，但整刻對拍還沒對齊。**
+四道閘門走完的切片有六個（亂數：讀原始碼 → READY 規格 → Go 實作 →
 接線登記 ＋ 機器檢查）。oracle 可用，DOS 素材盤點完成。目前有的東西：
 `CLAUDE.md`（方法論）、`LICENSE`（PolyForm Noncommercial 1.0.0）、`.gitignore`、`README.md`。
 
@@ -107,13 +108,17 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 11. ~~DOS 資料檔的共用壓縮~~ **完成**：`docs/formats/02-dos-lzss.md`，
     `internal/assets/`。一套 LZSS 打開 `.PGF`／`.PPF`／`.PSN`／`.PSF`／`.PTF`；
     七個訊息檔全部解出（中文化語料），八個 DOS 劇本能直接餵進模擬層。
-12. **交通生成**（`s_traf.c`）與**分區成長**（`s_zone.c`）——兩者緊密耦合，
-    要一起做，而且驗收得靠整刻對拍（單獨驗不了）。
-13. **稅收與預算**、**城市評分**（`s_eval.c`）、**災難**（`s_disast.c`）、
-    **精靈**（`w_sprite.c`）、**工具**（`w_tool.c`）、**訊息**（`s_msg.c`）。
-14. **整刻對拍骨架**：`Simulate` 的十六相位串起來之後，才驗得動 12、13。
-15. `.PGF` 圖形版面 → 呈現層（`internal/ui`）。
-16. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出
+12. ~~交通、分區、災難、普查、需求閥、預算、評分、十六相位主迴圈~~
+    **已實作**：`docs/re/07`–`11`，`internal/sim/{traffic,zone,mapscan,disaster,census,eval,simulate}.go`。
+    ⚠ **驗收只到強證據**：整刻對拍重現原版 108 格變化中的 101 格（93.5%），
+    亂數狀態尚未對齊。工具與剩餘差距見 `docs/re/12-tick-parity.md`。
+13. **精靈系統**（`w_sprite.c`）——怪獸、龍捲風、飛機、船、火車、直昇機、爆炸。
+    它是目前對拍對不齊的最大嫌疑：`MoveObjects()` 每個 frame 都跑而且會抽樣。
+14. **訊息系統**（`s_msg.c`）——含 `CheckGrowth` 與劇本勝敗判定。
+15. **玩家工具**（`w_tool.c`）——放置、推土機、成本。
+16. 回到 `docs/re/12` 的對拍，把差異壓到 0。
+17. `.PGF` 圖形版面 → 呈現層（`internal/ui`）。
+18. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出
     `translations/glossary.md` 與以序號為鍵的訊息翻譯檔。
 
 ## 7. 現行驗證入口
