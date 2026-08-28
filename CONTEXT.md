@@ -70,15 +70,17 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 
 依序做，前一項沒完成不要跳下一項。
 
-1. **取得 Micropolis 封存**，記下 commit／SHA-256，解到 `workplace/ref/micropolis/`。
-2. **核對 `CLAUDE.md` §1.3 的原始碼地圖**：逐列驗證，核對過的改標「已確認」並補
-   檔案大小與 SHA-256，核對不到的整列刪掉。
-3. **DOS 1.10 檔案時間戳分群**：分出 1991-05 的原廠檔與 1996／2012 被動過的檔，
+1. ~~取得 Micropolis 封存~~ **完成**：commit `c98f6b0`，解到 `workplace/ref/micropolis/`。
+2. ~~核對原始碼地圖~~ **完成**：[`docs/re/00-source-map.md`](docs/re/00-source-map.md)。
+   推翻了「`s_` ＝ 規則、`w_` ＝ 介面」的假說。
+3. **建立 Micropolis headless oracle**（`rulebook/60`：先有 pass／fail 訊號再寫規則）：
+   把 `s_*.c` ＋ `w_sprite.c` ＋ `w_tool.c` ＋ `random.c` 配一支自己寫的 `main.c`
+   編成無 X11／Tcl 的 harness，能吃種子與操作序列、吐出可比對的狀態文字。
+4. **Go 專案骨架 ＋ docker 建置**（`tools/go.sh`），第一個單元是亂數重寫並對拍。
+5. **DOS 1.10 檔案時間戳分群**：分出 1991-05 原廠檔與 1996／2012 被動過的檔，
    寫進 `docs/formats/00-dos110-inventory.md`。另尋一份未破解的 1.10 副本。
-4. **建立逐 tick 對拍骨架**（`rulebook/60`：先有 pass／fail 訊號再寫規則）：
-   能把 Micropolis 的狀態序列化成可比對的文字。
-5. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
-6. 之後才進 G1：第一份機制筆記。
+6. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
+7. 之後照 `docs/re/00-source-map.md` 的規則層清單逐項進 G1。
 
 ## 7. 現行驗證入口
 

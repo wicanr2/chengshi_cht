@@ -117,26 +117,21 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 **不得把 Micropolis 的符號名改寫成自己的推測語意再引用。** 原始符號名是可稽核身分，
 語意用附加說明表達，不取代原始名稱。
 
-### 1.3 Micropolis 原始碼地圖（入口速查）
+### 1.3 Micropolis 原始碼地圖
 
-⚠ **下表整份的推論等級是「假說（憑印象寫的，尚未對照封存）」。**
-取得 Micropolis 封存後的第一輪工作就是逐列核對，核對過的改標「已確認」並補上
-檔案大小與 SHA-256；核對不到的整列刪掉。**在核對之前不得引用本表當證據。**
+**已核對。單一真相在 [`docs/re/00-source-map.md`](docs/re/00-source-map.md)**
+（封存 commit、逐檔 SHA-256、規則層函式速查）。這裡只留三條動手前必須知道的事：
 
-| 檔案（假說） | 推測內容 |
-|---|---|
-| `src/sim/sim.h`、`macros.h` | 全域地圖陣列、tile 常數、結構宣告。**動任何欄位前先讀這裡** |
-| `src/sim/s_sim.c` | 模擬主迴圈、每一步做什麼、階段切分 |
-| `src/sim/s_scan.c` | 人口密度、汙染、地價、犯罪的掃描 |
-| `src/sim/s_power.c` | 電力網傳導 |
-| `src/sim/s_traf.c` | 交通生成與壅塞 |
-| `src/sim/s_zone.c` | 分區格的成長與衰退 |
-| `src/sim/s_eval.c` | 城市評分、市長民調 |
-| `src/sim/s_disast.c` | 災難（火災、水災、空難、龍捲風、地震、怪獸）|
-| `src/sim/s_gen.c` | 地形產生 |
-| `src/sim/s_fileio.c` | 城市存檔讀寫 |
-| `src/sim/s_msg.c` | 訊息觸發條件 |
-| `src/sim/w_*.c`、`g_*.c` | X11／Tcl 介面與繪圖層。**與 DOS 版無關，只當語意參考** |
+1. **`s_` ／ `w_` 前綴不是規則／介面的分界。** 初版依前綴推測「`w_*.c` 可以整批跳過」
+   已被推翻。`w_sprite.c`（怪獸、龍捲風、飛機、船、火車、爆炸、起火、破壞）與
+   `w_tool.c`（分區放置合法性、佔地、成本、推土機）**都是規則檔**。
+   判一個檔案是規則還是呈現要看頂層函式，不能看檔名。
+2. **主迴圈的節奏在 `sim.c`（`sim_loop`／`sim_update`），不在 `s_sim.c`。**
+   `s_sim.c` 的 `Simulate(int mod16)` 是「模擬的一格」，依 `mod16` 分 16 個相位。
+3. **亂數是封存自帶的 BSD `random()`（`random.c`／`rand.c`），不呼叫系統 libc。**
+   所以 Go 版照著重寫就能得到同一串數列——這是逐 tick 對拍成立的前提。
+
+**動任何欄位之前先讀 `s_alloc.c` 的 `initMapArrays` 與 `headers/sim.h`。**
 
 ### 1.4 DUX X11 版的用法（介面語意與資料的第二來源）
 
