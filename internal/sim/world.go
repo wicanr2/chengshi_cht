@@ -144,6 +144,22 @@ type World struct {
 	ScoreType, ScoreWait        int
 	NoDisasters                 bool
 
+	// 訊息埠。s_msg.c:227
+	//
+	// 一次只放得下一則。正數（純文字）先到先得，負數（有圖）會覆蓋。
+	// MesX／MesY 是「前往」按鈕的目標，0,0 代表沒有座標。
+	// DoAnimation 決定爆炸要不要用動畫格。原版是使用者選項
+	// （w_stubs.c），預設開。關掉時瓦礫用固定的 SOMETINYEXP，
+	// **而且不擲骰**——這會改變亂數數列。
+	DoAnimation bool
+
+	MessagePort  int
+	MesX, MesY   int
+	LastPicNum   int
+	LastCityPop  int // CheckGrowth 的上一次人口（算法與 TotalPop 不同）
+	LastCategory int // 上一次發出的人口里程碑，用來去重
+	GameOver     GameOverHook
+
 	// 交通的走訪堆疊。s_traf.c:69
 	posStack           [maxTrafDis + 1][2]int
 	posStackN          int
@@ -196,6 +212,7 @@ func NewWorld(seed uint32) *World {
 		SimSpeed:     3,     // sim.c:194
 		AutoBulldoze: true,  // sim.c:188
 		AutoBudget:   true,  // sim.c:189
+		DoAnimation:  true,  // sim.c:92
 		AutoGo:       true,  // sim.c:181
 		RoadEffect:   32,    // s_sim.c:401 SetCommonInits
 		PoliceEffect: 1000,  // s_sim.c:402

@@ -110,13 +110,20 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     七個訊息檔全部解出（中文化語料），八個 DOS 劇本能直接餵進模擬層。
 12. ~~交通、分區、災難、普查、需求閥、預算、評分、十六相位主迴圈~~
     **已實作**：`docs/re/07`–`11`，`internal/sim/{traffic,zone,mapscan,disaster,census,eval,simulate}.go`。
-    ⚠ **驗收只到強證據**：整刻對拍重現原版 108 格變化中的 101 格（93.5%），
-    亂數狀態尚未對齊。工具與剩餘差距見 `docs/re/12-tick-parity.md`。
-13. **精靈系統**（`w_sprite.c`）——怪獸、龍捲風、飛機、船、火車、直昇機、爆炸。
-    它是目前對拍對不齊的最大嫌疑：`MoveObjects()` 每個 frame 都跑而且會抽樣。
-14. **訊息系統**（`s_msg.c`）——含 `CheckGrowth` 與劇本勝敗判定。
-15. **玩家工具**（`w_tool.c`）——放置、推土機、成本。
-16. 回到 `docs/re/12` 的對拍，把差異壓到 0。
+    驗收：單一分區的微實驗 692.5 刻逐次元完全一致；分段對拍 23 段中
+    9 段完全一致（含含完整城市評估的段落）。見 `docs/re/12-tick-parity.md`。
+13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
+    `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
+    ⚠ 對拍實驗沒有觸發精靈（沒有機場、港口、鐵路，災難也關著），
+    所以精靈本身還沒有逐次元證據。
+14. ~~訊息系統~~ **完成**：`docs/re/14-messages.md`，`internal/sim/message.go`。
+    含分區上限旗標、人口里程碑與八個劇本的勝敗條件。
+15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，
+    `internal/sim/tool.go`、`internal/sim/connect.go`。
+    自動接線用八座劇本城市驗證，15 447 格線路裡 99.83% 形狀一致。
+16. 逐次元對拍：微實驗完全一致；分段對拍 23 段中 9 段完全一致。
+    見 `docs/re/12-tick-parity.md`。剩下的差距多半是重建不出來的
+    內部狀態，不一定是實作錯誤——**繼續縮小要靠新的微實驗**。
 17. `.PGF` 圖形版面 → 呈現層（`internal/ui`）。
 18. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出
     `translations/glossary.md` 與以序號為鍵的訊息翻譯檔。

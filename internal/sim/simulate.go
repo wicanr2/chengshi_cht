@@ -143,11 +143,6 @@ func (w *World) DecROGMem() {
 	}
 }
 
-// SendMessages 是訊息系統的入口。s_msg.c:75
-//
-// **還沒實作。** 訊息與劇本勝敗判定在 s_msg.c，見 docs/re/11 §4。
-func (w *World) SendMessages() {}
-
 // DoSimInit 是載入或新開城市之後的初始化。s_sim.c:207
 func (w *World) DoSimInit() {
 	w.Fcycle = 0
