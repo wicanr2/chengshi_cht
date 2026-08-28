@@ -1,0 +1,44 @@
+# 原版素材與參考封存一律不入版控（CLAUDE.md §8）
+# 玩家自備合法原版；公開產出只有引擎程式碼、規格文件與翻譯文本。
+*.rar
+*.7z
+*.zip
+珍029-模擬城市.rar
+SimCity_DOS_EN_v110.zip
+Rare simcity.zip
+
+# 原版資料檔（DOS 1.10 與 X11 版）：即使有人手動解到 repo 裡也擋下來
+*.PGF
+*.pgf
+*.PPF
+*.ppf
+*.PSN
+*.psn
+*.PTF
+*.ptf
+*.PSF
+*.psf
+*.CTY
+*.cty
+*.V4
+
+# 解壓後的工作區：原版資料、Micropolis 參考原始碼、IDA 資料庫、產生的中間檔
+workplace/
+
+# 軟體世界說明書掃描（骨灰集散地補完計劃素材，不散布）
+docs/manual-cht/scans/
+
+# 建置產物
+/dist/
+/dist-all/
+/bin/
+*.exe
+/chengshi
+/simtool
+
+# Go
+*.test
+*.out
+
+# Python 的位元組碼快取
+__pycache__/

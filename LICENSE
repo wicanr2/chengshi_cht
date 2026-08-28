@@ -1,0 +1,131 @@
+模擬城市繁體中文重製（chengshi_cht）授權條款
+chengshi_cht — SimCity Traditional Chinese Remake License
+
+Copyright (c) 2026 Wang Chun-Yu (wicanr2) <wicanr2@gmail.com>
+
+繁體中文為準，英文譯本僅供參考（The Traditional Chinese text governs;
+the English translation below is provided for convenience only）。
+
+────────────────────────────────────────────────────────────
+
+第 1 條　涵蓋範圍
+
+本條款適用於本儲存庫中由著作權人創作的一切內容：程式碼、文件、規格、
+反組譯筆記、譯文校訂紀錄與工具。
+
+本條款**不適用**於原版遊戲的執行檔、資料檔、美術、音樂、點陣字型，
+以及任何直接衍生自它們的素材。那些屬於各自的權利人；本專案不散布它們，
+使用者必須自備合法的原版副本。
+
+第 2 條　免費授權（不必事先取得同意）
+
+在遵守第 3 條的前提下，任何人都可以免費：
+
+  (a) 為個人、教育、研究、保存或其他**非商業**目的使用、執行、重製與散布
+      本作品；
+  (b) 修改本作品，並在同樣的非商業前提下散布修改後的版本。
+
+第 3 條　條件
+
+  (a) 散布時要保留本授權條款全文與著作權聲明。
+  (b) 散布修改過的版本時，要明確標示這是修改版、改動了什麼，並指出原始出處
+      https://github.com/wicanr2/chengshi_cht 。不得讓人誤以為修改版出自
+      著作權人，也不得以會造成混淆的方式使用著作權人的姓名。
+  (c) 不得為取得或使用本作品本身收取費用（實體媒介與運送的實際成本除外）。
+  (d) 不得散布原版遊戲的資產（見第 1 條）。
+
+第 4 條　商業使用要另外洽談
+
+商業性使用不在第 2 條的免費授權範圍內，需要事先取得著作權人的書面授權。
+商業性使用包含但不限於：販售本作品或其修改版、以付費或訂閱形式提供、
+隨商品或服務一併散布、加入廣告或內購、以及在營利事業的營運中使用。
+
+洽談請寄 wicanr2@gmail.com。**歡迎來談**——這一條的用意是保留商業條件的
+決定權，不是拒絕合作。
+
+第 5 條　無擔保與責任限制
+
+本作品以「現狀」提供，不附任何明示或默示的擔保，包括但不限於適售性、
+特定目的適用性與未侵權的擔保。在法律允許的最大範圍內，著作權人不就
+因本作品或其使用而產生的任何請求、損害或其他責任負責。
+
+第 6 條　終止與回復
+
+違反本條款時，本條款給予的授權自動終止。若在知悉違反後三十日內改正，
+並通知著作權人，授權自改正之日起回復。
+
+────────────────────────────────────────────────────────────
+English translation (for convenience; the Chinese text governs)
+
+1. SCOPE. This license covers everything in this repository authored by the
+   copyright holder: source code, documentation, specifications, disassembly
+   notes, translation-correction records and tools. It does NOT cover the
+   original game's executables, data files, artwork, music, bitmap fonts, or
+   anything directly derived from them. Those belong to their respective
+   rights holders; this project does not distribute them, and users must
+   supply their own lawful copy of the original game.
+
+2. FREE GRANT. Subject to Section 3, anyone may, free of charge:
+   (a) use, run, reproduce and distribute this work for personal,
+       educational, research, preservation or other NON-COMMERCIAL purposes;
+   (b) modify this work and distribute the modified version under the same
+       non-commercial condition.
+
+3. CONDITIONS.
+   (a) Retain this license and the copyright notice in all distributions.
+   (b) When distributing a modified version, state clearly that it is
+       modified, what was changed, and point to the original source at
+       https://github.com/wicanr2/chengshi_cht . Do not imply that the
+       modified version comes from the copyright holder, and do not use the
+       copyright holder's name in a confusing way.
+   (c) Do not charge a fee for obtaining or using the work itself (actual
+       cost of physical media and shipping excepted).
+   (d) Do not distribute the original game's assets (see Section 1).
+
+4. COMMERCIAL USE REQUIRES A SEPARATE AGREEMENT. Commercial use falls
+   outside the free grant in Section 2 and requires prior written permission
+   from the copyright holder. Commercial use includes, without limitation:
+   selling this work or a modified version, offering it for a fee or by
+   subscription, bundling it with a product or service, adding advertising
+   or in-app purchases, and using it in the operations of a for-profit
+   entity. Enquiries are welcome at wicanr2@gmail.com — this section exists
+   to keep commercial terms negotiable, not to refuse cooperation.
+
+5. NO WARRANTY. THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE
+   LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE WORK OR
+   ITS USE.
+
+6. TERMINATION AND REINSTATEMENT. Rights under this license terminate
+   automatically upon breach. If the breach is cured within thirty days of
+   becoming aware of it, and the copyright holder is notified, the license is
+   reinstated as of the date of cure.
+
+────────────────────────────────────────────────────────────
+附註（不構成授權條款的一部分）
+Notes (not part of the license terms)
+
+商標：SimCity、SimCity 2000 與 Maxis 是 Electronic Arts Inc. 的商標或註冊
+商標。Micropolis 是該 GPL 版本自己的名稱。本專案與 Electronic Arts、
+Maxis、Will Wright、DUX Software、軟體世界或骨灰集散地皆無隸屬關係，
+也未獲其背書。上述名稱僅用於指稱原版作品，屬指示性使用。
+
+規格參考揭露：本專案的模擬規則規格參考了 Micropolis（Electronic Arts 於
+2008 年以 GPL-3.0 釋出的 SimCity Unix 版原始碼）。程式碼由本專案以 Go
+重新撰寫，未複製 Micropolis 的原始碼。著作權人據此主張本作品不是
+Micropolis 的衍生著作，因而不受 GPL-3.0 拘束；此為著作權人的立場，
+非法院見解。詳見 CLAUDE.md §1 與 docs/spec/ 各份規格的證據引用。
+
+Trademarks: SimCity and Maxis are trademarks of Electronic Arts Inc.
+This project is not affiliated with or endorsed by Electronic Arts, Maxis,
+Will Wright, DUX Software, Soft-World, or oldgame.tw. Names are used
+nominatively to identify the original work.
+
+Specification reference disclosure: the simulation rules in this project
+were specified with reference to Micropolis (the SimCity Unix source
+released by Electronic Arts under GPL-3.0 in 2008). All code here is newly
+written in Go; no Micropolis source was copied. The copyright holder's
+position is that this work is therefore not a derivative work of Micropolis
+and not bound by GPL-3.0. That is the holder's position, not a court ruling.
