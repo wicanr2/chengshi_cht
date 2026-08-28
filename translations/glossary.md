@@ -53,18 +53,146 @@
 | Easy | 易如反掌 | 說明書 p.14 | |
 | Time Limit | 時間限制 | 說明書 p.14 | |
 
-## 四、待補
+## 四、工具（編輯圖形）
 
-說明書其餘頁面尚未逐頁轉錄（`docs/manual-cht/`），下列都還沒有一手依據：
+一手出處：說明書 p.47–53（[`docs/manual-cht/p23-58-operations.md`](../docs/manual-cht/p23-58-operations.md)）。
 
-- 三種分區（residential／commercial／industrial）
-- 交通（road／rail／bridge／tunnel）
-- 公共設施（power plant／police／fire／stadium／seaport／airport／park）
-- 六種災難（fire／flood／tornado／earthquake／air crash／monster）
-- 六個圖形集（Ancient Asia／Medieval／Wild West／Future USA／Future Europe／Moon Colony）
-  —— 電腦玩家那篇提到資料片系列叫「古城風情系列」與「回到未來系列」，
-  但**那是資料片的商品名，不是圖形集各自的名字**，不能直接當譯名用
-- 166 條遊戲訊息（`translations/messages/`，以序號為鍵）
+| 原文 | 繁中 | 來源 | 備註 |
+|---|---|---|---|
+| Bulldozer | 推土機 | 說明書 p.3 | p.48 寫「堆土機」，是排版誤字 |
+| Road | 道路 | 說明書 p.48 | |
+| Power Lines | 電力線 | 說明書 p.49 | |
+| Transit Lines | 鐵軌 | 說明書 p.49 | p.3 的概觀寫「鐵路」，指同一件事 |
+| Parks | 公園 | 說明書 p.50 | |
+| Residential Zones | 住宅區 | 說明書 p.50 | |
+| Commercial Zone | 商業區 | 說明書 p.51 | |
+| Industrial Zones | 工業用地 | 說明書 p.51 | 需求表的欄位用「工業區」 |
+| Police Departments | 警察局 | 說明書 p.51 | 預算表欄位窄，用「警局」 |
+| Fire Departments | 消防隊 | 說明書 p.51 | |
+| Stadiums | 體育館 | 說明書 p.52 | p.3 的概觀寫「運動場」 |
+| Power Plants | 發電廠 | 說明書 p.52 | |
+| Coal | 火力 | 說明書 p.52 | 「火力發電廠」 |
+| Nuclear | 核能 | 說明書 p.52 | 「核電廠」 |
+| Sea Ports | 海港 | 說明書 p.53 | |
+| Airports | 機場 | 說明書 p.53 | |
+| Query | 查詢 | 新譯 | 說明書未收 |
 
-**在說明書轉錄完成之前，不要為上面這些詞定譯名。** 先定了之後再發現說明書有，
-就得回頭改，而且會留下兩套說法。
+## 五、災難
+
+一手出處：說明書 p.34–35。
+
+| 原文 | 繁中 | 來源 |
+|---|---|---|
+| DISASTERS | 災難選單 | 說明書 p.34 |
+| Fire | 火災 | 說明書 p.34 |
+| Flood | 水災 | 說明書 p.34 |
+| Air Disaster | 空難 | 說明書 p.34 |
+| Tornado | 龍捲風 | 說明書 p.35 |
+| Earthquake | 地震 | 說明書 p.35 |
+| Monster | 怪獸 | 說明書 p.35 |
+| Disable | 取消 | 說明書 p.35 |
+| Meltdown | 爐心熔毀 | 新譯 | 
+
+## 六、選單與視窗
+
+一手出處：說明書 p.29–58。
+
+| 原文 | 繁中 | 來源 |
+|---|---|---|
+| SYSTEM | 系統選單 | 說明書 p.29 |
+| ABOUT SIMCITY | 關於本遊戲 | 說明書 p.29 |
+| PRINT | 印表 | 說明書 p.29 |
+| LOAD SCENARIO | 讀取「悲情城市」檔案 | 說明書 p.30 |
+| START NEW CITY | 重新建造一新城市 | 說明書 p.30 |
+| LOAD CITY | 讀取舊有檔案 | 說明書 p.30 |
+| SAVE CITY AS | 以……檔名儲存現有城市 | 說明書 p.30 |
+| SAVE CITY | 以同一城市檔名儲存 | 說明書 p.31 |
+| EXIT | 跳出遊戲 | 說明書 p.31 |
+| OPTIONS | 功能選單 | 說明書 p.32 |
+| Auto-Bulldoze | 全自動整地 | 說明書 p.32 |
+| Auto-Budget | 自動編列預算 | 說明書 p.32 |
+| Auto-Goto | 自動前往災難現場 | 說明書 p.33 |
+| Sound | 音效 | 說明書 p.33 |
+| Speed | 模擬速度 | 說明書 p.33 |
+| Animate All | 持續所有視窗內之活動 | 說明書 p.33 |
+| WINDOWS | 視窗選單 | 說明書 p.35 |
+| Maps | 地圖視窗 | 說明書 p.35 |
+| Graphs | 統計圖視窗 | 說明書 p.35 |
+| Budget | 預算視窗 | 說明書 p.35 |
+| Edit | 編輯視窗 | 說明書 p.35 |
+| Evaluation | 評估視窗 | 說明書 p.35 |
+| Close | 關閉視窗 | 說明書 p.35 |
+| Hide | 隱藏前視窗 | 說明書 p.35 |
+
+## 七、地圖圖層
+
+一手出處：說明書 p.36。
+
+| 原文 | 繁中 | 來源 |
+|---|---|---|
+| （city form）| 都市型態 | 說明書 p.36 |
+| （power grid）| 電力網路 | 說明書 p.36 |
+| （transit）| 運輸網路 | 說明書 p.36 |
+| （population density）| 人口分佈 | 說明書 p.36 |
+| （traffic density）| 交通密度 | 說明書 p.36 |
+| （pollution）| 污染分佈 | 說明書 p.36 |
+| （crime rate）| 犯罪率 | 說明書 p.36 |
+| （land value）| 地價 | 說明書 p.36 |
+| （city services）| 都市設施 | 說明書 p.36 |
+| （rate of growth）| 正成長／負成長 | 說明書 p.36 |
+
+## 八、預算與評估
+
+一手出處：說明書 p.43–58。
+
+| 原文 | 繁中 | 來源 |
+|---|---|---|
+| Tax Rate | 稅率 | 說明書 p.43 |
+| Taxes collected | 稅收 | 說明書 p.43 |
+| Amount Requested | 維護需求額 | 說明書 p.43 |
+| Amount Allocated | 實際撥給金額 | 說明書 p.43 |
+| Funding Level | 編列（支付）百分比 | 說明書 p.43 |
+| Trans | 交通 | 說明書 p.43 |
+| Cash Flow | 現金流量 | 說明書 p.43 |
+| Previous Fund | 年底現餘資金 | 說明書 p.43 |
+| Current Funds | 明年初結餘資金 | 說明書 p.43 |
+| Trans system | 運輸系統 | 說明書 p.33 |
+| PUBLIC OPINION | 公眾意見 | 說明書 p.54 |
+| STATISTICS | 統計數據 | 說明書 p.54 |
+| Population | 人口總數 | 說明書 p.54 |
+| Net Migration | 遷出入數 | 說明書 p.54 |
+| Assessed Value | 市有財產總數 | 說明書 p.54 |
+| Category | 城市類別 | 說明書 p.54 |
+| Game Level | 遊戲等級 | 說明書 p.54 |
+| Overall City Score | 整體成績 | 說明書 p.54 |
+| POLLUTION | 污染 | 說明書 p.54 |
+| CRIME | 犯罪 | 說明書 p.54 |
+| TAXES | 稅 | 說明書 p.54 |
+| HOUSING COSTS | 房價 | 說明書 p.54 |
+
+## 九、編輯視窗元件
+
+| 原文 | 繁中 | 來源 |
+|---|---|---|
+| （title bar）| 標題欄 | 說明書 p.36、p.47 |
+| （close box）| 關閉鈕 | 說明書 p.36 |
+| （message bar）| 訊息欄 | 說明書 p.47 |
+| GO | 前往災區鈕 | 說明書 p.47 |
+| （tool name field）| 圖形名稱欄 | 說明書 p.47 |
+| （demand indicator）| 需求顯示表 | 說明書 p.47 |
+| （density scale）| 分佈密度表 | 說明書 p.36 |
+| （cursor）| 游標 | 說明書 p.23 |
+| Bulldoze | 清除地上物 | 說明書 p.23 |
+
+## 十、待補
+
+說明書其餘章節（安裝步驟、密碼表、參考手冊的策略討論）尚未轉錄。
+下列還沒有一手依據：
+
+- 六個圖形集的中文名。`.PGF` 檔頭寫的是英文原名（Ancient Asia、
+  Medieval Times、Wild West、Future USA、Future Europe、Moon Colony），
+  說明書沒有收。電腦玩家那篇提到資料片系列叫「古城風情系列」與
+  「回到未來系列」，**那是資料片的商品名，不是圖形集各自的名字**，
+  不能直接當譯名用。
+- 166 條遊戲訊息（`translations/messages/`，以序號為鍵）。
+  訊息的用詞要與本表一致，但句子本身說明書沒有收。
