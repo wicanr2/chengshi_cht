@@ -7,27 +7,34 @@
 
 ## 1. 目前狀態
 
-**模擬規則層大致完整，但整刻對拍還沒對齊。**
-四道閘門走完的切片有六個（亂數：讀原始碼 → READY 規格 → Go 實作 →
-接線登記 ＋ 機器檢查）。oracle 可用，DOS 素材盤點完成。目前有的東西：
-`CLAUDE.md`（方法論）、`LICENSE`（PolyForm Noncommercial 1.0.0）、`.gitignore`、`README.md`。
+**可以玩。** 規則層、呈現層、中文化都接起來了：新城市或八個劇本開得起來，
+六種風格切得動，工具蓋得下去，四個視窗打得開，存讀檔用的是原版 `.cty`
+格式（拿去餵 Micropolis 也讀得起來）。
+
+還沒收斂的是**逐刻對拍**：微實驗（單一分區 692.5 刻）逐次元完全一致，
+分段對拍 23 段裡 9 段完全一致；剩下的差距多半出在重建不出來的內部狀態
+（`Scycle`、需求閥、交通密度、`RateOGMem`、上一次的 `ProblemTaken`），
+不一定是實作錯誤。詳見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 
 ### 已盤點的素材
 
 | 素材 | 狀態 |
 |---|---|
-| DOS 版 1.10（69 檔）| 已列檔案清單。**是破解版**，見 `CLAUDE.md` §2.1 三項後果 |
+| Micropolis 原始碼（EA 2008 GPL-3.0）| 已封存在 `workplace/ref/micropolis/`，是規則層的第一手依據 |
+| DOS 版 1.10（69 檔）| 已盤點。`.PGF`／`.PTF`／`.PSN`／`.PSF` 全部解得開，是呈現層與中文化語料的來源 |
 | DUX X11 版（SGI／SunOS／Solaris）| 已列內容：30 個 Tcl、154 個 XPM、46 個 au、23 個 `.cty`，無 C 原始碼 |
-| 軟體世界珍藏版 29 說明書 | 56 張跨頁掃描已解到 `workplace/`，尚未轉錄 |
-| Micropolis 原始碼 | **尚未取得** |
+| 軟體世界珍藏版 29 說明書 | 56 張跨頁掃描已解開，操作手冊部分已轉錄成 `docs/manual-cht/` |
 
 ### 驗證入口
 
 ```bash
-tools/go.sh test ./...            # 全部測試（docker，含接線檢查）
-tools/oracle/build.sh             # 建 Micropolis oracle
+tools/go.sh test ./...              # 全部測試（docker，含接線檢查與字型覆蓋率）
+tools/playtest.sh [種子]            # 正常玩家路徑實機驗證（真視窗、真鍵盤、真滑鼠）
+tools/screenshot.sh [秒] [檔名]     # 單張截圖，GAME_ARGS 帶遊戲參數
+tools/font.sh                       # 重烘點陣字圖集（改過譯文或註解後）
+tools/i18n.sh                       # 重新合併七份訊息檔的譯文
+tools/oracle/build.sh               # 建 Micropolis oracle
 tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
-tools/oracle/run.sh 10 shot.png   # Xvfb 下跑起來並截圖
 ```
 
 ### 已確認的事實（可引用）
@@ -42,6 +49,9 @@ tools/oracle/run.sh 10 shot.png   # Xvfb 下跑起來並截圖
   Lores EGA Color／Hires EGA Color／單色 VGA-MCGA／256 色 VGA-MCGA），
   圖形檔名規則是 `<圖形集><模式>`（`SIMCITY.CFG` 的 `Graphics Set: WESTCEGA`）。
   **中文化的畫布尺寸不能只假設一種版面。**
+- 劇本的城市名來自 `.PSN` 檔頭，不隨風格改；劇本簡介則隨風格改寫。
+  所以中世紀風格玩劇本 3 會同時看到「漢堡　1944」與「史邦美樂，1535」，
+  原版就是這個組合。
 
 ## 2. 證據優先序
 
@@ -147,7 +157,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     合計 695 條。譯文來源在 `tools/i18n/`，`tools/i18n.sh` 合併。
 20. ~~呈現層~~ **完成**：`internal/ui`（Ebiten）、`internal/game`（組裝層）。
     圖塊渲染、工具列、四個視窗、存讀檔、八個劇本、六種風格。
-21. 正常玩家路徑試玩驗收、發行包、README 更新。
+21. ~~正常玩家路徑試玩驗收~~ **完成**：`tools/playtest.sh`。在 Xvfb 裡真的
+    開視窗、真的敲鍵、真的點滑鼠，走完「開新城市 → 蓋發電廠／電線／道路／
+    分區 → 四個視窗 → 查詢 → 捲動 → 存檔 → 離開 → 重開讀檔 → 劇本」，
+    每一步截圖，最後用存檔內容做機械判定。
+22. 發行包、README 更新。
 
 ## 7. 現行驗證入口
 

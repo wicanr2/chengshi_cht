@@ -42,11 +42,11 @@ const (
 
 // 人口里程碑訊息（CheckGrowth）。
 const (
-	MsgPopTown     = 35 // 2 000
-	MsgPopCity     = 36 // 10 000
-	MsgPopCapital  = 37 // 50 000
-	MsgPopMetro    = 38 // 100 000
-	MsgPopMegalop  = 39 // 500 000
+	MsgPopTown    = 35 // 2 000
+	MsgPopCity    = 36 // 10 000
+	MsgPopCapital = 37 // 50 000
+	MsgPopMetro   = 38 // 100 000
+	MsgPopMegalop = 39 // 500 000
 )
 
 // GameOverHook 讓呈現層接勝敗。規則層只負責判定，不負責畫面。

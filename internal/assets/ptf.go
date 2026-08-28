@@ -25,8 +25,8 @@ import (
 
 // Section 是訊息檔裡的一個段落。
 type Section struct {
-	Index  int      // 段落序號
-	Count  int      // 檔案宣告的筆數
+	Index   int      // 段落序號
+	Count   int      // 檔案宣告的筆數
 	Strings []string // 段落內的字串，順序即索引
 }
 

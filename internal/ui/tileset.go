@@ -19,8 +19,8 @@ import (
 // **本專案不散布原版素材**，所以這裡只負責讀取，不內嵌任何圖形。
 // 找不到資料時要給玩家看得懂的中文訊息，不是 panic。
 type TileSet struct {
-	Style string        // 風格顯示名，例如「Ancient Asia」
-	Size  int           // 一格的邊長（CEGA 16、MCGA 8）
+	Style string // 風格顯示名，例如「Ancient Asia」
+	Size  int    // 一格的邊長（CEGA 16、MCGA 8）
 	Tiles []*ebiten.Image
 	// Sprites 是精靈圖形庫，索引與 .PGF 的圖形庫編號一致。
 	Sprites [][]*ebiten.Image

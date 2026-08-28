@@ -26,6 +26,10 @@ func main() {
 		cmdPrefix(os.Args[2:])
 	case "save":
 		cmdSave(os.Args[2:])
+	case "inspect":
+		cmdInspect(os.Args[2:])
+	case "flat":
+		cmdFlat(os.Args[2:])
 	case "scenario":
 		cmdScenario(os.Args[2:])
 	default:
@@ -39,6 +43,12 @@ func usage() {
   simtool messages -dos <DOS 1.10 目錄> [-out <輸出目錄>]
         解開七個 .PTF 訊息檔，印出每一筆的序號、標記與長度。
         加 -out 就產生以序號為鍵的翻譯骨架。
+
+  simtool inspect <城市檔.cty>
+        印出存檔摘要（年份、資金、人口、各類地磚數），給試玩腳本判定。
+
+  simtool flat -seed <種子>
+        在該種子的開場視野裡找一塊空地，印出左上角的格子座標。
 
   simtool scenario -file <劇本.PSN>
         解開一個 DOS 劇本，印出城市名與城市資料大小。`)

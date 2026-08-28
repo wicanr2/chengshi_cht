@@ -17,5 +17,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       pkg-config \
       fonts-noto-cjk \
       python3 python3-pil \
-      xvfb x11-utils imagemagick libgl1 libglx-mesa0 mesa-utils \
+      xvfb x11-utils x11-apps xdotool imagemagick libgl1 libglx-mesa0 mesa-utils \
  && rm -rf /var/lib/apt/lists/*

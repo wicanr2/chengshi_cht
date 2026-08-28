@@ -50,4 +50,3 @@ func TestMicroZoneExactParity(t *testing.T) {
 	}
 	t.Fatal("16 個相位都對不上亂數狀態")
 }
-

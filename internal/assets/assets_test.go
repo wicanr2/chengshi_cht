@@ -222,16 +222,16 @@ func TestDecompressRejectsRunaway(t *testing.T) {
 func TestAllGraphicsFilesDecode(t *testing.T) {
 	dir := dosDir(t)
 	cases := []struct {
-		sub    string
-		mode   byte
-		bpp    int
-		tile   int
-		banks  int
+		sub   string
+		mode  byte
+		bpp   int
+		tile  int
+		banks int
 	}{
-		{"mcga", '2', 8, 8, 17},   // MCGA 320×200 256 色
-		{"CEGA", 'E', 4, 16, 24},  // EGA 640×350 十六色
-		{"MONO", 'V', 1, 16, 24},  // 單色 640×350
-		{"sega", 'e', 4, 8, 24},   // EGA 320×200 十六色
+		{"mcga", '2', 8, 8, 17},  // MCGA 320×200 256 色
+		{"CEGA", 'E', 4, 16, 24}, // EGA 640×350 十六色
+		{"MONO", 'V', 1, 16, 24}, // 單色 640×350
+		{"sega", 'e', 4, 8, 24},  // EGA 320×200 十六色
 	}
 	styles := map[string]bool{}
 	total := 0

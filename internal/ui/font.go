@@ -33,7 +33,6 @@ type glyphInfo struct {
 	width int
 }
 
-
 // LoadFont 讀進內嵌的字型圖集並轉成 Ebiten 影像。
 func LoadFont() (*Font, error) {
 	a, err := textfont.Load()

@@ -136,10 +136,10 @@ func TestConnectBitOrder(t *testing.T) {
 // neutralizeRoad：有車流的路段在判斷連通時要被還原成空路。
 func TestNeutralizeRoad(t *testing.T) {
 	cases := []struct{ in, want int }{
-		{66, 66},   // 空路，不變
+		{66, 66},       // 空路，不變
 		{66 + 64, 66},  // 輕度車流
 		{66 + 128, 66}, // 重度車流
-		{240, 240}, // 不在 64..207 的範圍，不變
+		{240, 240},     // 不在 64..207 的範圍，不變
 		{0, 0},
 	}
 	for _, c := range cases {

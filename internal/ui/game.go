@@ -24,11 +24,11 @@ const (
 	CanvasW = 1280
 	CanvasH = 960
 
-	tileScale = 2  // 16×16 → 32×32
+	tileScale = 2   // 16×16 → 32×32
 	panelW    = 256 // 右側工具列
 	statusH   = 192 // 下方狀態列
 
-	viewW = CanvasW - panelW // 1024
+	viewW = CanvasW - panelW  // 1024
 	viewH = CanvasH - statusH // 768
 )
 
@@ -113,7 +113,6 @@ type Game struct {
 
 // SetSavePath 設定存檔位置。
 func (g *Game) SetSavePath(p string) { g.savePath = p }
-
 
 // NewGame 建一個新遊戲。
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
@@ -545,7 +544,6 @@ func (g *Game) drawDemand(dst *ebiten.Image, x, y int) {
 	}
 }
 
-
 // toolNameCost 從譯文取工具的名稱與造價。
 //
 // 原版把它們寫成一句「推土機：$1」，所以在冒號處拆開。譯文用的是全形
@@ -606,7 +604,6 @@ func (g *Game) query(x, y int) string {
 		g.txt.S(i18n.SecQuery, 1), g.world.LandValueMem[x>>1][y>>1],
 		g.txt.S(i18n.SecQuery, 2), g.world.CrimeMem[x>>1][y>>1])
 }
-
 
 // save 把城市存成原版格式的 .cty。
 func (g *Game) save() {

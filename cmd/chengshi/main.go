@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -34,7 +35,7 @@ func main() {
 	seed := flag.Int("seed", 0, "地形亂數種子（0 = 隨機）")
 	scen := flag.Int("scenario", 0, "載入第幾個悲情城市（1–8，0 = 新城市）")
 	load := flag.String("load", "", "讀取一個城市檔（.cty，原版格式）")
-	save := flag.String("save", "city.cty", "Ctrl-S 的存檔位置")
+	save := flag.String("save", defaultSavePath(), "Ctrl-S 的存檔位置")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
 	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval")
@@ -42,12 +43,17 @@ func main() {
 	flag.Parse()
 
 	if *data == "" {
+		*data = os.Getenv("CHENGSHI_DATA")
+	}
+	if *data == "" {
 		fmt.Fprintln(os.Stderr, `請用 -data 指向解開的 SimCity 1.10 目錄。
 
 本專案不散布原版素材（圖形、音效、劇本檔），玩家必須自備一份合法的原版。
 目錄裡應該看得到 CEGA/、mcga/、MONO/、sega/、DATA/、SCENARIO/。
 
-例：chengshi -data "/path/to/SIMCITY 1.10" -style asia`)
+例：chengshi -data "/path/to/SIMCITY 1.10" -style asia
+
+也可以把路徑放進環境變數 CHENGSHI_DATA，就不必每次都打。`)
 		os.Exit(2)
 	}
 	if _, ok := styles[*style]; !ok {
@@ -132,4 +138,22 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// defaultSavePath 回傳 Ctrl-S 的預設存檔位置。
+//
+// 刻意不用工作目錄：發行包可能被解在唯讀的位置，玩家也可能從別的目錄
+// 啟動。存檔寫不進去這件事，玩家通常是蓋了一小時城市之後按下 Ctrl-S
+// 才會發現。改存到 XDG 的資料目錄，那裡一定寫得進去。
+func defaultSavePath() string {
+	dir := os.Getenv("XDG_DATA_HOME")
+	if dir == "" {
+		if home, err := os.UserHomeDir(); err == nil {
+			dir = filepath.Join(home, ".local", "share")
+		}
+	}
+	if dir == "" {
+		return "city.cty" // 連家目錄都問不出來時的退路
+	}
+	return filepath.Join(dir, "chengshi", "city.cty")
 }

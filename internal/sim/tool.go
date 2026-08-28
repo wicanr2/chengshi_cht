@@ -194,10 +194,10 @@ func (w *World) PlaceZone(mapH, mapV, base int, anim bool, tool Tool, n int) int
 // 那是原版行為，不是漏寫。
 func (w *World) fixZoneBorder(x, y, n int) {
 	for i := 0; i < n; i++ {
-		w.ConnecTile(x+i, y-1, ConnFixZone)   // 上
-		w.ConnecTile(x-1, y+i, ConnFixZone)   // 左
-		w.ConnecTile(x+i, y+n, ConnFixZone)   // 下
-		w.ConnecTile(x+n, y+i, ConnFixZone)   // 右
+		w.ConnecTile(x+i, y-1, ConnFixZone) // 上
+		w.ConnecTile(x-1, y+i, ConnFixZone) // 左
+		w.ConnecTile(x+i, y+n, ConnFixZone) // 下
+		w.ConnecTile(x+n, y+i, ConnFixZone) // 右
 	}
 }
 

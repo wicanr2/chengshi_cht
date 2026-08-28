@@ -143,7 +143,7 @@ func ParsePGF(raw []byte) (*PGF, error) {
 		w := int(binary.LittleEndian.Uint16(data[p:]))
 		h := int(binary.LittleEndian.Uint16(data[p+2:]))
 		cnt := int(binary.LittleEndian.Uint16(data[p+4:]))
-		fl := binary.LittleEndian.Uint16(data[p + 6:])
+		fl := binary.LittleEndian.Uint16(data[p+6:])
 		size := int(binary.LittleEndian.Uint32(data[p+8:]))
 		p += 12
 		if w <= 0 || h <= 0 || cnt < 0 || p+size > len(data) {
@@ -226,4 +226,3 @@ func pgfPixels(data []byte, q, w, h, bpp int, fl uint16) ([]uint8, int, error) {
 	}
 	return nil, 0, fmt.Errorf("位元深度 %d 不支援", bpp)
 }
-

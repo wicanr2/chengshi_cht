@@ -5,10 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/wicanr2/chengshi_cht/internal/sim"
 	"github.com/wicanr2/chengshi_cht/internal/game"
+	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
-
 
 // 正常玩家路徑：蓋電廠、拉電線、鋪路、劃分區，然後讓城市自己長。
 //

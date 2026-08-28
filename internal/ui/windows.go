@@ -296,14 +296,22 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	w0 := g.world
 	g.font.Draw(dst, "公眾意見", x, y, colOn)
-	yes := w0.Eval.CityYes
+	// 兩個數字都直接讀，不要拿 100 減。空城的評估是 EvalInit 清成
+	// 0／0（沒有人投票），用減法會變成「否 100%」——一座剛開的城市
+	// 被說成全體反對，而原版是兩邊都 0（w_eval.c:101 的 goodyes／goodno）。
 	g.font.Draw(dst, fmt.Sprintf("市長做得好嗎？　是 %d%%　否 %d%%",
-		yes, 100-yes), x, y+40, colText)
+		w0.Eval.CityYes, w0.Eval.CityNo), x, y+40, colText)
 
 	g.font.Draw(dst, "嚴重問題", x, y+96, colOn)
 	for i := 0; i < 4; i++ {
 		p := w0.Eval.ProblemOrder[i]
 		if p < 0 || p >= len(w0.Eval.ProblemVotes) {
+			continue
+		}
+		// 沒有票的名次整列留白。ProblemOrder 在沒問題可排時填的是 7
+		// （= ProbNone），而 7 是合法的索引，光看索引分辨不出來——
+		// 原版也是拿票數當判準（w_eval.c:115 的三元運算）。
+		if w0.Eval.ProblemVotes[p] == 0 {
 			continue
 		}
 		g.font.Draw(dst, fmt.Sprintf("%d. %s　%d%%",
