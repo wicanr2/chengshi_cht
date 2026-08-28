@@ -98,6 +98,15 @@ type World struct {
 	FirePercent   float64
 	RoadPercent   float64
 
+	// 掃描的輸出。s_scan.c:69-72
+	CCx, CCy   int // 城市重心（全解析度座標）
+	CCx2, CCy2 int // 重心的半解析度座標
+	PolMaxX, PolMaxY     int
+	CrimeMaxX, CrimeMaxY int
+	LVAverage      int // 地價平均
+	PolluteAverage int // 汙染平均
+	CrimeAverage   int // 犯罪平均
+
 	Rand *Rand
 }
 

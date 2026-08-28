@@ -101,7 +101,8 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 9. ~~電力傳導~~ **完成**：`docs/re/05-power-scan.md` ＋ `docs/spec/power.md`，
    `internal/sim/power.go`。受控實驗 12000 格逐格對拍，劇本 1 的 266 格
    `PWRBIT` 差異全部收掉。
-10. **每格掃描**（`s_scan.c`：人口密度、汙染、地價、犯罪）。
+10. ~~四個逐格掃描~~ **完成**：`docs/re/06-scans.md` ＋ `docs/spec/scans.md`，
+    `internal/sim/scan.go`。收斂後的地價／汙染／犯罪平均值與原版相同。
 11. **交通生成**（`s_traf.c`）、**分區成長**（`s_zone.c`）、**稅收與預算**、
     **城市評分**（`s_eval.c`）、**災難**（`s_disast.c`）、**精靈**（`w_sprite.c`）、
     **工具**（`w_tool.c`）、**訊息**（`s_msg.c`）。
