@@ -3,11 +3,13 @@ package ui
 import (
 	"fmt"
 	"image/color"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
+	"github.com/wicanr2/chengshi_cht/internal/i18n"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
 
@@ -43,40 +45,41 @@ var (
 	colDemI   = color.RGBA{0xe0, 0xc0, 0x50, 0xff}
 )
 
-// toolButton 是工具列上的一個按鈕。譯名全部來自軟體世界說明書，
-// 出處見 translations/glossary.md。
+// toolButton 是工具列上的一個按鈕。
+//
+// 名稱與造價**不寫在這裡**：它們來自原版訊息檔第 1 段（「推土機：$1」
+// 這種形式），經由 internal/i18n 取得。這樣切換城市風格時，工具名會跟著
+// 換成該風格的說法——古代亞洲的發電廠叫「水井」，那是原版的設計。
+//
+// msgIdx 是那一筆在第 1 段裡的索引；cost 只用來判斷買不買得起（灰掉），
+// 顯示的字一律用譯文。
 type toolButton struct {
-	tool sim.Tool
-	name string
-	cost int
-	key  ebiten.Key
+	tool   sim.Tool
+	msgIdx int
+	cost   int
+	key    ebiten.Key
 }
 
+// ⚠ 造價以**原版資料檔**為準（訊息第 1 段自己寫著），不是 Micropolis 的
+// CostOf[]：體育館 $3000、海港 $5000，兩者在 Micropolis 裡剛好對調。
+// 見 docs/manual-cht/p23-58-operations.md 的「與 Micropolis 不一致的數字」。
 var toolButtons = []toolButton{
-	{sim.ToolBulldozer, "推土機", 1, ebiten.KeyD},
-	{sim.ToolRoad, "道路", 10, ebiten.KeyR},
-	{sim.ToolRail, "鐵軌", 20, ebiten.KeyT},
-	{sim.ToolWire, "電力線", 5, ebiten.KeyW},
-	{sim.ToolPark, "公園", 10, ebiten.KeyP},
-	{sim.ToolResidential, "住宅區", 100, ebiten.Key1},
-	{sim.ToolCommercial, "商業區", 100, ebiten.Key2},
-	{sim.ToolIndustrial, "工業用地", 100, ebiten.Key3},
-	{sim.ToolPolice, "警察局", 500, ebiten.Key4},
-	{sim.ToolFireStation, "消防隊", 500, ebiten.Key5},
-	{sim.ToolStadium, "體育館", 5000, ebiten.Key6},
-	{sim.ToolCoalPower, "火力發電廠", 3000, ebiten.Key7},
-	{sim.ToolNuclear, "核能發電廠", 5000, ebiten.Key8},
-	{sim.ToolSeaport, "海港", 3000, ebiten.Key9},
-	{sim.ToolAirport, "機場", 10000, ebiten.Key0},
-	{sim.ToolQuery, "查詢", 0, ebiten.KeyQ},
-}
-
-// 速度的譯名同樣來自說明書 p.33。
-var speedNames = [4]string{"暫停", "慢速", "普通", "最快"}
-
-var monthNames = [12]string{
-	"一月", "二月", "三月", "四月", "五月", "六月",
-	"七月", "八月", "九月", "十月", "十一月", "十二月",
+	{sim.ToolBulldozer, 0, 1, ebiten.KeyD},
+	{sim.ToolRoad, 1, 10, ebiten.KeyR},
+	{sim.ToolWire, 2, 5, ebiten.KeyW},
+	{sim.ToolRail, 3, 20, ebiten.KeyT},
+	{sim.ToolPark, 4, 10, ebiten.KeyP},
+	{sim.ToolResidential, 5, 100, ebiten.Key1},
+	{sim.ToolCommercial, 6, 100, ebiten.Key2},
+	{sim.ToolIndustrial, 7, 100, ebiten.Key3},
+	{sim.ToolPolice, 8, 500, ebiten.Key4},
+	{sim.ToolFireStation, 9, 500, ebiten.Key5},
+	{sim.ToolStadium, 10, 3000, ebiten.Key6},
+	{sim.ToolNuclear, 11, 5000, ebiten.Key8},
+	{sim.ToolSeaport, 12, 5000, ebiten.Key9},
+	{sim.ToolAirport, 13, 10000, ebiten.Key0},
+	{sim.ToolCoalPower, 14, 3000, ebiten.Key7},
+	{sim.ToolQuery, -1, 0, ebiten.KeyQ},
 }
 
 // Game 是 Ebiten 的遊戲物件。
@@ -84,6 +87,7 @@ type Game struct {
 	world *sim.World
 	tiles *TileSet
 	font  *Font
+	txt   *i18n.Catalog
 
 	tool     sim.Tool
 	camX     int // 視野左上角的格子座標
@@ -95,8 +99,8 @@ type Game struct {
 }
 
 // NewGame 建一個新遊戲。
-func NewGame(w *sim.World, ts *TileSet, f *Font) *Game {
-	g := &Game{world: w, tiles: ts, font: f, tool: sim.ToolResidential}
+func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
+	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential}
 	g.centerCamera()
 	return g
 }
@@ -161,7 +165,7 @@ func (g *Game) pumpSimMessage() {
 	if n < 0 {
 		n = -n
 	}
-	g.setMessage(messageText(n))
+	g.setMessage(g.txt.S(i18n.SecStatus, (n-1)*2))
 }
 
 func (g *Game) setMessage(s string) {
@@ -176,7 +180,7 @@ func (g *Game) handleKeys() {
 	for _, b := range toolButtons {
 		if inpututil.IsKeyJustPressed(b.key) {
 			g.tool = b.tool
-			g.setMessage(fmt.Sprintf("選擇工具：%s", b.name))
+			g.setMessage(g.toolLabel(b))
 		}
 	}
 	step := 1
@@ -202,7 +206,7 @@ func (g *Game) handleKeys() {
 	} {
 		if inpututil.IsKeyJustPressed(k) {
 			g.world.SimSpeed = i
-			g.setMessage("模擬速度：" + speedNames[i])
+			g.setMessage("模擬速度：" + g.speedName(i))
 		}
 	}
 }
@@ -216,7 +220,7 @@ func (g *Game) handleMouse() {
 	if just && mx >= viewW && my < viewH {
 		if i := (my - 8) / 40; i >= 0 && i < len(toolButtons) {
 			g.tool = toolButtons[i].tool
-			g.setMessage("選擇工具：" + toolButtons[i].name)
+			g.setMessage(g.toolLabel(toolButtons[i]))
 		}
 		return
 	}
@@ -244,7 +248,7 @@ func (g *Game) handleMouse() {
 
 func (g *Game) applyTool(tx, ty int) {
 	if g.tool == sim.ToolQuery {
-		g.setMessage(fmt.Sprintf("(%d,%d) 圖塊 %d", tx, ty, g.world.TileNum(tx, ty)))
+		g.setMessage(g.query(tx, ty))
 		return
 	}
 	before := g.world.TotalFunds
@@ -300,10 +304,10 @@ func (g *Game) drawPanel(dst *ebiten.Image) {
 				color.RGBA{0x3a, 0x46, 0x5c, 0xff}, false)
 			c = colOn
 		}
-		g.font.Draw(dst, b.name, viewW+16, y, c)
-		if b.cost > 0 {
-			s := fmt.Sprintf("$%d", b.cost)
-			g.font.Draw(dst, s, viewW+panelW-16-g.font.Measure(s), y, colDim)
+		name, cost := g.toolNameCost(b)
+		g.font.Draw(dst, name, viewW+16, y, c)
+		if cost != "" {
+			g.font.Draw(dst, cost, viewW+panelW-16-g.font.Measure(cost), y, colDim)
 		}
 	}
 }
@@ -315,7 +319,7 @@ func (g *Game) drawStatus(dst *ebiten.Image) {
 
 	// 日期與資金
 	year := 1900 + g.world.CityTime/48
-	month := monthNames[(g.world.CityTime%48)/4]
+	month := g.txt.S(i18n.SecMonth, (g.world.CityTime%48)/4)
 	g.font.Draw(dst, fmt.Sprintf("%d 年 %s", year, month), 24, top+20, colText)
 
 	fundColor := colText
@@ -333,9 +337,9 @@ func (g *Game) drawStatus(dst *ebiten.Image) {
 	if g.msgTimer > 0 {
 		g.font.Draw(dst, g.message, 660, top+20, colOn)
 	}
-	g.font.Draw(dst, "速度："+speedNames[g.world.SimSpeed], 660, top+56, colDim)
+	g.font.Draw(dst, "速度："+g.speedName(g.world.SimSpeed), 660, top+56, colDim)
 	g.font.Draw(dst, "F1–F4 切速度　方向鍵移動　數字鍵選工具", 660, top+92, colDim)
-	g.font.Draw(dst, "圖形："+g.tiles.Style, 660, top+128, colDim)
+	g.font.Draw(dst, "風格："+StyleNameZH(g.tiles.Style), 660, top+128, colDim)
 }
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。
@@ -368,4 +372,66 @@ func (g *Game) drawDemand(dst *ebiten.Image, x, y int) {
 		vector.StrokeLine(dst, bx, float32(y+mid), bx+24, float32(y+mid), 1, colLine, false)
 		g.font.Draw(dst, b.label, int(bx), y+mid+44, colDim)
 	}
+}
+
+
+// toolNameCost 從譯文取工具的名稱與造價。
+//
+// 原版把它們寫成一句「推土機：$1」，所以在冒號處拆開。譯文用的是全形
+// 冒號，原文是半形——兩種都要認得，不然某些風格會整串擠在左邊。
+func (g *Game) toolNameCost(b toolButton) (string, string) {
+	if b.msgIdx < 0 {
+		return "查詢", ""
+	}
+	s := g.txt.S(i18n.SecToolCost, b.msgIdx)
+	if s == "" {
+		return "?", ""
+	}
+	for _, sep := range []string{"：", ": "} {
+		if i := strings.Index(s, sep); i >= 0 {
+			return s[:i], strings.TrimSpace(s[i+len(sep):])
+		}
+	}
+	return s, ""
+}
+
+func (g *Game) toolLabel(b toolButton) string {
+	n, _ := g.toolNameCost(b)
+	return "選擇工具：" + n
+}
+
+// speedName 從功能選單的速度副選單取名稱。
+//
+// ⚠ 原版那一段是「 最快  4」這種形式：前導空白給選單縮排、後面是數字。
+// 直接顯示會多出一堆空白，所以只取中間的名稱。
+//
+// ⚠ **DOS 版有五段速度（0–4），Micropolis 只有四段（0–3）。**
+// 規則層是 Micropolis，所以 SimSpeed 3 是最快，對到副選單的第 0 筆
+// 而不是第 1 筆。用 `4-n` 去算會把最快顯示成「快速」——數字看起來很合理，
+// 但玩家在最高速時看到的是次高速的名稱。
+var speedMsgIdx = [4]int{4, 3, 2, 0} // 暫停、慢速、普通、最快
+
+func (g *Game) speedName(n int) string {
+	if n < 0 || n >= len(speedMsgIdx) {
+		n = 0
+	}
+	idx := speedMsgIdx[n]
+	s := strings.TrimSpace(g.txt.S(i18n.SecSpeed, idx))
+	if i := strings.IndexAny(s, "0123456789"); i > 0 {
+		s = strings.TrimSpace(s[:i])
+	}
+	return s
+}
+
+// query 是查詢工具的輸出：地物名稱 ＋ 該格的統計值。
+func (g *Game) query(x, y int) string {
+	name := g.txt.S(i18n.SecTileName, tileNameIndex(g.world.TileNum(x, y)))
+	if name == "" {
+		name = "？？？"
+	}
+	return fmt.Sprintf("%s　%s%d　%s%d　%s%d",
+		name,
+		g.txt.S(i18n.SecQuery, 0), g.world.PopDensity[x>>1][y>>1],
+		g.txt.S(i18n.SecQuery, 1), g.world.LandValueMem[x>>1][y>>1],
+		g.txt.S(i18n.SecQuery, 2), g.world.CrimeMem[x>>1][y>>1])
 }

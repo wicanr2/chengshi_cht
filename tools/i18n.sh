@@ -7,4 +7,4 @@ exec docker run --rm \
   -u "$(id -u):$(id -g)" \
   --memory 1g --cpus 1 --pids-limit 128 --network none \
   -v "$ROOT:/src" -w /src -e HOME=/tmp \
-  simcity-go:1.25 python3 tools/i18n/merge.py translations/messages
+  simcity-go:1.25 python3 tools/i18n/merge.py internal/i18n/messages

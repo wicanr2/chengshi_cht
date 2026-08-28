@@ -11,6 +11,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
+	"github.com/wicanr2/chengshi_cht/internal/i18n"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 	"github.com/wicanr2/chengshi_cht/internal/ui"
 )
@@ -58,6 +59,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, "字型載入失敗：", err)
 		os.Exit(1)
 	}
+	// 文字跟著風格走：古代亞洲的發電廠叫「水井」、鐵路叫「人力車道」，
+	// 那是原版的設計，不是翻譯自由發揮。
+	txt, err := i18n.Load(*style)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "文字載入失敗：", err)
+		os.Exit(1)
+	}
 
 	s := uint32(*seed)
 	if s == 0 {
@@ -80,7 +88,7 @@ func main() {
 		}
 	}
 
-	g := ui.NewGame(w, ts, font)
+	g := ui.NewGame(w, ts, font, txt)
 	if *demo > 0 {
 		g.LookAt(demoX+6, demoY+6)
 	}

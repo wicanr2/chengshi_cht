@@ -27,7 +27,7 @@ TTC = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 COLS = 64          # 圖集每列幾個字
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-SCAN_DIRS = ["translations", "internal/ui", "docs/manual-cht"]
+SCAN_DIRS = ["translations", "internal/i18n", "internal/ui", "docs/manual-cht"]
 
 
 def pick_tc_face():

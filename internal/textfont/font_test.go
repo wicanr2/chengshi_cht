@@ -17,7 +17,7 @@ func TestAtlasCoversAllText(t *testing.T) {
 	}
 	root := repoRoot(t)
 	missing := map[rune]string{}
-	for _, dir := range []string{"translations", "internal/ui"} {
+	for _, dir := range []string{"translations", "internal/i18n", "internal/ui"} {
 		full := filepath.Join(root, dir)
 		filepath.Walk(full, func(p string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
