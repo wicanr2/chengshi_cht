@@ -98,7 +98,9 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 8. ~~城市檔格式~~ **完成**：`docs/formats/01-city-file.md` ＋ `docs/spec/city-file.md`，
    `internal/sim/cityfile.go`、`scenario.go`。32 個檔案逐位元組 round-trip，
    劇本 1 對 oracle 零無法解釋的差異。
-9. **電力傳導**（`s_power.c`）——它是分區成長的前提，而且是純函式，好對拍。
+9. ~~電力傳導~~ **完成**：`docs/re/05-power-scan.md` ＋ `docs/spec/power.md`，
+   `internal/sim/power.go`。受控實驗 12000 格逐格對拍，劇本 1 的 266 格
+   `PWRBIT` 差異全部收掉。
 10. **每格掃描**（`s_scan.c`：人口密度、汙染、地價、犯罪）。
 11. **交通生成**（`s_traf.c`）、**分區成長**（`s_zone.c`）、**稅收與預算**、
     **城市評分**（`s_eval.c`）、**災難**（`s_disast.c`）、**精靈**（`w_sprite.c`）、

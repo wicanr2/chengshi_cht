@@ -50,8 +50,21 @@ def main():
     script_path, out_path = sys.argv[1], sys.argv[2]
 
     with open(script_path, encoding="utf-8") as fh:
-        cmds = [ln.rstrip("\n") for ln in fh]
-    cmds = [c for c in cmds if c.strip() and not c.lstrip().startswith("#")]
+        raw_lines = [ln.rstrip("\n") for ln in fh]
+    # `#sleep N` 是給驅動器看的指令：讓 sim 的事件迴圈自己跑 N 秒。
+    # 需要它是因為模擬要靠 Tk 的計時器推進，而我們每送一條指令就等提示字元回來，
+    # 中間幾乎不留時間給它跑。
+    cmds = []
+    for ln in raw_lines:
+        st = ln.strip()
+        if not st:
+            continue
+        if st.startswith("#sleep"):
+            cmds.append(st)
+            continue
+        if st.startswith("#"):
+            continue
+        cmds.append(ln)
 
     master, slave = pty.openpty()
     proc = subprocess.Popen(
@@ -65,6 +78,19 @@ def main():
     results = []
     ok = True
     for cmd in cmds:
+        if cmd.startswith("#sleep"):
+            secs = float(cmd.split()[1])
+            # 一邊睡一邊把 sim 的輸出讀掉，否則 pty 緩衝區滿了它會卡住。
+            end = time.time() + secs
+            while time.time() < end:
+                r, _, _ = select.select([master], [], [], 0.2)
+                if r:
+                    try:
+                        os.read(master, 65536)
+                    except OSError:
+                        break
+            results.append({"cmd": cmd, "out": []})
+            continue
         os.write(master, (cmd + "\n").encode())
         raw = read_until_prompt(master, timeout=60.0)
         text = raw.decode("utf-8", "replace")

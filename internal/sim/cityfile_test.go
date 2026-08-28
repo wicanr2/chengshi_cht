@@ -19,6 +19,17 @@ func micropolisRes(t *testing.T) string {
 	return p
 }
 
+
+// readFileOrSkip 讀封存裡的檔案；不在就跳過測試。
+func readFileOrSkip(t *testing.T, dir, name string) ([]byte, error) {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join(dir, name))
+	if err != nil {
+		t.Skipf("封存裡沒有 %s", name)
+	}
+	return b, nil
+}
+
 // 八個劇本與封存附的城市檔都要解得開，而且**逐位元組 round-trip 相同**。
 //
 // 這一條守著 CLAUDE.md §4 的「改寫不是重建」：未解的位元組要原樣寫回去。
