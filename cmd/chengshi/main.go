@@ -11,6 +11,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
+	"github.com/wicanr2/chengshi_cht/internal/game"
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 	"github.com/wicanr2/chengshi_cht/internal/ui"
@@ -31,8 +32,11 @@ func main() {
 	data := flag.String("data", "", "解開的 SIMCITY 1.10 目錄（裡面要有 CEGA/、mcga/、DATA/）")
 	style := flag.String("style", "asia", "城市風格：asia／medi／west／fusa／feur／moon")
 	seed := flag.Int("seed", 0, "地形亂數種子（0 = 隨機）")
+	scen := flag.Int("scenario", 0, "載入第幾個悲情城市（1–8，0 = 新城市）")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
+	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval")
+	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
 	flag.Parse()
 
 	if *data == "" {
@@ -67,18 +71,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	s := uint32(*seed)
-	if s == 0 {
-		s = sim.RandomSeed()
+	var w *sim.World
+	if *scen > 0 {
+		w, err = game.LoadScenario(*data, *scen)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Printf("載入悲情城市：%s\n", game.ScenarioNameZH(*scen))
+	} else {
+		s := uint32(*seed)
+		if s == 0 {
+			s = sim.RandomSeed()
+		}
+		w = sim.NewWorld(s)
+		w.GenerateMap(s, sim.DefaultTerrainParams())
+		w.DoSimInit()
 	}
-	w := sim.NewWorld(s)
-	w.GenerateMap(s, sim.DefaultTerrainParams())
-	w.DoSimInit()
 
 	var demoX, demoY int
 	if *demo > 0 {
 		var ok bool
-		demoX, demoY, ok = ui.BuildStarterCity(w)
+		demoX, demoY, ok = game.BuildStarterCity(w)
 		if !ok {
 			fmt.Fprintln(os.Stderr, "這張地圖上找不到夠大的平地，換個 -seed 試試")
 			os.Exit(1)
@@ -91,6 +105,13 @@ func main() {
 	g := ui.NewGame(w, ts, font, txt)
 	if *demo > 0 {
 		g.LookAt(demoX+6, demoY+6)
+	}
+	if *win != "" {
+		if !g.OpenWindow(*win) {
+			fmt.Fprintf(os.Stderr, "不認得的視窗 %q\n", *win)
+			os.Exit(2)
+		}
+		g.SetLayer(*layer)
 	}
 
 	ebiten.SetWindowSize(int(float64(ui.CanvasW)**scale), int(float64(ui.CanvasH)**scale))

@@ -9,6 +9,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
+	"github.com/wicanr2/chengshi_cht/internal/game"
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
@@ -89,6 +90,10 @@ type Game struct {
 	font  *Font
 	txt   *i18n.Catalog
 
+	win       window
+	layer     mapLayer
+	budgetRow int
+
 	tool     sim.Tool
 	camX     int // 視野左上角的格子座標
 	camY     int
@@ -113,6 +118,30 @@ func (g *Game) centerCamera() {
 
 func (g *Game) tilesAcross() int { return viewW / (g.tiles.Size * tileScale) }
 func (g *Game) tilesDown() int   { return viewH / (g.tiles.Size * tileScale) }
+
+// OpenWindow 依名稱開一個視窗。給 -window 旗標與截圖驗收用。
+func (g *Game) OpenWindow(name string) bool {
+	switch name {
+	case "maps":
+		g.win = winMaps
+	case "graphs":
+		g.win = winGraphs
+	case "budget":
+		g.win = winBudget
+	case "eval":
+		g.win = winEval
+	default:
+		return false
+	}
+	return true
+}
+
+// SetLayer 設定地圖視窗的圖層。
+func (g *Game) SetLayer(n int) {
+	if n >= 0 && n < int(layerCount) {
+		g.layer = mapLayer(n)
+	}
+}
 
 // LookAt 把鏡頭移到某一格附近。示範模式與「前往災區」都用它。
 func (g *Game) LookAt(x, y int) {
@@ -187,6 +216,9 @@ func (g *Game) handleKeys() {
 	if ebiten.IsKeyPressed(ebiten.KeyShift) {
 		step = 5
 	}
+	if g.win != winNone {
+		step = 0 // 視窗開著時方向鍵歸視窗用
+	}
 	switch {
 	case ebiten.IsKeyPressed(ebiten.KeyLeft):
 		g.camX -= step
@@ -209,6 +241,88 @@ func (g *Game) handleKeys() {
 			g.setMessage("模擬速度：" + g.speedName(i))
 		}
 	}
+
+	// 視窗快速鍵沿用原版（說明書 p.35）。
+	ctrl := ebiten.IsKeyPressed(ebiten.KeyControl)
+	if ctrl {
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyM):
+			g.toggleWindow(winMaps)
+		case inpututil.IsKeyJustPressed(ebiten.KeyG):
+			g.toggleWindow(winGraphs)
+		case inpututil.IsKeyJustPressed(ebiten.KeyB):
+			g.toggleWindow(winBudget)
+		case inpututil.IsKeyJustPressed(ebiten.KeyU):
+			g.toggleWindow(winEval)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.win = winNone
+	}
+	g.handleWindowKeys()
+}
+
+func (g *Game) toggleWindow(w window) {
+	if g.win == w {
+		g.win = winNone
+		return
+	}
+	g.win = w
+}
+
+// handleWindowKeys 處理開著的視窗自己的按鍵。
+func (g *Game) handleWindowKeys() {
+	switch g.win {
+	case winMaps:
+		// 1–9、0、- 切換十一個圖層
+		keys := []ebiten.Key{
+			ebiten.Key1, ebiten.Key2, ebiten.Key3, ebiten.Key4, ebiten.Key5,
+			ebiten.Key6, ebiten.Key7, ebiten.Key8, ebiten.Key9, ebiten.Key0,
+			ebiten.KeyMinus,
+		}
+		for i, k := range keys {
+			if inpututil.IsKeyJustPressed(k) && i < int(layerCount) {
+				g.layer = mapLayer(i)
+			}
+		}
+	case winBudget:
+		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+			g.budgetRow = (g.budgetRow + 1) % 3
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+			g.budgetRow = (g.budgetRow + 2) % 3
+		}
+		step := 0.01
+		if ebiten.IsKeyPressed(ebiten.KeyShift) {
+			step = 0.10
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+			g.adjustFunding(step)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+			g.adjustFunding(-step)
+		}
+		// 稅率
+		if inpututil.IsKeyJustPressed(ebiten.KeyEqual) {
+			g.world.CityTax = clamp(g.world.CityTax+1, 0, 20)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyMinus) {
+			g.world.CityTax = clamp(g.world.CityTax-1, 0, 20)
+		}
+	}
+}
+
+// adjustFunding 調整一項的編列百分比。上限 100%，下限 0。
+func (g *Game) adjustFunding(d float64) {
+	p := []*float64{&g.world.RoadPercent, &g.world.PolicePercent, &g.world.FirePercent}[g.budgetRow]
+	v := *p + d
+	if v < 0 {
+		v = 0
+	}
+	if v > 1 {
+		v = 1
+	}
+	*p = v
 }
 
 func (g *Game) handleMouse() {
@@ -222,6 +336,10 @@ func (g *Game) handleMouse() {
 			g.tool = toolButtons[i].tool
 			g.setMessage(g.toolLabel(toolButtons[i]))
 		}
+		return
+	}
+	// 視窗開著時，地圖區的點擊歸視窗，不要蓋東西
+	if g.win != winNone && mx < viewW && my < viewH {
 		return
 	}
 	// 地圖
@@ -270,6 +388,7 @@ func (g *Game) applyTool(tx, ty int) {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colBG)
 	g.drawMap(screen)
+	g.drawWindow(screen)
 	g.drawPanel(screen)
 	g.drawStatus(screen)
 }
@@ -338,8 +457,12 @@ func (g *Game) drawStatus(dst *ebiten.Image) {
 		g.font.Draw(dst, g.message, 660, top+20, colOn)
 	}
 	g.font.Draw(dst, "速度："+g.speedName(g.world.SimSpeed), 660, top+56, colDim)
-	g.font.Draw(dst, "F1–F4 切速度　方向鍵移動　數字鍵選工具", 660, top+92, colDim)
-	g.font.Draw(dst, "風格："+StyleNameZH(g.tiles.Style), 660, top+128, colDim)
+	g.font.Draw(dst, "F1–F4 速度　Ctrl-M 地圖　Ctrl-G 統計圖　Ctrl-B 預算　Ctrl-U 評估", 660, top+92, colDim)
+	label := "風格：" + StyleNameZH(g.tiles.Style)
+	if g.world.Scenario != 0 {
+		label = game.ScenarioNameZH(int(g.world.Scenario)) + "　" + label
+	}
+	g.font.Draw(dst, label, 660, top+128, colDim)
 }
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。

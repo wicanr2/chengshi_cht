@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/wicanr2/chengshi_cht/internal/sim"
+	"github.com/wicanr2/chengshi_cht/internal/game"
 )
+
 
 // 正常玩家路徑：蓋電廠、拉電線、鋪路、劃分區，然後讓城市自己長。
 //
@@ -141,4 +143,51 @@ func flat(world *sim.World, x, y, w, h int) bool {
 		}
 	}
 	return true
+}
+
+// 八個悲情城市都要載得起來，而且載進來的狀態要與劇本表一致。
+//
+// ⚠ 劇本**不套用檔案裡的純量**：原版的 LoadScenario 只讀七個陣列，
+// CityTime 與起始資金由劇本表寫死。檔案裡殘留的值從來沒有生效過，
+// 拿它去驗證會得到「自洽但錯」的結論。
+func TestAllScenariosLoad(t *testing.T) {
+	dir := dosDir(t)
+	for n := 1; n <= 8; n++ {
+		w, err := game.LoadScenario(dir, n)
+		if err != nil {
+			t.Errorf("第 %d 個劇本載入失敗：%v", n, err)
+			continue
+		}
+		info := sim.Scenario(n).Info()
+		if w.CityTime != info.CityTime {
+			t.Errorf("%s：CityTime = %d，劇本表寫的是 %d",
+				info.Name, w.CityTime, info.CityTime)
+		}
+		if w.TotalFunds != info.StartFunds {
+			t.Errorf("%s：起始資金 = %d，劇本表寫的是 %d",
+				info.Name, w.TotalFunds, info.StartFunds)
+		}
+		if w.CityTax != 7 {
+			t.Errorf("%s：稅率 = %d，LoadScenario 設 7", info.Name, w.CityTax)
+		}
+		// 劇本城市一定有東西：地圖不能是空的。
+		nonEmpty := 0
+		for x := 0; x < sim.WorldX; x++ {
+			for y := 0; y < sim.WorldY; y++ {
+				if w.TileNum(x, y) != 0 {
+					nonEmpty++
+				}
+			}
+		}
+		if nonEmpty < 1000 {
+			t.Errorf("%s：地圖上只有 %d 格非空地，太少", info.Name, nonEmpty)
+		}
+		// 跑幾刻確認不會爆
+		for i := 0; i < 48*16; i++ {
+			w.Frame()
+		}
+		if zh := game.ScenarioNameZH(n); zh == "" {
+			t.Errorf("第 %d 個劇本沒有中文名", n)
+		}
+	}
 }

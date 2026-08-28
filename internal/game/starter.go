@@ -1,4 +1,4 @@
-package ui
+package game
 
 import "github.com/wicanr2/chengshi_cht/internal/sim"
 

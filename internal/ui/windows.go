@@ -1,0 +1,357 @@
+package ui
+
+import (
+	"fmt"
+	"image"
+	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
+
+	"github.com/wicanr2/chengshi_cht/internal/i18n"
+	"github.com/wicanr2/chengshi_cht/internal/sim"
+)
+
+// 四個視窗。快速鍵沿用原版（說明書 p.35）：Ctrl-M 地圖、Ctrl-G 統計圖、
+// Ctrl-B 預算、Ctrl-U 評估。
+type window int
+
+const (
+	winNone window = iota
+	winMaps
+	winGraphs
+	winBudget
+	winEval
+)
+
+// 地圖視窗的十種全貌圖。順序與訊息檔第 10 段一致，名稱從那裡取。
+type mapLayer int
+
+const (
+	layerCityForm mapLayer = iota
+	layerPower
+	layerTransport
+	layerPopDensity
+	layerTraffic
+	layerPollution
+	layerCrime
+	layerLandValue
+	layerPolice
+	layerFire
+	layerGrowth
+	layerCount
+)
+
+// 分佈密度表的配色：由低到高。原版用的是十六色調色盤裡的一組漸層，
+// 這裡自己配一組在深色底上讀得出來的。
+var densityRamp = []color.RGBA{
+	{0x20, 0x28, 0x38, 0xff},
+	{0x28, 0x50, 0x60, 0xff},
+	{0x30, 0x80, 0x70, 0xff},
+	{0x60, 0xa0, 0x50, 0xff},
+	{0xc0, 0xb0, 0x40, 0xff},
+	{0xd0, 0x70, 0x30, 0xff},
+	{0xd0, 0x40, 0x40, 0xff},
+}
+
+func rampColor(v, max int) color.RGBA {
+	if max <= 0 {
+		return densityRamp[0]
+	}
+	i := v * (len(densityRamp) - 1) / max
+	if i < 0 {
+		i = 0
+	}
+	if i >= len(densityRamp) {
+		i = len(densityRamp) - 1
+	}
+	return densityRamp[i]
+}
+
+// drawWindow 畫目前開著的視窗。視窗蓋在地圖上，不佔工具列與狀態列。
+func (g *Game) drawWindow(dst *ebiten.Image) {
+	if g.win == winNone {
+		return
+	}
+	const pad = 48
+	x, y := pad, pad
+	w, h := viewW-pad*2, viewH-pad*2
+	vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h),
+		color.RGBA{0x1a, 0x1e, 0x26, 0xf2}, false)
+	vector.StrokeRect(dst, float32(x), float32(y), float32(w), float32(h), 2, colLine, false)
+
+	title := ""
+	switch g.win {
+	case winMaps:
+		title = g.txt.S(i18n.SecWinMenu, 0)
+	case winGraphs:
+		title = g.txt.S(i18n.SecWinMenu, 1)
+	case winBudget:
+		title = g.txt.S(i18n.SecWinMenu, 2)
+	case winEval:
+		title = g.txt.S(i18n.SecWinMenu, 4)
+	}
+	g.font.Draw(dst, trimMenu(title), x+20, y+14, colOn)
+	g.font.Draw(dst, "Esc 關閉", x+w-20-g.font.Measure("Esc 關閉"), y+14, colDim)
+
+	inner := image.Rect(x+16, y+52, x+w-16, y+h-16)
+	switch g.win {
+	case winMaps:
+		g.drawMapWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winGraphs:
+		g.drawGraphWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winBudget:
+		g.drawBudgetWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winEval:
+		g.drawEvalWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	}
+}
+
+// drawMapWindow 畫全市小地圖與十個圖層。
+//
+// ⚠ 圖層的解析度不一樣：都市型態與運輸是逐格（120×100），密度類是半解析
+// （60×50），警力與消防是八分之一（15×13）。畫的時候要按各自的解析度取值，
+// 不能一律用格子座標——那會讓密度圖只顯示左上四分之一，而且**看起來像是
+// 城市只發展了一角**。
+func (g *Game) drawMapWindow(dst *ebiten.Image, x, y, w, h int) {
+	// 左側：圖層清單
+	const listW = 260
+	for i := 0; i < int(layerCount); i++ {
+		c := colText
+		if mapLayer(i) == g.layer {
+			c = colOn
+		}
+		g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecMapTitle, i)), x, y+i*32, c)
+	}
+	g.font.Draw(dst, "1–9 0 - 切圖層", x, y+int(layerCount)*32+12, colDim)
+
+	// 右側：地圖本體，等比放大到剩下的空間
+	mx, my := x+listW, y
+	mw := w - listW
+	scale := mw / sim.WorldX
+	if s2 := h / sim.WorldY; s2 < scale {
+		scale = s2
+	}
+	if scale < 1 {
+		scale = 1
+	}
+	for ty := 0; ty < sim.WorldY; ty++ {
+		for tx := 0; tx < sim.WorldX; tx++ {
+			c := g.layerColor(tx, ty)
+			vector.DrawFilledRect(dst, float32(mx+tx*scale), float32(my+ty*scale),
+				float32(scale), float32(scale), c, false)
+		}
+	}
+	// 目前視野的框
+	vector.StrokeRect(dst,
+		float32(mx+g.camX*scale), float32(my+g.camY*scale),
+		float32(g.tilesAcross()*scale), float32(g.tilesDown()*scale),
+		2, colOn, false)
+}
+
+func (g *Game) layerColor(x, y int) color.RGBA {
+	w := g.world
+	t := w.TileNum(x, y)
+	switch g.layer {
+	case layerCityForm:
+		return cityFormColor(t)
+	case layerPower:
+		if t >= sim.RESBASE && w.Map[x][y]&sim.PWRBIT != 0 {
+			return color.RGBA{0xf0, 0xd0, 0x40, 0xff}
+		}
+		if t >= sim.RESBASE {
+			return color.RGBA{0x60, 0x30, 0x30, 0xff}
+		}
+		if w.Map[x][y]&sim.CONDBIT != 0 {
+			return color.RGBA{0x90, 0x80, 0x30, 0xff}
+		}
+		return color.RGBA{0x20, 0x24, 0x2c, 0xff}
+	case layerTransport:
+		if t >= sim.ROADBASE && t < sim.POWERBASE {
+			return color.RGBA{0xd0, 0xd0, 0xd0, 0xff}
+		}
+		if t >= sim.RAILBASE && t < sim.RESBASE {
+			return color.RGBA{0x90, 0x90, 0x60, 0xff}
+		}
+		return color.RGBA{0x20, 0x24, 0x2c, 0xff}
+	case layerPopDensity:
+		return rampColor(int(w.PopDensity[x>>1][y>>1]), 255)
+	case layerTraffic:
+		return rampColor(int(w.TrfDensity[x>>1][y>>1]), 255)
+	case layerPollution:
+		return rampColor(int(w.PollutionMem[x>>1][y>>1]), 255)
+	case layerCrime:
+		return rampColor(int(w.CrimeMem[x>>1][y>>1]), 255)
+	case layerLandValue:
+		return rampColor(int(w.LandValueMem[x>>1][y>>1]), 255)
+	case layerPolice:
+		return rampColor(int(w.PoliceMapEffect[x>>3][y>>3]), 1000)
+	case layerFire:
+		return rampColor(int(w.FireStMap[x>>3][y>>3]), 1000)
+	case layerGrowth:
+		v := int(w.RateOGMem[x>>3][y>>3])
+		if v > 0 {
+			return rampColor(v, 200)
+		}
+		return color.RGBA{uint8(clamp(-v, 0, 200) + 40), 0x20, 0x20, 0xff}
+	}
+	return densityRamp[0]
+}
+
+// cityFormColor 是都市型態圖：水、地、三種分區、道路各一色。
+func cityFormColor(t int) color.RGBA {
+	switch {
+	case t == 0:
+		return color.RGBA{0x3a, 0x2c, 0x20, 0xff}
+	case t < sim.TREEBASE:
+		return color.RGBA{0x20, 0x40, 0x90, 0xff}
+	case t <= sim.WOODS5:
+		return color.RGBA{0x28, 0x60, 0x30, 0xff}
+	case t >= sim.ROADBASE && t < sim.POWERBASE:
+		return color.RGBA{0x80, 0x80, 0x80, 0xff}
+	case t >= sim.RESBASE && t < sim.COMBASE:
+		return color.RGBA{0x50, 0xc0, 0x60, 0xff}
+	case t >= sim.COMBASE && t < sim.INDBASE:
+		return color.RGBA{0x60, 0x90, 0xe0, 0xff}
+	case t >= sim.INDBASE && t <= sim.LASTZONE:
+		return color.RGBA{0xe0, 0xc0, 0x50, 0xff}
+	}
+	return color.RGBA{0x40, 0x44, 0x50, 0xff}
+}
+
+// drawGraphWindow 畫六條歷史曲線。
+//
+// ⚠ 歷史陣列是**環狀**的嗎？不是——原版是把整個陣列往後推一格再寫入
+// 索引 0（`s_sim.c` 的 `GraphDoer`），所以索引 0 是最新的、索引 119 最舊。
+// 當成環狀去畫會得到一條時間軸亂跳的曲線，而且**看起來只是「資料有雜訊」**。
+func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
+	series := []struct {
+		label string
+		data  *[240]int16
+		c     color.RGBA
+	}{
+		{g.txt.S(i18n.SecGraph, 0), &g.world.ResHis, colDemR},
+		{g.txt.S(i18n.SecGraph, 2), &g.world.ComHis, colDemC},
+		{g.txt.S(i18n.SecGraph, 4), &g.world.IndHis, colDemI},
+		{g.txt.S(i18n.SecGraph, 1), &g.world.CrimeHis, color.RGBA{0xd0, 0x50, 0x50, 0xff}},
+		{g.txt.S(i18n.SecGraph, 5), &g.world.PollutionHis, color.RGBA{0x90, 0xd0, 0x50, 0xff}},
+		{g.txt.S(i18n.SecGraph, 3), &g.world.MoneyHis, color.RGBA{0xe0, 0xd0, 0x90, 0xff}},
+	}
+	const n = 120 // 近十年（每格一個月）
+	gw, gh := w-200, h-40
+	vector.StrokeRect(dst, float32(x), float32(y), float32(gw), float32(gh), 1, colLine, false)
+	for si, s := range series {
+		g.font.Draw(dst, s.label, x+gw+20, y+si*32, s.c)
+		for i := 0; i < n-1; i++ {
+			// 索引 0 是最新，畫的時候要反過來讓時間由左往右。
+			x0 := float32(x+gw) - float32(i)*float32(gw)/float32(n)
+			x1 := float32(x+gw) - float32(i+1)*float32(gw)/float32(n)
+			y0 := float32(y+gh) - float32(clamp(int(s.data[i]), 0, 255))*float32(gh)/255
+			y1 := float32(y+gh) - float32(clamp(int(s.data[i+1]), 0, 255))*float32(gh)/255
+			vector.StrokeLine(dst, x0, y0, x1, y1, 2, s.c, false)
+		}
+	}
+	g.font.Draw(dst, g.txt.S(i18n.SecGraph, 6), x, y+gh+8, colDim)
+}
+
+// drawBudgetWindow 畫預算視窗（說明書 p.43）。
+func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
+	w0 := g.world
+	rows := []struct {
+		label string
+		req   int
+		pct   float64
+	}{
+		{trimMenu(g.txt.S(i18n.SecBudget, 0)), w0.RoadFund, w0.RoadPercent},
+		{trimMenu(g.txt.S(i18n.SecBudget, 1)), w0.PoliceFund, w0.PolicePercent},
+		{trimMenu(g.txt.S(i18n.SecBudget, 2)), w0.FireFund, w0.FirePercent},
+	}
+	g.font.Draw(dst, fmt.Sprintf("%s %d%%（＋／－ 調整）",
+		trimMenu(g.txt.S(i18n.SecBudget, 3)), w0.CityTax), x, y, colText)
+	// ⚠ 「稅收」不在訊息檔裡（第 3 段只有交通／警局／消防／稅率），
+	// 用譯名表的說法（說明書 p.43）。
+	g.font.Draw(dst, fmt.Sprintf("稅收 $%d", w0.TaxFund), x+400, y, colDim)
+
+	g.font.Draw(dst, "項目", x, y+56, colDim)
+	g.font.Draw(dst, "維護需求額", x+200, y+56, colDim)
+	g.font.Draw(dst, "編列百分比", x+440, y+56, colDim)
+	g.font.Draw(dst, "實際撥給", x+680, y+56, colDim)
+	for i, r := range rows {
+		yy := y + 96 + i*40
+		c := colText
+		if i == g.budgetRow {
+			c = colOn
+		}
+		g.font.Draw(dst, r.label, x, yy, c)
+		g.font.Draw(dst, fmt.Sprintf("$%d", r.req), x+200, yy, colText)
+		g.font.Draw(dst, fmt.Sprintf("%d%%", int(r.pct*100+0.5)), x+440, yy, colText)
+		g.font.Draw(dst, fmt.Sprintf("$%d", int(float64(r.req)*r.pct)), x+680, yy, colText)
+	}
+	g.font.Draw(dst, fmt.Sprintf("現金流量 $%d", w0.CashFlow), x, y+240, colText)
+	g.font.Draw(dst, fmt.Sprintf("目前資金 $%d", w0.TotalFunds), x, y+280, colText)
+	g.font.Draw(dst, "上下鍵選項目，左右鍵調整百分比", x, y+340, colDim)
+}
+
+// drawEvalWindow 畫評估視窗（說明書 p.54）。
+func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
+	w0 := g.world
+	g.font.Draw(dst, "公眾意見", x, y, colOn)
+	yes := w0.Eval.CityYes
+	g.font.Draw(dst, fmt.Sprintf("市長做得好嗎？　是 %d%%　否 %d%%",
+		yes, 100-yes), x, y+40, colText)
+
+	g.font.Draw(dst, "嚴重問題", x, y+96, colOn)
+	for i := 0; i < 4; i++ {
+		p := w0.Eval.ProblemOrder[i]
+		if p < 0 || p >= len(w0.Eval.ProblemVotes) {
+			continue
+		}
+		g.font.Draw(dst, fmt.Sprintf("%d. %s　%d%%",
+			i+1, g.txt.S(i18n.SecProblem, p), w0.Eval.ProblemVotes[p]),
+			x, y+136+i*36, colText)
+	}
+
+	g.font.Draw(dst, "統計數據", x+520, y+96, colOn)
+	stats := [][2]string{
+		{"人口總數", fmt.Sprintf("%d", w0.Eval.CityPop)},
+		{"遷出入數", fmt.Sprintf("%d", w0.Eval.DeltaCityPop)},
+		{"市有財產總數", fmt.Sprintf("$%d", w0.Eval.CityAssValue)},
+		{"城市類別", g.txt.S(i18n.SecClass, clamp(w0.CityClass, 0, 5))},
+		{"整體成績", fmt.Sprintf("%d", w0.CityScore)},
+		{"年度成績", fmt.Sprintf("%+d", w0.Eval.DeltaCityScore)},
+	}
+	for i, s := range stats {
+		g.font.Draw(dst, s[0], x+520, y+136+i*36, colDim)
+		g.font.Draw(dst, s[1], x+760, y+136+i*36, colText)
+	}
+}
+
+// trimMenu 去掉原版選單項目的前導空白與快速鍵。
+//
+// 原版把「 地圖視窗      Ctrl-M」整串存成一筆，因為它要直接畫進固定寬度的
+// 選單。當標題用的時候那些空白與快速鍵是雜訊。
+func trimMenu(s string) string {
+	for i := 0; i < len(s); i++ {
+		if s[i] == ' ' || s[i] == '\t' {
+			continue
+		}
+		s = s[i:]
+		break
+	}
+	if i := indexOf(s, "Ctrl-"); i > 0 {
+		s = s[:i]
+	}
+	for len(s) > 0 && (s[len(s)-1] == ' ' || s[len(s)-1] == '\t') {
+		s = s[:len(s)-1]
+	}
+	return s
+}
+
+func indexOf(s, sub string) int {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return i
+		}
+	}
+	return -1
+}
