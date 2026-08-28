@@ -28,6 +28,9 @@ workplace/
 # 軟體世界說明書掃描（骨灰集散地補完計劃素材，不散布）
 docs/manual-cht/scans/
 
+# Go 的 docker 快取（在 workplace/ 底下，已被涵蓋，這裡只是說明）
+# workplace/gocache、workplace/gomod
+
 # 建置產物
 /dist/
 /dist-all/

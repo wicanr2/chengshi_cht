@@ -7,7 +7,8 @@
 
 ## 1. 目前狀態
 
-**還沒有 remake 程式碼，但 oracle 已經可用。** 目前完成的是專案骨架：
+**第一個垂直切片已經走完四道閘門**（亂數：讀原始碼 → READY 規格 → Go 實作 →
+接線登記 ＋ 機器檢查）。oracle 可用，DOS 素材盤點完成。目前有的東西：
 `CLAUDE.md`（方法論）、`LICENSE`（PolyForm Noncommercial 1.0.0）、`.gitignore`、`README.md`。
 
 ### 已盤點的素材
@@ -18,6 +19,15 @@
 | DUX X11 版（SGI／SunOS／Solaris）| 已列內容：30 個 Tcl、154 個 XPM、46 個 au、23 個 `.cty`，無 C 原始碼 |
 | 軟體世界珍藏版 29 說明書 | 56 張跨頁掃描已解到 `workplace/`，尚未轉錄 |
 | Micropolis 原始碼 | **尚未取得** |
+
+### 驗證入口
+
+```bash
+tools/go.sh test ./...            # 全部測試（docker，含接線檢查）
+tools/oracle/build.sh             # 建 Micropolis oracle
+tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
+tools/oracle/run.sh 10 shot.png   # Xvfb 下跑起來並截圖
+```
 
 ### 已確認的事實（可引用）
 
@@ -76,8 +86,9 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 3. ~~建立可驅動的 oracle~~ **完成**：[`docs/re/01-oracle-harness.md`](docs/re/01-oracle-harness.md)。
    docker ＋ Xvfb 編得起來、跑得動，pty 驅動 128 個 Tcl 狀態存取子指令。
 4. ~~DOS 1.10 素材盤點~~ **完成**：[`docs/formats/00-dos110-inventory.md`](docs/formats/00-dos110-inventory.md)。
-5. **Go 專案骨架 ＋ docker 建置**（`tools/go.sh`）。第一個單元是 BSD 亂數重寫，
-   驗收條件是與 `sim Rand` 的數列逐項相同。
+5. ~~Go 骨架 ＋ 亂數~~ **完成**：[`docs/spec/rng.md`](docs/spec/rng.md) 標 READY，
+   `internal/sim/rand.go` 實作，測試對活的 oracle 黃金樣本逐項相同，
+   接線表與 `TestWiringStatus` 已建立（四道閘門第一次全部走完）。
 6. **地圖陣列與圖塊編號**：讀 `headers/sim.h` ＋ `s_alloc.c` → `docs/re/02`，
    收攏成 READY 規格後才動 `internal/sim`。
 7. **`.cty` 存檔格式**（`s_fileio.c`，27120 bytes）→ `docs/formats/01`。
@@ -87,4 +98,4 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 
 ## 7. 現行驗證入口
 
-（尚未建立。第 4 項完成後補。）
+見第 1 節「驗證入口」。

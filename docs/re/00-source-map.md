@@ -54,11 +54,12 @@
 | 檔案 | 函式 | 備註 |
 |---|---|---|
 | `s_sim.c` | `Rand(short range)` `Rand16` `Rand16Signed` `SeedRand` `RandomlySeedRand` | 遊戲用的取數介面 |
-| `rand.c` | `sim_rand` `sim_srand` | 薄包裝 |
-| `random.c` | `sim_random` `sim_srandom` `sim_initstate` `sim_setstate` | BSD `random()` 的自帶實作。**因為它自帶，不依賴 libc，所以逐位元重現得出來** |
+| `rand.c` | `sim_rand` `sim_srand` | **遊戲實際使用的產生器**：12 行的 24 位元 LCG |
+| `random.c` | `sim_random` `sim_srandom` `sim_initstate` `sim_setstate` | BSD `random()` 的完整移植，**遊戲沒有用到**（`grep -rn 'sim_random' *.c` 只命中它自己）|
 
-**這是本專案能做逐 tick 對拍的關鍵發現**：亂數不是呼叫系統 libc，是封存自帶的
-BSD trinomial 產生器。Go 版照著重寫就能得到同一串數列。
+**這是本專案能做逐 tick 對拍的關鍵**：亂數不呼叫系統 libc，就在封存裡，
+而且是最簡單的那種 LCG。公式與驗證見
+[`02-rng.md`](02-rng.md)（已對活的 oracle 驗證：看四個輸出就能預測其餘）。
 
 ### 每格的模擬
 
