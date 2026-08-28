@@ -1,131 +1,143 @@
-模擬城市繁體中文重製（chengshi_cht）授權條款
-chengshi_cht — SimCity Traditional Chinese Remake License
+Required Notice: Copyright 2026 Wang Chun-Yu (wicanr2) <wicanr2@gmail.com>
+(https://github.com/wicanr2/chengshi_cht)
 
-Copyright (c) 2026 Wang Chun-Yu (wicanr2) <wicanr2@gmail.com>
+本專案（chengshi_cht／模擬城市繁體中文重製）採用 PolyForm Noncommercial
+License 1.0.0，全文如下，一字未改。商業使用請洽 wicanr2@gmail.com。
 
-繁體中文為準，英文譯本僅供參考（The Traditional Chinese text governs;
-the English translation below is provided for convenience only）。
+This project is licensed under the PolyForm Noncommercial License 1.0.0,
+reproduced verbatim below. For commercial use, contact wicanr2@gmail.com.
 
-────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────
 
-第 1 條　涵蓋範圍
+# PolyForm Noncommercial License 1.0.0
 
-本條款適用於本儲存庫中由著作權人創作的一切內容：程式碼、文件、規格、
-反組譯筆記、譯文校訂紀錄與工具。
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
 
-本條款**不適用**於原版遊戲的執行檔、資料檔、美術、音樂、點陣字型，
-以及任何直接衍生自它們的素材。那些屬於各自的權利人；本專案不散布它們，
-使用者必須自備合法的原版副本。
+## Acceptance
 
-第 2 條　免費授權（不必事先取得同意）
+In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
 
-在遵守第 3 條的前提下，任何人都可以免費：
+## Copyright License
 
-  (a) 為個人、教育、研究、保存或其他**非商業**目的使用、執行、重製與散布
-      本作品；
-  (b) 修改本作品，並在同樣的非商業前提下散布修改後的版本。
+The licensor grants you a copyright license for the software to do everything you might do with the software that would otherwise infringe the licensor's copyright in it for any permitted purpose.  However, you may only distribute the software according to [Distribution License](#distribution-license) and make changes or new works based on the software according to [Changes and New Works License](#changes-and-new-works-license).
 
-第 3 條　條件
+## Distribution License
 
-  (a) 散布時要保留本授權條款全文與著作權聲明。
-  (b) 散布修改過的版本時，要明確標示這是修改版、改動了什麼，並指出原始出處
-      https://github.com/wicanr2/chengshi_cht 。不得讓人誤以為修改版出自
-      著作權人，也不得以會造成混淆的方式使用著作權人的姓名。
-  (c) 不得為取得或使用本作品本身收取費用（實體媒介與運送的實際成本除外）。
-  (d) 不得散布原版遊戲的資產（見第 1 條）。
+The licensor grants you an additional copyright license to distribute copies of the software.  Your license to distribute covers distributing the software with changes and new works permitted by [Changes and New Works License](#changes-and-new-works-license).
 
-第 4 條　商業使用要另外洽談
+## Notices
 
-商業性使用不在第 2 條的免費授權範圍內，需要事先取得著作權人的書面授權。
-商業性使用包含但不限於：販售本作品或其修改版、以付費或訂閱形式提供、
-隨商品或服務一併散布、加入廣告或內購、以及在營利事業的營運中使用。
+You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms or the URL for them above, as well as copies of any plain-text lines beginning with `Required Notice:` that the licensor provided with the software.  For example:
 
-洽談請寄 wicanr2@gmail.com。**歡迎來談**——這一條的用意是保留商業條件的
-決定權，不是拒絕合作。
+> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
 
-第 5 條　無擔保與責任限制
+## Changes and New Works License
 
-本作品以「現狀」提供，不附任何明示或默示的擔保，包括但不限於適售性、
-特定目的適用性與未侵權的擔保。在法律允許的最大範圍內，著作權人不就
-因本作品或其使用而產生的任何請求、損害或其他責任負責。
+The licensor grants you an additional copyright license to make changes and new works based on the software for any permitted purpose.
 
-第 6 條　終止與回復
+## Patent License
 
-違反本條款時，本條款給予的授權自動終止。若在知悉違反後三十日內改正，
-並通知著作權人，授權自改正之日起回復。
+The licensor grants you a patent license for the software that covers patent claims the licensor can license, or becomes able to license, that you would infringe by using the software.
 
-────────────────────────────────────────────────────────────
-English translation (for convenience; the Chinese text governs)
+## Noncommercial Purposes
 
-1. SCOPE. This license covers everything in this repository authored by the
-   copyright holder: source code, documentation, specifications, disassembly
-   notes, translation-correction records and tools. It does NOT cover the
-   original game's executables, data files, artwork, music, bitmap fonts, or
-   anything directly derived from them. Those belong to their respective
-   rights holders; this project does not distribute them, and users must
-   supply their own lawful copy of the original game.
+Any noncommercial purpose is a permitted purpose.
 
-2. FREE GRANT. Subject to Section 3, anyone may, free of charge:
-   (a) use, run, reproduce and distribute this work for personal,
-       educational, research, preservation or other NON-COMMERCIAL purposes;
-   (b) modify this work and distribute the modified version under the same
-       non-commercial condition.
+## Personal Uses
 
-3. CONDITIONS.
-   (a) Retain this license and the copyright notice in all distributions.
-   (b) When distributing a modified version, state clearly that it is
-       modified, what was changed, and point to the original source at
-       https://github.com/wicanr2/chengshi_cht . Do not imply that the
-       modified version comes from the copyright holder, and do not use the
-       copyright holder's name in a confusing way.
-   (c) Do not charge a fee for obtaining or using the work itself (actual
-       cost of physical media and shipping excepted).
-   (d) Do not distribute the original game's assets (see Section 1).
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study, private entertainment, hobby projects, amateur pursuits, or religious observance, without any anticipated commercial application, is use for a permitted purpose.
 
-4. COMMERCIAL USE REQUIRES A SEPARATE AGREEMENT. Commercial use falls
-   outside the free grant in Section 2 and requires prior written permission
-   from the copyright holder. Commercial use includes, without limitation:
-   selling this work or a modified version, offering it for a fee or by
-   subscription, bundling it with a product or service, adding advertising
-   or in-app purchases, and using it in the operations of a for-profit
-   entity. Enquiries are welcome at wicanr2@gmail.com — this section exists
-   to keep commercial terms negotiable, not to refuse cooperation.
+## Noncommercial Organizations
 
-5. NO WARRANTY. THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-   TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE
-   LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE WORK OR
-   ITS USE.
+Use by any charitable organization, educational institution, public research organization, public safety or health organization, environmental protection organization, or government institution is use for a permitted purpose regardless of the source of funding or obligations resulting from the funding.
 
-6. TERMINATION AND REINSTATEMENT. Rights under this license terminate
-   automatically upon breach. If the breach is cured within thirty days of
-   becoming aware of it, and the copyright holder is notified, the license is
-   reinstated as of the date of cure.
+## Fair Use
 
-────────────────────────────────────────────────────────────
-附註（不構成授權條款的一部分）
-Notes (not part of the license terms)
+You may have "fair use" rights for the software under the law. These terms do not limit them.
 
-商標：SimCity、SimCity 2000 與 Maxis 是 Electronic Arts Inc. 的商標或註冊
-商標。Micropolis 是該 GPL 版本自己的名稱。本專案與 Electronic Arts、
-Maxis、Will Wright、DUX Software、軟體世界或骨灰集散地皆無隸屬關係，
-也未獲其背書。上述名稱僅用於指稱原版作品，屬指示性使用。
+## No Other Rights
 
-規格參考揭露：本專案的模擬規則規格參考了 Micropolis（Electronic Arts 於
-2008 年以 GPL-3.0 釋出的 SimCity Unix 版原始碼）。程式碼由本專案以 Go
-重新撰寫，未複製 Micropolis 的原始碼。著作權人據此主張本作品不是
-Micropolis 的衍生著作，因而不受 GPL-3.0 拘束；此為著作權人的立場，
-非法院見解。詳見 CLAUDE.md §1 與 docs/spec/ 各份規格的證據引用。
+These terms do not allow you to sublicense or transfer any of your licenses to anyone else, or prevent the licensor from granting licenses to anyone else.  These terms do not imply any other licenses.
 
-Trademarks: SimCity and Maxis are trademarks of Electronic Arts Inc.
-This project is not affiliated with or endorsed by Electronic Arts, Maxis,
-Will Wright, DUX Software, Soft-World, or oldgame.tw. Names are used
-nominatively to identify the original work.
+## Patent Defense
 
-Specification reference disclosure: the simulation rules in this project
-were specified with reference to Micropolis (the SimCity Unix source
-released by Electronic Arts under GPL-3.0 in 2008). All code here is newly
-written in Go; no Micropolis source was copied. The copyright holder's
-position is that this work is therefore not a derivative work of Micropolis
-and not bound by GPL-3.0. That is the holder's position, not a court ruling.
+If you make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+
+## Violations
+
+The first time you are notified in writing that you have violated any of these terms, or done anything with the software not covered by your licenses, your licenses can nonetheless continue if you come into full compliance with these terms, and take practical steps to correct past violations, within 32 days of receiving notice.  Otherwise, all your licenses end immediately.
+
+## No Liability
+
+***As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.***
+
+## Definitions
+
+The **licensor** is the individual or entity offering these terms, and the **software** is the software the licensor makes available under these terms.
+
+**You** refers to the individual or entity agreeing to these terms.
+
+**Your company** is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization.  **Control** means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise.  Control can be direct or indirect.
+
+**Your licenses** are all the licenses granted to you for the software under these terms.
+
+**Use** means anything you do with the software requiring one of your licenses.
+
+────────────────────────────────────────────────────────────────────────
+附註 — 以下不是授權條款的一部分，不修改、不限制、不擴張上述條款。
+NOTICE — the following is NOT part of the license terms above. It neither
+modifies, limits, nor extends them.
+────────────────────────────────────────────────────────────────────────
+
+一、授權範圍（哪些東西是「the software」）
+
+上述條款涵蓋本儲存庫中由著作權人創作的一切內容：程式碼、文件、規格、
+機制筆記、譯文與譯名校訂紀錄、工具。
+
+上述條款**不涵蓋**原版遊戲的執行檔、資料檔、美術、音樂、點陣字型、
+說明書掃描件，以及任何直接衍生自它們的素材。那些屬於各自的權利人；
+本專案不散布它們，使用者必須自備合法的原版副本。著作權人無法、也沒有
+就那些素材授予任何權利。
+
+The license above covers only material authored by the copyright holder.
+It does NOT cover the original game's executables, data files, artwork,
+music, bitmap fonts or manual scans. Those belong to their respective
+rights holders; this project does not distribute them, and users must
+supply their own lawful copy of the original game.
+
+二、商業使用
+
+PolyForm Noncommercial 1.0.0 只授權非商業用途。商業用途需要另外取得
+著作權人的書面授權，請寄 wicanr2@gmail.com。**歡迎來談**——這一條的
+用意是保留商業條件的決定權，不是拒絕合作。
+
+三、商標
+
+SimCity 與 Maxis 是 Electronic Arts Inc. 的商標或註冊商標。
+MICROPOLIS 是 Micropolis GmbH（Micropolis Corporation）擁有的註冊商標，
+授權給 Micropolis 都市模擬遊戲專案使用。
+本專案與 Electronic Arts、Maxis、Will Wright、DUX Software、Micropolis
+GmbH、軟體世界或骨灰集散地皆無隸屬關係，也未獲其背書。上述名稱僅用於
+指稱原版作品，屬指示性使用。
+
+四、規格參考揭露
+
+本專案的模擬規則規格參考了 Micropolis（Electronic Arts 於 2008 年以
+GPL-3.0 釋出的 SimCity Unix 版原始碼）。程式碼由本專案以 Go 重新撰寫，
+未複製 Micropolis 的原始碼。著作權人據此主張本作品不是 Micropolis 的
+衍生著作，因而不受 GPL-3.0 拘束；此為著作權人的立場，非法院見解。
+詳見 CLAUDE.md §1 與 docs/spec/ 各份規格的證據引用。
+
+The simulation rules here were specified with reference to Micropolis (the
+SimCity Unix source released by Electronic Arts under GPL-3.0 in 2008).
+All code is newly written in Go; no Micropolis source was copied. The
+copyright holder's position is that this work is therefore not a derivative
+work of Micropolis and not bound by GPL-3.0. That is the holder's position,
+not a court ruling.
+
+────────────────────────────────────────────────────────────────────────
+條款全文取自官方來源，未經改動：
+https://github.com/polyformproject/polyform-licenses（tag 1.0.0）
+PolyForm-Noncommercial-1.0.0.md
+SHA-256 c0ea4a896d2c8c394b29f9427589996db826cd501c512279ff0ed3ef48fabbe5
+取得日期 2026-08-29

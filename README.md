@@ -306,18 +306,24 @@ Hires EGA 640×350 與 MCGA 320×200 是兩套不同的字元格。
 <a name="license"></a>
 ## 授權與聲明
 
-本專案採**專有授權**（source-available，**不是** open source）：
+本專案採 **[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)**
+（source-available，**不是** open source）：
 
-- **非商業用途免費**，不必事先取得同意，包含使用、重製、散布，**也可以修改並散布修改版**。
-- 條件：保留條款全文與著作權聲明；修改版要標明是修改版、改了什麼、原始出處；
-  不對作品本身收費。
+- **非商業用途免費**：使用、重製、**散布**、**修改並散布修改版**都可以，不必事先取得同意。
+  個人研究、實驗、測試、興趣專案、私人娛樂算非商業；慈善團體、教育機構、
+  公立研究機構、公共安全與衛生機構、環保團體、政府機關的使用也算。
+- 條件：把條款（或其網址）連同 `Required Notice:` 那一行一起交給拿到副本的人。
 - **商業用途要先洽談**：<wicanr2@gmail.com>。這一條的用意是保留商業條件的決定權，
   不是拒絕合作。
 
-全文見 [`LICENSE`](LICENSE)。
+條款全文見 [`LICENSE`](LICENSE)——取自 PolyForm 官方 repo 的 `1.0.0` tag，
+逐字未改（SHA-256 已記在檔尾）。
 
-**授權不涵蓋原版素材。** 原版的執行檔、資料檔、美術、音樂、點陣字型與說明書掃描件
-屬於各自的權利人；本專案不散布它們，使用者必須自備合法的原版副本。
+**授權不涵蓋原版素材。** PolyForm 的條款只涵蓋本儲存庫中由著作權人創作的內容
+（程式碼、文件、規格、機制筆記、譯文與譯名校訂紀錄、工具）。原版的執行檔、資料檔、
+美術、音樂、點陣字型與說明書掃描件屬於各自的權利人；本專案不散布它們，
+使用者必須自備合法的原版副本。這段寫在 `LICENSE` 的「附註」，**明確標示不是條款的一部分**——
+PolyForm 的條款全文一個字都不能改。
 
 ### 與 Micropolis 的關係（要講清楚的一件事）
 
@@ -332,8 +338,9 @@ Electronic Arts 於 2008 年以 GPL-3.0 釋出的 SimCity Unix 版原始碼；
 ### 商標
 
 SimCity 與 Maxis 是 Electronic Arts Inc. 的商標或註冊商標。
-本專案與 Electronic Arts、Maxis、Will Wright、DUX Software、軟體世界、智冠科技
-或骨灰集散地皆無隸屬關係，也未獲其背書。上述名稱僅用於指稱原版作品。
+MICROPOLIS 是 Micropolis GmbH 擁有的註冊商標，授權給 Micropolis 都市模擬遊戲專案使用。
+本專案與 Electronic Arts、Maxis、Will Wright、DUX Software、Micropolis GmbH、
+軟體世界、智冠科技或骨灰集散地皆無隸屬關係，也未獲其背書。上述名稱僅用於指稱原版作品。
 
 ---
 

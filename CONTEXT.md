@@ -8,7 +8,7 @@
 ## 1. 目前狀態
 
 **專案剛建立，還沒有任何程式碼。** 目前完成的只有專案骨架：
-`CLAUDE.md`（方法論）、`LICENSE`（專有授權）、`.gitignore`、`README.md`。
+`CLAUDE.md`（方法論）、`LICENSE`（PolyForm Noncommercial 1.0.0）、`.gitignore`、`README.md`。
 
 ### 已盤點的素材
 
@@ -44,7 +44,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | 方法論、四道閘門、證據優先序、授權立場 |
 | [`README.md`](README.md) | 專案首頁：這是什麼、為何保存、現況 |
-| [`LICENSE`](LICENSE) | 專有授權（非商業免費、商業洽談）＋ 商標與規格參考揭露 |
+| [`LICENSE`](LICENSE) | PolyForm Noncommercial 1.0.0 全文（逐字未改）＋ 附註：原版素材排除、商標、規格參考揭露 |
 | `WORKLOG.md` | 逐輪工作紀錄（尚未建立）|
 | [`docs/research/`](docs/research/) | 查證筆記：玩家與評論對一代的說法（二手彙整，每條標來源）|
 | `docs/re/` | 機制筆記（尚未建立）|
