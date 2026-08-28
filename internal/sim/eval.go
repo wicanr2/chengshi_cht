@@ -7,17 +7,17 @@ const ProbNum = 10
 
 // Evaluation 是一次評分的結果。
 type Evaluation struct {
-	CityYes, CityNo  int      // 市民投票：滿意 / 不滿意（各 100 票）
-	CityPop          int      // 城市人口
-	DeltaCityPop     int      // 與上次的差
-	CityAssValue     int      // 資產價值
-	CityClass        int      // 0…5：村莊 / 小鎮 / 城市 / 首府 / 大都會 / 巨型都會
-	CityScore        int      // 0…1000
-	DeltaCityScore   int      //
-	ProblemTable     [ProbNum]int
-	ProblemVotes     [ProbNum]int
-	ProblemOrder     [4]int // 前四大問題的索引；7 代表「沒問題」
-	TrafficAverage   int
+	CityYes, CityNo int // 市民投票：滿意 / 不滿意（各 100 票）
+	CityPop         int // 城市人口
+	DeltaCityPop    int // 與上次的差
+	CityAssValue    int // 資產價值
+	CityClass       int // 0…5：村莊 / 小鎮 / 城市 / 首府 / 大都會 / 巨型都會
+	CityScore       int // 0…1000
+	DeltaCityScore  int //
+	ProblemTable    [ProbNum]int
+	ProblemVotes    [ProbNum]int
+	ProblemOrder    [4]int // 前四大問題的索引；7 代表「沒問題」
+	TrafficAverage  int
 }
 
 // 問題索引。s_eval.c:163-169
@@ -133,7 +133,20 @@ func (w *World) voteProblems() {
 	}
 	x, z, count := 0, 0, 0
 	for z < 100 && count < 600 {
-		if x < len(w.Eval.ProblemTable) && w.Rand.Rand(300) < w.Eval.ProblemTable[x] {
+		// ⚠ 迴圈尾是 `if x > PROBNUM { x = 0 }`，不是 `>=`，
+		// 所以 x 會走到 10，而 ProblemTable 只有 0..9 —— 原版每 11 次
+		// 就讀一次越界。**那一次的 Rand(300) 照樣被呼叫**，只是拿去和
+		// 相鄰記憶體比較（s_eval.c 的宣告順序是 ProblemTable、
+		// ProblemTaken、ProblemVotes，所以讀到的多半是 ProblemTaken[0]，
+		// 值域 {0,1}，幾乎永遠比不過）。
+		//
+		// 抽樣次數才是關鍵：跳過這一次會讓每次評估少抽約 54 次，
+		// 亂數數列從此整條錯開。這裡照抽不誤，比較對象取 0。
+		v := 0
+		if x < len(w.Eval.ProblemTable) {
+			v = w.Eval.ProblemTable[x]
+		}
+		if w.Rand.Rand(300) < v {
 			w.Eval.ProblemVotes[x]++
 			z++
 		}

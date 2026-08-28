@@ -229,7 +229,21 @@ func (w *World) doFlood() {
 	}
 }
 
-// 下面三個要靠精靈系統，還沒實作。見 docs/re/08-disasters.md §4。
-func (w *World) makeAirCrash() {}
-func (w *World) makeTornado()  {}
-func (w *World) makeMonster()  {}
+// 這三種災難靠精靈系統。沒掛精靈時什麼都不做。
+func (w *World) makeAirCrash() {
+	if w.spriteSys != nil {
+		w.spriteSys.MakeAirCrash()
+	}
+}
+
+func (w *World) makeTornado() {
+	if w.spriteSys != nil {
+		w.spriteSys.MakeTornado()
+	}
+}
+
+func (w *World) makeMonster() {
+	if w.spriteSys != nil {
+		w.spriteSys.MakeMonster()
+	}
+}

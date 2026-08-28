@@ -9,15 +9,15 @@ package sim
 type Scenario int
 
 const (
-	ScenarioNone          Scenario = 0
-	ScenarioDullsville    Scenario = 1
-	ScenarioSanFrancisco  Scenario = 2
-	ScenarioHamburg       Scenario = 3
-	ScenarioBern          Scenario = 4
-	ScenarioTokyo         Scenario = 5
-	ScenarioDetroit       Scenario = 6
-	ScenarioBoston        Scenario = 7
-	ScenarioRio           Scenario = 8
+	ScenarioNone         Scenario = 0
+	ScenarioDullsville   Scenario = 1
+	ScenarioSanFrancisco Scenario = 2
+	ScenarioHamburg      Scenario = 3
+	ScenarioBern         Scenario = 4
+	ScenarioTokyo        Scenario = 5
+	ScenarioDetroit      Scenario = 6
+	ScenarioBoston       Scenario = 7
+	ScenarioRio          Scenario = 8
 )
 
 // ScenarioInfo 是劇本表的一列。

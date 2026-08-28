@@ -294,3 +294,40 @@ func (w *World) doNilPower() {
 		}
 	}
 }
+
+// SimFrame 是一個 timer frame 的模擬部分。s_sim.c:90
+//
+// ⚠ 速度 1 每五個 frame 才做一次、速度 2 每三個、速度 3 每個都做，
+// 速度 0 直接 return。所以「一個 frame」不等於「一個相位」。
+func (w *World) SimFrame() {
+	if w.SimSpeed == 0 {
+		return
+	}
+	w.Spdcycle++
+	if w.Spdcycle > 1023 {
+		w.Spdcycle = 0
+	}
+	if w.SimSpeed == 1 && w.Spdcycle%5 != 0 {
+		return
+	}
+	if w.SimSpeed == 2 && w.Spdcycle%3 != 0 {
+		return
+	}
+	w.Fcycle++
+	if w.Fcycle > 1023 {
+		w.Fcycle = 0
+	}
+	w.Simulate(w.Fcycle & 15)
+}
+
+// Frame 是一個完整的 timer frame。sim.c:560 sim_loop
+//
+// ⚠ `MoveObjects()` 在 `SimFrame()` **之後**呼叫，而且**不受 SimSpeed 的
+// 分頻影響**（它自己只檢查 SimSpeed != 0）。所以速度 1 時精靈仍然每個 frame
+// 都動，只有模擬本身被降頻——快轉時精靈相對「變慢」，慢速時相對「變快」。
+func (w *World) Frame() {
+	w.SimFrame()
+	if w.spriteSys != nil {
+		w.spriteSys.MoveObjects()
+	}
+}

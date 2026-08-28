@@ -33,9 +33,9 @@ const (
 // 所以 tools/gen_tiles.py 抽不到（它只收數字）。在這裡以同樣的算式定義，
 // 值由編譯器算，不手抄數字。
 const (
-	BLBNBIT   = BULLBIT + BURNBIT             // headers/sim.h:254
-	BLBNCNBIT = BULLBIT + BURNBIT + CONDBIT   // headers/sim.h:255
-	BNCNBIT   = BURNBIT + CONDBIT             // headers/sim.h:256
+	BLBNBIT   = BULLBIT + BURNBIT           // headers/sim.h:254
+	BLBNCNBIT = BULLBIT + BURNBIT + CONDBIT // headers/sim.h:255
+	BNCNBIT   = BURNBIT + CONDBIT           // headers/sim.h:256
 )
 
 // World 是模擬的全部狀態。它不認識畫面，也不做 I/O。
@@ -104,16 +104,16 @@ type World struct {
 	CChr9        int    // 目前這一格的圖塊編號（CChr & LOMASK）
 
 	// 每一輪普查歸零、由 MapScan 累計的計數。s_sim.c:524 ClearCensus
-	PwrdZCnt, UnPwrdZCnt         int
-	FirePop                      int
-	RoadTotal, RailTotal         int
-	ResPop, ComPop, IndPop       int
-	ResZPop, ComZPop, IndZPop    int
-	HospPop, ChurchPop           int
-	PolicePop, FireStPop         int
-	StadiumPop                   int
-	CoalPop, NuclearPop          int
-	PortPop, APortPop            int
+	PwrdZCnt, UnPwrdZCnt      int
+	FirePop                   int
+	RoadTotal, RailTotal      int
+	ResPop, ComPop, IndPop    int
+	ResZPop, ComZPop, IndZPop int
+	HospPop, ChurchPop        int
+	PolicePop, FireStPop      int
+	StadiumPop                int
+	CoalPop, NuclearPop       int
+	PortPop, APortPop         int
 
 	// 三態旗標：1 需要、0 剛好、−1 太多。s_sim.c:598 TakeCensus
 	NeedHosp, NeedChurch int
@@ -135,9 +135,9 @@ type World struct {
 	RoadFund, PoliceFund, FireFund       int
 	RoadSpend, PoliceSpend, FireSpend    int
 
-	// 主迴圈的兩個計數器。s_sim.c:207 DoSimInit
-	Fcycle, Scycle int
-	NewPower       bool
+	// 主迴圈的計數器。s_sim.c:207 DoSimInit、:96 SimFrame
+	Fcycle, Scycle, Spdcycle int
+	NewPower                 bool
 
 	// 劇本災難排程。s_sim.c:333 SimLoadInit
 	DisasterEvent, DisasterWait int
@@ -145,20 +145,20 @@ type World struct {
 	NoDisasters                 bool
 
 	// 交通的走訪堆疊。s_traf.c:69
-	posStack   [maxTrafDis + 1][2]int
-	posStackN  int
-	lDir       int
-	zSource    int
+	posStack           [maxTrafDis + 1][2]int
+	posStackN          int
+	lDir               int
+	zSource            int
 	TrafMaxX, TrafMaxY int
 
 	// 掃描的輸出。s_scan.c:69-72
-	CCx, CCy   int // 城市重心（全解析度座標）
-	CCx2, CCy2 int // 重心的半解析度座標
+	CCx, CCy             int // 城市重心（全解析度座標）
+	CCx2, CCy2           int // 重心的半解析度座標
 	PolMaxX, PolMaxY     int
 	CrimeMaxX, CrimeMaxY int
-	LVAverage      int // 地價平均
-	PolluteAverage int // 汙染平均
-	CrimeAverage   int // 犯罪平均
+	LVAverage            int // 地價平均
+	PolluteAverage       int // 汙染平均
+	CrimeAverage         int // 犯罪平均
 
 	// MeltX/MeltY 是最近一次熔毀的位置。s_sim.c:1161
 	MeltX, MeltY int
@@ -174,6 +174,12 @@ type World struct {
 	// Eval 是最近一次城市評分的結果。s_eval.c
 	Eval Evaluation
 
+	// HasAirCrash 對應原版的 NO_AIRCRASH 建置旗標。
+	// 官方 makefile 帶了 -DNO_AIRCRASH，所以隨機空難在正式建置裡不會發生。
+	HasAirCrash bool
+
+	spriteSys *spriteSystem
+
 	// Sprites 是精靈系統。nil 代表沒有（見 mapscan.go 的 SpriteHooks）。
 	Sprites SpriteHooks
 
@@ -184,18 +190,27 @@ type World struct {
 // NewWorld 配置一個全空的世界，純量用 sim.c:167 sim_init() 的初值。
 func NewWorld(seed uint32) *World {
 	return &World{
-		CityTime:     50,   // sim.c:183
+		CityTime:     50,    // sim.c:183
 		TotalFunds:   20000, // 實測 sim Funds；docs/re/01-oracle-harness.md §4
-		CityTax:      7,    // sim.c:182
-		SimSpeed:     3,    // sim.c:194
-		AutoBulldoze: true, // sim.c:188
-		AutoBudget:   true, // sim.c:189
-		AutoGo:       true, // sim.c:181
-		RoadEffect:   32,   // s_sim.c:401 SetCommonInits
-		PoliceEffect: 1000, // s_sim.c:402
-		FireEffect:   1000, // s_sim.c:403
-		EMarket:      6.0,  // s_sim.c:318 InitSimMemory
-		Rand:         NewRand(seed),
+		CityTax:      7,     // sim.c:182
+		SimSpeed:     3,     // sim.c:194
+		AutoBulldoze: true,  // sim.c:188
+		AutoBudget:   true,  // sim.c:189
+		AutoGo:       true,  // sim.c:181
+		RoadEffect:   32,    // s_sim.c:401 SetCommonInits
+		PoliceEffect: 1000,  // s_sim.c:402
+		FireEffect:   1000,  // s_sim.c:403
+		EMarket:      6.0,   // s_sim.c:318 InitSimMemory
+
+		// 三項撥款比例的初值是 1.0（w_budget.c:82 InitFundingLevel）。
+		// 檔案層宣告的 0.0 只是 C 的靜態初值，開新城市時會被覆蓋掉；
+		// 漏掉這一步的話 roadValue 恆為 0 —— 錢只進不出，而且
+		// RoadEffect 會被 UpdateFundEffects 算成 0，道路加速崩壞。
+		PolicePercent: 1.0,
+		FirePercent:   1.0,
+		RoadPercent:   1.0,
+
+		Rand: NewRand(seed),
 	}
 }
 

@@ -30,7 +30,7 @@
 | [`docs/re/09-census-valves-budget.md`](09-census-valves-budget.md) | 普查、需求閥、稅收與預算 | **已接** | `internal/sim/census.go` |
 | [`docs/re/10-evaluation.md`](10-evaluation.md) | 城市評分與投票 | **已接** | `internal/sim/eval.go` |
 | [`docs/re/11-simulate-loop.md`](11-simulate-loop.md) | 十六相位主迴圈 | **已接** | `internal/sim/simulate.go` |
-| [`docs/re/12-tick-parity.md`](12-tick-parity.md) | 整刻對拍工具與現況 | **已接** | `internal/sim/tickparity_test.go` |
+| [`docs/re/12-tick-parity.md`](12-tick-parity.md) | 逐次元對拍工具與現況 | **已接** | `internal/sim/tickparity_test.go`、`internal/sim/segparity_test.go`、`internal/sim/microzone_test.go` |
 | [`docs/formats/00-dos110-inventory.md`](../formats/00-dos110-inventory.md) | DOS 1.10 素材盤點 | 不適用 | 素材盤點，規則在別處 |
 | [`docs/formats/01-city-file.md`](../formats/01-city-file.md) | 城市檔格式 | **已接** | `internal/sim/cityfile.go`、`scenario.go` |
 | [`docs/formats/02-dos-lzss.md`](../formats/02-dos-lzss.md) | DOS 共用壓縮與四種資料檔 | **已接** | `internal/assets/lzss.go`、`ptf.go`、`psn.go` |

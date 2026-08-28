@@ -119,8 +119,9 @@ func TestZonePopulationFormulas(t *testing.T) {
 }
 
 // 兩個平滑核不一樣，不可互換。
-//   doSmooth：  (四鄰居和 + 自己) >> 2
-//   smoothFSMap：((四鄰居和 >> 2) + 自己) >> 1
+//
+//	doSmooth：  (四鄰居和 + 自己) >> 2
+//	smoothFSMap：((四鄰居和 >> 2) + 自己) >> 1
 func TestSmoothKernelsDiffer(t *testing.T) {
 	w := NewWorld(1)
 	// 半解析度：中央一點 100，四周 0。

@@ -8,10 +8,10 @@ package sim
 
 // 地形產生用到的圖塊範圍。s_gen.c:68-71
 const (
-	waterLow  = RIVER          // 2
-	waterHigh = LASTRIVEDGE    // 20
-	woodsLow  = TREEBASE       // 21
-	woodsHigh = UNUSED_TRASH2  // 39 —— 是的，上界是一個被標成「未用」的編號
+	waterLow  = RIVER         // 2
+	waterHigh = LASTRIVEDGE   // 20
+	woodsLow  = TREEBASE      // 21
+	woodsHigh = UNUSED_TRASH2 // 39 —— 是的，上界是一個被標成「未用」的編號
 )
 
 // TerrainParams 對應 s_gen.c:76-79 的四個全域旋鈕。
@@ -30,11 +30,11 @@ func DefaultTerrainParams() TerrainParams {
 
 // terrainGen 持有 s_gen.c 的那幾個全域變數（MapX/MapY/XStart/YStart/Dir/LastDir）。
 type terrainGen struct {
-	w                  *World
-	p                  TerrainParams
-	mapX, mapY         int
-	xStart, yStart     int
-	dir, lastDir       int
+	w              *World
+	p              TerrainParams
+	mapX, mapY     int
+	xStart, yStart int
+	dir, lastDir   int
 }
 
 // GenerateMap 依種子產生地形。s_gen.c:127 GenerateMap(int r)

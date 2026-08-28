@@ -25,15 +25,15 @@ const (
 
 // powerScan 是傳導的可重入狀態。原版全部是全域變數（s_power.c:68-70）。
 type powerScan struct {
-	w         *World
-	stackX    [PwrStkSize]int
-	stackY    [PwrStkSize]int
-	stackNum  int
-	sMapX     int
-	sMapY     int
-	cChr9     int // MapScan 留下的「目前圖塊」，見 docs/re/05-power-scan.md §3
-	maxPower  int
-	numPower  int
+	w          *World
+	stackX     [PwrStkSize]int
+	stackY     [PwrStkSize]int
+	stackNum   int
+	sMapX      int
+	sMapY      int
+	cChr9      int // MapScan 留下的「目前圖塊」，見 docs/re/05-power-scan.md §3
+	maxPower   int
+	numPower   int
 	OutOfPower bool // 對應 SendMes(40)
 }
 

@@ -19,7 +19,6 @@ func micropolisRes(t *testing.T) string {
 	return p
 }
 
-
 // readFileOrSkip 讀封存裡的檔案；不在就跳過測試。
 func readFileOrSkip(t *testing.T, dir, name string) ([]byte, error) {
 	t.Helper()
@@ -219,10 +218,10 @@ func TestLoadCityFileResetsFundingPercents(t *testing.T) {
 // 三個夾限。s_fileio.c:286-291
 func TestLoadCityFileClamps(t *testing.T) {
 	cases := []struct {
-		name              string
-		time              int32
-		tax, speed        int16
-		wantTime          int
+		name               string
+		time               int32
+		tax, speed         int16
+		wantTime           int
 		wantTax, wantSpeed int
 	}{
 		{"負的時間歸零", -5, 7, 3, 0, 7, 3},

@@ -11,7 +11,7 @@ package sim
 //
 // **精靈（w_sprite.c）還沒實作。** 它包含怪獸、龍捲風、飛機、船、火車、
 // 直昇機、爆炸與起火點——這些是**規則**而不是呈現層，儘管檔名前綴是 w_
-//（機制筆記的原始碼地圖已更正過那個誤判）。
+// （機制筆記的原始碼地圖已更正過那個誤判）。
 // 在它實作出來之前，這個介面讓規則層可以照原版的位置呼叫，
 // 而預設實作什麼都不做——**這是已知差異，記在 docs/re/07 §5。**
 type SpriteHooks interface {
@@ -30,14 +30,14 @@ type SpriteHooks interface {
 // noSprites 是預設的空實作。
 type noSprites struct{}
 
-func (noSprites) GenerateShip()               {}
-func (noSprites) GeneratePlane(x, y int)      {}
-func (noSprites) GenerateCopter(x, y int)     {}
-func (noSprites) GenerateTrain(x, y int)      {}
-func (noSprites) MakeExplosionAt(x, y int)    {}
-func (noSprites) MakeExplosion(x, y int)      {}
-func (noSprites) HasShip() bool               { return false }
-func (noSprites) BoatDistance(x, y int) int   { return 99999 }
+func (noSprites) GenerateShip()             {}
+func (noSprites) GeneratePlane(x, y int)    {}
+func (noSprites) GenerateCopter(x, y int)   {}
+func (noSprites) GenerateTrain(x, y int)    {}
+func (noSprites) MakeExplosionAt(x, y int)  {}
+func (noSprites) MakeExplosion(x, y int)    {}
+func (noSprites) HasShip() bool             { return false }
+func (noSprites) BoatDistance(x, y int) int { return 99999 }
 
 func (w *World) sprites() SpriteHooks {
 	if w.Sprites == nil {
