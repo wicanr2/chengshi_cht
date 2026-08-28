@@ -20,3 +20,4 @@
 | [`00-source-map.md`](00-source-map.md) | Micropolis 原始碼地圖 | 不適用 | 索引文件，不含可實作的規則 |
 | [`01-oracle-harness.md`](01-oracle-harness.md) | oracle 建置與驅動 | 不適用 | 工具鏈；產物在 `tools/oracle/` |
 | [`02-rng.md`](02-rng.md) | 亂數產生器 | **已接** | `internal/sim/rand.go` |
+| [`03-map-and-tiles.md`](03-map-and-tiles.md) | 地圖陣列與圖塊編碼 | **已接** | `internal/sim/world.go`、`internal/sim/tiles.go`（由 `tools/gen_tiles.py` 重產）|
