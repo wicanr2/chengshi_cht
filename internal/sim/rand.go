@@ -32,6 +32,9 @@ func NewRand(seed uint32) *Rand {
 	return &Rand{next: seed & randMask}
 }
 
+// Seed 重設種子。對應 rand.c:50 sim_srand()。
+func (r *Rand) Seed(seed uint32) { r.next = seed & randMask }
+
 // State 回傳目前的內部狀態（低 24 位元）。測試與對拍用。
 func (r *Rand) State() uint32 { return r.next & randMask }
 

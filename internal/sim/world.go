@@ -27,6 +27,17 @@ const (
 	MiscHistLen = MISCHISTLEN / 2 // 120
 )
 
+// 旗標的組合常數。headers/sim.h:254-256
+//
+// 這三個在標頭裡寫成 (BULLBIT+BURNBIT) 這種算式而不是數字字面量，
+// 所以 tools/gen_tiles.py 抽不到（它只收數字）。在這裡以同樣的算式定義，
+// 值由編譯器算，不手抄數字。
+const (
+	BLBNBIT   = BULLBIT + BURNBIT             // headers/sim.h:254
+	BLBNCNBIT = BULLBIT + BURNBIT + CONDBIT   // headers/sim.h:255
+	BNCNBIT   = BURNBIT + CONDBIT             // headers/sim.h:256
+)
+
 // World 是模擬的全部狀態。它不認識畫面，也不做 I/O。
 //
 // 索引順序照原版：s_alloc.c:160 的 Map[i] = mapPtr + i*WORLD_Y，

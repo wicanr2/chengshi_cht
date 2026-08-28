@@ -89,12 +89,19 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 5. ~~Go 骨架 ＋ 亂數~~ **完成**：[`docs/spec/rng.md`](docs/spec/rng.md) 標 READY，
    `internal/sim/rand.go` 實作，測試對活的 oracle 黃金樣本逐項相同，
    接線表與 `TestWiringStatus` 已建立（四道閘門第一次全部走完）。
-6. **地圖陣列與圖塊編號**：讀 `headers/sim.h` ＋ `s_alloc.c` → `docs/re/02`，
-   收攏成 READY 規格後才動 `internal/sim`。
-7. **`.cty` 存檔格式**（`s_fileio.c`，27120 bytes）→ `docs/formats/01`。
-   解出來就能直接吃 X11 版的 24 個城市檔當測試資料。
-8. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
-9. 之後照 `docs/re/00-source-map.md` 的規則層清單逐項進 G1。
+6. ~~地圖陣列與圖塊編碼~~ **完成**：`docs/re/03` ＋ `docs/spec/map-and-tiles.md`，
+   `internal/sim/world.go`、`tiles.go`（工具重產）。
+7. ~~地形產生~~ **完成**：`docs/re/04` ＋ `docs/spec/terrain.md`，
+   `internal/sim/terrain.go`。**四顆種子、48000 格逐格對拍全部相同**（含造島分支）。
+8. **`.cty` 存檔格式**（`s_fileio.c`，27120 bytes）→ `docs/formats/01`。
+   解出來就能直接吃 X11 版的 24 個城市檔當測試資料，也才能載入八個劇本。
+9. **電力傳導**（`s_power.c`）——它是分區成長的前提，而且是純函式，好對拍。
+10. **每格掃描**（`s_scan.c`：人口密度、汙染、地價、犯罪）。
+11. **交通生成**（`s_traf.c`）、**分區成長**（`s_zone.c`）、**稅收與預算**、
+    **城市評分**（`s_eval.c`）、**災難**（`s_disast.c`）、**精靈**（`w_sprite.c`）、
+    **工具**（`w_tool.c`）、**訊息**（`s_msg.c`）。
+12. **軟體世界說明書逐頁轉錄** → `docs/manual-cht/`，同時長出 `translations/glossary.md`。
+13. 呈現層（`internal/ui`）與 DOS 資料解碼（`internal/assets`）。
 
 ## 7. 現行驗證入口
 
