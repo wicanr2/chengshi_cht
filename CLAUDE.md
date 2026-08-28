@@ -178,23 +178,28 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 | `SETTINGS.EXE` (36 KB) | 顯示模式設定，改寫 `SIMCITY.CFG` | 強證據（`read.me` 明載）|
 | `SIMCITY.CFG` (548 B) | 純文字設定檔，自帶解碼表：八種螢幕模式（`H` Hercules／`C` CGA Mono／`T` Tandy Color／`M` Hires EGA Mono／`e` Lores EGA Color／`E` Hires EGA Color／`V` Mono VGA/MCGA／`2` 256 Color VGA/MCGA）、搖桿（IBM／Covox）、音效、Covox 聲道、`Graphics Set` | **已確認**（檔案本身就是明文說明）|
 | `CEGA/`、`sega/`、`mcga/`、`MONO/` | 四套顯示模式的圖形資料。**檔名規則是 `<圖形集><模式>`**，例如 `WESTCEGA.PGF` ＝ Wild West 集的 Hires EGA Color 版 | 已確認（`SIMCITY.CFG` 的 `Graphics Set: WESTCEGA` 直接對上）|
-| 模式目錄對應 | `CEGA` ＝ Hires EGA Color；`sega` ＝ Lores EGA Color；`mcga` ＝ 256 色 VGA/MCGA；`MONO` ＝ 單色 | 假說（由 CFG 的模式清單 ＋ 各目錄檔案大小分群推得，`CEGA` 那一列另有 CFG 直接佐證）|
-| `*.PGF` | 圖形資料，每個模式一組 | 假說（副檔名推測）|
-| `*.PPF` | `*ntro`（開場）與 `*scen`（劇本畫面）的圖片 | 假說 |
+| 模式目錄對應 | `CEGA` ＝ EGA High-Res Color；`sega` ＝ **EGA Low-Res Color**（不是 Super EGA）；`MONO` ＝ Monochrome（Hercules 與 EGA Mono 共用）；`mcga` ＝ VGA/MCGA | **已確認**（手冊附錄逐項寫明；`mcga` 手冊未列，是後期版本才有的）|
+| `*.PGF` | Graphics File（圖形），每個模式與圖形集一組 | **已確認**（官方手冊附錄的磁片清單逐項列出）|
+| `*.PPF` | `*NTRO` ＝ Intro Screen、`*SCEN` ＝ Scenario Menu Screen | **已確認**（同上）|
 | `SCENARIO/*.PSN`（8 個）| 劇本：`BERN`、`BOSTON`、`DETROIT`、`DULLSVIL`、`HAMBURG`、`RIO`、`SANFRAN`、`TOKYO` | 已確認（檔名與手冊的八個悲情城市對得上）|
-| `DATA/*_MSG.PTF` | 各圖形集的訊息文字。**中文化的主要目標之一** | 假說 |
-| `DATA/*_SND.PSF`、`SOUNDDAT.PSF`、`SOUNDDAT.V4` | 音效資料 | 假說 |
+| `DATA/*_MSG.PTF` | 各圖形集的訊息文字。**中文化的主要目標之一** | 假說（手冊附錄未列 `.PTF`，要讀 bytes 自證）|
+| `SOUNDDAT.V4` | Sound Data File | **已確認**（手冊附錄）|
+| `DATA/*_SND.PSF`、`SOUNDDAT.PSF` | 音效資料。**根目錄與 `DATA/` 各有一份 `SOUNDDAT.PSF` 且內容不同** | 假說（手冊附錄未列 `.PSF`）|
 | 資料集前綴 `ASIA`／`MEDI`／`WEST`／`FUSA`／`FEUR`／`MOON` | 六組資料片圖形集：對應手冊與雜誌講的「古城風情系列」與「回到未來系列」 | 強證據（前綴語意 ＋ 骨灰集散地頁面列出兩套資料片）|
 
-⚠ **這份是破解版，不是乾淨的原版。** `read.me` 由 "Knight Rider" 署名，明載
-「This version has had all the copy protection removed」，並附了作弊程式
-`SIMCHEAT.EXE`。後果有三：
+**逐檔盤點在 [`docs/formats/00-dos110-inventory.md`](docs/formats/00-dos110-inventory.md)**
+（時間戳分群、SHA-256、對照官方手冊附錄的磁片清單）。動這份素材之前先讀它。三條摘要：
 
-1. `SIMCITY.EXE` 已被改過，**反組譯出來的不是原廠碼**，任何從它得出的結論都要標明。
-2. 部分檔案的時間戳是 1996 與 2012，與 1991-05 的原廠檔案混在一起——
-   **哪些被動過還沒查**，這是第一輪要做的事（列檔案時間戳分群）。
-3. 要拿它當 oracle 之前，先另尋一份未破解的 1.10 副本比對。**在那之前，
-   從這份得到的行為結論一律標「假說」。**
+1. **這份 zip 是三個年代疊起來的**：1991-05 的原廠 1.10、1996-12 的 "Knight Rider"
+   重打包（`mcga/`＋`sega/`＋`read.me`）、2012-05 補的古城風情三個圖形集。
+2. **`read.me` 自稱移除了防拷，但 `SIMCITY.EXE` 的時間戳跟原廠同一批。**
+   到底有沒有被改是**未解**，不是「已被破解」——DOSBox 跑一次看會不會問手冊就能定案。
+   在定案之前，從這份執行檔反組譯得到的結論一律標明來源版本存疑。
+3. **時間戳不等於內容被改。** `sega/` 整套是 1996 的時間戳，但官方手冊附錄列了
+   `SEGADAT.PGF`——它是原廠檔，只是被 touch 過。判「這個檔被動過了嗎」要比內容。
+
+⚠ **這份副本缺 CGA 與 Tandy 的全部資料檔**（手冊有列）。`SIMCITY.CFG` 選得到那兩個模式，
+但檔案不在。要完整覆蓋八種顯示模式得另找一份磁片映像。
 
 ### 2.2 X11 版（`Rare simcity.zip`，玩家自備，不入版控）
 
