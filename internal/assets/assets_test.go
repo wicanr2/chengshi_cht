@@ -28,16 +28,41 @@ func TestLZSSDecodesFirstMessage(t *testing.T) {
 	if err != nil {
 		t.Skip("沒有 DATA/MESSAGE.PTF")
 	}
-	msgs, err := LoadPTF(raw)
+	secs, err := LoadPTF(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(msgs) == 0 {
-		t.Fatal("一筆訊息都沒解出來")
+	if len(secs) == 0 {
+		t.Fatal("一個段落都沒解出來")
 	}
+	msgs := TextMessages(secs)
 	const want = "More residential zones needed."
-	if msgs[0].Text != want {
-		t.Fatalf("第 0 筆 = %q，應為 %q", msgs[0].Text, want)
+	if len(msgs) == 0 || msgs[0].Text != want {
+		t.Fatalf("第一筆 = %q，應為 %q", msgs[0].Text, want)
+	}
+
+	// 月份是最好的回歸哨兵：把整份檔案當成「文字、屬性」交替去讀，
+	// 會得到「一月、三月、五月……」——二月被當成一月的屬性吃掉，
+	// 而輸出看起來完全合理，只是少了一半。
+	var months *Section
+	for i := range secs {
+		if len(secs[i].Strings) >= 12 && secs[i].Strings[0] == "Jan" {
+			months = &secs[i]
+			break
+		}
+	}
+	if months == nil {
+		t.Fatal("找不到月份段落 —— 段落切割可能壞了")
+	}
+	want12 := []string{"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}
+	for i, w := range want12 {
+		if months.Strings[i] != w {
+			t.Errorf("第 %d 個月是 %q，應為 %q", i, months.Strings[i], w)
+		}
+	}
+	if months.Count != 12 {
+		t.Errorf("月份段落宣告 %d 筆，應為 12", months.Count)
 	}
 }
 
@@ -78,9 +103,14 @@ func TestAllMessageFilesDecode(t *testing.T) {
 			t.Errorf("%s：解出 %d 位元組，可列印比例只有 %.0f%% —— LZSS 參數可能不對",
 				e.Name(), len(d), ratio*100)
 		}
-		msgs, err := LoadPTF(raw)
-		if err != nil || len(msgs) < 40 {
-			t.Errorf("%s：只解出 %d 筆訊息（err=%v）", e.Name(), len(msgs), err)
+		secs, err := LoadPTF(raw)
+		if err != nil {
+			t.Errorf("%s：解析失敗 %v", e.Name(), err)
+			continue
+		}
+		msgs := TextMessages(secs)
+		if len(secs) < 20 || len(msgs) < 150 {
+			t.Errorf("%s：%d 個段落、%d 筆文字，太少", e.Name(), len(secs), len(msgs))
 		}
 	}
 	if found == 0 {

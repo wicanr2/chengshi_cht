@@ -1,839 +1,1047 @@
 # message 的訊息翻譯
 #
-# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，
-# 而且六個圖形集的同一個序號講同一件事、用詞不同。
+# 鍵是「段落.索引」，不是原文：原文屬於原權利人不進版控，
+# 而且六個圖形集的同一個鍵講同一件事、用詞不同。
 # 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。
 #
 # len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。
-# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。
 
-[0]
+# ── 第 0 段 ──
+["0.0"]
 len = 30
-mark = "\xfe\x02"
-zh = ""
+zh = "住宅區不足"
 
-[1]
+["0.2"]
 len = 29
-mark = "\xfe\x02"
-zh = ""
+zh = "商業區不足"
 
-[2]
+["0.4"]
 len = 29
-mark = "\xfe\x02"
-zh = ""
+zh = "工業用地不足"
 
-[3]
+["0.6"]
 len = 20
-mark = "\xfe\x02"
-zh = ""
+zh = "道路不足"
 
-[4]
+["0.8"]
 len = 23
-mark = "\xfe\x02"
-zh = ""
+zh = "鐵路系統不敷使用"
 
-[5]
+["0.10"]
 len = 20
-mark = "\xfe\x04"
-zh = ""
+zh = "請興建發電廠"
 
-[6]
+["0.12"]
 len = 27
-mark = "\xfe\x02"
-zh = ""
+zh = "市民要求興建體育館"
 
-[7]
+["0.14"]
 len = 29
-mark = "\xfe\x02"
-zh = ""
+zh = "工業需要海港"
 
-[8]
+["0.16"]
 len = 29
-mark = "\xfe\x02"
-zh = ""
+zh = "商業需要機場"
 
-[9]
+["0.18"]
 len = 20
-mark = "\xfe\x03"
-zh = ""
+zh = "污染非常嚴重"
 
-[10]
+["0.20"]
 len = 16
-mark = "\xfe\x03"
-zh = ""
+zh = "犯罪率非常高"
 
-[11]
+["0.22"]
 len = 31
-mark = "\xfe\x03"
-zh = ""
+zh = "交通經常壅塞"
 
-[12]
+["0.24"]
 len = 34
-mark = "\xfe\x03"
-zh = ""
+zh = "市民要求增設消防隊"
 
-[13]
+["0.26"]
 len = 36
-mark = "\xfe\x03"
-zh = ""
+zh = "市民要求增設警察局"
 
-[14]
+["0.28"]
 len = 36
-mark = "\xfe\x05"
-zh = ""
+zh = "傳出停電。請查看電力網路圖"
 
-[15]
+["0.30"]
 len = 41
-mark = "\xfe\x03"
-zh = ""
+zh = "稅率過高，市民不滿"
 
-[16]
+["0.32"]
 len = 42
-mark = "\xfe\x04"
-zh = ""
+zh = "經費不足，道路年久失修"
 
-[17]
+["0.34"]
 len = 30
-mark = "\xfe\x03"
-zh = ""
+zh = "消防隊需要經費"
 
-[18]
+["0.36"]
 len = 32
-mark = "\xfe\x03"
-zh = ""
+zh = "警察局需要經費"
 
-[19]
+["0.38"]
 len = 15
-mark = "\xfe\x06"
-zh = ""
+zh = "傳出火警！"
 
-[20]
+["0.40"]
 len = 29
-mark = "\xfe\x06"
-zh = ""
+zh = "發現怪獸出沒！！"
 
-[21]
+["0.42"]
 len = 19
-mark = "\xfe\x06"
-zh = ""
+zh = "出現龍捲風！！"
 
-[22]
+["0.44"]
 len = 29
-mark = "\xfe\a"
-zh = ""
+zh = "發生強烈地震！！！"
 
-[23]
+["0.46"]
 len = 21
-mark = "\xfe\x06"
-zh = ""
+zh = "有飛機墜毀！"
 
-[24]
+["0.48"]
 len = 20
-mark = "\xfe\x06"
-zh = ""
+zh = "有船隻失事！"
 
-[25]
+["0.50"]
 len = 17
-mark = "\xfe\x06"
-zh = ""
+zh = "有火車出軌！"
 
-[26]
+["0.52"]
 len = 22
-mark = "\xfe\x06"
-zh = ""
+zh = "有直昇機墜毀！"
 
-[27]
+["0.54"]
 len = 26
-mark = "\xfe\x03"
-zh = ""
+zh = "失業率偏高"
 
-[28]
+["0.56"]
 len = 25
-mark = "\xfe\x05"
-zh = ""
+zh = "本市已經破產！"
 
-[29]
+["0.58"]
 len = 26
-mark = "\xfe\x03"
-zh = ""
+zh = "樹林砍伐過多"
 
-[30]
+["0.60"]
 len = 16
-mark = "\xfe\x02"
-zh = ""
+zh = "公園不足"
 
-[31]
+["0.62"]
 len = 20
-mark = "\xfe\x06"
-zh = ""
+zh = "偵測到爆炸！"
 
-[32]
+["0.64"]
 len = 33
-mark = "\xfe\t"
-zh = ""
+zh = "資金不足，無法興建"
 
-[33]
+["0.66"]
 len = 29
-mark = "\xfe\t"
-zh = ""
+zh = "這塊地必須先整平"
 
-[34]
+["0.68"]
 len = 29
-mark = "\xfe\x05"
-zh = ""
+zh = "人口已達兩千人"
 
-[35]
+["0.70"]
 len = 30
-mark = "\xfe\x05"
-zh = ""
+zh = "人口已達一萬人"
 
-[36]
+["0.72"]
 len = 30
-mark = "\xfe\x05"
-zh = ""
+zh = "人口已達五萬人"
 
-[37]
+["0.74"]
 len = 31
-mark = "\xfe\x05"
-zh = ""
+zh = "人口已達十萬人"
 
-[38]
+["0.76"]
 len = 31
-mark = "\xfe\x05"
-zh = ""
+zh = "人口已達五十萬人"
 
-[39]
+["0.78"]
 len = 37
-mark = "\xfe\x05"
-zh = ""
+zh = "電力吃緊，請再蓋一座發電廠"
 
-[40]
+["0.80"]
 len = 23
-mark = "\xfe\b"
-zh = ""
+zh = "交通量偏高"
 
-[41]
+["0.82"]
 len = 20
-mark = "\xfe\x06"
-zh = ""
+zh = "傳出水災！！"
 
-[42]
+["0.84"]
 len = 35
-mark = "\xfe\x06"
-zh = ""
+zh = "發生爐心熔毀！！！"
 
-[43]
+["0.86"]
 len = 27
-mark = "\xfe\t"
-zh = ""
+zh = "水面上不能興建"
 
-[44]
+["0.88"]
 len = 23
-mark = "\xfe\t"
-zh = ""
+zh = "這裡不能興建"
 
-[45]
+["0.90"]
 len = 21
-mark = "\xfe\b"
-zh = ""
+zh = "這裡無法整地"
 
-[46]
-len = 0
-mark = "\xfe\b"
-zh = ""
-
-[47]
-len = 0
-mark = "\xfe\b"
-zh = ""
-
-[48]
-len = 0
-mark = "\xfe\b"
-zh = ""
-
-[49]
-len = 2
-mark = ""
-zh = ""
-
-[50]
-len = 1
-mark = "\x10"
-zh = ""
-
-[51]
+# ── 第 1 段 ──
+["1.0"]
 len = 12
-mark = "Road: $10"
-zh = ""
+zh = "推土機：$1"
 
-[52]
+["1.1"]
+len = 9
+zh = "道路：$10"
+
+["1.2"]
 len = 15
-mark = "Railroad: $20"
-zh = ""
+zh = "電力線：$5"
 
-[53]
-len = 9
-mark = "Residential: $100"
-zh = ""
-
-[54]
-len = 16
-mark = "Industrial: $100"
-zh = ""
-
-[55]
-len = 20
-mark = "Fire station: $500"
-zh = ""
-
-[56]
-len = 14
-mark = "Nuclear reactor: $5000"
-zh = ""
-
-[57]
-len = 14
-mark = "Airport: $10000"
-zh = ""
-
-[58]
-len = 23
-mark = "\xff\xbe\x12\x15"
-zh = ""
-
-[59]
-len = 182
-mark = "\xfe\xf4\xffCRIME ALERT-  Crime in your city is\nout of hand. Angry mobs are looting\nand vandalizing the central city. The\npresident will send in the national\nguard soon if you cannot control the\nproblem."
-zh = ""
-
-[60]
-len = 236
-mark = "\xfe\xd5\xffYOU'RE A WINNER- Your mayorial skill\nand city planning expertise have\nearned you the KEY TO THE CITY. Local\nresidents will erect monuments to\nyour glory and name their first-born\nchildren after you. Why not run for\ngovernor?"
-zh = ""
-
-[61]
-len = 317
-mark = "\xfe8\xffMONSTER ATTACK- A large reptilian\ncreature has been spotted in the\nwater. It seems to be attracted to \nareas of high pollution. There is a\ntrail of destruction wherever it\n goes.  You will have to wait\nuntil it leaves and then rebuild\nfrom the rubble."
-zh = ""
-
-[62]
-len = 258
-mark = "\xfe\xf6\xffMEGALOPOLIS - Congratulations, you\nhave reached the highest category\nof urban development, the mega-\nlopolis. If you manage to reach\nthis level give us a call at MAXIS\nor send us a copy of your city. We \nmight do something interesting with\nit."
-zh = ""
-
-[63]
-len = 204
-mark = "\xfe\xda\xffCAPITAL- Your current city has\nbecome a capital.  The current\npopulation here is 50,000. Your\npolitical future looks bright."
-zh = ""
-
-[64]
-len = 112
-mark = "\xfe\xdc\xffTOWN- Congratulations, your village\nhas grown to town status. You now\nhave 2,000 citizens."
-zh = ""
-
-[65]
-len = 327
-mark = "\xfe\xfa\xffRio de Janiero, Brazil 2047 -\nBy the mid-21st century, the green-\nhouse effect increased global tem-\nperatures about 4 degrees F. Polar\nicecaps melted and raised sea levels\nworldwide. Coastal areas were\ndevastated by flood and erosion. You\nhave 10 years to turn this swamp back\ninto a city again."
-zh = ""
-
-[66]
-len = 242
-mark = "\xfe\xfb\xffHamburg, Germany 1944-\nAllied fire-bombing of German cities\nin WWII caused tremendous damage and\nloss of life. People living in the\ninner cities were at greatest risk.\nYou must control the firestorms\nduring the bombing and then rebuild\nthe city after the war. You have\nfive years."
-zh = ""
-
-[67]
-len = 271
-mark = "\xfe\xfe\xffDullsville, USA 1900-\nThings haven't changed much around\nhere in the last hundred years or\nso and the residents are beginning\nto get bored. They think Dullsville\ncould be the next great city with\nthe right leader. It is your job to\nattract new growth and development,\nturning Dullsville into a\nMetropolis within 30 years."
-zh = ""
-
-[68]
-len = 285
-mark = "\xfe\xf9\xffBern, Switzerland 1965-\nThe roads here are becoming more\ncongested every day, and the\nresidents are upset. They demand\nthat you do something about it.\nSome have suggested a mass transit\nsystem as the answer, but this\nwould require major rezoning in\nthe downtown area. You have\nten years."
-zh = ""
-
-[69]
-len = 5
-mark = ""
-zh = ""
-
-[70]
-len = 1
-mark = "\x04"
-zh = ""
-
-[71]
-len = 6
-mark = "Police"
-zh = ""
-
-[72]
-len = 6
-mark = "Tax Rate"
-zh = ""
-
-[73]
-len = 1
-mark = "\f"
-zh = ""
-
-[74]
-len = 3
-mark = "Feb"
-zh = ""
-
-[75]
-len = 3
-mark = "Apr"
-zh = ""
-
-[76]
-len = 3
-mark = "Jun"
-zh = ""
-
-[77]
-len = 3
-mark = "Aug"
-zh = ""
-
-[78]
-len = 3
-mark = "Oct"
-zh = ""
-
-[79]
-len = 3
-mark = "Dec"
-zh = ""
-
-[80]
-len = 1
-mark = "\x03"
-zh = ""
-
-[81]
-len = 4
-mark = "Nuclear"
-zh = ""
-
-[82]
-len = 2
-mark = "\b"
-zh = ""
-
-[83]
-len = 12
-mark = "sanfran.psn"
-zh = ""
-
-[84]
-len = 11
-mark = "bern.psn"
-zh = ""
-
-[85]
-len = 9
-mark = "detroit.psn"
-zh = ""
-
-[86]
-len = 10
-mark = "rio.psn"
-zh = ""
-
-[87]
-len = 1
-mark = "\b"
-zh = ""
-
-[88]
-len = 10
-mark = "Crime"
-zh = ""
-
-[89]
-len = 8
-mark = "Cash Flow"
-zh = ""
-
-[90]
-len = 8
-mark = "Pollution"
-zh = ""
-
-[91]
+["1.3"]
 len = 13
-mark = "Last 120 years"
-zh = ""
+zh = "鐵軌：$20"
 
-[92]
-len = 1
-mark = "\x03"
-zh = ""
-
-[93]
-len = 18
-mark = "Population Growth"
-zh = ""
-
-[94]
-len = 2
-mark = "\x03"
-zh = ""
-
-[95]
-len = 6
-mark = "Fire"
-zh = ""
-
-[96]
-len = 2
-mark = "\v"
-zh = ""
-
-[97]
-len = 11
-mark = " Power Grid "
-zh = ""
-
-[98]
-len = 16
-mark = " Population Density "
-zh = ""
-
-[99]
-len = 17
-mark = " Pollution Map "
-zh = ""
-
-[100]
-len = 11
-mark = " Land Value "
-zh = ""
-
-[101]
-len = 19
-mark = " Fire Protection "
-zh = ""
-
-[102]
-len = 19
-mark = "N"
-zh = ""
-
-[103]
-len = 1
-mark = "\xff\xff\xffPopulation Density"
-zh = ""
-
-[104]
-len = 21
-mark = "Fire Protection"
-zh = ""
-
-[105]
-len = 17
-mark = "1"
-zh = ""
-
-[106]
-len = 1
-mark = "VILLAGE"
-zh = ""
-
-[107]
-len = 4
-mark = "CITY"
-zh = ""
-
-[108]
-len = 7
-mark = "METROPOLIS"
-zh = ""
-
-[109]
-len = 11
-mark = "?"
-zh = ""
-
-[110]
-len = 1
-mark = "CRIME"
-zh = ""
-
-[111]
+["1.4"]
 len = 9
-mark = "HOUSING COSTS"
-zh = ""
+zh = "公園：$10"
 
-[112]
-len = 5
-mark = "TRAFFIC"
-zh = ""
-
-[113]
-len = 12
-mark = "FIRES"
-zh = ""
-
-[114]
-len = 3
-mark = "0"
-zh = ""
-
-[115]
-len = 9
-mark = "Water"
-zh = ""
-
-[116]
-len = 6
-mark = "Park"
-zh = ""
-
-[117]
-len = 6
-mark = "Flood"
-zh = ""
-
-[118]
-len = 11
-mark = "Fire"
-zh = ""
-
-[119]
-len = 4
-mark = "Power line"
-zh = ""
-
-[120]
-len = 4
-mark = "Residential"
-zh = ""
-
-[121]
-len = 8
-mark = "Church"
-zh = ""
-
-[122]
-len = 10
-mark = "Maxis"
-zh = ""
-
-[123]
-len = 10
-mark = "Industrial"
-zh = ""
-
-[124]
-len = 8
-mark = "Airport"
-zh = ""
-
-[125]
-len = 16
-mark = "Fire Station"
-zh = ""
-
-[126]
+["1.5"]
 len = 17
-mark = "Stadium"
-zh = ""
+zh = "住宅區：$100"
 
-[127]
-len = 19
-mark = "Bridge"
-zh = ""
-
-[128]
-len = 10
-mark = "Park Fountain"
-zh = ""
-
-[129]
-len = 10
-mark = "Small Explosion"
-zh = ""
-
-[130]
-len = 10
-mark = "Coal Smoke"
-zh = ""
-
-[131]
+["1.6"]
 len = 16
-mark = "Bridge"
-zh = ""
+zh = "商業區：$100"
 
-[132]
-len = 19
-mark = "???"
-zh = ""
+["1.7"]
+len = 16
+zh = "工業用地：$100"
 
-[133]
-len = 1
-mark = "\x05"
-zh = ""
+["1.8"]
+len = 20
+zh = "警察局：$500"
 
-[134]
-len = 8
-mark = "Value:"
-zh = ""
-
-[135]
-len = 6
-mark = "Pollution:"
-zh = ""
-
-[136]
-len = 7
-mark = "\""
-zh = ""
-
-[137]
-len = 1
-mark = "SYSTEM"
-zh = ""
-
-[138]
-len = 7
-mark = "DISASTERS"
-zh = ""
-
-[139]
-len = 7
-mark = "\xff\x9e"
-zh = ""
-
-[140]
-len = 1
-mark = " About SIM CITY"
-zh = ""
-
-[141]
-len = 2
-mark = " Print"
-zh = ""
-
-[142]
-len = 14
-mark = " -"
-zh = ""
-
-[143]
-len = 14
-mark = " Start New City"
-zh = ""
-
-[144]
-len = 2
-mark = " Load City  Ctrl-L"
-zh = ""
-
-[145]
+["1.9"]
 len = 18
-mark = " Save City  Ctrl-S"
-zh = ""
+zh = "消防隊：$500"
 
-[146]
-len = 2
-mark = " Exit       Ctrl-X"
-zh = ""
+["1.10"]
+len = 14
+zh = "體育館：$3000"
 
-[147]
-len = 2
-mark = "\b"
-zh = ""
-
-[148]
+["1.11"]
 len = 22
-mark = " Auto-Budget"
-zh = ""
+zh = "核能發電廠：$5000"
 
-[149]
-len = 10
-mark = " Sound Off"
-zh = ""
+["1.12"]
+len = 14
+zh = "海港：$5000"
 
-[150]
+["1.13"]
+len = 15
+zh = "機場：$10000"
+
+["1.14"]
+len = 23
+zh = "火力發電廠：$3000"
+
+# ── 第 2 段 ──
+["2.0"]
+len = 182
+zh = "交通警訊——本市交通量持續擴張，
+通勤族的火氣越來越大，公路上的
+槍擊事件也在增加。要嘛多蓋幾條
+道路和鐵軌，要嘛去弄一台防彈車。"
+
+["2.1"]
+len = 191
+zh = "治安警報——本市的犯罪已經失控。
+暴民在市中心搶劫、破壞。你再不
+把問題壓下來，總統就要派國民兵
+進來了。"
+
+["2.2"]
+len = 233
+zh = "爐心熔毀——你的發電廠發生爐心
+熔毀。在放射性同位素衰變完之前，
+建議你避開那一帶。這問題要好幾
+個世代才會過去，別憋著氣等。"
+
+["2.3"]
+len = 224
+zh = "你贏了——憑著你的市政手腕與都市
+計劃專業，你贏得了市鑰。當地居民
+會為你立碑，並且拿你的名字為
+自己的長子命名。要不要考慮選州長？"
+
+["2.4"]
+len = 314
+zh = "彈劾通知——全市市民終於受夠了你
+拙劣的規劃與無能的管理。一群憤怒
+的暴民——由你母親帶頭——已經出現
+在市政廳附近。你該認真考慮去放個
+長假了，現在就去。（或者把說明書
+讀一遍，再來一次。）"
+
+["2.5"]
+len = 253
+zh = "怪獸來襲——有人在水域發現一隻
+巨大的爬蟲類生物。牠似乎會被高
+污染的地區吸引，所到之處一片狼藉。
+你只能等牠離開，再從瓦礫堆重建。"
+
+["2.6"]
+len = 255
+zh = "污染警報——本市的污染已經超過
+模擬城市污染管理局訂定的上限。
+你正冒著造成嚴重生態後果的風險。
+要嘛把它清乾淨，要嘛在市政廳門口
+擺個防毒面具攤位。"
+
+["2.7"]
+len = 243
+zh = "超級都會——恭喜，你已經達到都市
+發展的最高等級：超級都會。
+如果你真的走到這一步，打通電話給
+MAXIS，或把你的城市寄一份給我們，
+我們也許會拿它做點有趣的事。"
+
+["2.8"]
+len = 201
+zh = "大都會——你的首府已經晉升為大
+都會，目前人口十萬。以你的規劃
+能力，可以考慮去選州長，
+或者改行做 VLSI 設計。"
+
+["2.9"]
+len = 124
+zh = "首府——你的城市已經成為首府，
+目前人口五萬。你的政治前途一片
+光明。"
+
+["2.10"]
+len = 109
+zh = "城市——你的城鎮已經長成一座完整
+的城市，目前人口一萬。
+繼續保持！"
+
+["2.11"]
+len = 90
+zh = "城鎮——恭喜，你的村莊已經升格為
+城鎮，現在有兩千位市民了。"
+
+["2.12"]
+len = 324
+zh = "美國密西根州底特律，1972 年——
+到了 1970 年代，海外競爭與其他
+經濟因素把這座曾經的世界汽車之都
+推進了衰退。地價暴跌與失業使得
+市中心的犯罪惡化成長期問題。
+你有十年的時間降低犯罪，
+並重建本市的工業基礎。"
+
+["2.13"]
+len = 296
+zh = "巴西里約熱內盧，2047 年——
+到二十一世紀中葉，溫室效應讓全球
+均溫上升了約華氏四度。極地冰冠
+融化，全球海平面上升，沿海地區
+被洪水與侵蝕摧毀。你有十年的時間
+把這片沼澤變回一座城市。"
+
+["2.14"]
+len = 239
+zh = "日本東京，1957 年——
+有人發現一隻巨大的爬蟲類生物正
+朝東京灣前進。牠似乎是被大量的
+工業污染吸引來的。先控制住火勢，
+再重建工業中心。你有五年的時間。"
+
+["2.15"]
+len = 280
+zh = "德國漢堡，1944 年——
+二次大戰盟軍對德國城市的燒夷彈
+轟炸造成巨大的破壞與傷亡，住在
+市中心的人風險最高。你必須在轟炸
+期間控制住火風暴，戰後再重建城市。
+你有五年的時間。"
+
+["2.16"]
+len = 268
+zh = "美國加州舊金山，1906 年——
+地震本身的損害，比起隨後那場燒了
+好幾天才控制住的大火，其實算輕的。
+一千五百人喪生。你首先要處理的是
+火勢，然後清除瓦礫、開始重建。
+你有五年的時間。"
+
+["2.17"]
+len = 321
+zh = "美國達斯維利，1900 年——
+這裡過去一百年來沒什麼變化，
+居民也開始覺得無聊了。他們認為
+只要有對的領導者，達斯維利可以
+成為下一座偉大的城市。你的工作
+是吸引新的成長與開發，在三十年內
+把達斯維利變成一座大都會。"
+
+["2.18"]
+len = 282
+zh = "美國麻州波士頓，2010 年——
+市中心新蓋的核子反應爐之一即將
+發生嚴重的爐心熔毀。反應爐周邊
+會受到嚴重的輻射污染，逼得你必須
+繞著它重整整座城市。你有五年的
+時間把情況控制下來。"
+
+["2.19"]
+len = 287
+zh = "瑞士伯恩，1965 年——
+這裡的道路一天比一天壅塞，居民
+很不滿，要求你想想辦法。有人提議
+用大眾運輸系統來解決，但那需要
+對市中心做大規模的重新分區。
+你有十年的時間。"
+
+# ── 第 3 段 ──
+["3.0"]
 len = 6
-mark = " Animate all"
+zh = " 交通"
+
+["3.1"]
+len = 6
+zh = " 警局"
+
+["3.2"]
+len = 6
+zh = " 消防"
+
+["3.3"]
+len = 8
+zh = "稅率"
+
+# ── 第 4 段 ──
+["4.0"]
+len = 3
+zh = "一月"
+
+["4.1"]
+len = 3
+zh = "二月"
+
+["4.2"]
+len = 3
+zh = "三月"
+
+["4.3"]
+len = 3
+zh = "四月"
+
+["4.4"]
+len = 3
+zh = "五月"
+
+["4.5"]
+len = 3
+zh = "六月"
+
+["4.6"]
+len = 3
+zh = "七月"
+
+["4.7"]
+len = 3
+zh = "八月"
+
+["4.8"]
+len = 3
+zh = "九月"
+
+["4.9"]
+len = 3
+zh = "十月"
+
+["4.10"]
+len = 3
+zh = "十一月"
+
+["4.11"]
+len = 3
+zh = "十二月"
+
+# ── 第 5 段 ──
+["5.0"]
+len = 4
+zh = "火力"
+
+["5.1"]
+len = 7
+zh = "核能"
+
+# ── 第 6 段 ──
+["6.0"]
+len = 12
 zh = ""
 
-[151]
-len = 19
-mark = "\xff="
-zh = ""
-
-[152]
-len = 1
-mark = " Fastest  4"
-zh = ""
-
-[153]
+["6.1"]
 len = 11
-mark = " Average  2"
 zh = ""
 
-[154]
+["6.2"]
 len = 11
-mark = " Pause    0"
 zh = ""
 
-[155]
-len = 2
-mark = "\t"
+["6.3"]
+len = 8
 zh = ""
 
-[156]
-len = 5
-mark = " Flood"
+["6.4"]
+len = 9
 zh = ""
 
-[157]
+["6.5"]
+len = 11
+zh = ""
+
+["6.6"]
 len = 10
-mark = " Tornado"
 zh = ""
 
-[158]
+["6.7"]
+len = 7
+zh = ""
+
+# ── 第 7 段 ──
+["7.0"]
+len = 10
+zh = "人口"
+
+["7.1"]
+len = 5
+zh = "犯罪"
+
+["7.2"]
+len = 8
+zh = "商業"
+
+["7.3"]
+len = 9
+zh = "現金流量"
+
+["7.4"]
+len = 8
+zh = "工業"
+
+["7.5"]
+len = 9
+zh = "污染"
+
+["7.6"]
+len = 13
+zh = "近十年"
+
+["7.7"]
+len = 14
+zh = "近一百二十年"
+
+# ── 第 8 段 ──
+["8.0"]
+len = 18
+zh = "人口分佈"
+
+["8.1"]
+len = 17
+zh = "人口成長"
+
+# ── 第 9 段 ──
+["9.0"]
+len = 6
+zh = "警力"
+
+["9.1"]
+len = 4
+zh = "消防"
+
+# ── 第 10 段 ──
+["10.0"]
 len = 11
-mark = " Monster"
+zh = " 都市型態 "
+
+["10.1"]
+len = 12
+zh = " 電力網路 "
+
+["10.2"]
+len = 16
+zh = " 運輸網路 "
+
+["10.3"]
+len = 20
+zh = " 人口分佈 "
+
+["10.4"]
+len = 17
+zh = " 交通密度 "
+
+["10.5"]
+len = 15
+zh = " 污染分佈 "
+
+["10.6"]
+len = 11
+zh = " 犯罪率 "
+
+["10.7"]
+len = 12
+zh = " 地價 "
+
+["10.8"]
+len = 19
+zh = " 警力範圍 "
+
+["10.9"]
+len = 17
+zh = " 消防範圍 "
+
+["10.10"]
+len = 19
+zh = " 人口成長 "
+
+# ── 第 11 段 ──
+["11.0"]
+len = 18
+zh = "人口分佈"
+
+["11.1"]
+len = 17
+zh = "警力範圍"
+
+["11.2"]
+len = 15
+zh = "消防範圍"
+
+["11.3"]
+len = 17
+zh = "人口成長"
+
+# ── 第 12 段 ──
+["12.0"]
+len = 7
+zh = "村莊"
+
+["12.1"]
+len = 4
+zh = "城鎮"
+
+["12.2"]
+len = 4
+zh = "城市"
+
+["12.3"]
+len = 7
+zh = "首府"
+
+["12.4"]
+len = 10
+zh = "大都會"
+
+["12.5"]
+len = 11
+zh = "超級都會"
+
+# ── 第 13 段 ──
+["13.0"]
+len = 5
+zh = "犯罪"
+
+["13.1"]
+len = 9
+zh = "污染"
+
+["13.2"]
+len = 13
+zh = "房價"
+
+["13.3"]
+len = 5
+zh = "稅"
+
+["13.4"]
+len = 7
+zh = "交通"
+
+["13.5"]
+len = 12
+zh = "失業"
+
+["13.6"]
+len = 5
+zh = "火災"
+
+# ── 第 14 段 ──
+["14.0"]
+len = 1
 zh = ""
 
-[159]
+["14.1"]
+len = 9
+zh = "空地"
+
+["14.2"]
+len = 5
+zh = "水域"
+
+["14.3"]
+len = 6
+zh = "樹林"
+
+["14.4"]
+len = 4
+zh = "公園"
+
+["14.5"]
+len = 6
+zh = "瓦礫"
+
+["14.6"]
+len = 5
+zh = "水災"
+
+["14.7"]
+len = 11
+zh = "輻射污染"
+
+["14.8"]
+len = 4
+zh = "火災"
+
+["14.9"]
+len = 4
+zh = "道路"
+
+["14.10"]
+len = 10
+zh = "電力線"
+
+["14.11"]
+len = 4
+zh = "鐵軌"
+
+["14.12"]
+len = 11
+zh = "住宅區"
+
+["14.13"]
+len = 8
+zh = "醫院"
+
+["14.14"]
+len = 6
+zh = "教堂"
+
+["14.15"]
+len = 10
+zh = "商業區"
+
+["14.16"]
+len = 5
+zh = "MAXIS"
+
+["14.17"]
+len = 10
+zh = "商業區"
+
+["14.18"]
+len = 10
+zh = "工業用地"
+
+["14.19"]
+len = 8
+zh = "海港"
+
+["14.20"]
+len = 7
+zh = "機場"
+
+["14.21"]
+len = 16
+zh = "火力發電廠"
+
+["14.22"]
+len = 12
+zh = "消防隊"
+
+["14.23"]
+len = 17
+zh = "警察局"
+
+["14.24"]
+len = 7
+zh = "體育館"
+
+["14.25"]
+len = 19
+zh = "核能發電廠"
+
+["14.26"]
+len = 6
+zh = "橋樑"
+
+["14.27"]
+len = 10
+zh = "工業用地"
+
+["14.28"]
+len = 13
+zh = "公園噴泉"
+
+["14.29"]
+len = 10
+zh = "工業用地"
+
+["14.30"]
+len = 15
+zh = "小型爆炸"
+
+["14.31"]
+len = 10
+zh = "工業用地"
+
+["14.32"]
+len = 10
+zh = "發電廠煙囪"
+
+["14.33"]
+len = 16
+zh = "四九人隊 7－熊隊 10"
+
+["14.34"]
+len = 6
+zh = "橋樑"
+
+["14.35"]
+len = 19
+zh = "核能發電廠"
+
+["14.36"]
+len = 3
+zh = "？？？"
+
+# ── 第 15 段 ──
+["15.0"]
+len = 8
+zh = "密度："
+
+["15.1"]
+len = 6
+zh = "地價："
+
+["15.2"]
+len = 6
+zh = "犯罪："
+
+["15.3"]
+len = 10
+zh = "污染："
+
+["15.4"]
+len = 7
+zh = "成長："
+
+# ── 第 16 段 ──
+["16.0"]
+len = 6
+zh = "系統"
+
+["16.1"]
+len = 7
+zh = "功能"
+
+["16.2"]
+len = 9
+zh = "災難"
+
+["16.3"]
+len = 7
+zh = "視窗"
+
+# ── 第 17 段 ──
+["17.0"]
+len = 15
+zh = " 關於本遊戲"
+
+["17.1"]
 len = 2
-mark = " Disable "
-zh = ""
+zh = " -"
 
-[160]
+["17.2"]
+len = 6
+zh = " 印表"
+
+["17.3"]
+len = 14
+zh = " 讀取圖形集"
+
+["17.4"]
 len = 2
-mark = "\n"
-zh = ""
+zh = " -"
 
-[161]
-len = 21
-mark = " Graphs        Ctrl-G"
-zh = ""
+["17.5"]
+len = 14
+zh = " 讀取悲情城市"
 
-[162]
-len = 21
-mark = " Edit          Ctrl-E"
-zh = ""
+["17.6"]
+len = 15
+zh = " 重新建造一新城市"
 
-[163]
-len = 21
-mark = " Close         Ctrl-C"
-zh = ""
+["17.7"]
+len = 2
+zh = " -"
 
-[164]
-len = 21
-mark = " Position      Ctrl-P"
-zh = ""
+["17.8"]
+len = 18
+zh = " 讀取舊有檔案  Ctrl-L"
 
-[165]
+["17.9"]
+len = 18
+zh = " 以……檔名儲存 "
+
+["17.10"]
+len = 18
+zh = " 儲存現有城市  Ctrl-S"
+
+["17.11"]
+len = 2
+zh = " -"
+
+["17.12"]
+len = 18
+zh = " 跳出遊戲      Ctrl-X"
+
+# ── 第 18 段 ──
+["18.0"]
+len = 22
+zh = " 全自動整地      Ctrl-A"
+
+["18.1"]
+len = 12
+zh = " 自動編列預算"
+
+["18.2"]
+len = 10
+zh = " 自動前往災難現場"
+
+["18.3"]
+len = 10
+zh = " 關閉音效"
+
+["18.4"]
+len = 6
+zh = " 模擬速度"
+
+["18.5"]
+len = 12
+zh = " 持續所有視窗內之活動"
+
+["18.6"]
+len = 19
+zh = " 加快市區景物活動"
+
+# ── 第 19 段 ──
+["19.0"]
+len = 11
+zh = " 最快  4"
+
+["19.1"]
+len = 11
+zh = " 快速  3"
+
+["19.2"]
+len = 11
+zh = " 普通  2"
+
+["19.3"]
+len = 11
+zh = " 慢速  1"
+
+["19.4"]
+len = 11
+zh = " 暫停  0"
+
+# ── 第 20 段 ──
+["20.0"]
+len = 5
+zh = " 火災"
+
+["20.1"]
+len = 6
+zh = " 水災"
+
+["20.2"]
+len = 10
+zh = " 空難"
+
+["20.3"]
+len = 8
+zh = " 龍捲風"
+
+["20.4"]
+len = 11
+zh = " 地震"
+
+["20.5"]
+len = 8
+zh = " 怪獸"
+
+["20.6"]
+len = 2
+zh = " -"
+
+["20.7"]
+len = 9
+zh = " 取消 "
+
+# ── 第 21 段 ──
+["21.0"]
 len = 21
-mark = "\xff"
-zh = ""
+zh = " 地圖視窗      Ctrl-M"
+
+["21.1"]
+len = 21
+zh = " 統計圖視窗    Ctrl-G"
+
+["21.2"]
+len = 21
+zh = " 預算視窗      Ctrl-B"
+
+["21.3"]
+len = 21
+zh = " 編輯視窗      Ctrl-E"
+
+["21.4"]
+len = 21
+zh = " 評估視窗      Ctrl-U"
+
+["21.5"]
+len = 21
+zh = " 關閉視窗      Ctrl-C"
+
+["21.6"]
+len = 21
+zh = " 隱藏前視窗    Ctrl-H"
+
+["21.7"]
+len = 21
+zh = " 視窗位置      Ctrl-P"
+
+["21.8"]
+len = 21
+zh = " 調整編輯窗大小 Ctrl-R"
 

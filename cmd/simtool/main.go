@@ -70,12 +70,13 @@ func cmdMessages(args []string) {
 			fmt.Fprintf(os.Stderr, "%s：%v\n", n, err)
 			continue
 		}
-		msgs, err := assets.LoadPTF(raw)
+		secs, err := assets.LoadPTF(raw)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s：%v\n", n, err)
 			continue
 		}
-		fmt.Printf("%-16s %3d 筆\n", n, len(msgs))
+		msgs := assets.TextMessages(secs)
+		fmt.Printf("%-16s %2d 段、%3d 筆文字\n", n, len(secs), len(msgs))
 		if *out == "" {
 			continue
 		}
@@ -85,10 +86,10 @@ func cmdMessages(args []string) {
 	}
 }
 
-// writeSkeleton 產生以序號為鍵的翻譯骨架。
+// writeSkeleton 產生以 段落.索引 為鍵的翻譯骨架。
 //
 // **不寫入原文。** 原文屬於原權利人，不進本專案的版控（CLAUDE.md §8）；
-// 骨架只帶序號、標記與原文長度，譯者對照著遊戲畫面或自己的原版副本填。
+// 骨架只帶鍵與原文長度，譯者對照著遊戲畫面或自己的原版副本填。
 // 長度欄位是給排版用的：中文字寬是英數的兩倍，超過原文長度就要注意會不會爆版。
 func writeSkeleton(dir, srcName string, msgs []assets.Message) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -96,18 +97,19 @@ func writeSkeleton(dir, srcName string, msgs []assets.Message) error {
 	}
 	set := strings.TrimSuffix(strings.ToLower(srcName), ".ptf")
 	var b strings.Builder
-	fmt.Fprintf(&b, "# %s 的訊息翻譯\n", set)
-	fmt.Fprintf(&b, "#\n")
-	fmt.Fprintf(&b, "# 以**序號**為鍵，不以原文為鍵：原文屬於原權利人不進版控，\n")
-	fmt.Fprintf(&b, "# 而且六個圖形集的同一個序號講同一件事、用詞不同。\n")
-	fmt.Fprintf(&b, "# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。\n")
-	fmt.Fprintf(&b, "#\n")
-	fmt.Fprintf(&b, "# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。\n")
-	fmt.Fprintf(&b, "# mark 是原版記錄後面的標記位元組，語意未解，原樣保留。\n\n")
+	fmt.Fprintf(&b, "# %s 的訊息翻譯\n#\n", set)
+	fmt.Fprintf(&b, "# 鍵是「段落.索引」，不是原文：原文屬於原權利人不進版控，\n")
+	fmt.Fprintf(&b, "# 而且六個圖形集的同一個鍵講同一件事、用詞不同。\n")
+	fmt.Fprintf(&b, "# 譯名以軟體世界珍藏版 29 中文說明書為準（translations/glossary.md）。\n#\n")
+	fmt.Fprintf(&b, "# len 是原文的位元組長度，給排版參考：中文字寬是英數的兩倍。\n\n")
+	sec := -1
 	for _, m := range msgs {
-		fmt.Fprintf(&b, "[%d]\n", m.Index)
+		if m.Section != sec {
+			sec = m.Section
+			fmt.Fprintf(&b, "# ── 第 %d 段 ──\n", sec)
+		}
+		fmt.Fprintf(&b, "[\"%d.%d\"]\n", m.Section, m.Index)
 		fmt.Fprintf(&b, "len = %d\n", len(m.Text))
-		fmt.Fprintf(&b, "mark = %q\n", m.Mark)
 		fmt.Fprintf(&b, "zh = \"\"\n\n")
 	}
 	return os.WriteFile(filepath.Join(dir, set+".toml"), []byte(b.String()), 0o644)
