@@ -355,3 +355,49 @@ func indexOf(s, sub string) int {
 	}
 	return -1
 }
+
+// drawPicture 畫圖片訊息：整段文字擋在地圖上，按任意鍵或點一下關掉。
+//
+// 原版會配一張圖，本專案目前只放文字——圖形在 .PGF 的哪一個圖形庫還沒
+// 確認（見 docs/formats/03-pgf-graphics.md §7 的未解項），與其猜一個
+// 錯的貼上去，不如先只放文字。
+func (g *Game) drawPicture(dst *ebiten.Image) {
+	if g.picture == "" {
+		return
+	}
+	lines := splitLines(g.picture)
+	lh := g.font.Size() + 10
+	w := 0
+	for _, l := range lines {
+		if m := g.font.Measure(l); m > w {
+			w = m
+		}
+	}
+	w += 80
+	if w > viewW-80 {
+		w = viewW - 80
+	}
+	h := len(lines)*lh + 96
+	x := (viewW - w) / 2
+	y := (viewH - h) / 2
+	vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h),
+		color.RGBA{0x14, 0x18, 0x22, 0xf8}, false)
+	vector.StrokeRect(dst, float32(x), float32(y), float32(w), float32(h), 3, colOn, false)
+	for i, l := range lines {
+		g.font.Draw(dst, l, x+40, y+40+i*lh, colText)
+	}
+	hint := "按空白鍵或點一下繼續"
+	g.font.Draw(dst, hint, x+(w-g.font.Measure(hint))/2, y+h-38, colDim)
+}
+
+func splitLines(s string) []string {
+	var out []string
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\n' {
+			out = append(out, s[start:i])
+			start = i + 1
+		}
+	}
+	return append(out, s[start:])
+}

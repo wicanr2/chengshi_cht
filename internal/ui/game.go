@@ -104,6 +104,11 @@ type Game struct {
 
 	// savePath 是 Ctrl-S 存檔的目標。空的話存到工作目錄下的城市名。
 	savePath string
+
+	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
+	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
+	// 那是刻意的：那些訊息（爐心熔毀、彈劾、劇本簡介）必須被看到。
+	picture string
 }
 
 // SetSavePath 設定存檔位置。
@@ -192,6 +197,10 @@ func (g *Game) Update() error {
 }
 
 // pumpSimMessage 把模擬層的訊息埠取出來顯示。
+//
+// ⚠ 負數代表「有圖」。原版會開一個視窗放整段文字，而且**同一張圖不會
+// 重送**（靠 LastPicNum 去重）。正數是訊息欄的一行字，先到先得。
+// 兩者不能混：把有圖的當成一行字，玩家就永遠看不到劇本簡介與彈劾通知。
 func (g *Game) pumpSimMessage() {
 	n := g.world.MessagePort
 	if n == 0 {
@@ -199,9 +208,22 @@ func (g *Game) pumpSimMessage() {
 	}
 	g.world.MessagePort = 0
 	if n < 0 {
+		if p := g.txt.Picture(-n); p != "" {
+			g.picture = p
+			return
+		}
 		n = -n
 	}
+	// 訊息編號是 1 起算，第 0 段的文字在偶數索引。
 	g.setMessage(g.txt.S(i18n.SecStatus, (n-1)*2))
+}
+
+// ShowScenarioBrief 顯示劇本簡介。載入劇本時呼叫一次。
+func (g *Game) ShowScenarioBrief() {
+	if g.world.Scenario == 0 {
+		return
+	}
+	g.picture = g.txt.ScenarioBrief(int(g.world.Scenario))
 }
 
 func (g *Game) setMessage(s string) {
@@ -264,7 +286,15 @@ func (g *Game) handleKeys() {
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		g.win = winNone
+		if g.picture != "" {
+			g.picture = ""
+		} else {
+			g.win = winNone
+		}
+	}
+	if g.picture != "" && (inpututil.IsKeyJustPressed(ebiten.KeySpace) ||
+		inpututil.IsKeyJustPressed(ebiten.KeyEnter)) {
+		g.picture = ""
 	}
 	if ctrl && inpututil.IsKeyJustPressed(ebiten.KeyS) {
 		g.save()
@@ -348,6 +378,13 @@ func (g *Game) handleMouse() {
 		}
 		return
 	}
+	// 圖片訊息擋住畫面時，點一下關掉，不要蓋東西。
+	if g.picture != "" {
+		if just {
+			g.picture = ""
+		}
+		return
+	}
 	// 視窗開著時，地圖區的點擊歸視窗，不要蓋東西
 	if g.win != winNone && mx < viewW && my < viewH {
 		return
@@ -399,6 +436,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colBG)
 	g.drawMap(screen)
 	g.drawWindow(screen)
+	g.drawPicture(screen)
 	g.drawPanel(screen)
 	g.drawStatus(screen)
 }

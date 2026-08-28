@@ -157,3 +157,55 @@ func unquote(s string) string {
 	}
 	return b.String()
 }
+
+// 圖片訊息的編號對照。
+//
+// ⚠ 第 2 段的索引**不是**訊息編號。編號寫在原版檔案裡每一筆的
+// 三位元組前綴（見 docs/formats/04-ptf-messages.md §7），順序是
+// 交通、犯罪、爐心熔毀、勝利、彈劾、怪獸、污染，然後五個人口里程碑，
+// 最後八個劇本簡介——既不是遞增也不是遞減。
+//
+// 這張表是從原版檔案讀出來的，不是猜的；`simtool prefix` 可以重印。
+var pictureIndex = map[int]int{
+	12:  0,  // 交通壅塞
+	11:  1,  // 犯罪
+	43:  2,  // 爐心熔毀
+	100: 3,  // 劇本過關
+	200: 4,  // 劇本失敗
+	21:  5,  // 怪獸
+	10:  6,  // 污染
+	39:  7,  // 超級都會
+	38:  8,  // 大都會
+	37:  9,  // 首府
+	36:  10, // 城市
+	35:  11, // 城鎮
+}
+
+// scenarioPicture 是八個劇本簡介在第 2 段的索引。
+// 順序是原版檔案裡的順序，不是劇本編號。
+var scenarioPicture = map[int]int{
+	6: 12, 8: 13, 5: 14, 3: 15, 2: 16, 1: 17, 7: 18, 4: 19,
+}
+
+// Picture 回傳某個訊息編號對應的圖片訊息全文；沒有圖片就回空字串。
+//
+// 傳入的是**正數**訊息編號（模擬層送出的是負數，代表「有圖」）。
+func (c *Catalog) Picture(msg int) string {
+	if msg < 0 {
+		msg = -msg
+	}
+	i, ok := pictureIndex[msg]
+	if !ok {
+		return ""
+	}
+	return c.S(SecPicture, i)
+}
+
+// ScenarioBrief 回傳第 n 個劇本（1–8）的簡介全文。
+func (c *Catalog) ScenarioBrief(n int) string {
+	i, ok := scenarioPicture[n]
+	if !ok {
+		return ""
+	}
+	return c.S(SecPicture, i)
+}

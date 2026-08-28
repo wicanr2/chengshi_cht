@@ -116,6 +116,7 @@ func main() {
 		g.LookAt(demoX+6, demoY+6)
 	}
 	g.SetSavePath(*save)
+	g.ShowScenarioBrief()
 	if *win != "" {
 		if !g.OpenWindow(*win) {
 			fmt.Fprintf(os.Stderr, "不認得的視窗 %q\n", *win)

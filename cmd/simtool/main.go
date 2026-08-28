@@ -22,6 +22,8 @@ func main() {
 	switch os.Args[1] {
 	case "messages":
 		cmdMessages(os.Args[2:])
+	case "prefix":
+		cmdPrefix(os.Args[2:])
 	case "save":
 		cmdSave(os.Args[2:])
 	case "scenario":

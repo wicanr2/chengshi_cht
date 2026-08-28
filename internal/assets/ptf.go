@@ -106,19 +106,46 @@ func hasPrintable(s string) bool {
 	return false
 }
 
-// trimControl 去掉字串前面的控制位元組。
+// trimControl 去掉字串前面的三位元組前綴。
 //
-// ⚠ 圖片訊息（段落 2）的前面有兩到三個位元組的前綴（例如 `\xfe\xf4\xff`），
-// 那是圖片編號之類的中繼資料，不是文字的一部分。留著會讓譯文長度算錯，
-// 也會在畫面上出現亂碼。
+// 圖片訊息（段落 2）每一筆前面有 `FE` ＋ 一個小端 int16，那個 int16 是
+// **前一筆**的訊息編號（負值）。見 PictureID 與
+// docs/formats/04-ptf-messages.md §7。
+//
+// ⚠ **一定要固定去掉三個位元組，不能「去掉開頭所有的控制字元」。**
+// 彈劾通知的編號是 −200 = `0x38 0xFF`，而 `0x38` 就是 ASCII 的 `8`——
+// 按可列印性判斷的話會只去掉 `FE`，留下 `8` 與 `0xFF`，於是下一筆
+// 「怪獸來襲」在畫面上變成「8?MONSTER ATTACK」。那看起來像是解碼
+// 差了一個位元組，其實是判斷條件用錯了維度。
+// TrimPrefix 是 trimControl 的公開版本，給工具用。
+func TrimPrefix(s string) string { return trimControl(s) }
+
 func trimControl(s string) string {
-	i := 0
-	for i < len(s) && (s[i] < 0x20 && s[i] != '\n') {
-		i++
+	if len(s) >= 3 && s[0] == 0xFE {
+		return s[3:]
 	}
-	// 有些前綴後面還跟著一個高位位元組（0xff），一併去掉。
-	for i < len(s) && s[i] >= 0x7f {
+	// 其餘段落偶爾有單一控制位元組。
+	i := 0
+	for i < len(s) && s[i] < 0x20 && s[i] != '\n' {
 		i++
 	}
 	return s[i:]
+}
+
+// PictureID 回傳段落 2 第 i 筆圖片訊息的編號。
+//
+// ⚠ 編號放在**下一筆**的前三個位元組裡（`FE` ＋ 小端 int16），
+// 不是自己的開頭。原因是原版把它當成記錄的結尾寫，而 NUL 切割會把它
+// 分到後面那一筆的頭上。
+//
+// 回傳 0 代表查不到（最後一筆之後沒有記錄可讀）。
+func PictureID(sec Section, i int) int {
+	if i+1 >= len(sec.Strings) {
+		return 0
+	}
+	next := sec.Strings[i+1]
+	if len(next) < 3 || next[0] != 0xFE {
+		return 0
+	}
+	return int(int16(uint16(next[1]) | uint16(next[2])<<8))
 }

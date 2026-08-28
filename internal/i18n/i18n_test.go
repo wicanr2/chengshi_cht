@@ -94,3 +94,59 @@ func contains(s, sub string) bool {
 	}
 	return false
 }
+
+// 圖片訊息的索引不是訊息編號。對照表錯了會顯示成別的事件——
+// 而**畫面上看起來完全正常**，只是內容牛頭不對馬嘴。
+func TestPictureLookup(t *testing.T) {
+	c, err := Load("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := map[int]string{
+		12:  "交通",
+		11:  "治安",
+		100: "市鑰",
+		200: "彈劾",
+		21:  "怪獸",
+		10:  "污染",
+		39:  "超級都會",
+		35:  "城鎮",
+	}
+	for msg, want := range cases {
+		got := c.Picture(msg)
+		if got == "" {
+			t.Errorf("訊息 %d 沒有圖片文字", msg)
+			continue
+		}
+		if !contains(got, want) {
+			t.Errorf("訊息 %d 的圖片文字是 %q，應含 %q", msg, first(got, 20), want)
+		}
+	}
+	if c.Picture(1) != "" {
+		t.Error("訊息 1 沒有圖片，不該回傳內容")
+	}
+}
+
+// 八個劇本簡介都要對到自己那一則。順序在原版檔案裡不是劇本編號，
+// 對錯了會讓玩家在底特律看到里約的簡介。
+func TestScenarioBriefs(t *testing.T) {
+	c, _ := Load("")
+	want := map[int]string{
+		1: "達斯維利", 2: "舊金山", 3: "漢堡", 4: "伯恩",
+		5: "東京", 6: "底特律", 7: "波士頓", 8: "里約",
+	}
+	for n, w := range want {
+		got := c.ScenarioBrief(n)
+		if !contains(got, w) {
+			t.Errorf("第 %d 個劇本的簡介是 %q，應含 %q", n, first(got, 16), w)
+		}
+	}
+}
+
+func first(s string, n int) string {
+	r := []rune(s)
+	if len(r) > n {
+		r = r[:n]
+	}
+	return string(r)
+}
