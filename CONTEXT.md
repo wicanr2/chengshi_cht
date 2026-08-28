@@ -27,6 +27,10 @@
   `DETROIT`、`DULLSVIL`、`HAMBURG`、`RIO`、`SANFRAN`、`TOKYO`。
 - 說明書第 13–14 頁的譯名樣本：悲情城市（SCENARIOS）、達斯維利（DULLSVILLE）、
   明日之都、市鑰。
+- DOS 版有**八種螢幕模式**（Hercules／CGA 單色／Tandy Color／Hires EGA 單色／
+  Lores EGA Color／Hires EGA Color／單色 VGA-MCGA／256 色 VGA-MCGA），
+  圖形檔名規則是 `<圖形集><模式>`（`SIMCITY.CFG` 的 `Graphics Set: WESTCEGA`）。
+  **中文化的畫布尺寸不能只假設一種版面。**
 
 ## 2. 證據優先序
 
@@ -42,6 +46,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | [`README.md`](README.md) | 專案首頁：這是什麼、為何保存、現況 |
 | [`LICENSE`](LICENSE) | 專有授權（非商業免費、商業洽談）＋ 商標與規格參考揭露 |
 | `WORKLOG.md` | 逐輪工作紀錄（尚未建立）|
+| [`docs/research/`](docs/research/) | 查證筆記：玩家與評論對一代的說法（二手彙整，每條標來源）|
 | `docs/re/` | 機制筆記（尚未建立）|
 | `docs/spec/` | 可實作規格，只有 READY 的能動工（尚未建立）|
 | `docs/manual-cht/` | 軟體世界說明書逐頁轉錄（尚未建立）|

@@ -72,16 +72,24 @@
 | 4 | **DOS 執行檔反組譯** | DOS 版專屬行為（Micropolis 不涵蓋）| `workplace/ida/`，見 §2.4 |
 | 4 | **DOSBox 實跑** | 「讀出來的行為」需要眼睛確認時 | 見 §1.5 |
 | 5 | **軟體世界珍藏版 29 中文說明書** | 譯名與當年台灣用語的一手史料 | `珍029-模擬城市.rar` |
-| 6 | 官方英文手冊 | 規則輔助 | 待取得 |
+| 6 | 官方英文手冊（IBM PC 版）| 規則輔助 | `workplace/research/simcity-ibm-manual-ocr.txt`；原件 <https://archive.org/details/simcity_ibm_manual> |
 | 7 | 社群攻略、維基、論壇、雜誌回顧 | 最後才用，且要標明 | 網路 |
 
 低優先來源只能在高優先來源缺席時暫代，且要標明。
 **一手資料贏二手推論**：檔案內容 > 檔名、目錄結構、命名慣例、其他人的文章。
 
-⚠ **這條在本專案特別容易犯**：模擬城市的「玩家共識」量非常大（稅率 7%、
-工業區要靠海、警察局蓋幾格一座），那些是三十年的口耳相傳，**不是證據**。
-社群共識與原始碼衝突時，原始碼贏，而且要把衝突記進筆記——因為那通常代表
-玩家共識描述的是某個特定版本或某個 bug。
+⚠ **這條在本專案特別容易犯**：模擬城市累積了三十幾年的「玩家共識」，
+量大、講得很篤定，而且**經常是錯的或跨代混用的**。查證時已經抓到三個現成的例子：
+
+| 玩家共識 | 一手證據說什麼 |
+|---|---|
+| 「7% 是黃金稅率」 | IBM 手冊寫的是 `The optimum tax rate for fast growth is between 5 and 7%`——是**區間**，7% 只是上緣；手冊也沒說預設值是 7% |
+| 「Dullsville 是最難的劇本」（SimCity Fandom）| 手冊標的是 **Easy**；Very Difficult 的是 San Francisco 1906、Hamburg 1944、Boston 2010 |
+| 「水管沒接所以不長」 | **一代沒有自來水系統**。全份手冊的 water 只指地形水域，自來水是 SimCity 2000 以後的機制 |
+
+三個例子的共同形狀：**跨代混用**、**把建議區間講成單一數字**、**把玩家意見講成官方設定**。
+社群共識與原始碼衝突時原始碼贏，而且要把衝突記進筆記——衝突通常代表共識描述的是
+另一代、某個特定版本，或某個 bug。
 
 ### 1.2 Micropolis 是什麼、能信到什麼程度
 
@@ -173,8 +181,9 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 |---|---|---|
 | `SIMCITY.EXE` (126 KB) | 主程式 | 已確認（唯一的主執行檔）|
 | `SETTINGS.EXE` (36 KB) | 顯示模式設定，改寫 `SIMCITY.CFG` | 強證據（`read.me` 明載）|
-| `SIMCITY.CFG` (548 B) | 設定檔 | 強證據（同上）|
-| `CEGA/`、`mcga/`、`MONO/`、`sega/` | 四套顯示模式的圖形資料 | 強證據（目錄名 ＋ `read.me` 提到 mono/cga/mcga）|
+| `SIMCITY.CFG` (548 B) | 純文字設定檔，自帶解碼表：八種螢幕模式（`H` Hercules／`C` CGA Mono／`T` Tandy Color／`M` Hires EGA Mono／`e` Lores EGA Color／`E` Hires EGA Color／`V` Mono VGA/MCGA／`2` 256 Color VGA/MCGA）、搖桿（IBM／Covox）、音效、Covox 聲道、`Graphics Set` | **已確認**（檔案本身就是明文說明）|
+| `CEGA/`、`sega/`、`mcga/`、`MONO/` | 四套顯示模式的圖形資料。**檔名規則是 `<圖形集><模式>`**，例如 `WESTCEGA.PGF` ＝ Wild West 集的 Hires EGA Color 版 | 已確認（`SIMCITY.CFG` 的 `Graphics Set: WESTCEGA` 直接對上）|
+| 模式目錄對應 | `CEGA` ＝ Hires EGA Color；`sega` ＝ Lores EGA Color；`mcga` ＝ 256 色 VGA/MCGA；`MONO` ＝ 單色 | 假說（由 CFG 的模式清單 ＋ 各目錄檔案大小分群推得，`CEGA` 那一列另有 CFG 直接佐證）|
 | `*.PGF` | 圖形資料，每個模式一組 | 假說（副檔名推測）|
 | `*.PPF` | `*ntro`（開場）與 `*scen`（劇本畫面）的圖片 | 假說 |
 | `SCENARIO/*.PSN`（8 個）| 劇本：`BERN`、`BOSTON`、`DETROIT`、`DULLSVIL`、`HAMBURG`、`RIO`、`SANFRAN`、`TOKYO` | 已確認（檔名與手冊的八個悲情城市對得上）|
@@ -233,7 +242,7 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 | 來源 | 產出 | 要求 |
 |---|---|---|
 | 軟體世界中文說明書（56 張掃描）| `docs/manual-cht/` | **逐頁完整轉錄**，保留 1990 年代台灣代理商的用語、譯名、行文與編排脈絡 |
-| 官方英文手冊（待取得）| `docs/manual/` | 轉 markdown ＋ 繁中翻譯，當規則的輔助 oracle |
+| 官方英文手冊（IBM PC 版，OCR 全文已取得）| `docs/manual/` | 轉 markdown ＋ 繁中翻譯，當規則的輔助 oracle。**OCR 有錯字，引用前要對原掃描件核字** |
 | 社群攻略、雜誌回顧 | `docs/walkthrough/` | 繁中化，標明來源與版本 |
 
 **中文說明書那份是保存重點。** 它是當年台灣遊戲文化的一手史料：把「悲情城市」
@@ -375,6 +384,7 @@ docs/formats/     資料格式規格（PGF／PPF／PSN／PTF／PSF／CTY／DOS �
 docs/spec/        可實作規格（只有 READY 的能動工）
 docs/manual-cht/  軟體世界說明書逐頁轉錄
 docs/manual/      官方英文手冊 markdown ＋ 繁中
+docs/research/    查證筆記（二手彙整，每條標來源；不是規格）
 docs/walkthrough/ 繁中攻略
 translations/     譯名表與語言資料（照圖形集分檔）
 tools/            go.sh、對拍、抽取與整理腳本
