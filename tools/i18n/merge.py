@@ -24,6 +24,17 @@ try:
 except ImportError:
     STYLES = {}
 
+# 第 2 段（圖片訊息與劇本簡介）的風格改寫版。每個風格一個檔，
+# 因為那些是整段文字，混在 styles_zh 裡會讓那個檔難以閱讀。
+for _style, _mod in (("asia", "pic_asia"), ("medi", "pic_medi"),
+                     ("west", "pic_west"), ("fusa", "pic_fusa"),
+                     ("feur", "pic_feur"), ("moon", "pic_moon")):
+    try:
+        _m = __import__(_mod)
+    except ImportError:
+        continue
+    STYLES.setdefault(_style, {}).update(_m.PIC)
+
 # 檔名 → 風格代號
 FILES = {
     "message": None,
