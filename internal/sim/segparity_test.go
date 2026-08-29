@@ -1,6 +1,11 @@
 package sim
 
-import "testing"
+import (
+	"os"
+	"strconv"
+	"strings"
+	"testing"
+)
 
 // 分段對拍。
 //
@@ -37,14 +42,17 @@ func TestSegmentParity(t *testing.T) {
 		mA, mB := maps[i-1], maps[i]
 		s := recoverOrDie(t, meta[i-1].Rands)
 
+		// 收斂只做一次。它與候選的相位／CityTime 無關，放在迴圈裡等於
+		// 每個候選都多跑 3200 個 frame——那是整個搜尋六成的成本。
+		settled := newTickParityWorld(mA, 0, meta[i-1].Funds, 0, false)
+		for k := 0; k < 200*16; k++ {
+			settled.Frame()
+		}
+
 		hit, bestPh, bestCT := false, -1, -1
 		for ph := 0; ph < 16 && !hit; ph++ {
 			for ct := 0; ct < 48 && !hit; ct++ {
-				w := newTickParityWorld(mA, 0, meta[i-1].Funds, 0, false)
-				// 地圖已經靜止，先跑 200 刻讓衍生陣列收斂，再歸位。
-				for k := 0; k < 200*16; k++ {
-					w.Frame()
-				}
+				w := cloneWorld(settled)
 				w.Map = mA
 				w.TotalFunds = meta[i-1].Funds
 				w.CityTime = (w.CityTime/48)*48 + ct
@@ -77,5 +85,86 @@ func TestSegmentParity(t *testing.T) {
 	if matched > segParityBudget {
 		t.Errorf("對上 %d 段，比現況 %d 好 —— 請把 segParityBudget 調到 %d",
 			matched, segParityBudget, matched)
+	}
+}
+
+// cloneWorld 複製一份世界。
+//
+// World 全是值型別（陣列、純量）＋ 一個 *Rand 與一個介面。介面在對拍
+// 用的世界裡是零大小的 noSprites，複製安全；*Rand 要另外配一份，
+// 否則所有候選會共用同一個亂數狀態——症狀是搜尋結果隨迴圈順序改變。
+func cloneWorld(src *World) *World {
+	w := *src
+	r := *src.Rand
+	w.Rand = &r
+	return &w
+}
+
+// TestSegmentParityDeep 把 Scycle 也納入搜尋。
+//
+// 微實驗那邊已經證實 Scycle 設錯會讓對拍在完全無關的地方失敗
+// （docs/re/12-tick-parity.md §6）。分段對拍目前只搜相位與
+// CityTime%48（16×48＝768 個候選），沒搜 Scycle。
+//
+// 成本：加上 Scycle 是 768×1024 ≈ 79 萬個候選，一段約八分半。
+// 所以預設跳過，要跑就設 SIMCITY_DEEP=1，並用 -run 指定段號範圍：
+//
+//	SIMCITY_DEEP=1 SIMCITY_SEGS=3,5 tools/go.sh test ./internal/sim/ \
+//	    -run SegmentParityDeep -v -timeout 60m
+func TestSegmentParityDeep(t *testing.T) {
+	if os.Getenv("SIMCITY_DEEP") == "" {
+		t.Skip("預設跳過；設 SIMCITY_DEEP=1 才跑（一段約八分半）")
+	}
+	want := map[int]bool{}
+	for _, f := range strings.Split(os.Getenv("SIMCITY_SEGS"), ",") {
+		if n, err := strconv.Atoi(strings.TrimSpace(f)); err == nil {
+			want[n] = true
+		}
+	}
+	meta := loadSegMeta(t)
+	maps := loadSegMaps(t, len(meta))
+	for i := 1; i < len(meta); i++ {
+		if meta[i].Draws == nil || (len(want) > 0 && !want[i]) {
+			continue
+		}
+		target := *meta[i].Draws
+		mA, mB := maps[i-1], maps[i]
+		s := recoverOrDie(t, meta[i-1].Rands)
+
+		settled := newTickParityWorld(mA, 0, meta[i-1].Funds, 0, false)
+		for k := 0; k < 200*16; k++ {
+			settled.Frame()
+		}
+
+		hit := false
+		for sc := 0; sc < 1024 && !hit; sc++ {
+			for ph := 0; ph < 16 && !hit; ph++ {
+				for ct := 0; ct < 48 && !hit; ct++ {
+					w := cloneWorld(settled)
+					w.Map = mA
+					w.TotalFunds = meta[i-1].Funds
+					w.CityTime = (w.CityTime/48)*48 + ct
+					w.Fcycle = ph
+					w.Scycle = sc
+					w.Rand.SetState(advanceRand(s, 4))
+
+					got := 0
+					for n := 0; n < 4000 && got <= target; n++ {
+						if got == target && mapDiffM(&w.Map, &mB) == 0 {
+							t.Logf("段 %2d（%4d 次抽樣）✓ 相位 %d、CityTime%%48=%d、Scycle %d",
+								i, target, ph, ct, sc)
+							hit = true
+							break
+						}
+						b := w.Rand.State()
+						w.Frame()
+						got += drawsBetween(b, w.Rand.State())
+					}
+				}
+			}
+		}
+		if !hit {
+			t.Logf("段 %2d（%4d 次抽樣）✗ 連 Scycle 都搜過了還是對不上", i, target)
+		}
 	}
 }
