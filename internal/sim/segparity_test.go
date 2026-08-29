@@ -18,67 +18,63 @@ import (
 // 對上」等價於「這一段消耗的抽樣次數和原版一模一樣」。再加上地圖零差異，
 // 就是這一段逐次元等價。
 //
-// 起始的 Fcycle 與 CityTime%48 不可觀測（原版沒有對應的讀取指令），
-// 所以每段對 16×48 個候選各試一次。
-//
-// 現況：23 段裡有 9 段完全對上，包含好幾段含完整城市評估（單次約 700 次
-// 抽樣）的段落。對不上的多半是十幾刻的短段——那種長度裡，重建不出來的
-// 內部狀態（Scycle、閥門、交通密度、成長率記憶）還來不及收斂。
+// 起始的 Fcycle、CityTime%48 與 Scycle 三個都不可觀測，要用搜的
+// （TestSegmentParityDeep）。搜到的解記在 segSolutions，日常測試只驗不搜。
 // 進度與方法記在 docs/re/12-tick-parity.md。
-const segParityBudget = 9
+const segParityBudget = 10
+
+// segSolution 是一段對拍的起始狀態解。
+//
+// 三個值都**不可觀測**：Fcycle 決定這一刻跑十六段裡的哪一段，
+// CityTime%48 決定年內位置，Scycle 決定哪一刻跑那五個週期性掃描
+// （PTLScan／CrimeScan／PopDenScan／FireAnalysis／DoPowerScan，
+// 各自是 Scycle % 17／18／19／20／5）。原版沒有讀取它們的指令。
+type segSolution struct{ Ph, CT, Scycle int }
+
+// segSolutions 是 TestSegmentParityDeep 搜出來的解。
+//
+// 把搜尋的結果記下來，日常測試就從「搜」變成「驗」——快得多，而且
+// 判準更強：解不再驗得過，代表規則層真的動到了，不是搜尋範圍不夠。
+// 要重新搜（改過規則層之後）跑：
+//
+//	SIMCITY_DEEP=1 SIMCITY_SEGS=<段號> tools/go.sh test ./internal/sim/ \
+//	    -run SegmentParityDeep -v -timeout 90m
+var segSolutions = map[int]segSolution{
+	1:  {0, 34, 200},
+	3:  {0, 31, 200},
+	10: {0, 45, 200},
+	11: {0, 1, 200},
+	13: {0, 1, 200},
+	14: {2, 1, 1020},
+	16: {2, 40, 200},
+	20: {0, 22, 200},
+	21: {0, 36, 200},
+	23: {0, 17, 200},
+}
 
 func TestSegmentParity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("分段對拍要跑 16×48 個候選 × 23 段，很慢")
-	}
 	meta := loadSegMeta(t)
 	maps := loadSegMaps(t, len(meta))
-	matched := 0
+	matched, total := 0, 0
 	for i := 1; i < len(meta); i++ {
 		if meta[i].Draws == nil {
 			continue
 		}
-		want := *meta[i].Draws
-		mA, mB := maps[i-1], maps[i]
-		s := recoverOrDie(t, meta[i-1].Rands)
-
-		// 收斂只做一次。它與候選的相位／CityTime 無關，放在迴圈裡等於
-		// 每個候選都多跑 3200 個 frame——那是整個搜尋六成的成本。
-		settled := newTickParityWorld(mA, 0, meta[i-1].Funds, 0, false)
-		for k := 0; k < 200*16; k++ {
-			settled.Frame()
+		total++
+		sol, known := segSolutions[i]
+		if !known {
+			t.Logf("段 %2d（%4d 次抽樣）— 還沒搜到解", i, *meta[i].Draws)
+			continue
 		}
-
-		hit, bestPh, bestCT := false, -1, -1
-		for ph := 0; ph < 16 && !hit; ph++ {
-			for ct := 0; ct < 48 && !hit; ct++ {
-				w := cloneWorld(settled)
-				w.Map = mA
-				w.TotalFunds = meta[i-1].Funds
-				w.CityTime = (w.CityTime/48)*48 + ct
-				w.Fcycle = ph
-				w.Rand.SetState(advanceRand(s, 4))
-
-				got := 0
-				for n := 0; n < 4000 && got <= want; n++ {
-					if got == want && mapDiffM(&w.Map, &mB) == 0 {
-						hit, bestPh, bestCT = true, ph, ct
-						break
-					}
-					b := w.Rand.State()
-					w.Frame()
-					got += drawsBetween(b, w.Rand.State())
-				}
-			}
-		}
-		if hit {
+		if verifySegment(t, meta, maps, i, sol) {
 			matched++
-			t.Logf("段 %2d（%4d 次抽樣）✓ 相位 %d、CityTime%%48=%d", i, want, bestPh, bestCT)
+			t.Logf("段 %2d（%4d 次抽樣）✓ 相位 %d、CityTime%%48=%d、Scycle %d",
+				i, *meta[i].Draws, sol.Ph, sol.CT, sol.Scycle)
 		} else {
-			t.Logf("段 %2d（%4d 次抽樣）✗", i, want)
+			t.Errorf("段 %2d 記著的解驗不過了 —— 規則層被動到了，或者解該重搜", i)
 		}
 	}
-	t.Logf("逐次元對上 %d/%d 段", matched, len(meta)-1)
+	t.Logf("逐次元對上 %d/%d 段", matched, total)
 	if matched < segParityBudget {
 		t.Errorf("只對上 %d 段，低於現況 %d —— 有東西退步了", matched, segParityBudget)
 	}
@@ -86,6 +82,37 @@ func TestSegmentParity(t *testing.T) {
 		t.Errorf("對上 %d 段，比現況 %d 好 —— 請把 segParityBudget 調到 %d",
 			matched, segParityBudget, matched)
 	}
+}
+
+// verifySegment 用一個已知的解跑一段，回報是否逐次元一致。
+func verifySegment(t *testing.T, meta []segCP, maps [][WorldX][WorldY]uint16,
+	i int, sol segSolution) bool {
+	t.Helper()
+	want := *meta[i].Draws
+	mA, mB := maps[i-1], maps[i]
+	s := recoverOrDie(t, meta[i-1].Rands)
+
+	w := newTickParityWorld(mA, 0, meta[i-1].Funds, 0, false)
+	for k := 0; k < 200*16; k++ {
+		w.Frame()
+	}
+	w.Map = mA
+	w.TotalFunds = meta[i-1].Funds
+	w.CityTime = (w.CityTime/48)*48 + sol.CT
+	w.Fcycle = sol.Ph
+	w.Scycle = sol.Scycle
+	w.Rand.SetState(advanceRand(s, 4))
+
+	got := 0
+	for n := 0; n < 4000 && got <= want; n++ {
+		if got == want && mapDiffM(&w.Map, &mB) == 0 {
+			return true
+		}
+		b := w.Rand.State()
+		w.Frame()
+		got += drawsBetween(b, w.Rand.State())
+	}
+	return false
 }
 
 // cloneWorld 複製一份世界。
