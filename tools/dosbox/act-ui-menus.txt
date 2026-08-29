@@ -1,0 +1,32 @@
+# 版面對拍：乾淨的遊戲畫面 ＋ 四個下拉選單各一張。
+# 選單是**按住式**的：press 停在標題上、move 下去、shot、release。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+shot 00-clean
+press 112 8
+wait 2
+shot 01-system
+release
+wait 2
+press 252 8
+wait 2
+shot 02-options
+release
+wait 2
+press 404 8
+wait 2
+shot 03-disasters
+release
+wait 2
+press 555 8
+wait 2
+shot 04-windows
+release
+wait 2
