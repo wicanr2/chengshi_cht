@@ -3,25 +3,50 @@
 > Maxis／Will Wright，1989。Go / Ebiten 重寫 ＋ 繁體中文化 ＋
 > 軟體世界珍藏版 29 中文說明書保存。
 
-**現況：還沒有可以玩的東西。** 規則層走完了五個垂直切片（亂數、地圖與圖塊編碼、
-地形產生、城市檔格式、劇本表），每一個都對活的原版逐項驗收過；呈現層還沒開始。
+**現況：可以玩了。** 開新城市或八個悲情城市、六種城市風格、蓋東西、四個資訊
+視窗、存讀檔都接通了，走的是真的按鍵與滑鼠（[實機驗證](#run)）。逐刻對拍還沒
+完全收斂，細節與剩下的差距見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 本檔不寫進度百分比，現況的單一真相在 [`CONTEXT.md`](CONTEXT.md)。
 
 ---
 
 ## 目錄
 
+- [畫面](#shots)
 - [一件當年沒發生的事](#no-chinese)
 - [那本說明書留下了什麼](#manual)
 - [這款遊戲當年在吵什麼](#reception)
 - [華人圈的空白](#gap)
 - [這個專案在做什麼](#project)
 - [素材盤點與已知風險](#assets)
-- [現況與下一步](#status)
+- [現況](#status)
 - [怎麼跑](#run)
 - [文件導覽](#docs)
 - [授權與聲明](#license)
 - [致謝](#thanks)
+
+---
+
+<a name="shots"></a>
+## 畫面
+
+![遊戲畫面：底特律 1972，中世紀風格](docs/images/city.png)
+
+底特律 1972，中世紀風格。狀態列、工具列、訊息全部繁體中文；工具名稱跟著風格改
+（中世紀的發電廠叫「水車」、鐵路叫「馬車道」、體育館叫「比武場」），那是原版
+六個資料片的設計，不是翻譯自由發揮。
+
+| | |
+|---|---|
+| ![劇本簡介](docs/images/brief.png) | ![地圖視窗的犯罪率圖層](docs/images/maps.png) |
+| 劇本簡介。同一個劇本在不同風格下是不同的故事——底特律 1972 的犯罪問題，在中世紀變成「虎城，1563 年」。 | 地圖視窗，犯罪率圖層。十一個圖層都在，用 1–9、0、`-` 切換。 |
+
+![評估視窗](docs/images/eval.png)
+
+評估視窗。公眾意見、四大嚴重問題與統計數據，數字全部來自模擬層本身。
+
+> 圖裡的地圖圖塊、建築與精靈來自**玩家自己那份原版**，程式讀進來繪製而已。
+> 本專案不散布原版素材，發行包裡也沒有。截圖只作為說明用途。
 
 ---
 
@@ -226,6 +251,14 @@ rose from Tokyo Bay」，CGW 也註明「the monster which attacks a city is not
 可以用 pty 腳本驅動。細節與第一批已確認常數見
 [`docs/re/01-oracle-harness.md`](docs/re/01-oracle-harness.md)。
 
+對到什麼程度：**單一分區的微實驗，692.5 刻逐次元完全一致**；整座城市的分段對拍
+23 段裡 9 段完全一致（含含完整城市評估的段落），資金軌跡與原版相同。剩下的差距
+多半落在重建不出來的內部狀態（`Scycle`、需求閥、交通密度…），不一定是實作錯誤。
+量法、分母與每一段的結果見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
+
+亂數是這件事的關鍵：原版的 LCG 模 2²⁴ 可逆，所以**亂數狀態就是一個時鐘**——
+兩邊狀態一樣，就等於抽過一樣多次。這讓「哪一刻開始分岔」變成可以二分搜尋的問題。
+
 > 順帶一提，這件事立刻推翻了本文上面引用過的一條二手數字：
 > Tony Chen 2002 年的規格表寫「建設範圍 128 × 128」，
 > 但原始碼是 `SimWidth 120` / `SimHeight 100`，存檔大小
@@ -244,7 +277,7 @@ rose from Tokyo Bay」，CGW 也註明「the monster which attacks a city is not
 | DOS 版 1.10（69 檔）| 四套顯示模式圖形、8 個劇本、6 組資料片訊息與音效 | ⚠ **是破解版** |
 | DUX X11 版（1993）| 執行檔 ＋ 30 個 Tcl ＋ 154 個 XPM ＋ 46 個音效 ＋ 23 個 `.cty` | ⚠ 未授權的商業發行包；**沒有 C 原始碼** |
 | 軟體世界珍藏版 29 說明書 | 56 張跨頁掃描 | 補完計劃要求不得牟利，只轉錄文字 |
-| Micropolis 原始碼 | GPL-3.0 | **尚未取得** |
+| Micropolis 原始碼 | GPL-3.0 | 已封存，當規格書讀，不照抄（見[下文](#license)）|
 
 ### 手上這份 DOS 1.10 是破解版
 
@@ -281,47 +314,105 @@ Hires EGA 640×350 與 MCGA 320×200 是兩套不同的字元格。
 ---
 
 <a name="status"></a>
-## 現況與下一步
+## 現況
 
-現況與工作清單的單一真相是 [`CONTEXT.md`](CONTEXT.md)。
+工作清單與逐項狀態的單一真相是 [`CONTEXT.md`](CONTEXT.md)。這裡只放結論。
 
-### 已經對原版驗收過的
+### 接通了什麼
+
+正常玩家路徑走得完：開新城市或八個悲情城市 → 選工具 → 蓋 → 看四個資訊視窗 →
+查詢地塊 → 存檔 → 離開 → 重開讀檔。這條路徑由
+[`tools/playtest.sh`](tools/playtest.sh) 在 Xvfb 裡用**真的按鍵與滑鼠**跑，
+每一步截圖，最後拿存檔內容做機械判定，不是用 debug 入口繞過去的。
+
+| 層 | 狀態 |
+|---|---|
+| 模擬規則 | 十六相位主迴圈、電力、四個逐格掃描、交通、分區成長、普查、需求閥、預算、評分、災難、精靈、訊息、玩家工具 |
+| 資料格式 | `.PGF` 圖形、`.PTF` 訊息、`.PSN` 劇本、`.PSF` 音效、`.cty` 城市檔，一套共用的 LZSS |
+| 呈現 | 圖塊繪製、工具列、地圖／統計圖／預算／評估四個視窗、整頁圖片訊息、六種風格 |
+| 中文化 | 基本檔 226 條 ＋ 六個風格包的覆寫，合計 695 條；譯名以軟體世界說明書為準 |
+| 存讀檔 | 原版 `.cty` 格式，可與原版 SimCity 與 Micropolis 互通 |
+
+### 對原版驗收過的
 
 | 切片 | 驗收方式 | 結果 |
 |---|---|---|
 | 亂數產生器 | 從活的原版取 24 個連續輸出，看四個就反推內部狀態 | 其餘 20 個逐項預測正確 |
 | 地圖與圖塊編碼 | 130 條常數由工具從 `sim.h` 重產；實測值解碼 | 產物與工具輸出逐位元組相同 |
 | **地形產生** | 四顆種子各 12000 格逐格對拍（含造島那條 10% 分支）| **48000 格完整 16 位元字全部相同** |
-| 城市檔格式 | 32 個城市檔逐位元組 round-trip；劇本 1 對原版載入後的狀態比對 | round-trip 全部相同；差異只剩電力位元與動畫幀，扣掉後為 0 |
-| 劇本表 | 八列的年份、起始市庫、遊戲刻 | 與原始碼相同 |
+| 城市檔格式 | 32 個城市檔逐位元組 round-trip；存出來的檔拿回原版載入 | round-trip 全部相同；原版讀得起來，12000 格圖塊一致 |
+| 電力傳導 | 受控實驗 12000 格逐格對拍 | 劇本 1 的 266 格 `PWRBIT` 差異全部收掉 |
+| 四個逐格掃描 | 收斂後的地價／汙染／犯罪平均值 | 與原版相同 |
+| 自動接線 | 八座劇本城市的 15 447 格線路 | 99.83% 形狀一致，剩下的 26 格已歸因 |
+| 逐刻對拍 | 微實驗 692.5 刻、整城分段 23 段 | 微實驗完全一致；分段 9/23 完全一致 |
+| `.PGF` 圖形 | 24 個檔（4 種顯示模式 × 6 種風格）的長度公式 | 全部解開；第 0 庫一律 960 張，與 `TILE_COUNT` 對得上 |
+| 點陣字覆蓋 | 掃過譯文與程式碼裡出現的每一個字 | 缺字會讓測試變紅，不會等到玩家看到空白 |
 
-每一條的證據鏈都在 `docs/re/` 與 `docs/formats/`，並由
+每一條的證據鏈在 `docs/re/` 與 `docs/formats/`，並由
 [`docs/re/00-wiring-status.md`](docs/re/00-wiring-status.md) 與一個測試守著
 「筆記解出來了但程式碼沒用上」這種漏接。
 
-### 接下來
+### 還沒做的
 
-電力傳導 → 每格掃描（人口密度、汙染、地價、犯罪）→ 交通生成 → 分區成長 →
-稅收與預算 → 城市評分 → 災難 → 精靈 → 工具 → 訊息，之後才是呈現層與中文化。
-說明書逐頁轉錄與譯名表可以並行。
+- **逐刻對拍還沒完全收斂**：23 段裡 14 段仍有差異，多半歸因於重建不出來的
+  內部狀態，但還沒逐段證實。
+- **基本風格（沒有資料片的原始城市外觀）還開不起來**：`CEGADAT.PGF` 沒有圖形庫表，
+  尺寸多半寫死在 `SIMCITY.EXE` 裡。目前只有六種資料片風格。見
+  [`docs/formats/03-pgf-graphics.md`](docs/formats/03-pgf-graphics.md) §7。
+- **沒有聲音**：`.PSF` 解得開，但還沒接到播放。
+- **macOS 版**：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross，這一版沒出。
+- 說明書的安裝步驟、密碼表與參考手冊的策略討論還沒轉錄（譯名價值低，排在後面）。
 
 ---
 
 <a name="run"></a>
 ## 怎麼跑
 
-**還不能玩。** 目前只有規則層與驗收工具，沒有畫面。
+### 玩
+
+先自備一份合法的 **SimCity 1.10（DOS）**，解開到某個目錄——裡面要看得到
+`CEGA/`、`mcga/`、`MONO/`、`sega/`、`DATA/`、`SCENARIO/`。本專案不散布這些檔案。
+
+發行包（Linux 與 Windows）用 [`tools/release.sh`](tools/release.sh) 產，
+內容只有執行檔、授權條款與讀我——字型與譯文都內嵌在執行檔裡。解開後：
 
 ```bash
-tools/go.sh test ./...              # 全部測試（在 docker 裡跑，不裝 Go 到系統）
+./chengshi -data "/path/to/SIMCITY 1.10"                 # 新城市
+./chengshi -data "…" -style medi                          # 換城市風格
+./chengshi -data "…" -scenario 6                          # 第 6 個悲情城市（底特律）
+./chengshi -data "…" -load city.cty                       # 讀城市檔
+```
+
+路徑不想每次打，設環境變數 `CHENGSHI_DATA` 指過去。存檔預設落在使用者資料目錄
+（Linux 是 `~/.local/share/chengshi/`），不會寫進程式所在的位置。完整參數與操作
+說明見發行包裡的 `讀我.txt`。
+
+風格代號：`asia` 古代亞洲、`medi` 中世紀、`west` 西部拓荒、`fusa` 未來美國、
+`feur` 未來歐洲、`moon` 月球殖民地。
+
+### 從原始碼建置與驗證
+
+所有建置、測試、抓圖都在 docker 裡，不裝任何東西到系統。
+
+```bash
+docker build -f docker/go.Dockerfile -t simcity-go:1.25 docker/
+
+tools/go.sh test ./...              # 全部測試，含接線檢查與字型覆蓋率
+tools/playtest.sh                   # 正常玩家路徑實機驗證（真視窗、真鍵盤、真滑鼠）
+tools/screenshot.sh 12 out.png      # 單張截圖，GAME_ARGS／GAME_KEYS 控制情境
+tools/release.sh                    # 打發行包
+tools/verify_release.sh             # 驗發行包本身（不是驗 build 出來的執行檔）
+tools/font.sh                       # 改過譯文之後重烘點陣字圖集
+tools/i18n.sh                       # 重新合併七份訊息檔的譯文
+```
+
+逐刻對拍另外需要自備 [Micropolis](https://github.com/SimHacker/micropolis) 封存，
+放在 `workplace/ref/micropolis/`；沒有它的測試會跳過，不會紅。
+
+```bash
 tools/oracle/build.sh               # 把 Micropolis 編成對拍用的 oracle
 tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 ```
-
-對拍需要自備 [Micropolis](https://github.com/SimHacker/micropolis) 封存，
-放在 `workplace/ref/micropolis/`；沒有它的測試會跳過，不會紅。
-
-有可以玩的東西時，這一節會換成實際指令與它需要的原版檔案。
 
 ---
 
@@ -332,6 +423,12 @@ tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 |---|---|
 | [`CONTEXT.md`](CONTEXT.md) | 現況、術語、工作清單。接手時先讀這份 |
 | [`CLAUDE.md`](CLAUDE.md) | 方法論：四道閘門、證據優先序、中文化政策、授權立場 |
+| [`docs/re/`](docs/re/) | 反組譯與讀原始碼的筆記，一份一個機制，含 `檔名:行號` |
+| [`docs/spec/`](docs/spec/) | 收攏成 `READY` 的規格，實作照這份寫 |
+| [`docs/formats/`](docs/formats/) | DOS 資料檔格式：LZSS、`.PGF`、`.PTF`、`.cty` |
+| [`docs/manual-cht/`](docs/manual-cht/) | 軟體世界中文說明書的逐頁轉錄 |
+| [`translations/glossary.md`](translations/glossary.md) | 譯名表，每一條標明依據是說明書還是本專案新譯 |
+| [`licenses/`](licenses/) | 第三方授權（內建點陣字型的 OFL 1.1）|
 | [`LICENSE`](LICENSE) | 授權條款全文 ＋ 商標與規格參考揭露 |
 | [`docs/research/`](docs/research/) | 上面那些引文的查證筆記：來源 URL、年份，以及「事實／意見」的分界 |
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# 在 docker + Xvfb 裡跑遊戲並截圖。用法：tools/screenshot.sh [等待秒數] [輸出檔名]
+# 在 docker + Xvfb 裡跑遊戲並截圖。
+# 用法：tools/screenshot.sh [等待秒數] [輸出檔名]
+#   GAME_ARGS="…"  傳給遊戲的參數
+#   GAME_KEYS="…"  截圖前先送這幾個鍵（空白分隔的 xdotool 鍵名）
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WAIT="${1:-6}"
@@ -24,9 +27,9 @@ docker run --rm \
         >/tmp/game.log 2>&1 &
     GAME=\$!
     sleep $WAIT
+    for k in ${GAME_KEYS:-}; do xdotool key --clearmodifiers \$k; sleep 1; done
     if kill -0 \$GAME 2>/dev/null; then
-      import -window root workplace/shots/$SHOT 2>/dev/null || \
-        xwd -root -silent | convert xwd:- workplace/shots/$SHOT
+      xwd -root -silent | convert xwd:- workplace/shots/$SHOT
       kill \$GAME 2>/dev/null || true
       echo '== 截圖完成 =='
     else

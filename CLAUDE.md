@@ -375,6 +375,10 @@ tools/            go.sh（docker 建置）、對拍、抽取與整理腳本
 
 - 不散布原版執行檔、資料檔、圖形集、音效、說明書掃描件、X11 發行包與倚天字型。
   發行包只有引擎程式碼與翻譯文本，玩家自備合法原版。
+  **執行時的截圖是例外**：`docs/images/` 可以放 remake 跑起來的畫面，
+  即使畫面上有原版圖塊。截圖不能拿來當素材用（解不出圖形檔），而說明文件
+  沒有畫面等於要讀者憑空想像。條件是：圖說要註明圖塊來自玩家自備的原版、
+  只放說明所需的張數，且不放原版遊戲本身的截圖（那是原版的畫面，不是本專案的）。
 - 不照抄 Micropolis 的 C（授權允許，但違反 §0 的證據鏈要求，也違反 §7 的授權立場）。
 - 不 vendor 任何參考素材進版控：`workplace/` 全部 gitignore。
 - 不在還沒讀懂原版的情況下「先做個能跑的版本」。
@@ -415,6 +419,6 @@ internal/、cmd/   Go 引擎
 - DOS 版 1.10（破解版，見 §2.1 警告）：`./SimCity_DOS_EN_v110.zip`
 - DUX X11 版發行包：`./Rare simcity.zip`
 - 軟體世界珍藏版 29 中文說明書：`./珍029-模擬城市.rar`
-- Micropolis 原始碼：<https://github.com/SimHacker/micropolis>（GPL-3.0，**尚未取得**）
+- Micropolis 原始碼：<https://github.com/SimHacker/micropolis>（GPL-3.0，已封存在 `workplace/ref/micropolis/`）
 - 骨灰集散地經典回顧：<https://boneash.oldgame.tw/temp/simcity/simcity.html>
 - 方法論參考專案：`~/cht/dungeon_master/`、`~/cht/dragon/`
