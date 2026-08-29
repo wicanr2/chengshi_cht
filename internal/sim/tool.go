@@ -31,15 +31,24 @@ const (
 	ToolNetwork     Tool = 18
 )
 
-// ToolCost 是各工具的基本造價。w_tool.c:75 CostOf
+// ToolCost 是各工具的基本造價。版面出自 w_tool.c:75 `CostOf`。
 //
 // ⚠ 這是**基本**造價。自動推土開啟時，每推掉一格再加 1 元；
 // 橋樑與海底隧道另有更高的價碼（見 connect.go）。
+//
+// ⚠ **體育館 3000、海港 5000 照 DOS 1.10，不照 Micropolis。**
+// Micropolis 的 `CostOf[]` 把這兩項寫成 5000 與 3000，剛好對調；
+// 而 DOS 1.10 的 `DATA/MESSAGE.PTF` 第 1 段（`Stadium: $3000`、
+// `Seaport: $5000`）與軟體世界說明書 p.52 兩份一手資料都站另一邊。
+// 本專案重現的是 DOS 版，所以扣款與顯示都取訊息檔的數字——照 Micropolis
+// 的話玩家會看到標價 $3000、實扣 $5000。
+// 見 `docs/formats/04-ptf-messages.md` §4。
+// 這兩項不影響 `docs/re/12` 的逐 frame 對拍：那些實驗完全不動玩家工具。
 var ToolCost = [19]int{
 	100, 100, 100, 500,
 	0, 500, 5, 1,
 	20, 10, 0, 0,
-	5000, 10, 3000, 3000,
+	3000, 10, 5000, 3000,
 	5000, 10000, 100,
 }
 
