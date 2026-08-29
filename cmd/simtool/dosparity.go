@@ -196,6 +196,39 @@ func cmdDosParityScen(args []string) {
 	fmt.Printf("圖塊相同但旗標不同的格數：%s\n\n", bitDiff(want, w))
 
 	report(metrics(want), metrics(w))
+
+	if cf, err := game.LoadCityFileRaw(args[1]); err == nil {
+		reportMisc(cf, w)
+	}
+}
+
+// reportMisc 比**原版自己記在存檔裡的純量**與 remake 同一刻的值。
+//
+// 這一組比 metrics 那一組硬：metrics 的原版側是我們拿原版的地圖重算的，
+// 這一組是原版自己算完寫進 `MiscHis` 的。索引與 Micropolis 相同——
+// 用 run1.cty 驗過：[2]=446 與唯讀重數的住宅人口相同、[9]=1029 是 CityTime、
+// [51]=17216 是資金、[56]=7 是稅率，四個獨立錨點都對得上。
+func reportMisc(cf *sim.CityFile, w *sim.World) {
+	// ⚠ 人口用唯讀重數，不讀 w.ResPop——理由同 metrics（§五之二）。
+	res, com, ind := w.CountPops()
+	rows := []struct {
+		name string
+		idx  int
+		got  int
+	}{
+		{"住宅人口", 2, res}, {"商業人口", 3, com}, {"工業人口", 4, ind},
+		{"住宅需求", 5, w.RValve}, {"商業需求", 6, w.CValve}, {"工業需求", 7, w.IValve},
+		{"犯罪坡度", 10, w.CrimeRamp}, {"汙染坡度", 11, w.PolluteRamp},
+		{"地價均值", 12, w.LVAverage}, {"犯罪均值", 13, w.CrimeAverage},
+		{"汙染均值", 14, w.PolluteAverage},
+		{"城市等級", 16, w.CityClass}, {"城市評分", 17, w.CityScore},
+	}
+	fmt.Printf("\n原版自己記在 MiscHis 裡的值 vs remake 同一刻：\n")
+	fmt.Printf("%-10s %10s %10s %10s\n", "量", "原版", "remake", "差")
+	for _, r := range rows {
+		a := int(cf.MiscHis[r.idx])
+		fmt.Printf("%-10s %10d %10d %+10d\n", r.name, a, r.got, r.got-a)
+	}
 }
 
 // bitDiff 把「圖塊編號相同、旗標不同」的格數依旗標拆開。

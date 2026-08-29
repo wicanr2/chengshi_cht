@@ -84,6 +84,24 @@ func LoadCity(path string) (*sim.World, error) {
 	return LoadCitySeed(path, sim.RandomSeed())
 }
 
+// LoadCityFileRaw 只把城市檔攤成標準版面並解出結構，**不建 World、
+// 不跑 DoSimInit**。
+//
+// 為什麼需要：`DoSimInit` 會跑一次 PTLScan／CrimeScan，把 `MiscHis` 裡
+// 原版自己記下來的地價、犯罪、汙染平均全部覆蓋掉。要拿「原版自己算出來的
+// 數字」跟 remake 比就不能經過那一步（docs/re/18-dos-parity.md §五之三）。
+func LoadCityFileRaw(path string) (*sim.CityFile, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	body, err := normalizeCityBytes(raw)
+	if err != nil {
+		return nil, fmt.Errorf("%s：%w", filepath.Base(path), err)
+	}
+	return sim.ParseCityFile(body)
+}
+
 // LoadCitySeed 同 LoadCity，但種子由呼叫端指定。理由與
 // LoadScenarioSeed 相同：`DoSimInit` 的那次 `MapScan` 會擲亂數。
 func LoadCitySeed(path string, seed uint32) (*sim.World, error) {
