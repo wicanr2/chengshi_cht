@@ -125,6 +125,15 @@ type Game struct {
 	// snd 是音效系統。nil 代表沒開（無頭環境或裝置開不起來）。
 	snd *soundSystem
 
+	// version 顯示在「關於本遊戲」，由進入點填。
+	version string
+	// saveAs 是「以……檔名儲存」的輸入列，nil 代表沒開。
+	saveAs *saveAsBox
+
+	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
+	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
+	gotoX, gotoY int
+
 	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
 	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
 	// 那是刻意的：那些訊息（爐心熔毀、彈劾、劇本簡介）必須被看到。
@@ -161,6 +170,10 @@ func (g *Game) OpenWindow(name string) bool {
 		g.win = winBudget
 	case "eval":
 		g.win = winEval
+	case "about":
+		g.win = winAbout
+	case "saveas":
+		g.openSaveAs()
 	default:
 		return false
 	}
@@ -236,6 +249,9 @@ func (g *Game) pumpSimMessage() {
 		return
 	}
 	g.world.MessagePort = 0
+	if g.world.MesX != 0 || g.world.MesY != 0 {
+		g.gotoX, g.gotoY = g.world.MesX, g.world.MesY
+	}
 	if s := n; s != 0 {
 		// 警笛在訊息**第一次顯示**的那一刻播，判準是訊息類別。
 		// 原版同一支常式（doMessage 的 firstTime 分支）。
@@ -274,8 +290,18 @@ func (g *Game) setMessage(s string) {
 }
 
 func (g *Game) handleKeys() {
-	// ⚠ 工具鍵要排除 Ctrl 按著的情況，否則 Ctrl-B（預算）會順便選到推土機。
-	if !ebiten.IsKeyPressed(ebiten.KeyControl) {
+	// ⚠ 工具鍵要排除三種情況，每一種都造成過「按了甲卻順便做了乙」：
+	//
+	//   - **Ctrl 按著**：Ctrl-B（預算）會順便選到推土機。
+	//   - **Alt 按著**：Alt-S（系統選單）會順便選到體育館、
+	//     Alt-D（災難選單）順便選到道路。開個選單就換掉玩家的工具，
+	//     而且狀態列只顯示新工具，玩家下一次點擊才發現。
+	//   - **視窗開著**：「以……檔名儲存」要打字，每一個字母都會換工具。
+	//
+	// 前兩種是截圖驗收時發現的：開「關於本遊戲」的那張圖上，
+	// 工具列的高亮跑到體育館去了。
+	if !ebiten.IsKeyPressed(ebiten.KeyControl) &&
+		!ebiten.IsKeyPressed(ebiten.KeyAlt) && g.win == winNone {
 		for _, b := range toolButtons {
 			if inpututil.IsKeyJustPressed(b.key) ||
 				(b.alt != b.key && inpututil.IsKeyJustPressed(b.alt)) {
@@ -384,7 +410,22 @@ func (g *Game) handleKeys() {
 	if ctrl && inpututil.IsKeyJustPressed(ebiten.KeyS) {
 		g.save()
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		g.gotoEvent()
+	}
 	g.handleWindowKeys()
+}
+
+// gotoEvent 是原版參考附表上的 Tab「前往災區」。
+//
+// 目標是**上一則帶座標的訊息**的位置：災難、墜毀、爆炸、交通壅塞都帶座標
+// （`SendMesAt`），純提示訊息不帶。原版用 `MesX`／`MesY`，`0,0` 代表沒有。
+func (g *Game) gotoEvent() {
+	if g.gotoX == 0 && g.gotoY == 0 {
+		g.setMessage("沒有可以前往的事件")
+		return
+	}
+	g.LookAt(g.gotoX, g.gotoY)
 }
 
 // fireDisaster 發動災難選單的第 i 項，然後把選單收掉。
@@ -422,6 +463,8 @@ func (g *Game) handleWindowKeys() {
 		}
 	case winSystem, winScenario, winStyle:
 		g.handleSysMenuKeys()
+	case winSaveAs:
+		g.handleSaveAsKeys()
 	case winDisaster:
 		n := len(disasterItems)
 		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {

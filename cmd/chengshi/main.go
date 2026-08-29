@@ -85,7 +85,7 @@ func main() {
 	save := flag.String("save", defaultSavePath(), "Ctrl-S 的存檔位置")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
-	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval")
+	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas")
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
 	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
@@ -195,6 +195,7 @@ func main() {
 		g.LookAt(demoX+6, demoY+6)
 	}
 	g.SetSavePath(*save)
+	g.SetVersion(version)
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	g.SetDataDir(*data, *style)
 	// 音效開不起來不算致命：印一行就繼續。

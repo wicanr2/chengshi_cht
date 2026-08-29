@@ -30,6 +30,11 @@ const (
 	winSystem
 	winScenario
 	winStyle
+	// winAbout 是「關於本遊戲」（訊息檔第 17 段第 0 筆）。授權條款要求
+	// 副本要附條款與 Required Notice，而 APK 沒地方放文字檔——見 about.go。
+	winAbout
+	// winSaveAs 是「以……檔名儲存」（同段第 9 筆），遊戲裡唯一的文字輸入。
+	winSaveAs
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -117,6 +122,10 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecSysMenu, 5)
 	case winStyle:
 		title = g.txt.S(i18n.SecSysMenu, 3)
+	case winAbout:
+		title = g.txt.S(i18n.SecSysMenu, 0)
+	case winSaveAs:
+		title = g.txt.S(i18n.SecSysMenu, 9)
 	}
 	g.font.Draw(dst, trimMenu(title), x+20, y+14, colOn)
 	g.font.Draw(dst, "Esc 關閉", x+w-20-g.font.Measure("Esc 關閉"), y+14, colDim)
@@ -133,6 +142,10 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawEvalWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winDisaster:
 		g.drawDisasterWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winAbout:
+		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winSaveAs:
+		g.drawSaveAsWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winSystem, winScenario, winStyle:
 		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	}

@@ -18,19 +18,22 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
 
-// sysItems 是系統選單接得起來的項目，值是訊息檔第 17 段的索引。
+// sysItems 是系統選單的項目，順序與值都取自訊息檔第 17 段
+// （分隔線 1／4／7／11 不列）。
 //
-// 沒接的三項照原版的順序留著位置但不列出來：
-// 「關於本遊戲」「印表」「以……檔名儲存」——前兩個 remake 沒有對應物，
-// 第三個要檔名輸入框。見 docs/spec/controls.md 的差距表。
+// ⚠ 「印表」是 remake 自訂的對應物：原版印的是紙上的全市地圖，
+// 這裡存成 PNG。標在 docs/spec/controls.md，不要寫成原版行為。
 var sysItems = []struct {
 	msg  int // 訊息檔第 17 段的索引
 	kind string
 }{
+	{0, "about"},    // 關於本遊戲
+	{2, "print"},    // 印表 → 存成 PNG
 	{3, "style"},    // 讀取圖形集
 	{5, "scenario"}, // 讀取悲情城市
 	{6, "new"},      // 重新建造一新城市
 	{8, "load"},     // 讀取舊有檔案  Ctrl-L
+	{9, "saveas"},   // 以……檔名儲存
 	{10, "save"},    // 儲存現有城市  Ctrl-S
 	{12, "quit"},    // 跳出遊戲      Ctrl-X
 }
@@ -104,6 +107,13 @@ func (g *Game) sysMenuPick(i int) {
 		g.loadStyle(styleOrder[i].key)
 	case winSystem:
 		switch sysItems[i].kind {
+		case "about":
+			g.win = winAbout
+		case "print":
+			g.printMap()
+			g.win = winNone
+		case "saveas":
+			g.openSaveAs()
 		case "style":
 			g.openSubMenu(winStyle)
 		case "scenario":
