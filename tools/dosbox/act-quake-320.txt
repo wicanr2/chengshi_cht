@@ -9,15 +9,21 @@
 #   標題畫面 START NEW CITY (207,223)
 #   手冊查驗：Return ×2 之後 Continue (304,215)
 #   DISASTERS 選單標題 (327,11)；Earthquake (320,103)
-wait 6
+wait 8
 click 207 223
-wait 6
-key Return
-wait 2
+wait 10
+# 防拷對話框：先問一句（要打字＋Return），再跳「Congratulations」（要點
+# Continue）。Tandy 模式讀不出畫面，判斷不了現在是哪一個，所以兩種都送、
+# 各送兩輪。
 key Return
 wait 3
 click 304 215
 wait 3
+key Return
+wait 3
+click 304 215
+wait 3
+shot 00b-ingame
 mark 準備觸發地震
 press 327 11
 wait 1

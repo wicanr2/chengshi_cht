@@ -172,14 +172,14 @@ DISASTERS 選單標題 (327,11)；Earthquake (320,103)
 |---|---|---|
 | `machine=svga_s3` `Sound: I` MCGA | 進遊戲、觸發地震 | 振幅 9997 ✅ |
 | `machine=tandy` `Sound: T` `TDY_FROM=mcga` | **黑畫面**（mcga 資料在 Tandy 下載不起來）| 0 |
-| `machine=tandy` `Sound: T` `TDY_FROM=sega` | 卡在防拷對話框，Continue 點不到 | 0 |
+| `machine=tandy` `Sound: T` `TDY_FROM=sega` | 卡在對話框過不去 | 0 |
+| 同上 ＋ 加長等待、Return 與點擊各送兩輪 | 游標確實落在按鈕上了，對話框還是不關；**而且對話框後面那片地圖是純灰的——城市根本沒生成** | 0 |
 
-最後那一列的原因不是聲音，是**游標飄移**：DOS 的滑鼠驅動吃相對位移，
-遊戲自己搬過游標之後絕對座標就對不齊了（`tools/dosbox_inner.sh` 的
-`goto` 註解記過同一個坑）。畫面讀得出來的時候可以用畫面校正，
-Tandy 這一側讀不出來，所以校正不了。
+最後那一列是決定性的：問題**不只是「文字讀不出來」**。
+替代圖形能讓程式跑起來、把視窗框畫出來，但遊戲本身沒有進入可玩狀態
+（地圖沒畫、對話框關不掉）。**換一套圖形集不足以讓 Tandy 模式可用。**
 
-**三次 Tandy 實驗，三次各自因為不同的理由失敗，沒有一次是因為聲音。**
+**四次 Tandy 實驗，四次各自因為不同的理由失敗，沒有一次是因為聲音。**
 靜音到目前為止仍然什麼都證明不了
 （`~/diagnosis-notes/docs/03-silence-is-not-success/`）。
 
