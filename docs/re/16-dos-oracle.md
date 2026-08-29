@@ -344,8 +344,68 @@ BIOS 服務**，所以呼叫直接落空，沒有任何埠寫入可錄。
 ——就算拿到帶 `tdy\` 的副本也一樣。§4.1–4.2 那四次實驗的結論要照這個
 修正：缺的不只是圖形檔，是**會實作 Tandy 音效 BIOS 的模擬器**。
 
-還沒解的是**「哪一段是哪個事件」**：那在 0xC9EB 的**呼叫端**，
-而呼叫是 far call（`9A`），節區值載入時才填，靜態搜不到。
+### 五之三、far call 搜得到——`PlaySound(n)` 的 n 就是段編號
+
+「節區值載入時才填」這個判斷**是錯的**。解開的映像就是載入時的記憶體
+影像，而 `9A off seg` 裡的 `seg` 是**相對載入節區**的值，所以
+
+```
+目標線性位址 ＝ seg × 16 ＋ off
+```
+
+驗證：全映像 **2118 個 far call、405 個相異目標，其中 181 個正好落在
+`55 8B EC` 函式序言上**——遠高於隨機命中。工具：
+[`tools/dos_farcalls.py`](../../tools/dos_farcalls.py)。
+
+於是：**0xC9EB 只有一個呼叫者，0xCF51**，而它就是 `PlaySound(n)`：
+
+```
+0CF51  push bp / mov bp,sp / push di
+0CF55  mov  es, <音效開關的節區>
+0CF59  cmp  byte ptr es:29B4h, 0     ; 音效關掉就直接 return
+0CF61  cmp  word ptr [bp+6], 8       ; ⭐ 參數 ≥ 8 就 return
+0CF65  jge  ret                      ;   → **n 的值域是 0–7，就是段編號**
+0CF6B  mov  bx,[bp+6] / shl bx,1
+0CF70  mov  di, es:[bx-759Ch]        ; 八個 word 的**長度表**
+0CF75  or   di,di / jz ret           ; 長度 0 不放
+0CF79  push di                       ; 參數 3：長度
+0CF7E  mov  bx,[bp+6] / shl bx,1 / shl bx,1
+0CF85  push word ptr es:[bx-781Eh]   ; 八個 far pointer 的**資料表**：segment
+0CF8A  push word ptr es:[bx-7820h]   ;                              offset
+0CF8F  call far 0xC9EB               ; PlaySample(far *data, len)
+```
+
+### 五之四、十個呼叫點與已認出的三段
+
+`python3 tools/dos_farcalls.py workplace/ida/image.bin 0xCF51`：
+
+| 呼叫點 | n | 上下文 |
+|---|---:|---|
+| `0x0EB98` | 7 | 工具函式：`sub_1686F` 回 1 → 播 7 |
+| `0x0EBAE` | 7 | 同一支：另一條失敗路徑 |
+| `0x0EFED` | 7 | 工具主流程：`di != 1`（失敗）且 `[bp-2] == 0` → 播 7 |
+| `0x0EFD6` | 6 | 工具主流程：`di == 1`（成功）且 `es:2B50h > 4` → 播 6 |
+| `0x0EFDE` | 5 | 同上，`es:2B50h ≤ 4` → 播 5 |
+| `0x1517A` | 3 | `cmp word ptr ds:324Ch, 20h` 之後 |
+| `0x1E316` | 4 | 之後把某個計數器設成 `0x4B0`（1200）|
+| `0x1E74D` | 2 | 之後把某個 word 設成 `0x64`（100）|
+| `0x1EC4F` | 1 | `cmp word ptr es:[bx], 1` 之後 |
+| `0x1F8C4` | 1 | |
+| `0x1EE62` | ？ | 常數不是用 `mov ax,imm/push ax` 壓的 |
+
+**已認出（推論等級：強證據）**：
+
+| 段 | 事件 | 依據 |
+|---|---|---|
+| **7** | **工具失敗** | 三個呼叫點全部在工具的失敗分支上。對應 Micropolis `w_tool.c` 的 `MakeSound("editor","Sorry")` |
+| **5**／**6** | **工具成功**，依工具編號 ≤4／>4 分兩種 | 同一個 `if/else`，條件是 `es:2B50h`（目前工具）與 4 比 |
+
+**未解**：段 0（十個呼叫點都沒用到）、1、2、3、4——它們在模擬／精靈那一側
+（`0x15000`、`0x1E000`–`0x1F800`，`GetPValue` 在 `0x1CC07`，同一區）。
+要認出來得逐一讀那幾支函式。
+
+⚠ **不要拿 Micropolis 的音效清單去硬套。** DOS 版只有八段，Micropolis 有
+46 個具名音效；對應關係要從呼叫端的上下文推，不能從名字猜。
 
 ## 六、執行檔裡的硬編碼字串——中文化的第三個來源
 
