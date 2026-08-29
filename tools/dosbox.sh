@@ -34,4 +34,5 @@ exec timeout "${TIMEOUT:-600}" docker run --rm \
   -e HOME=/tmp -e SECS="$SECS" -e PREFIX="$PREFIX" -e RUN="${RUN:-}" \
   -e CFG_SOUND="${CFG_SOUND:-}" -e CFG_SCREEN="${CFG_SCREEN:-}" \
   -e MACHINE="${MACHINE:-}" -e DOSBOX_BIN="${DOSBOX_BIN:-dosbox-x}" \
+  -e TDY_FROM="${TDY_FROM:-}" -e CFG_GFX="${CFG_GFX:-}" \
   "${IMAGE:-simcity-dosbox:x}" bash /conf/inner.sh

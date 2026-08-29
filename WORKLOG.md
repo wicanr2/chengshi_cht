@@ -230,3 +230,19 @@ tools/go.sh run ./cmd/simtool dosparity-scen 1 workplace/dosbox/save/run1.cty sw
 **停在這裡的理由**：就算解出「哪一段是哪個事件」，這個環境也驗不了
 （Covox 沒模擬器、Tandy 缺 `tdy\` 圖形檔）。照 §0 的閘門，沒對過原版的
 規則不該接進遊戲。真正的解法是換素材或換環境，不是再多花幾小時反組譯。
+
+### 同日：Tandy 模式跑起來了，但音效還是問不出答案
+
+`machine=tandy` 原本卡在載入圖形。繞法：`TDY_FROM=sega CFG_GFX=WESTSEGA`
+——螢幕模式決定的是目錄不是檔名，所以把 `sega\`（320×200，與 Tandy 同尺寸）
+複製成 `tdy\`、把圖形集改成 `WESTSEGA` 讓檔名對得上。**遊戲進得去了。**
+
+順序踩出來的三個狀態：沒有 `tdy\` → `Cannot open graphics file`；
+`tdy\` 放 CEGA（640×350）→ `Not enough memory to load graphics`；
+放 sega → 進得去。
+
+**但這組實驗不能當證據**：畫面是用別的模式的資料畫的，連防拷對話框都讀不出來、
+過不了，所以一次都沒觸發過發聲。錄到的靜音在 `Sound: T` 與 `Sound: I`
+（已知會出聲）兩邊一樣——**沒有正對照**，靜音相容於兩個世界。
+
+缺的東西沒變：一份帶真正 `tdy\` 圖形檔的副本。

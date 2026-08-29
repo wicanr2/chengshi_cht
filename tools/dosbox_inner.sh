@@ -22,6 +22,17 @@ fi
 if [ -n "${CFG_GFX:-}" ]; then
   sed -i "s/^Graphics Set: .*/Graphics Set: $CFG_GFX/" /tmp/game/SIMCITY.CFG
 fi
+# Tandy 模式會去找 C:\tdy\<圖形集>.pgf——螢幕模式決定的是**目錄**不是檔名
+# （docs/re/16-dos-oracle.md §3）。這份副本沒有 tdy\，所以 Tandy 一直卡在
+# 「Please wait - loading graphics」。TDY_FROM 把別的模式目錄複製過去，
+# 讓遊戲載得下去；畫面會是錯的（EGA 的資料餵給 Tandy），但**發聲那條路
+# 會活起來**——目的是錄 Tandy DAC 的輸出，不是看畫面。
+if [ -n "${TDY_FROM:-}" ]; then
+  mkdir -p /tmp/game/tdy
+  cp /tmp/game/"$TDY_FROM"/* /tmp/game/tdy/ 2>/dev/null || true
+  ls /tmp/game/tdy | head -3
+fi
+
 head -5 /tmp/game/SIMCITY.CFG
 
 cp /conf/dosbox.conf /tmp/dosbox.conf

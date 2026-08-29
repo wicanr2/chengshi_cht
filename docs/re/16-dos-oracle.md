@@ -125,6 +125,38 @@ Cannot open graphics file:C:\tdy\WESTCEGA.pgf
 「Tandy 被接受、而且寫出去的東西沒人接」本身是**正面證據**：PCM 那條路
 就是 DAC。但我們放不出來。
 
+### 4.1 用替代圖形讓 Tandy 模式跑起來（2026-08-30）
+
+`machine=tandy` 原本卡在 `Please wait - loading graphics`，因為這份副本沒有
+`tdy\` 目錄。**繞過去了**：螢幕模式決定的是目錄不是檔名（§3），所以
+
+```bash
+MACHINE=tandy CFG_SOUND=T CFG_SCREEN=T CFG_GFX=WESTSEGA TDY_FROM=sega \
+  RUN=simcity ACTIONS=… tools/dosbox.sh 6 tdy
+```
+
+`TDY_FROM` 把 `sega\`（EGA 低解析度，320×200，與 Tandy 同尺寸）複製成
+`tdy\`，`CFG_GFX` 把圖形集改成 `WESTSEGA` 讓檔名對得上。**遊戲跑起來了**
+——選單列、對話框、按鈕都畫得出來。
+
+兩個中間狀態，都是照順序踩出來的：
+
+| 設定 | 結果 |
+|---|---|
+| 不建 `tdy\` | `Cannot open graphics file: C:\tdy\WESTCEGA.pgf` |
+| `tdy\` 放 `CEGA`（640×350 的資料）| `Not enough memory to load graphics` |
+| `tdy\` 放 `sega` ＋ 圖形集改 `WESTSEGA` | **進得去** |
+
+⚠ **但這還是沒有解開音效，而且目前的實驗完全不能當證據。**
+畫面是用別的模式的資料畫的，讀不出任何文字——連防拷對話框都過不了，
+所以**沒有任何一次觸發過發聲**。錄到的靜音在 `Sound: T` 與 `Sound: I`
+（內建喇叭，已知會出聲）**兩邊都一樣**，也就是說這組實驗**沒有正對照**，
+靜音相容於「Tandy DAC 不通」與「根本沒觸發聲音」兩個世界
+（`~/diagnosis-notes/docs/03-silence-is-not-success/`）。
+
+所以缺的東西沒有變：**一份帶真正 `tdy\` 圖形檔的 1.10 副本**。
+有了它，畫面讀得出來、驅動得動，Tandy DAC 那條路才問得出答案。
+
 所以**音效不接進遊戲**。要解開，需要下列其中一項：
 
 - 一份帶 `tdy\` 圖形檔的 1.10 副本（Tandy 畫面 ＋ Tandy DAC 同時成立）；
