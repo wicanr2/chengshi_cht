@@ -11,7 +11,9 @@ rm -rf "$OUT"; mkdir -p "$OUT"
 
 # Windows 走 CGO_ENABLED=0：Ebiten 的 Windows 後端是純 Go（自己載 DLL），
 # 不需要 mingw。Linux 反過來一定要 cgo，因為它要連 X11 與 OpenGL。
-# macOS 需要 Objective-C，交叉編要 osxcross，暫時不出。
+# macOS 需要 Objective-C（Ebiten 的後端），交叉編要 osxcross，
+# 由 tools/build-mac.sh 另外處理——它需要一個含 Apple SDK 的 image，
+# 那個 image 不能散布，所以不是每台機器都有。沒有就跳過。
 docker run --rm \
   --log-opt max-size=10m --log-opt max-file=3 \
   -u "$(id -u):$(id -g)" \
@@ -34,8 +36,21 @@ for p in linux-amd64 windows-amd64; do
   cp "$ROOT/packaging/讀我.txt" "$d/"
 done
 
+# macOS：有 osxcross image 才做。
+if docker image inspect simcity-osxcross:15.5 >/dev/null 2>&1; then
+  "$ROOT/tools/build-mac.sh" "$VER"
+  d="$OUT/mac"
+  cp "$ROOT/LICENSE" "$d/LICENSE"
+  cp "$ROOT/licenses/NotoSansCJK-copyright.txt" "$d/"
+  cp "$ROOT/packaging/讀我.txt" "$d/"
+  rm -f "$d/chengshi"   # 已經在 .app 裡了
+else
+  echo "沒有 simcity-osxcross:15.5，跳過 macOS（見 docker/osxcross.Dockerfile）"
+fi
+
 cd "$OUT"
 tar -czf "chengshi_cht-$VER-linux-amd64.tar.gz" -C linux-amd64 .
+[ -d mac ] && tar -czf "chengshi_cht-$VER-macos-universal.tar.gz" -C mac .
 python3 - "$VER" <<'PY'
 import os
 import sys
@@ -48,7 +63,7 @@ with zipfile.ZipFile(f"chengshi_cht-{ver}-windows-amd64.zip", "w",
     for name in sorted(os.listdir(src)):
         z.write(os.path.join(src, name), name)
 PY
-rm -rf linux-amd64 windows-amd64
+rm -rf linux-amd64 windows-amd64 mac
 ls -lh
 echo
 echo "發行包在 $OUT"

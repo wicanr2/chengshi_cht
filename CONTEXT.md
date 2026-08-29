@@ -30,6 +30,8 @@
 ```bash
 tools/go.sh test ./...              # 全部測試（docker，含接線檢查與字型覆蓋率）
 tools/playtest.sh [種子]            # 正常玩家路徑實機驗證（真視窗、真鍵盤、真滑鼠）
+tools/release.sh ＋ tools/verify_release.sh   # 打發行包並驗包本身
+tools/build-mac.sh                  # macOS universal（osxcross）＋ 靜態驗收
 tools/screenshot.sh [秒] [檔名]     # 單張截圖，GAME_ARGS 帶遊戲參數
 tools/font.sh                       # 重烘點陣字圖集（改過譯文或註解後）
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文
@@ -188,8 +190,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     但只有一段比對得上（`docs/re/16-dos-oracle.md` §4）。剩下的路：
     找一份帶 `tdy\` 圖形檔的 1.10 副本走 Tandy DAC，或反組譯
     `SIMCITY.EXE` 的發聲程式。**在對出來之前不接進遊戲**。
-26. macOS 版：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross
-    （有 skill `osxcross-macos-cross-build`）。
+26. ~~macOS 版~~ **完成**：`docker/osxcross.Dockerfile` ＋ `tools/build-mac.sh`，
+    arm64 與 x86_64 各編一次再 lipo 成 universal，附靜態驗收（雙架構、
+    arm64 的 ad-hoc 簽章、只相依系統庫、含得到中文字串）。`.app` 未簽名，
+    首次開啟要右鍵 → 打開。**⚠ Linux 上執行不了 macOS binary，所以沒有
+    實機試玩**——靜態全過只代表不會因結構問題開不起來。
 27. 說明書轉錄：操作手冊、p.9–22、《參考手冊》第壹章（模擬模型）都完成。
     沒轉錄的只剩 p.1–2 與 p.4–8 的安裝步驟（DOS 3.3 時代的磁片操作），
     以及《參考手冊》第貳章（都市計劃史的散文，沒有術語也沒有機制）。

@@ -364,7 +364,6 @@ Hires EGA 640×350 與 MCGA 320×200 是兩套不同的字元格。
 - **逐刻對拍還沒完全收斂**：23 段裡 14 段仍有差異，多半歸因於重建不出來的
   內部狀態，但還沒逐段證實。
 - **沒有聲音**：`.PSF` 解得開，但還沒接到播放。
-- **macOS 版**：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross，這一版沒出。
 - 說明書的安裝步驟、密碼表與參考手冊的策略討論還沒轉錄（譯名價值低，排在後面）。
 
 ---
@@ -377,8 +376,8 @@ Hires EGA 640×350 與 MCGA 320×200 是兩套不同的字元格。
 先自備一份合法的 **SimCity 1.10（DOS）**，解開到某個目錄——裡面要看得到
 `CEGA/`、`mcga/`、`MONO/`、`sega/`、`DATA/`、`SCENARIO/`。本專案不散布這些檔案。
 
-發行包（Linux 與 Windows）用 [`tools/release.sh`](tools/release.sh) 產，
-內容只有執行檔、授權條款與讀我——字型與譯文都內嵌在執行檔裡。解開後：
+發行包（Linux、Windows、macOS universal）用 [`tools/release.sh`](tools/release.sh)
+產，內容只有執行檔、授權條款與讀我——字型與譯文都內嵌在執行檔裡。解開後：
 
 ```bash
 ./chengshi -data "/path/to/SIMCITY 1.10"                 # 新城市
@@ -387,9 +386,17 @@ Hires EGA 640×350 與 MCGA 320×200 是兩套不同的字元格。
 ./chengshi -data "…" -load city.cty                       # 讀城市檔
 ```
 
-路徑不想每次打，設環境變數 `CHENGSHI_DATA` 指過去。存檔預設落在使用者資料目錄
-（Linux 是 `~/.local/share/chengshi/`），不會寫進程式所在的位置。完整參數與操作
-說明見發行包裡的 `讀我.txt`。
+路徑不想每次打，設環境變數 `CHENGSHI_DATA`，或把 `SIMCITY 1.10` 目錄放在
+執行檔旁邊、`~/.local/share/chengshi/`（Linux）、
+`~/Library/Application Support/chengshi/`（macOS）任一處。存檔預設落在使用者
+資料目錄，不會寫進程式所在的位置。完整參數與操作說明見發行包裡的 `讀我.txt`。
+
+macOS 的 `城市.app` 是在 Linux 上交叉編的，**沒有簽名也沒有公證**——
+第一次開啟要右鍵 → 打開。執行檔本身有 ad-hoc 簽章（否則 Apple Silicon 會
+直接 `Killed: 9`），這一項與「只相依系統庫」「雙架構」都由
+[`tools/build-mac.sh`](tools/build-mac.sh) 的靜態驗收擋著。
+⚠ **Linux 上執行不了 macOS binary**，所以 macOS 版只有靜態驗收，
+沒有像 Linux 那樣的實機試玩。
 
 風格代號：`base` 基本（預設，就是沒裝資料片的原始外觀）、`asia` 古代亞洲、
 `medi` 中世紀、`west` 西部拓荒、`fusa` 未來美國、`feur` 未來歐洲、
@@ -405,8 +412,9 @@ docker build -f docker/go.Dockerfile -t simcity-go:1.25 docker/
 tools/go.sh test ./...              # 全部測試，含接線檢查與字型覆蓋率
 tools/playtest.sh                   # 正常玩家路徑實機驗證（真視窗、真鍵盤、真滑鼠）
 tools/screenshot.sh 12 out.png      # 單張截圖，GAME_ARGS／GAME_KEYS 控制情境
-tools/release.sh                    # 打發行包
+tools/release.sh                    # 打發行包（Linux／Windows／macOS）
 tools/verify_release.sh             # 驗發行包本身（不是驗 build 出來的執行檔）
+tools/build-mac.sh                  # 只編 macOS universal ＋ 靜態驗收
 tools/font.sh                       # 改過譯文之後重烘點陣字圖集
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文
 ```

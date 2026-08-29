@@ -22,7 +22,18 @@ Linux：
 
     ./chengshi -data "/path/to/SIMCITY 1.10"
 
-路徑不想每次打的話，設一個環境變數 CHENGSHI_DATA 指過去就好。
+macOS：把「城市.app」拖到「應用程式」，然後把整個 SIMCITY 1.10 目錄放到
+
+    ~/Library/Application Support/chengshi/SIMCITY 1.10
+
+再點兩下開啟。**這個 App 沒有簽名**（在 Linux 上交叉編出來的，簽名要有
+Mac），第一次開啟要在圖示上按右鍵 → 打開 → 再按一次「打開」。
+
+不想打路徑的話，任何平台都可以改用下面任一種：
+  · 設環境變數 CHENGSHI_DATA
+  · 把 SIMCITY 1.10 目錄放在執行檔旁邊
+  · 放到 ~/.local/share/chengshi/（Linux）
+    或 ~/Library/Application Support/chengshi/（macOS）
 
 
 三、常用參數

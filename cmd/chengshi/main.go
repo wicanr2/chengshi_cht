@@ -60,6 +60,9 @@ func main() {
 		*data = os.Getenv("CHENGSHI_DATA")
 	}
 	if *data == "" {
+		*data = findDataDir()
+	}
+	if *data == "" {
 		fmt.Fprintln(os.Stderr, `請用 -data 指向解開的 SimCity 1.10 目錄。
 
 本專案不散布原版素材（圖形、音效、劇本檔），玩家必須自備一份合法的原版。
@@ -67,7 +70,12 @@ func main() {
 
 例：chengshi -data "/path/to/SIMCITY 1.10" -style asia
 
-也可以把路徑放進環境變數 CHENGSHI_DATA，就不必每次都打。`)
+也可以把路徑放進環境變數 CHENGSHI_DATA，或把整個 SIMCITY 1.10 目錄放到
+下面任何一個位置，就不必每次都打：
+
+  ./SIMCITY 1.10                                    （執行檔旁邊）
+  ~/.local/share/chengshi/SIMCITY 1.10              （Linux）
+  ~/Library/Application Support/chengshi/SIMCITY 1.10（macOS）`)
 		os.Exit(2)
 	}
 	if _, ok := styles[*style]; !ok {
@@ -170,4 +178,33 @@ func defaultSavePath() string {
 		return "city.cty" // 連家目錄都問不出來時的退路
 	}
 	return filepath.Join(dir, "chengshi", "city.cty")
+}
+
+// findDataDir 找玩家自備的原版目錄。
+//
+// 從 Finder 或桌面捷徑點開的時候沒有命令列參數，工作目錄也不是執行檔
+// 所在的地方——只靠 -data 的話，macOS 的 .app 按下去就是「閃一下沒反應」，
+// 而錯誤訊息寫在 stderr，玩家看不到。所以先找幾個約定的位置。
+func findDataDir() string {
+	var cands []string
+	if exe, err := os.Executable(); err == nil {
+		dir := filepath.Dir(exe)
+		cands = append(cands,
+			filepath.Join(dir, "SIMCITY 1.10"),
+			// .app/Contents/MacOS/chengshi → .app 旁邊
+			filepath.Join(dir, "..", "..", "..", "SIMCITY 1.10"))
+	}
+	cands = append(cands, "SIMCITY 1.10")
+	if home, err := os.UserHomeDir(); err == nil {
+		cands = append(cands,
+			filepath.Join(home, ".local", "share", "chengshi", "SIMCITY 1.10"),
+			filepath.Join(home, "Library", "Application Support", "chengshi", "SIMCITY 1.10"))
+	}
+	for _, c := range cands {
+		// 認得出是原版目錄才算：光是同名資料夾不夠。
+		if _, err := os.Stat(filepath.Join(c, "DATA")); err == nil {
+			return c
+		}
+	}
+	return ""
 }
