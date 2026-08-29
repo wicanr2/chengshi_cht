@@ -29,6 +29,26 @@ else
   pass "包裡沒有原版素材"
 fi
 
+# macOS 的包在 Linux 上執行不了，只能驗結構。
+M=/tmp/mac
+if ls dist/chengshi_cht-*-macos-universal.tar.gz >/dev/null 2>&1; then
+  rm -rf $M; mkdir -p $M
+  tar -xzf dist/chengshi_cht-*-macos-universal.tar.gz -C $M
+  for f in "城市.app/Contents/MacOS/chengshi" "城市.app/Contents/Info.plist" \
+           LICENSE NotoSansCJK-copyright.txt 讀我.txt; do
+    [ -s "$M/$f" ] && pass "macOS 包裡有 $f" || fail "macOS 包裡少了 $f"
+  done
+  [ -x "$M/城市.app/Contents/MacOS/chengshi" ] \
+    && pass "macOS 執行檔保留了執行權限" || fail "macOS 執行檔沒有執行權限（tar 壓法不對）"
+  if find "$M" -iname "*.pgf" -o -iname "*.ptf" -o -iname "*.psn" -o -iname "*.cty" | grep -q .; then
+    fail "macOS 包裡混進了原版素材"
+  else
+    pass "macOS 包裡沒有原版素材"
+  fi
+else
+  echo "      （沒有 macOS 包，跳過）"
+fi
+
 V=$("$W/chengshi" -version 2>/dev/null)
 [ -n "$V" ] && pass "版本：$V" || fail "-version 印不出東西"
 
