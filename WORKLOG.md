@@ -350,3 +350,22 @@ found.` 等）的位移在一個 0x600 視窗裡同時出現，看起來像找�
 工具面：映像丟進 IDA 要先把節區設成 16 位元
 （`ida_segment.set_segm_addressing(seg, 0)`），否則 raw binary 預設 32 位元，
 `create_insn` 會把整段解成 `dq`。`tools/ida/dump16.py`。
+
+### 同日續三 — 發聲常式找到了，Tandy 那條路確定走不通
+
+映像 **0xC9EB** 是發聲常式（far，參數是 4 位元資料的 far 指標與位元組長度）。
+它把每個位元組的兩個 nibble 攤成兩個位元組、nibble 放高四位——**獨立確認了
+`.PSF` 是 4 位元、高位在前**（原本只有「相鄰取樣平均絕對差」的統計證據）。
+
+依 `byte_29A7` 分三條路：`==3` 走 DAC；否則 `mov dx,300h / mov ax,8307h /
+int 1Ah` ＝ **Tandy 音效 BIOS**；否則 PC 喇叭 PWM。
+
+**這解釋了四次 Tandy 實驗為什麼全是靜音**：Tandy 不是寫 I/O 埠，是呼叫
+`INT 1Ah AH=83h`，而 DOSBox-X 的 `machine=tandy` 不提供這個 BIOS 服務。
+與字串表裡的 `Tandy sound BIOS not found.` 對得起來。
+
+**所以先前「缺一份帶 tdy\ 圖形檔的副本」這個結論要修正**：就算拿到那份
+副本也一樣沒聲音。缺的是**會實作 Tandy 音效 BIOS 的模擬器**。
+
+還沒解：「哪一段是哪個事件」在 0xC9EB 的呼叫端，而呼叫是 far call（`9A`），
+節區值載入時才填，靜態搜不到。
