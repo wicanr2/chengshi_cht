@@ -1,0 +1,31 @@
+# 在 320×200 版面（MCGA 或 Tandy）觸發一次地震，用來問「這個發聲裝置
+# 有沒有真的出聲」。
+#
+# ⚠ 320×200 的視窗是 640×400（2 倍縮放），**座標 ＝ 遊戲像素 × 2**，
+# 與 640×350 的 EGA 模式不同。Tandy 模式的畫面讀不出來（沒有 tdy\ 的
+# 原生圖形），但版面與 MCGA 相同，所以座標可以共用——這就是這支腳本
+# 存在的理由。
+#
+#   標題畫面 START NEW CITY (207,223)
+#   手冊查驗：Return ×2 之後 Continue (304,215)
+#   DISASTERS 選單標題 (327,11)；Earthquake (320,103)
+wait 6
+click 207 223
+wait 6
+key Return
+wait 2
+key Return
+wait 3
+click 304 215
+wait 3
+mark 準備觸發地震
+press 327 11
+wait 1
+move 320 103
+wait 1
+release
+wait 2
+mark 地震觸發
+shot 01-quake
+wait 8
+shot 02-after

@@ -147,11 +147,40 @@ MACHINE=tandy CFG_SOUND=T CFG_SCREEN=T CFG_GFX=WESTSEGA TDY_FROM=sega \
 | `tdy\` 放 `CEGA`（640×350 的資料）| `Not enough memory to load graphics` |
 | `tdy\` 放 `sega` ＋ 圖形集改 `WESTSEGA` | **進得去** |
 
-⚠ **但這還是沒有解開音效，而且目前的實驗完全不能當證據。**
-畫面是用別的模式的資料畫的，讀不出任何文字——連防拷對話框都過不了，
-所以**沒有任何一次觸發過發聲**。錄到的靜音在 `Sound: T` 與 `Sound: I`
-（內建喇叭，已知會出聲）**兩邊都一樣**，也就是說這組實驗**沒有正對照**，
-靜音相容於「Tandy DAC 不通」與「根本沒觸發聲音」兩個世界
+### 4.2 正對照建起來了，但 Tandy 那一側還是驅動不到觸發點
+
+**Tandy 與 MCGA 都是 320×200，版面相同**——所以可以在讀得出畫面的 MCGA
+量座標，再拿去驅動讀不出畫面的 Tandy。座標寫進
+[`tools/dosbox/act-quake-320.txt`](../../tools/dosbox/act-quake-320.txt)：
+
+```
+標題畫面 START NEW CITY (207,223)
+手冊查驗：Return ×2 之後 Continue (304,215)
+DISASTERS 選單標題 (327,11)；Earthquake (320,103)
+```
+
+⚠ **320×200 的視窗是 640×400（2 倍縮放），座標 ＝ 遊戲像素 × 2**，
+與 640×350 的 EGA 模式不同。
+
+**正對照成立**：同一支腳本，`machine=svga_s3` ＋ `Sound: I`（內建喇叭）
+在 MCGA 下觸發地震，錄到**最大振幅 9997、63 234 個非零樣本**。
+所以腳本確實會觸發發聲，錄音管線也確實會收到。
+
+**但 Tandy 那一側還是到不了觸發點**：
+
+| 設定 | 到哪裡 | 錄到 |
+|---|---|---|
+| `machine=svga_s3` `Sound: I` MCGA | 進遊戲、觸發地震 | 振幅 9997 ✅ |
+| `machine=tandy` `Sound: T` `TDY_FROM=mcga` | **黑畫面**（mcga 資料在 Tandy 下載不起來）| 0 |
+| `machine=tandy` `Sound: T` `TDY_FROM=sega` | 卡在防拷對話框，Continue 點不到 | 0 |
+
+最後那一列的原因不是聲音，是**游標飄移**：DOS 的滑鼠驅動吃相對位移，
+遊戲自己搬過游標之後絕對座標就對不齊了（`tools/dosbox_inner.sh` 的
+`goto` 註解記過同一個坑）。畫面讀得出來的時候可以用畫面校正，
+Tandy 這一側讀不出來，所以校正不了。
+
+**三次 Tandy 實驗，三次各自因為不同的理由失敗，沒有一次是因為聲音。**
+靜音到目前為止仍然什麼都證明不了
 （`~/diagnosis-notes/docs/03-silence-is-not-success/`）。
 
 所以缺的東西沒有變：**一份帶真正 `tdy\` 圖形檔的 1.10 副本**。

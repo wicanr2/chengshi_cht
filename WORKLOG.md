@@ -246,3 +246,19 @@ tools/go.sh run ./cmd/simtool dosparity-scen 1 workplace/dosbox/save/run1.cty sw
 （已知會出聲）兩邊一樣——**沒有正對照**，靜音相容於兩個世界。
 
 缺的東西沒變：一份帶真正 `tdy\` 圖形檔的副本。
+
+### 同日：Tandy 音效的正對照建起來了，但還是到不了觸發點
+
+Tandy 與 MCGA 都是 320×200，版面相同——在讀得出畫面的 MCGA 量座標
+（`tools/dosbox/act-quake-320.txt`），拿去驅動讀不出畫面的 Tandy。
+⚠ 320×200 的視窗是 640×400（2 倍縮放），**座標 ＝ 遊戲像素 × 2**。
+
+**正對照成立**：同一支腳本在 `machine=svga_s3` ＋ `Sound: I` 下觸發地震，
+錄到最大振幅 9997、63 234 個非零樣本。
+
+**Tandy 那一側到不了觸發點**：`TDY_FROM=mcga` 黑畫面（mcga 資料在 Tandy
+下載不起來）；`TDY_FROM=sega` 卡在防拷對話框，Continue 點不到——原因是
+**游標飄移**（DOS 滑鼠吃相對位移，遊戲自己搬過游標之後絕對座標就歪了），
+而畫面讀不出來就校正不了。
+
+**三次 Tandy 實驗，三次各自因為不同的理由失敗，沒有一次是因為聲音。**
