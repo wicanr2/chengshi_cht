@@ -20,7 +20,7 @@ docker run --rm \
   -w /src simcity-go:1.25 \
   bash -c "
     set -e
-    Xvfb :99 -screen 0 1280x960x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
+    Xvfb :99 -screen 0 1920x1050x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
     export DISPLAY=:99
     for i in \$(seq 1 40); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.25; done
     go run ./cmd/chengshi -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \

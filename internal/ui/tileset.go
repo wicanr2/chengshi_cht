@@ -22,8 +22,33 @@ type TileSet struct {
 	Style string // 風格顯示名，例如「Ancient Asia」
 	Size  int    // 一格的邊長（CEGA 16、MCGA 8）
 	Tiles []*ebiten.Image
-	// Sprites 是精靈圖形庫，索引與 .PGF 的圖形庫編號一致。
+	// Sprites 是精靈圖形庫，索引 i 對應 .PGF 的第 i+1 庫。
 	Sprites [][]*ebiten.Image
+	// UI 是介面美術，索引同 Sprites，但**色號 0 不透明**。
+	//
+	// ⚠ 兩份不能共用。精靈要拿色號 0 當透明（否則拖著一塊黑底走），
+	// 而介面圖的黑色是圖本身的一部分——工具盤的格線、按鈕的陰影都是黑的，
+	// 當成透明的話畫出來會缺一塊，而且缺得很像「圖解錯了」。
+	UI [][]*ebiten.Image
+}
+
+// 介面美術在哪一庫。證據：docs/formats/03-pgf-graphics.md §5之二。
+const (
+	BankToolPalette = 2 // 57×182，2 欄 × 7 列的工具圖示
+	BankDemand      = 3 // 46×39，需求指標底圖
+	BankGraphBtns   = 4 // 51×102，統計圖視窗的按鈕
+	BankMapIcons    = 5 // 26×226，地圖視窗左緣的圖層圖示
+	BankRampA       = 6 // 24×72，色階圖例
+	BankRampB       = 7 // 24×72，另一種配色
+)
+
+// UIImage 回傳第 bank 庫的第 i 張介面圖；沒有就回 nil。
+func (t *TileSet) UIImage(bank, i int) *ebiten.Image {
+	k := bank - 1
+	if k < 0 || k >= len(t.UI) || i < 0 || i >= len(t.UI[k]) {
+		return nil
+	}
+	return t.UI[k][i]
 }
 
 // 圖形檔的挑選順序。CEGA 是 EGA 640×350、圖塊 16×16，細節最多，
@@ -122,14 +147,16 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 	for i := range b0.Images {
 		ts.Tiles = append(ts.Tiles, imageFrom(&b0, i, pal))
 	}
-	// 其餘圖形庫原樣收著，精靈與 UI 面板都在裡面。
+	// 其餘圖形庫原樣收著，精靈與介面美術都在裡面。兩份，透明處理不同。
 	for bi := 1; bi < len(g.Banks); bi++ {
 		b := g.Banks[bi]
-		var imgs []*ebiten.Image
+		var imgs, opaque []*ebiten.Image
 		for i := range b.Images {
 			imgs = append(imgs, imageFrom(&b, i, pal))
+			opaque = append(opaque, imageFromOpaque(&b, i, pal))
 		}
 		ts.Sprites = append(ts.Sprites, imgs)
+		ts.UI = append(ts.UI, opaque)
 	}
 	return ts, nil
 }
@@ -149,6 +176,18 @@ func imageFrom(b *assets.PGFBank, i int, pal []color.RGBA) *ebiten.Image {
 				c.A = 0
 			}
 			img.Set(x, y, c)
+		}
+	}
+	return ebiten.NewImageFromImage(img)
+}
+
+// imageFromOpaque 同 imageFrom，但**不做去背**。介面美術用這個。
+func imageFromOpaque(b *assets.PGFBank, i int, pal []color.RGBA) *ebiten.Image {
+	img := image.NewRGBA(image.Rect(0, 0, b.Width, b.Height))
+	px := b.Images[i].Pixels
+	for y := 0; y < b.Height; y++ {
+		for x := 0; x < b.Width; x++ {
+			img.Set(x, y, pal[px[y*b.Width+x]])
 		}
 	}
 	return ebiten.NewImageFromImage(img)

@@ -1,0 +1,27 @@
+# 版面對拍第二輪：三個資料視窗 ＋ 查詢視窗。
+# 用快速鍵開（Ctrl-G 統計圖、Ctrl-B 預算、Ctrl-U 評估），比拉選單穩。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+g
+wait 3
+shot 10-graphs
+key ctrl+c
+wait 2
+key ctrl+b
+wait 3
+shot 11-budget
+key ctrl+c
+wait 2
+key ctrl+u
+wait 3
+shot 12-eval
+key ctrl+c
+wait 2
+shot 13-after

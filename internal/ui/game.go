@@ -14,22 +14,23 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
 
-// 內部畫布。
+// 內部畫布 ＝ 原版畫面 × UIScale。
 //
-// 為什麼是 1280×960 而不是原版的 640×350：中文字要 24×24 才讀得清楚，
-// 硬塞進原版的字位會糊成一團。正解是把畫布拉高、底圖用**整數倍**最近鄰
-// 放大——這裡圖塊 16×16 放大兩倍成 32×32。非整數倍即使用最近鄰也會出現
-// 寬窄不一的像素。詳見 rulebook/81。
+// 版面照原版 DOS 1.10 的 640×350 重現（docs/spec/ui-layout.md），
+// 放大三倍成 1920×1050。三倍不是隨便挑的：原版一個字元格 8×8，×3 剛好
+// 24×24，而本專案的中文點陣字就是 24×24——**一個中文字剛好佔一個原版
+// 字元格**，英數半形佔半格。所以中文比它取代的英文窄，版面有餘裕。
+// 全部整數倍放大，不會出現寬窄不一的像素（rulebook/81）。
 const (
-	CanvasW = 1280
-	CanvasH = 960
+	CanvasW = OrigW * UIScale // 1920
+	CanvasH = OrigH * UIScale // 1050
 
-	tileScale = 2   // 16×16 → 32×32
-	panelW    = 256 // 右側工具列
-	statusH   = 192 // 下方狀態列
+	tileScale = UIScale // 圖塊放大倍率跟著版面
 
-	viewW = CanvasW - panelW  // 1024
-	viewH = CanvasH - statusH // 768
+	// 編輯視窗裡地圖區的大小（螢幕像素）。原版的編輯視窗很小——
+	// 右半邊被 City Form 視窗佔著，那是原版的預設配置。
+	viewW = editViewW * UIScale
+	viewH = editViewH * UIScale
 )
 
 // 配色。刻意用低彩度的灰藍，讓原版的十六色底圖是畫面上最亮的東西。
@@ -130,6 +131,9 @@ type Game struct {
 	// saveAs 是「以……檔名儲存」的輸入列，nil 代表沒開。
 	saveAs *saveAsBox
 
+	// openMenu 是拉開的下拉選單（0 ＝ 沒有，1–4 對應選單列四個標題）。
+	openMenu int
+
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
 	gotoX, gotoY int
@@ -148,6 +152,12 @@ func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential}
 	g.centerCamera()
 	return g
+}
+
+// inEditView 判斷畫面座標在不在編輯視窗的地圖區裡。
+func inEditView(mx, my int) bool {
+	return mx >= editViewX*UIScale && mx < (editViewX+editViewW)*UIScale &&
+		my >= editViewY*UIScale && my < (editViewY+editViewH)*UIScale
 }
 
 func (g *Game) centerCamera() {
@@ -527,13 +537,12 @@ func (g *Game) handleMouse() {
 	pressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	just := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
-	// 工具列
-	if just && mx >= viewW && my < viewH {
-		if i := (my - 8) / 40; i >= 0 && i < len(toolButtons) {
-			g.tool = toolButtons[i].tool
-			g.setMessage(g.toolLabel(toolButtons[i]))
+	// 工具盤：編輯視窗左緣，2 欄 × 7 列（classic.go）。
+	if just {
+		if i := paletteHit(mx, my); i >= 0 {
+			g.tool = paletteOrder[i]
+			return
 		}
-		return
 	}
 	// 圖片訊息擋住畫面時，點一下關掉，不要蓋東西。
 	if g.picture != "" {
@@ -542,12 +551,13 @@ func (g *Game) handleMouse() {
 		}
 		return
 	}
-	// 視窗開著時，地圖區的點擊歸視窗，不要蓋東西
-	if g.win != winNone && mx < viewW && my < viewH {
+	// 視窗開著時，點擊歸視窗，不要蓋東西
+	if g.win != winNone {
 		return
 	}
-	// 地圖
-	if mx >= viewW || my >= viewH {
+	// 地圖：編輯視窗裡的那一塊。座標要先減掉視窗原點——
+	// 少減的話工具會蓋在離游標好幾格的地方，而且看起來像「格子算錯」。
+	if !inEditView(mx, my) {
 		g.dragging = false
 		return
 	}
@@ -564,7 +574,8 @@ func (g *Game) handleMouse() {
 	}
 	g.dragging = true
 	px := g.tiles.Size * tileScale
-	tx, ty := g.camX+mx/px, g.camY+my/px
+	tx := g.camX + (mx-editViewX*UIScale)/px
+	ty := g.camY + (my-editViewY*UIScale)/px
 	g.applyTool(tx, ty)
 }
 
@@ -613,85 +624,14 @@ func (g *Game) toolMessage(n int) {
 }
 
 // Draw 畫一個 frame。
+//
+// 版面是原版 DOS 的重現，畫法在 classic.go。舊的固定版面（右側文字工具列
+// ＋ 下方狀態列）已經換掉——原版是視窗系統，那才是「操作介面一樣」的意思。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colBG)
-	g.drawMap(screen)
+	g.drawClassic(screen)
 	g.drawWindow(screen)
 	g.drawPicture(screen)
-	g.drawPanel(screen)
-	g.drawStatus(screen)
-}
-
-func (g *Game) drawMap(dst *ebiten.Image) {
-	px := g.tiles.Size * tileScale
-	view := dst.SubImage(rect(0, 0, viewW, viewH)).(*ebiten.Image)
-	for y := 0; y < g.tilesDown(); y++ {
-		for x := 0; x < g.tilesAcross(); x++ {
-			n := g.world.TileNum(g.camX+x, g.camY+y)
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Scale(tileScale, tileScale)
-			op.GeoM.Translate(float64(x*px), float64(y*px))
-			// 最近鄰：像素畫放大要銳利，雙線性會糊掉。
-			op.Filter = ebiten.FilterNearest
-			view.DrawImage(g.tiles.TileImage(n), op)
-		}
-	}
-}
-
-func (g *Game) drawPanel(dst *ebiten.Image) {
-	vector.DrawFilledRect(dst, viewW, 0, panelW, viewH, colPanel, false)
-	vector.StrokeLine(dst, viewW, 0, viewW, viewH, 2, colLine, false)
-	for i, b := range toolButtons {
-		y := 8 + i*40
-		c := colText
-		if b.cost > g.world.TotalFunds {
-			c = colDim
-		}
-		if b.tool == g.tool {
-			vector.DrawFilledRect(dst, viewW+4, float32(y-4), panelW-8, 36,
-				color.RGBA{0x3a, 0x46, 0x5c, 0xff}, false)
-			c = colOn
-		}
-		name, cost := g.toolNameCost(b)
-		g.font.Draw(dst, name, viewW+16, y, c)
-		if cost != "" {
-			g.font.Draw(dst, cost, viewW+panelW-16-g.font.Measure(cost), y, colDim)
-		}
-	}
-}
-
-func (g *Game) drawStatus(dst *ebiten.Image) {
-	top := viewH
-	vector.DrawFilledRect(dst, 0, float32(top), CanvasW, statusH, colPanel, false)
-	vector.StrokeLine(dst, 0, float32(top), CanvasW, float32(top), 2, colLine, false)
-
-	// 日期與資金
-	year := 1900 + g.world.CityTime/48
-	month := g.txt.S(i18n.SecMonth, (g.world.CityTime%48)/4)
-	g.font.Draw(dst, fmt.Sprintf("%d 年 %s", year, month), 24, top+20, colText)
-
-	fundColor := colText
-	if g.world.TotalFunds < 0 {
-		fundColor = colMoneyN
-	}
-	g.font.Draw(dst, fmt.Sprintf("資金 $%d", g.world.TotalFunds), 24, top+56, fundColor)
-	g.font.Draw(dst, fmt.Sprintf("人口 %d", g.world.Eval.CityPop), 24, top+92, colText)
-	g.font.Draw(dst, fmt.Sprintf("稅率 %d%%", g.world.CityTax), 24, top+128, colText)
-
-	// 需求顯示表（說明書 p.47）：短柱指向上代表市民需要這一類。
-	g.drawDemand(dst, 360, top+16)
-
-	// 訊息欄
-	if g.msgTimer > 0 {
-		g.font.Draw(dst, g.message, 660, top+20, colOn)
-	}
-	g.font.Draw(dst, "速度："+g.speedName(g.world.SimSpeed), 660, top+56, colDim)
-	g.font.Draw(dst, "F1–F4 速度　Ctrl-M 地圖　Ctrl-G 統計圖　Ctrl-B 預算　Ctrl-U 評估", 660, top+92, colDim)
-	label := "風格：" + StyleNameZH(g.tiles.Style)
-	if g.world.Scenario != 0 {
-		label = game.ScenarioNameZH(int(g.world.Scenario)) + "　" + label
-	}
-	g.font.Draw(dst, label, 660, top+128, colDim)
 }
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。

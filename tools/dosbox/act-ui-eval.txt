@@ -1,0 +1,22 @@
+# 評估視窗（Ctrl-U）。預算視窗是**強制回應**的，要點「Go with these figures」
+# 才關得掉，Ctrl-C 沒有用——所以評估要先開。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+u
+wait 3
+shot 20-eval
+key ctrl+c
+wait 2
+shot 21-after
+key ctrl+b
+wait 3
+click 315 315
+wait 2
+shot 22-budget-closed
