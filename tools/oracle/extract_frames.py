@@ -121,15 +121,23 @@ def main():
         for ln in r["out"]:
             if ln.startswith("SPR "):
                 spr = ln[4:]
+    spg = None
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("SPG "):
+                spg = ln.split()[1:]
     if spr is not None:
         cyc, _, rest = spr.partition(" ; ")
         with open(f"{out}/sprites.csv", "w") as fh:
-            fh.write("# 第一行是 w_sprite.c 的全域（Cycle absDist CrashX CrashY），"
-                     "其餘每行一隻：\n"
+            fh.write("# globals 行：Cycle absDist CrashX CrashY\n"
+                     "# gidx 行：GlobalSprites 每一型指到第幾個節點（−1 ＝ NULL）\n"
+                     "# 其餘每行一個節點，**含死掉的**，順序就是串列的實體順序：\n"
                      "# type,frame,x,y,orig_x,orig_y,dest_x,dest_y,count,"
-                     "sound_count,dir,new_dir,step,flag,control,turn,accel,speed\n")
-            # 第一欄是 Cycle absDist CrashX CrashY 四個全域
+                     "sound_count,dir,new_dir,step,flag,control,turn,accel,"
+                     "speed,named\n")
             fh.write("globals," + ",".join(cyc.split()) + "\n")
+            if spg:
+                fh.write("gidx," + ",".join(spg) + "\n")
             for one in rest.split(" ; "):
                 one = one.strip()
                 if one:
@@ -149,6 +157,22 @@ def main():
                 ones = [o.strip() for o in rest.split(" ; ") if o.strip()]
                 fh.write(",".join([i, str(len(ones))] +
                                   [v for o in ones for v in o.split()]) + "\n")
+
+    maps = []
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("MM "):
+                _, i, rest = ln.split(" ", 2)
+                maps.append((i, parse_map("MM " + rest, "MM")))
+    if maps:
+        with open(f"{out}/map-frames.csv", "w") as fh:
+            fh.write("# 每 N 個 frame 的地圖檢查點，存成相對 cp0 的差異：\n"
+                     "# frame,x,y,圖塊  （一格一行）\n")
+            for i, mm in maps:
+                for y in range(WY):
+                    for x in range(WX):
+                        if mm[y][x] != m0[y][x]:
+                            fh.write(f"{i},{x},{y},{mm[y][x]}\n")
 
     init = find_line(res, "INIT").split()
     r0 = None

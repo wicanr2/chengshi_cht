@@ -153,11 +153,25 @@ func loadSprites(t *testing.T, w *World, path string) {
 	if err != nil {
 		return
 	}
+	var gidx []int
 	for _, ln := range strings.Split(strings.TrimSpace(string(b)), "\n") {
 		if ln == "" || strings.HasPrefix(ln, "#") {
 			continue
 		}
 		f := strings.Split(ln, ",")
+		if f[0] == "gidx" {
+			// GlobalSprites 每一型指到串列的第幾個節點。要等節點都建好
+			// 才能接上去，先記下來。
+			gidx = gidx[:0]
+			for _, v := range f[1:] {
+				n, err := strconv.Atoi(strings.TrimSpace(v))
+				if err != nil {
+					t.Fatalf("sprites.csv 的 gidx 讀不了：%q", ln)
+				}
+				gidx = append(gidx, n)
+			}
+			continue
+		}
 		if f[0] == "globals" {
 			// Cycle absDist CrashX CrashY —— 四個載入時不重設的全域。
 			n, err := strconv.Atoi(f[1])
@@ -170,10 +184,11 @@ func loadSprites(t *testing.T, w *World, path string) {
 			}
 			continue
 		}
-		if len(f) != 18 {
-			t.Fatalf("sprites.csv 這行有 %d 欄，應該 18：%q", len(f), ln)
+		// 18 欄是舊版（只有活著的），19 欄多一個「具名」旗標。
+		if len(f) != 18 && len(f) != 19 {
+			t.Fatalf("sprites.csv 這行有 %d 欄，應該 18 或 19：%q", len(f), ln)
 		}
-		v := make([]int, 18)
+		v := make([]int, len(f))
 		for i := range f {
 			n, err := strconv.Atoi(strings.TrimSpace(f[i]))
 			if err != nil {
@@ -188,8 +203,27 @@ func loadSprites(t *testing.T, w *World, path string) {
 			Step: v[12], Flag: v[13], Control: v[14], Turn: v[15],
 			Accel: v[16], Speed: v[17],
 		}
+		if len(v) == 19 {
+			sp.Named = v[18] != 0
+		}
 		w.spriteSys.list = append(w.spriteSys.list, sp)
-		w.spriteSys.globals[sp.Type] = sp
+	}
+	// ⚠ 原版**開機時就把九型的節點全部建好，而且都是具名的**（不會被回收）。
+	// 所以 `MakeSprite` 從頭到尾都是原地重用，串列的順序是固定的。我們是
+	// 需要時才建，順序自然對不上——除非把整串（含死掉的）連同全域指標一起倒過來。
+	if len(gidx) > 0 {
+		w.spriteSys.globals = [SpriteTypeCount]*Sprite{}
+		for t, idx := range gidx {
+			if idx >= 0 && idx < len(w.spriteSys.list) && t < SpriteTypeCount {
+				w.spriteSys.globals[t] = w.spriteSys.list[idx]
+			}
+		}
+	} else {
+		for _, sp := range w.spriteSys.list {
+			if w.spriteSys.globals[sp.Type] == nil {
+				w.spriteSys.globals[sp.Type] = sp
+			}
+		}
 	}
 }
 

@@ -84,6 +84,65 @@ int SimCmdSprites(ARGS)
 }
 
 
+/* chengshi: 倒出串列的**實體順序**，死掉的節點也算。
+   `sim Sprites` 只列活著的，看不出「新節點加在哪裡」——而那件事有觀察得到
+   的效果（`absDist` 是所有精靈共用的）。另外 `MakeSprite` 對同型別**已存在
+   的節點是原地重用**，所以位置取決於歷史：開機那座隨機城市留下的死節點
+   還在串列裡，而且 `GlobalSprites` 還指著它們。
+   每一隻的最後多一個欄位：名字是不是空的（0 代表無名，會被回收）。 */
+int SimCmdSpritesAll(ARGS)
+{
+  SimSprite *sp;
+  char buf[8192];
+  int n = 0;
+
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  for (sp = sim->sprite; sp != NULL; sp = sp->next) {
+    if (n > 7500) break;
+    n += sprintf(buf + n,
+		 "%s%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+		 n ? " ; " : "",
+		 sp->type, sp->frame, sp->x, sp->y, sp->orig_x, sp->orig_y,
+		 sp->dest_x, sp->dest_y, sp->count, sp->sound_count,
+		 sp->dir, sp->new_dir, sp->step, sp->flag, sp->control,
+		 sp->turn, sp->accel, sp->speed,
+		 (sp->name && sp->name[0]) ? 1 : 0);
+  }
+  buf[n] = 0;
+  Tcl_SetResult(interp, buf, TCL_VOLATILE);
+  return (TCL_OK);
+}
+
+
+/* chengshi: GlobalSprites 每一型指到串列裡的第幾個節點（−1 代表 NULL）。 */
+extern SimSprite *GlobalSprites[];
+
+int SimCmdSpriteGlobals(ARGS)
+{
+  SimSprite *sp;
+  char buf[256];
+  int t, i, idx, n = 0;
+
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  for (t = 0; t < 9; t++) {
+    idx = -1;
+    if (GlobalSprites[t] != NULL) {
+      for (sp = sim->sprite, i = 0; sp != NULL; sp = sp->next, i++) {
+	if (sp == GlobalSprites[t]) { idx = i; break; }
+      }
+    }
+    n += sprintf(buf + n, "%s%d", t ? " " : "", idx);
+  }
+  buf[n] = 0;
+  Tcl_SetResult(interp, buf, TCL_VOLATILE);
+  return (TCL_OK);
+}
+
+
 /* chengshi: w_sprite.c 的四個檔案層級全域，**載入城市時都不會重設**：
    Cycle    動畫計數器，DoCopter／DoPlane 用 `% 3`／`% 5` 決定要不要重算
             方向——也就是要不要抽亂數。
@@ -325,7 +384,9 @@ REG = ("  /* chengshi */ SIM_CMD(Frame);\n"
        "  /* chengshi */ SIM_CMD(FrameStats);\n"
        "  /* chengshi */ SIM_CMD(Sprites);\n"
        "  /* chengshi */ SIM_CMD(SpriteCycle);\n"
-       "  /* chengshi */ SIM_CMD(SpriteDraws);\n")
+       "  /* chengshi */ SIM_CMD(SpriteDraws);\n"
+       "  /* chengshi */ SIM_CMD(SpritesAll);\n"
+       "  /* chengshi */ SIM_CMD(SpriteGlobals);\n")
 
 
 EVALC_OLD = """  x = 0;
@@ -505,6 +566,39 @@ def patch_sprite(root):
     print(f"已加上逐隻精靈的抽樣計數：{p}")
 
 
+# `res/micropolis.tcl` 的三支 proc 也從模擬的亂數抽——**只為了挑音效的
+# 播放速度／音高**。它們是被 `MakeSound("city", "… [MonsterSpeed]")` 這種
+# 命令替換叫起來的，所以在 C 裡看不到。改成常數。
+UI_TCL = [
+    ("""proc MonsterSpeed {} {
+  return [expr "[sim Rand 40] + 70"]
+}""",
+     """proc MonsterSpeed {} {
+  # chengshi: 原本是 [sim Rand 40] + 70——挑音效速度卻抽模擬的亂數。
+  return 90
+}"""),
+]
+
+
+def patch_tcl(root):
+    p = f"{root}/res/micropolis.tcl"
+    s = open(p, encoding="utf-8", errors="surrogateescape").read()
+    if MARK.replace("/* ", "# ") in s or "chengshi:" in s:
+        return
+    n = 0
+    for old, new in UI_TCL:
+        if old in s:
+            s = s.replace(old, new, 1)
+            n += 1
+    # ExplosionPitch／ExplosionHighPitch 兩支長得一樣，一起換掉。
+    old = """  return [expr "[sim Rand 20] + 90"]"""
+    new = """  return 100  ;# chengshi: 原本是 [sim Rand 20] + 90"""
+    n += s.count(old)
+    s = s.replace(old, new)
+    open(p, "w", encoding="utf-8", errors="surrogateescape").write(s)
+    print(f"已移除 Tcl 呈現層的亂數消耗（{n} 處）：{p}")
+
+
 def patch_ui(root):
     for rel, old, new in UI_RAND:
         p = f"{root}/{rel}"
@@ -524,6 +618,7 @@ def main():
     patch_eval(root)
     patch_sprite(root)
     patch_ui(root)
+    patch_tcl(root)
     p = f"{root}/src/sim/w_sim.c"
     # 原始碼是 ASCII，但保險起見用 surrogateescape，非法位元組原樣帶過去。
     s = open(p, encoding="utf-8", errors="surrogateescape").read()

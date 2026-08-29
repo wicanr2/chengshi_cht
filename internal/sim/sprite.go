@@ -143,6 +143,17 @@ func (s *spriteSystem) makeSprite(t, x, y int) *Sprite {
 	return sp
 }
 
+// makeNewSprite 一定生一個新節點，加在串列**最前面**。w_sprite.c:452
+//
+// 這是 `MakeNewSprite`：不看 `GlobalSprites`，直接 `NewSprite`。
+// 原版只有爆炸走這條（w_sprite.c:1639）。
+func (s *spriteSystem) makeNewSprite(t, x, y int) *Sprite {
+	sp := &Sprite{Type: t}
+	s.list = append([]*Sprite{sp}, s.list...)
+	s.initSprite(sp, x, y)
+	return sp
+}
+
 // initSprite 設定一隻精靈的初值。w_sprite.c:272
 func (s *spriteSystem) initSprite(sp *Sprite, x, y int) {
 	sp.X, sp.Y = x, y

@@ -43,9 +43,14 @@ set _a {} ; for {set y 0} {$y < 13} {incr y} { for {set x 0} {$x < 15} {incr x} 
 set _a {} ; for {set y 0} {$y < 13} {incr y} { for {set x 0} {$x < 15} {incr x} { lappend _a [sim Mem PoliceMap $x $y] } } ; puts stdout "POSTPLC [llength $_a] [join $_a ,]"
 set _a {} ; for {set y 0} {$y < 13} {incr y} { for {set x 0} {$x < 15} {incr x} { lappend _a [sim Mem PoliceMapEffect $x $y] } } ; puts stdout "POSTPLE [llength $_a] [join $_a ,]"
 set _a {} ; for {set y 0} {$y < 13} {incr y} { for {set x 0} {$x < 15} {incr x} { lappend _a [sim Mem FireRate $x $y] } } ; puts stdout "POSTFRT [llength $_a] [join $_a ,]"
-puts stdout "SPR [sim SpriteCycle] ; [sim Sprites]"
+puts stdout "SPR [sim SpriteCycle] ; [sim SpritesAll]"
+puts stdout "SPG [sim SpriteGlobals]"
 puts stdout "CHK [sim Mem LandValueMem 30 25] [sim Mem PopDensity 30 25] [sim Mem LandValueMem 10 40] [sim Mem PopDensity 10 40] [sim Mem ComRate 3 7]"
 puts stdout "INIT [sim Fcycle] [sim Scycle] [sim Funds]"
 puts stdout "R0S [sim RandState]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CP0 [llength $_m] [join $_m ,]"
 for {set i 0} {$i < 400} {incr i} { sim Frame 1 ; puts stdout "FS $i [sim Scycle] [sim Valves] [sim RandState] [sim FrameStats] [sim SpriteDraws]" ; puts stdout "S $i ; [sim Sprites]" }
+# ⚠ 地圖檢查點放在這個迴圈裡實測跑不完（八次全圖傾印 ＝ 九萬六千次 Tcl
+# 指令派送，加上八條六十 KB 的輸出行走 pty）。所以這一份**不比對地圖**——
+# 精靈的欄位對得上、抽樣次數也對得上，地圖仍可能悄悄偏掉。要補的話，
+# 得換一種傾印方式（例如只倒怪獸附近的視窗，或改走檔案而不是 pty）。

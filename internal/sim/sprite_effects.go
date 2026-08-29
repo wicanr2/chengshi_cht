@@ -184,11 +184,14 @@ func (s *spriteSystem) GenerateCopter(x, y int) {
 	s.makeSprite(SpriteCopter, x<<4, (y<<4)+30)
 }
 
-// MakeExplosionAt 在像素座標處生一團爆炸。
+// MakeExplosionAt 在像素座標處生一團爆炸。w_sprite.c:1639
+//
+// ⚠ 原版走的是 `MakeNewSprite`（**一定生新節點**，而且**加在串列最前面**），
+// 不是 `MakeSprite`（同型別已有節點就原地重用）。差別看得出來：爆炸會排到
+// 所有精靈前面，而 `absDist` 是大家共用的。
 func (s *spriteSystem) MakeExplosionAt(x, y int) {
-	sp := &Sprite{Type: SpriteExplosion}
-	s.list = append(s.list, sp)
-	s.initSprite(sp, x-40, y-16)
+	sp := s.makeNewSprite(SpriteExplosion, x-40, y-16)
+	_ = sp
 }
 
 // MakeExplosion 在格子座標處生一團爆炸。
