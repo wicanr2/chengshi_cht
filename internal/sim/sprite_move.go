@@ -95,6 +95,7 @@ func (s *spriteSystem) doCopter(sp *Sprite) {
 		if x >= 0 && x < WorldX>>1 && y >= 0 && y < WorldY>>1 {
 			if s.w.TrfDensity[x][y] > 170 && s.w.Rand.Rand16()&7 == 0 {
 				s.w.SendMesAt(-MsgHeavyTraffic, (x<<1)+1, (y<<1)+1)
+				s.w.playSound(SoundHeavyTraffic)
 				sp.SoundCount = 200
 			}
 		}
@@ -170,11 +171,12 @@ func (s *spriteSystem) doShip(sp *Sprite) {
 		sp.SoundCount--
 	}
 	if sp.SoundCount == 0 {
-		// 原版在這裡發出汽笛聲，並且**不管有沒有發聲都抽樣**。
+		// ⚠ **不管有沒有發聲都抽樣**——條件不成立時那一次 Rand 照樣消耗掉。
 		if s.w.Rand.Rand16()&3 == 1 {
 			if s.w.Scenario == ScenarioSanFrancisco {
 				s.w.Rand.Rand(10) // 舊金山的汽笛有兩種，多抽一次
 			}
+			s.w.playSound(SoundShipHorn)
 		}
 		sp.SoundCount = 200
 	}
@@ -334,6 +336,7 @@ func (s *spriteSystem) doMonster(sp *Sprite) {
 					}
 					d = 4
 					if sp.SoundCount == 0 {
+						s.w.playSound(SoundMonster)
 						sp.SoundCount = 50 + s.w.Rand.Rand(100)
 					}
 				}
@@ -456,6 +459,7 @@ func (s *spriteSystem) doTornado(sp *Sprite) {
 func (s *spriteSystem) doExplosion(sp *Sprite) {
 	if s.cycle&1 == 0 {
 		if sp.Frame == 1 {
+			s.w.playSound(SoundExplosion)
 			s.w.SendMesAt(MsgExplosion, (sp.X>>4)+3, sp.Y>>4)
 		}
 		sp.Frame++

@@ -5,10 +5,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -37,9 +42,43 @@ var styles = map[string]string{
 	"moon": "Moon Colony",
 }
 
+// audioUsable 開一個子行程試開音效裝置。
+//
+// 為什麼不在本行程裡試：`oto.NewContext` 沒有 Close，試完裝置就被佔住，
+// Ebiten 自己那個環境反而開不成。子行程結束時作業系統會收回。
+func audioUsable() error {
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, exe, "-audio-probe")
+	out, err := cmd.Output()
+	if err != nil {
+		msg := strings.TrimSpace(string(out))
+		if msg == "" {
+			msg = err.Error()
+		}
+		return errors.New(firstLine(msg))
+	}
+	return nil
+}
+
+// firstLine 只留第一行：ALSA 失敗時會列出十幾個裝置名，那對玩家沒有意義。
+func firstLine(s string) string {
+	if i := strings.IndexByte(s, '\n'); i >= 0 {
+		return s[:i] + " …"
+	}
+	return s
+}
+
 func main() {
 	data := flag.String("data", "", "解開的 SIMCITY 1.10 目錄（裡面要有 CEGA/、mcga/、DATA/）")
 	style := flag.String("style", "base", "城市風格：base 基本／asia／medi／west／fusa／feur／moon")
+	mute := flag.Bool("mute", false, "不要音效")
+	probe := flag.Bool("audio-probe", false, "內部用：試開音效裝置後結束（0 ＝ 開得起來）")
+	sndTest := flag.Int("sound-test", -1, "內部用：一開始就播第幾段音效（0–7），給錄音驗收")
 	seed := flag.Int("seed", 0, "地形亂數種子（0 = 隨機）")
 	scen := flag.Int("scenario", 0, "載入第幾個悲情城市（1–8，0 = 新城市）")
 	load := flag.String("load", "", "讀取一個城市檔（.cty，原版格式）")
@@ -50,6 +89,18 @@ func main() {
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
 	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
+
+	// -audio-probe 是內部用的：只試開一次音效裝置就結束，回傳碼給
+	// audioUsable 判斷。要放在所有其他初始化之前，它不需要任何資料。
+	if *probe {
+		if err := ui.ProbeAudio(); err != nil {
+			// 寫 stdout：stderr 已經被圖形函式庫的警告佔滿了
+			// （`XGB: Could not get authority info…`），混在一起讀不出原因。
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 
 	if *showVer {
 		fmt.Println("城市（chengshi_cht）", version)
@@ -146,6 +197,20 @@ func main() {
 	g.SetSavePath(*save)
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	g.SetDataDir(*data, *style)
+	// 音效開不起來不算致命：印一行就繼續。
+	//
+	// ⚠ 但**必須先在子行程裡試開**，見 ui.ProbeAudio：Ebiten 把音效環境的
+	// 錯誤當成致命錯誤，直接在遊戲行程裡開失敗的話，玩家會看到視窗閃一下
+	// 就結束。沒有音效裝置的機器（伺服器、容器、有些 WSL）比想像中多。
+	if !*mute {
+		if err := audioUsable(); err != nil {
+			fmt.Fprintf(os.Stderr, "音效沒開起來（遊戲照跑）：%v\n", err)
+		} else if err := g.EnableSound(*data, *style); err != nil {
+			fmt.Fprintf(os.Stderr, "音效沒開起來（遊戲照跑）：%v\n", err)
+		} else if *sndTest >= 0 {
+			g.PlaySoundOnce(*sndTest)
+		}
+	}
 	g.ShowScenarioBrief()
 	if *win != "" {
 		if !g.OpenWindow(*win) {

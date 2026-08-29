@@ -62,7 +62,7 @@ echo "$MSG" | grep -q "請用 -data" && pass "少了 -data 有中文說明" \
 export HOME=/tmp/player; rm -rf $HOME; mkdir -p $HOME
 SAVE=$HOME/.local/share/chengshi/city.cty
 cd $W
-./chengshi -data "/src/workplace/dos110/SIMCITY 1.10" -seed 7 >/tmp/pkg.log 2>&1 &
+./chengshi -data "/src/workplace/dos110/SIMCITY 1.10" -mute -seed 7 >/tmp/pkg.log 2>&1 &
 G=$!
 ok=0
 for i in $(seq 1 90); do

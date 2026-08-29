@@ -122,6 +122,9 @@ type Game struct {
 	// savePath 是 Ctrl-S 存檔的目標。空的話存到工作目錄下的城市名。
 	savePath string
 
+	// snd 是音效系統。nil 代表沒開（無頭環境或裝置開不起來）。
+	snd *soundSystem
+
 	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
 	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
 	// 那是刻意的：那些訊息（爐心熔毀、彈劾、劇本簡介）必須被看到。
@@ -218,6 +221,7 @@ func (g *Game) Update() error {
 		g.msgTimer--
 	}
 	g.pumpSimMessage()
+	g.pumpSounds()
 	return nil
 }
 
@@ -232,6 +236,16 @@ func (g *Game) pumpSimMessage() {
 		return
 	}
 	g.world.MessagePort = 0
+	if s := n; s != 0 {
+		// 警笛在訊息**第一次顯示**的那一刻播，判準是訊息類別。
+		// 原版同一支常式（doMessage 的 firstTime 分支）。
+		if s < 0 {
+			s = -s
+		}
+		if sim.WantsSiren(s) {
+			g.snd.play(sim.SoundSiren)
+		}
+	}
 	if n < 0 {
 		if p := g.txt.Picture(-n); p != "" {
 			g.picture = p
@@ -517,7 +531,9 @@ func (g *Game) applyTool(tx, ty int) {
 		return
 	}
 	before := g.world.TotalFunds
-	switch r := g.world.ApplyTool(g.tool, tx, ty); r {
+	r := g.world.ApplyTool(g.tool, tx, ty)
+	g.toolSound(r, g.tool)
+	switch r {
 	case sim.ToolOK:
 		if spent := before - g.world.TotalFunds; spent > 0 {
 			g.setMessage(fmt.Sprintf("花費 $%d", spent))

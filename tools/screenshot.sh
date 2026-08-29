@@ -23,7 +23,7 @@ docker run --rm \
     Xvfb :99 -screen 0 1280x960x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
     export DISPLAY=:99
     for i in \$(seq 1 40); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.25; done
-    go run ./cmd/chengshi -data 'workplace/dos110/SIMCITY 1.10' ${GAME_ARGS:-} \
+    go run ./cmd/chengshi -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \
         >/tmp/game.log 2>&1 &
     GAME=\$!
     sleep $WAIT

@@ -9,18 +9,22 @@ import (
 	"strings"
 
 	"github.com/wicanr2/chengshi_cht/internal/assets"
+	"github.com/wicanr2/chengshi_cht/internal/audio"
 )
 
 // cmdSound 把一份 DOS 音效檔的八段倒成 WAV。
 //
-// ⚠ 取樣率是**猜的**。原版沒有在檔案裡寫，而 8000 只是常見值——
-// 見 docs/formats/05-psf-sound.md 的未解項。倒出來的檔案拿去聽或拿去
-// 比對可以，但不要拿這個數字當結論。
+// 八段各是什麼事件已經解出來了（0 交通壅塞、1 爆炸、2 怪獸、3 警笛、
+// 4 船笛、5／6 工具成功、7 工具失敗，見 docs/re/16-dos-oracle.md §五之四）。
+//
+// ⚠ 取樣率**只到強證據**：預設 5400 Hz 是量出來的區間 5300–5450 的中值
+// （同文件 §五之五），不是從程式碼直讀的常數。倒出來的檔案拿去聽或比對
+// 可以，但不要拿這個數字當結論。
 func cmdSound(args []string) {
 	fs := flag.NewFlagSet("sound", flag.ExitOnError)
 	in := fs.String("file", "", "音效檔（.PSF 或未壓縮的 .V4）")
 	out := fs.String("out", "sound", "輸出目錄")
-	rate := fs.Int("rate", 8000, "假設的取樣率（沒有一手證據）")
+	rate := fs.Int("rate", audio.DOSSampleRate, "取樣率（預設是量出來的 5400 Hz，強證據）")
 	fs.Parse(args)
 	if *in == "" {
 		fs.Usage()

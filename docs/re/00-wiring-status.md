@@ -40,6 +40,6 @@
 | [`docs/formats/02-dos-lzss.md`](../formats/02-dos-lzss.md) | DOS 共用壓縮與四種資料檔 | **已接** | `internal/assets/lzss.go`、`ptf.go`、`psn.go` |
 | [`docs/formats/03-pgf-graphics.md`](../formats/03-pgf-graphics.md) | `.PGF` 圖形檔版面與圖形庫 | **已接** | `internal/assets/pgf.go` |
 | [`docs/formats/04-ptf-messages.md`](../formats/04-ptf-messages.md) | `.PTF` 訊息檔的分段結構與訊息類別 | **已接** | `internal/assets/ptf.go`（`ParsePTF`、`PictureID`、`MessageClass`）、`internal/i18n/i18n.go` |
-| [`docs/formats/05-psf-sound.md`](../formats/05-psf-sound.md) | `.PSF`／`.V4` 音效檔的長度鏈與 4 位元取樣 | **已接** | `internal/assets/psf.go`、`cmd/simtool/sound.go`。⚠ 接的只有**容器格式**。八段對應哪個事件已經解出來（§五，已確認），取樣率只到區間（§六，強證據 5300–5450 Hz），所以聲音還沒接進遊戲——差的是取樣率的定值，不再是事件對應 |
+| [`docs/formats/05-psf-sound.md`](../formats/05-psf-sound.md) | `.PSF`／`.V4` 音效檔的長度鏈與 4 位元取樣 | **已接** | `internal/audio/audio.go`、`internal/assets/psf.go`、`cmd/simtool/sound.go`；八段接在 `internal/ui/sound.go` 與 `internal/sim/sound.go`。⚠ 取樣率只到區間（§六，強證據 5300–5450 Hz），程式取中值 5400，**規格裡標成暫代值**（`docs/spec/sound.md` §三）|
 | [`docs/re/16-dos-oracle.md`](16-dos-oracle.md) | DOS 原版當 oracle：防拷、螢幕模式、音效裝置、八段音效的事件對應 | **已接** | §五之四的訊息類別語意接在 `internal/assets/ptf.go` 的 `MessageClass`。§2 的防拷、§3 的螢幕模式、§4 的模擬器界線是原版環境的事實，不進 remake；工具鏈在 `tools/dosbox.sh` |
 | [`docs/re/18-dos-parity.md`](18-dos-parity.md) | DOS 原版與 remake 的抽樣對拍 | **已接** | `cmd/simtool/dosparity.go`；量法上的兩個坑接在 `internal/sim/scan.go` 的 `CountPops` 與 `internal/game/scenario.go` 的 `LoadScenarioSeed` |

@@ -14,6 +14,7 @@ func (s *spriteSystem) explodeSprite(sp *Sprite) {
 	s.MakeExplosionAt(x, y)
 	s.w.CrashX = x >> 4
 	s.w.CrashY = y >> 4
+	s.w.playSound(SoundExplosion)
 	// 依型別送訊息。w_sprite.c:1383。公車照原版也送 −26（原始碼註記 `XXX for now`）。
 	switch sp.Type {
 	case SpriteAirplane:

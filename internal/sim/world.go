@@ -202,6 +202,10 @@ type World struct {
 
 	spriteSys *spriteSystem
 
+	// soundQueue 是規則層發出的音效事件，呈現層每個畫格取走一次。
+	// 不進存檔、不參與對拍，見 sound.go。
+	soundQueue []int
+
 	// Sprites 是精靈系統。nil 代表沒有（見 mapscan.go 的 SpriteHooks）。
 	Sprites SpriteHooks
 
