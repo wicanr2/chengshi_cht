@@ -107,6 +107,7 @@ IBM PC 版手冊的「LIST OF FILES ON THE DISKS」逐項列出：
 | `SIMCITY.EXE` 到底有沒有被改 | DOSBox 跑一次看會不會問手冊；另找一份未破解 1.10 比對 SHA-256 |
 | ~~`.PTF`／`.PSF` 的內部格式~~ | **已解**：`04-ptf-messages.md`、`05-psf-sound.md` |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 反組譯 `SIMCITY.EXE` 的檔名字串，或 DOSBox 追檔案開啟。兩份只差第 2 段（`05-psf-sound.md` §4）|
+| ~~螢幕模式怎麼對到圖形檔~~ | **已解**：模式決定目錄、`Graphics Set` 是完整檔名主幹（`../re/16-dos-oracle.md` §3）|
 | 圖形集前綴的語意 | 從 `.PGF` 解出圖塊後看內容，或找執行檔裡的字串 |
 
 ## 補充：圖形集前綴的語意（已解）

@@ -1,0 +1,16 @@
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 189
+wait 4
+press 404 8
+wait 1
+move 404 40
+wait 1
+shot 10-disasters-open
+release
+wait 2

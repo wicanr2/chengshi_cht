@@ -70,8 +70,11 @@ u16  之後的位元組數（＝檔案大小 − 2）
   試過拿 X11 版有名字的音效（`micropolis-activity/res/sounds/`）比對包絡線，
   相關係數落在 0.6–0.9 之間且彼此矛盾（第 7 段是一段乾淨的正弦音，卻比到
   「粉筆聲」），**判不出來**，不採用。
-  可行的路是 **DOSBox 實跑**：把原版跑起來、觸發已知事件、錄下聲音，
-  再與這八段對相關。工具在 `tools/snd_export.py`／`tools/snd_match.py`。
+  DOSBox 實跑的設施已經做好了（[`../re/16-dos-oracle.md`](../re/16-dos-oracle.md)），
+  但**DOSBox 0.74 放不出這八段**：`Sound: I`（PC 喇叭）只錄得到單頻方波，
+  `Sound: S`（Covox）在 0.74 的 disney 裝置底下完全無聲，`Sound: T`（Tandy）
+  要 `tdy\` 目錄的圖形檔而這份副本沒有。
+  下一步是換一個支援 Covox／LPT DAC 的 DOSBox（DOSBox-X 或 Staging，要自己編）。
 - **取樣率**。檔案裡沒寫，`simtool sound` 預設的 8000 只是佔位值。
   同一次 DOSBox 實跑可以一併定案：錄到的長度除以段的取樣數就是取樣率。
 - 播放硬體（PC 喇叭 PWM／Tandy DAC／Sound Blaster）各自怎麼餵這些樣本。

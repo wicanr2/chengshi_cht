@@ -1,0 +1,85 @@
+# 音效實驗：每個動作之間留四秒靜音，事後才切得開。
+# 座標是 640×350 的 Hires EGA 畫面座標。工具盤兩欄七列，
+# 第一欄中心 x=22、第二欄 x=49；列中心 y=70/96/121/146/170/196/221。
+# 地圖區大約 x 63–237、y 54–312。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 5
+shot 00-ingame
+mark 基線靜音
+wait 6
+
+mark A-選推土機
+click 22 70
+wait 4
+mark A-推平
+click 100 100
+wait 6
+
+mark B-選道路
+click 49 70
+wait 4
+mark B-鋪路
+click 100 140
+wait 6
+
+mark C-選電力線
+click 22 96
+wait 4
+mark C-拉線
+click 100 180
+wait 6
+
+mark D-選鐵路
+click 49 96
+wait 4
+mark D-鋪軌
+click 100 220
+wait 6
+
+mark E-選公園
+click 22 121
+wait 4
+mark E-蓋公園
+click 150 100
+wait 6
+
+mark F-選住宅區
+click 49 121
+wait 4
+mark F-劃住宅區
+click 150 140
+wait 6
+
+mark G-選商業區
+click 22 146
+wait 4
+mark G-劃商業區
+click 150 180
+wait 6
+
+mark H-選工業區
+click 49 146
+wait 4
+mark H-劃工業區
+click 150 220
+wait 6
+
+mark I-選發電廠
+click 49 196
+wait 4
+mark I-蓋發電廠
+click 200 140
+wait 6
+
+mark J-選機場買不起
+click 49 221
+wait 4
+mark J-試蓋
+click 200 220
+wait 6
+shot 99-after

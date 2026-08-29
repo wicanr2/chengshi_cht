@@ -33,11 +33,18 @@ tools/playtest.sh [種子]            # 正常玩家路徑實機驗證（真視�
 tools/screenshot.sh [秒] [檔名]     # 單張截圖，GAME_ARGS 帶遊戲參數
 tools/font.sh                       # 重烘點陣字圖集（改過譯文或註解後）
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文
+tools/dosbox.sh <秒> <前綴>         # 跑 DOS 原版當 oracle（截圖 ＋ 錄音 ＋ 動作腳本）
 tools/oracle/build.sh               # 建 Micropolis oracle
 tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 ```
 
 ### 已確認的事實（可引用）
+
+- 手上這份 DOS 副本的防拷**查驗還在，但一律判過**：開新城市後跳出
+  「Enter NAME of city ／ Page:」，送空白答案回的是
+  `Congratulations, you passed.`（`docs/re/16-dos-oracle.md` §2）。
+- 螢幕模式決定的是**圖形檔的目錄**不是檔名：`Screen Mode: T` 會去找
+  `C:\tdy\WESTCEGA.pgf`（同上 §3）。
 
 - 軟體世界代理的是**英文版遊戲 ＋ 中文說明書**，一代沒有中文版遊戲。
   （來源：封面「珍藏版 29／NT 180／2 片裝」＋ 骨灰集散地規格表「中文版本：無」）
@@ -170,8 +177,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     要反組譯。已知的部分見 `docs/formats/03-pgf-graphics.md` §7。
 25. 聲音：**容器格式已解**（`docs/formats/05-psf-sound.md`、`internal/assets/psf.go`）——
     九份檔案各切成八段 4 位元 PCM。**還缺兩件事**才能接進遊戲：
-    每一段對應哪一個事件、取樣率是多少。兩件都要靠 DOSBox 實跑
-    （跑原版、觸發已知事件、錄音、對相關）一次解決。
+    每一段對應哪一個事件、取樣率是多少。DOSBox 實跑的設施已經做好
+    （`tools/dosbox.sh`、`docs/re/16-dos-oracle.md`），但 **DOSBox 0.74
+    放不出這八段**——PC 喇叭只出單頻方波、Covox 在它的 disney 裝置底下
+    無聲、Tandy 要缺的圖形檔。下一步是換一個支援 Covox／LPT DAC 的
+    DOSBox（DOSBox-X 或 Staging，Debian 沒有套件，要自己編）。
 26. macOS 版：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross
     （有 skill `osxcross-macos-cross-build`）。
 27. 說明書剩下的章節（安裝步驟、密碼表、參考手冊的策略討論）。譯名價值低，排最後。

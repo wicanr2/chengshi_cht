@@ -1,0 +1,21 @@
+# 一次只觸發一個災難，錄音裡就不會有別的東西可以混淆。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 189
+wait 6
+mark 靜音基線開始
+wait 10
+mark 開選單
+press 404 8
+wait 3
+mark 選-Fire
+move 404 28
+wait 1
+release
+wait 20
+shot 99-after

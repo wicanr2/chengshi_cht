@@ -193,9 +193,12 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 
 1. **這份 zip 是三個年代疊起來的**：1991-05 的原廠 1.10、1996-12 的 "Knight Rider"
    重打包（`mcga/`＋`sega/`＋`read.me`）、2012-05 補的古城風情三個圖形集。
-2. **`read.me` 自稱移除了防拷，但 `SIMCITY.EXE` 的時間戳跟原廠同一批。**
-   到底有沒有被改是**未解**，不是「已被破解」——DOSBox 跑一次看會不會問手冊就能定案。
-   在定案之前，從這份執行檔反組譯得到的結論一律標明來源版本存疑。
+2. **`read.me` 自稱移除了防拷。跑起來看到的是：查驗還在，但一律判過。**
+   開新城市之後照樣跳出「Enter NAME of city / Page:」那個手冊查驗視窗，
+   直接按 Enter 送出空白答案，回的是 `Congratulations, you passed.`——
+   所以被改的是**判斷結果**，不是把整段拿掉。`SIMCITY.EXE` 確實被動過，
+   從它反組譯得到的結論要標明來源版本存疑。
+   （證據：`tools/dosbox.sh` 實跑，見 [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md)。）
 3. **時間戳不等於內容被改。** `sega/` 整套是 1996 的時間戳，但官方手冊附錄列了
    `SEGADAT.PGF`——它是原廠檔，只是被 touch 過。判「這個檔被動過了嗎」要比內容。
 

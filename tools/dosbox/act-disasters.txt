@@ -1,0 +1,56 @@
+# 逐一觸發六種災難，中間各留十二秒。名稱取自西部拓荒風格的 DISASTERS 選單。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 189
+wait 5
+shot 00-clean
+mark 基線
+wait 8
+
+mark 災難-Fire
+press 404 8
+wait 1
+move 404 28
+release
+wait 12
+
+mark 災難-Flood
+press 404 8
+wait 1
+move 404 43
+release
+wait 12
+
+mark 災難-BalloonCrash
+press 404 8
+wait 1
+move 404 57
+release
+wait 12
+
+mark 災難-Twister
+press 404 8
+wait 1
+move 404 71
+release
+wait 12
+
+mark 災難-Earthquake
+press 404 8
+wait 1
+move 404 85
+release
+wait 12
+
+mark 災難-Tumbleweed
+press 404 8
+wait 1
+move 404 99
+release
+wait 12
+shot 99-after

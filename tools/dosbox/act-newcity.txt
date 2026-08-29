@@ -1,0 +1,9 @@
+# 從標題畫面進到一座新城市。座標是 640×350 的 Hires EGA 畫面座標。
+wait 3
+shot 01-title
+click 200 197
+wait 5
+shot 02-newcity-dialog
+click 311 245
+wait 8
+shot 03-ingame

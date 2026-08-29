@@ -1,0 +1,8 @@
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+shot 04-clean
