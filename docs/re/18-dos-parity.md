@@ -197,9 +197,9 @@ tools/go.sh run ./cmd/simtool dosparity-scen 1 workplace/dosbox/save/run1.cty
 （第一次就是踩這個坑，讀到「原版地價 8」——那是被我們自己的第一次掃描
 蓋掉的值，原版自己記的是 98。）
 
-## 六、差距的來源：DOS 版算的汙染比 Micropolis 低
+## 六、汙染的差距：DOS 版用的是**舊的汙染權重**
 
-### 6.1 先看到的現象
+### 6.1 現象
 
 三個沒有腳本災難干擾的劇本，拿原版自己記的數字比（左原版、右 remake）：
 
@@ -215,58 +215,121 @@ tools/go.sh run ./cmd/simtool dosparity-scen 1 workplace/dosbox/save/run1.cty
 一條因果鏈，頭在汙染：**汙染高 → 地價低 → 商業需求被壓下去 →
 人口少 → 稅收（正比於 `TotalPop × LVAverage`）少 → 資金少三成。**
 
-### 6.2 三方對質：是我們錯還是 DOS 與 Micropolis 本來就不同
+先確認過不是我們移植錯：十六份 DOS 存檔攤成 27120 餵給 Micropolis oracle
+（[`tools/oracle/tcl/dos-pollution.tcl`](../../tools/oracle/tcl/dos-pollution.tcl)），
+**remake 與 Micropolis 十六份全部落在 ±7 以內**，而 DOS 十六份全部偏低。
+所以差異在 DOS ↔ Micropolis 之間。
 
-**拿 DOS 的存檔去問 Micropolis。** 十六份存檔（八個劇本各兩個取樣點）
-攤成 27120 位元組餵給 oracle（[`tools/oracle/tcl/dos-pollution.tcl`](../../tools/oracle/tcl/dos-pollution.tcl)），
-與 DOS 自己記的、我們算的並排：
+### 6.2 答案在 Micropolis 的原始碼註解裡
 
-| 存檔 | DOS 自記 | remake | Micropolis | | 存檔 | DOS 自記 | remake | Micropolis |
-|---|---:|---:|---:|---|---|---:|---:|---:|
-| scen1 | 38 | 46 | 46 | | run1 | 40 | 47 | 54 |
-| scen2 | 49 | 56 | 55 | | run2 | 40 | 54 | 54 |
-| scen3 | 50 | 56 | 54 | | run3 | 51 | 53 | 55 |
-| scen4 | 40 | 50 | 46 | | run4 | 31 | 46 | 46 |
-| scen5 | 60 | 63 | 62 | | run5 | 47 | 62 | 63 |
-| scen6 | 60 | 63 | 65 | | run6 | 51 | 70 | 72 |
-| scen7 | 62 | 73 | 73 | | run7 | 51 | 96 | 90 |
-| scen8 | 54 | 64 | 67 | | run8 | 42 | 63 | 64 |
+`s_scan.c:257 GetPValue()` 每一個被改過的權重都**把舊值留在註解裡**：
 
-**remake 與 Micropolis 十六份全部落在 ±7 以內，多數 ≤2**（Micropolis 自己的載入
-也會擲亂數，所以不會逐位元組相同）。**DOS 十六份全部比 Micropolis 低**，
-低 8%–43%。
+```c
+GetPValue(int loc)
+{
+  if (loc < POWERBASE) {
+    if (loc >= HTRFBASE) return (/* 25 */ 75);	/* heavy traf  */
+    if (loc >= LTRFBASE) return (/* 10 */ 50);	/* light traf  */
+    if (loc <  ROADBASE) {
+      if (loc > FIREBASE) return (/* 60 */ 90);
+      /* XXX: Why negative pollution from radiation? */
+      if (loc >= RADTILE) return (/* -40 */ 255);	/* radioactivity  */
+    }
+    return (0);
+  }
+  if (loc <= LASTIND) return (0);
+  if (loc < PORTBASE) return (50);	/* Ind  */
+  if (loc <= LASTPOWERPLANT) return (/* 60 */ 100);	/* prt, aprt, cpp */
+  return (0);
+}
+```
 
-推論等級：**已確認**——這不是我們移植錯了，是 **DOS 1.10 與 Micropolis 的汙染
-算法本來就不同**。
+| 圖塊 | 註解裡的舊值 | 現行值 |
+|---|---:|---:|
+| 壅塞車流 | 25 | 75 |
+| 稀疏車流 | 10 | 50 |
+| 火災 | 60 | 90 |
+| 輻射 | **−40** | 255 |
+| 海港／機場／電廠 | 60 | 100 |
+| 工業 | 50 | 50（沒改）|
 
-地價那一欄反過來佐證同一件事：run 系列的 DOS 地價（51–98）比 Micropolis
-（39–95）**高**，而地價公式裡汙染是減項。汙染低 → 地價高 → 稅收多 →
-資金多。整條鏈自洽。
+**DOS 1.10 是 1991 年的建置，Micropolis 是 2008 年釋出的。** 假說：
+權重是在這中間調高的，DOS 版用的是舊值。
 
-### 6.3 這件事怎麼處置
+### 6.3 拿十六份存檔驗這個假說
 
-**不動 `internal/sim`。** `CLAUDE.md` §1.1 的第 1 順位是 Micropolis，DOS 執行檔
-是第 4；remake 對 Micropolis 是 955 206 次抽樣逐 frame 全等
-（[`12-tick-parity.md`](12-tick-parity.md)），這一份又確認了載入路徑上也一致。
-往 DOS 那邊調參數等於拿第 4 順位推翻第 1 順位。
+汙染均值是**地圖的純函數**（`GetPValue` 逐格加總 → 兩次平滑 → 除以非零格數），
+所以拿 DOS 存檔的地圖重算一次就能比。三十二種「每個權重取新或取舊」的組合
+全部跑過（每份存檔的絕對誤差平均）：
 
-還沒回答的是**哪一段不同**。下一步只有一條路：反組譯 `SIMCITY.EXE` 的
-`PTLScan` 對應常式，比對 `getPValue` 的四個權重（車流 50／75、工業 50、
-海港與電廠 100、火災 90、輻射 255）與平均值的分母。
-⚠ 這份副本被改過（見 [`16-dos-oracle.md`](16-dos-oracle.md) §2），結論要標明
-來源版本存疑。
+| 權重組合 | 平均絕對誤差 |
+|---|---:|
+| 全部用現行值（＝目前的 remake）| **14.6** |
+| 全部用註解裡的舊值 | 5.7 |
+| **車流舊、輻射舊、海港／電廠新** | **4.06** |
 
-### 6.4 量這件事的兩個陷阱
+逐份看最好的那一組：
 
-- **汙染均值不是地圖的純函數。** `LoadCity` 之後的 `DoSimInit` 會先跑一次
-  `MapScan`，而 `MapScan` 會產生車流、把道路改寫成帶車流的圖塊（權重 50／75）。
-  「直接對存檔裡的地圖算一次」與「走載入路徑」差很多：劇本 1 的 run 存檔
-  是 76 對 47。**三邊要走同一條路**才比得起來——上面那張表全部走載入路徑。
+```
+scen1  0   scen2 −4   scen3 −7   scen4 −6   scen5 −10  scen6 −4  scen7  4  scen8 −6
+run1   4   run2   1   run3 −10   run4   1   run5  −1   run6   1  run7  −4  run8   2
+```
+
+對照現行值那一組（同樣十六份）：`+15 +3 +4 +6 −2 +2 +7 +4 / +36 +22 +4 +29 +13 +22 +41 +23`。
+
+**推論等級：強證據。** 誤差從 14.6 掉到 4.06，方向也對得上——
+差距最大的兩份（run1 達斯維利、run4 伯恩）是車流佔汙染源六成的兩份，
+而差第三大的 run7 波士頓有 131 格輻射（爐心熔毀劇本），
+把輻射從 255 換成 −40 就從 +41 掉到 −4。
+
+還不能寫「已確認」的理由：殘差還有 ±10，而且火災權重只有三份存檔有火
+（78／17／13 格），分辨不出新舊。
+
+### 6.4 這件事怎麼處置
+
+**不動 `internal/sim`。** `CLAUDE.md` §1.1 的第 1 順位是 Micropolis，
+DOS 執行檔是第 4。remake 跟著 Micropolis 是對的——DOS 1.10 是同一份引擎的
+**較早版本**，不是另一套規則。要做的是把這個版本差異記在這裡，
+而不是把 remake 往 1991 年調。
+
+真要確認到「已確認」，路只有一條：反組譯 `SIMCITY.EXE` 的 `GetPValue`
+對應常式，直接看那五個立即數。**目前卡住**——見 §6.5。
+
+### 6.5 反組譯這條路目前走不通：執行檔是打包過的
+
+`tools/ida.sh` 已經接好（IDA Pro 9.4 headless，image `ida-pro-9.4-idapython:locked-v1`）。
+`SIMCITY.EXE`（SHA-256 `66457cc4…`）建得起 `.i64`，但探針回報的是：
+
+```
+函式 3，字串 1（只有 "Initializing SimCity, please wait"）
+```
+
+那是打包執行檔的特徵。入口 `start_0` 在做的事也對得上：讀 BIOS 的
+`0040:0013` 記憶體大小、把一段 0x1A2 位元組的常式搬到高位記憶體、
+掛 `INT 21h` 向量（`0000:0084`），然後跳進解壓迴圈（`sub_2EB59` 是
+一個逐位元組的解密迴圈）。
+
+**下一步**：用 DOSBox 把解開後的記憶體 dump 出來，當成 raw binary 依
+segment 基底載進 IDA。這條路還沒走。
+
+⚠ 而且這份副本是被改過的（[`16-dos-oracle.md`](16-dos-oracle.md) §2 的防拷
+「一律判過」），從它反組譯得到的結論要標明來源版本存疑。
+
+### 6.6 量這件事的三個陷阱
+
+- **汙染均值不是地圖的純函數——如果你走載入路徑的話。** `LoadCity` 之後的
+  `DoSimInit` 會先跑一次 `MapScan`，而 `MapScan` 會產生車流、把道路改寫成
+  帶車流的圖塊。同一份存檔：直接對地圖算一次是 76，走載入路徑是 47。
+  §6.3 的擬合走的是**直接對地圖算**，因為要問的是「權重是多少」。
 - **Micropolis 的載入器只認得 27120 位元組。** 餵 27248（DOS 原始存檔）
   不會報錯，它**靜默地留在新遊戲的預設狀態**：讀出來是資金 20000、1900 年，
-  看起來像「載進去了但城市是空的」。第一次就是這樣拿到一整排 `pollution 0`。
+  看起來像「載進去了但城市是空的」。
+- **「活的數值」與「拿當下地圖重算」在我們自己的引擎裡只差 0–3**
+  （`simtool poll-stale`，八個劇本各跑三年）。所以 DOS 那 14–41 的差
+  **不是**「存檔那一刻的純量比地圖舊」造成的——這個解釋先被排除掉了，
+  才輪到權重。
 
-### 6.5 犯罪那一欄不能用
+### 6.7 犯罪那一欄不能用
 
 DOS 的犯罪（run 系列 104–132）比 Micropolis（13–69）高很多，但**這個比較無效**：
 剛載入時的犯罪是拿還沒收斂的地價圖算的（§五之二 5.2 的同一個坑，

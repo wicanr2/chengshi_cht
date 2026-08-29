@@ -39,7 +39,8 @@ func LoadScenario(dataDir string, n int) (*sim.World, error) {
 // 起始地圖已經被那一次掃描動過了，同一個種子跑兩次得到不同的城市。
 // 對拍工具實測過：同一份存檔連跑三次得到 10224／10215／10223 格相同
 // （docs/re/18-dos-parity.md §3）。
-func LoadScenarioSeed(dataDir string, n int, seed uint32) (*sim.World, error) {
+// scenarioBytes 讀第 n 個劇本的原始位元組（還沒解壓）。
+func scenarioBytes(dataDir string, n int) ([]byte, error) {
 	if n < 1 || n > len(scenarioFile) {
 		return nil, fmt.Errorf("劇本編號 %d 超出範圍（1–8）", n)
 	}
@@ -60,7 +61,11 @@ func LoadScenarioSeed(dataDir string, n int, seed uint32) (*sim.World, error) {
 	if path == "" {
 		return nil, fmt.Errorf("在 %s 底下找不到 %s", dir, scenarioFile[n-1])
 	}
-	raw, err := os.ReadFile(path)
+	return os.ReadFile(path)
+}
+
+func LoadScenarioSeed(dataDir string, n int, seed uint32) (*sim.World, error) {
+	raw, err := scenarioBytes(dataDir, n)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +82,22 @@ func LoadScenarioSeed(dataDir string, n int, seed uint32) (*sim.World, error) {
 	w.InitSimLoad = 1
 	w.DoSimInit()
 	return w, nil
+}
+
+// ScenarioCityFile 只解出劇本檔的結構，**不建 World**。
+//
+// 理由同 LoadCityFileRaw：要看「檔案裡本來寫著什麼」就不能經過
+// DoSimInit，那一步會把 MiscHis 裡的地價、犯罪、汙染平均全部重算掉。
+func ScenarioCityFile(dataDir string, n int) (*sim.CityFile, error) {
+	raw, err := scenarioBytes(dataDir, n)
+	if err != nil {
+		return nil, err
+	}
+	psn, err := assets.LoadPSN(raw)
+	if err != nil {
+		return nil, fmt.Errorf("%s：%w", scenarioFile[n-1], err)
+	}
+	return sim.ParseCityFile(psn.Body)
 }
 
 // ScenarioNameZH 回傳劇本的中文名。譯名來自軟體世界說明書 p.13–14。

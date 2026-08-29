@@ -38,6 +38,10 @@ func main() {
 		cmdDosParityScen(os.Args[2:])
 	case "play":
 		cmdPlay(os.Args[2:])
+	case "psn-misc":
+		cmdPsnMisc(os.Args[2:])
+	case "poll-stale":
+		cmdPollStale(os.Args[2:])
 	case "dosparity-poll":
 		cmdDosPoll(os.Args[2:])
 	case "dosparity":

@@ -332,6 +332,63 @@ func cmdDosPoll(args []string) {
 	}
 }
 
+// cmdPollStale 量「活的 PolluteAverage」與「拿當下的地圖重算一次」差多少。
+//
+// 為什麼要問這個：DOS 存檔裡的 `MiscHis[14]` 是**存檔那一刻的活值**，
+// 而那個值是上一次汙染掃描算出來的；存檔裡的**地圖**卻是存檔那一刻的。
+// 兩者中間隔了幾個 frame，而車流圖塊每一輪都在改寫。
+// 如果我們自己的引擎也有同樣大小的落差，那 DOS 那 8%–43% 的差距就不是
+// 規則不同，而是**拿不同時刻的兩樣東西在比**。
+func cmdPollStale(args []string) {
+	dir := os.Getenv("SIMCITY_DATA")
+	if dir == "" {
+		dir = "workplace/dos110/SIMCITY 1.10"
+	}
+	fmt.Printf("%-14s %8s %10s %10s %8s\n", "劇本", "跑了幾刻", "活的", "重算", "差")
+	for n := 1; n <= 8; n++ {
+		w, err := game.LoadScenarioSeed(dir, n, 1)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		w.AutoBudget = true
+		w.NoDisasters = true
+		start := w.CityTime
+		for i := 0; i < 48*16*3; i++ { // 三年
+			w.Frame()
+		}
+		live := w.PolluteAverage
+		// 拿當下的地圖重算：複製一份世界，只跑一次 PTLScan。
+		w2 := sim.NewWorld(1)
+		cf := w.ToCityFile()
+		w2.LoadCityFile(cf)
+		w2.PTLScan()
+		fmt.Printf("%-14s %8d %10d %10d %+8d\n",
+			w.CityName, w.CityTime-start, live, w2.PolluteAverage, w2.PolluteAverage-live)
+	}
+}
+
+// cmdPsnMisc 印劇本檔自帶的 MiscHis 幾個欄位。
+//
+// 用來判別一件事：載入後幾刻就存出來的城市檔，裡面的汙染／地價均值到底是
+// **DOS 自己算的**，還是**劇本檔裡本來就寫著的**。後者的話那些數字不能
+// 拿來當「DOS 版怎麼算」的證據。
+func cmdPsnMisc(args []string) {
+	dir := os.Getenv("SIMCITY_DATA")
+	if dir == "" {
+		dir = "workplace/dos110/SIMCITY 1.10"
+	}
+	fmt.Printf("%-14s %10s %10s %10s\n", "劇本", "汙染[14]", "地價[12]", "犯罪[13]")
+	for n := 1; n <= 8; n++ {
+		cf, err := game.ScenarioCityFile(dir, n)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Printf("%-14d %10d %10d %10d\n", n, cf.MiscHis[14], cf.MiscHis[12], cf.MiscHis[13])
+	}
+}
+
 // report 印出兩邊的量與差。
 func report(exp, got map[string]int) {
 	keys := make([]string, 0, len(exp))
