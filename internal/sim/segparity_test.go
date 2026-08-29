@@ -23,6 +23,9 @@ import (
 // 進度與方法記在 docs/re/12-tick-parity.md。
 const segParityBudget = 10
 
+// segChainBudget 是接力式對拍（TestSegmentParityChain）目前連續對上的段數。
+const segChainBudget = 1
+
 // segSolution 是一段對拍的起始狀態解。
 //
 // 三個值都**不可觀測**：Fcycle 決定這一刻跑十六段裡的哪一段，
@@ -194,4 +197,87 @@ func TestSegmentParityDeep(t *testing.T) {
 			t.Logf("段 %2d（%4d 次抽樣）✗ 連 Scycle 都搜過了還是對不上", i, target)
 		}
 	}
+}
+
+// TestSegmentParityChain 接力式對拍。
+//
+// 分段對拍每一段都用「200 刻收斂」重建內部狀態，那是虛構的：真正的
+// 閥門、成長記憶、交通密度是從上一段延續下來的，不是從那一段的起始
+// 地圖重新算出來的。而 tools/oracle/tcl/tick-parity-seg.tcl 顯示
+// **段與段之間沒有玩家動作**（只有 Speed 3 → Speed 0 → 讀狀態），
+// 所以合法的做法是接力：只在第一段搜起點，之後一路跑下去，中途不重設
+// 任何東西（地圖也不重設）。
+//
+// 這是比逐段獨立搜更強的判準——它證明的是「連續 N 段逐次元一致」，
+// 而不是「N 段各自在某個湊出來的起點下一致」。
+func TestSegmentParityChain(t *testing.T) {
+	meta := loadSegMeta(t)
+	maps := loadSegMaps(t, len(meta))
+	sol, ok := segSolutions[1]
+	if !ok {
+		t.Skip("第 1 段還沒有解，接力無從起頭")
+	}
+	s0 := recoverOrDie(t, meta[0].Rands)
+
+	settled := newTickParityWorld(maps[0], 0, meta[0].Funds, 0, false)
+	for k := 0; k < 200*16; k++ {
+		settled.Frame()
+	}
+
+	// 第 1 段可能不只一個解（Scycle 觀察不到），能接得最長的那個才是對的。
+	best, bestSc := 0, -1
+	for sc := 0; sc < 1024; sc++ {
+		w := cloneWorld(settled)
+		w.Map = maps[0]
+		w.TotalFunds = meta[0].Funds
+		w.CityTime = (w.CityTime/48)*48 + sol.CT
+		w.Fcycle = sol.Ph
+		w.Scycle = sc
+		w.Rand.SetState(advanceRand(s0, 4))
+		if n := runChain(w, meta, maps); n > best {
+			best, bestSc = n, sc
+		}
+	}
+	if bestSc >= 0 {
+		t.Logf("接力連續對上 %d 段（相位 %d、CityTime%%48=%d、Scycle %d）",
+			best, sol.Ph, sol.CT, bestSc)
+	} else {
+		t.Logf("接力一段都沒對上")
+	}
+	if best < segChainBudget {
+		t.Errorf("接力只對上 %d 段，低於現況 %d —— 有東西退步了", best, segChainBudget)
+	}
+	if best > segChainBudget {
+		t.Errorf("接力對上 %d 段，比現況 %d 好 —— 請把 segChainBudget 調到 %d",
+			best, segChainBudget, best)
+	}
+}
+
+// runChain 從 w 一路跑完所有檢查點，回傳連續對上幾段。
+// 中途不重設任何東西——地圖也不重設，這正是接力比逐段獨立搜強的地方。
+func runChain(w *World, meta []segCP, maps [][WorldX][WorldY]uint16) int {
+	chain := 0
+	for i := 1; i < len(meta); i++ {
+		if meta[i].Draws == nil {
+			break
+		}
+		want := *meta[i].Draws
+		got, hit := 0, false
+		for n := 0; n < 20000 && got <= want; n++ {
+			if got == want {
+				hit = mapDiffM(&w.Map, &maps[i]) == 0
+				break
+			}
+			b := w.Rand.State()
+			w.Frame()
+			got += drawsBetween(b, w.Rand.State())
+		}
+		if !hit {
+			break
+		}
+		chain++
+		// 原版在每個檢查點自己抽了四次（sim Rand ×4）。
+		w.Rand.SetState(advanceRand(w.Rand.State(), 4))
+	}
+	return chain
 }

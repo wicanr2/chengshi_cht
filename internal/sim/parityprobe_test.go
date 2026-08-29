@@ -396,3 +396,92 @@ func TestMicroIndScycleSearch(t *testing.T) {
 	t.Errorf("最好只追到第 %d 個檢查點（共 %d 個），相位 %d、Scycle %d",
 		bestReach, len(cps)-1, bestPhase, bestScycle)
 }
+
+// TestSegmentChainTrace 追蹤接力式對拍斷掉的那一段。
+//
+// 只印診斷，不做判定。用法：
+//
+//	SIMCITY_TRACE=1 tools/go.sh test ./internal/sim/ -run SegmentChainTrace -v
+func TestSegmentChainTrace(t *testing.T) {
+	if os.Getenv("SIMCITY_TRACE") == "" {
+		t.Skip("設 SIMCITY_TRACE=1 才跑（只印診斷）")
+	}
+	meta := loadSegMeta(t)
+	maps := loadSegMaps(t, len(meta))
+	sol := segSolutions[1]
+	s0 := recoverOrDie(t, meta[0].Rands)
+
+	w := newTickParityWorld(maps[0], 0, meta[0].Funds, 0, false)
+	for k := 0; k < 200*16; k++ {
+		w.Frame()
+	}
+	w.Map = maps[0]
+	w.TotalFunds = meta[0].Funds
+	w.CityTime = (w.CityTime/48)*48 + sol.CT
+	w.Fcycle = sol.Ph
+	w.Scycle = sol.Scycle
+	w.Rand.SetState(advanceRand(s0, 4))
+
+	for i := 1; i < len(meta); i++ {
+		if meta[i].Draws == nil {
+			return
+		}
+		want := *meta[i].Draws
+		got := 0
+		type frameRec struct {
+			phase, scycle, draws int
+			sites                map[string]int
+		}
+		var recs []frameRec
+		for n := 0; n < 20000 && got < want; n++ {
+			sites := map[string]int{}
+			w.Rand.Watch = func() { sites[callerSite()]++ }
+			ph, sc := w.Fcycle, w.Scycle
+			b := w.Rand.State()
+			w.Frame()
+			w.Rand.Watch = nil
+			d := drawsBetween(b, w.Rand.State())
+			got += d
+			recs = append(recs, frameRec{ph, sc, d, sites})
+		}
+		if got == want && mapDiffM(&w.Map, &maps[i]) == 0 {
+			w.Rand.SetState(advanceRand(w.Rand.State(), 4))
+			continue
+		}
+		t.Logf("第 %d 段斷掉：要 %d 次抽樣、跑到 %d（多 %d），地圖差 %d 格",
+			i, want, got, got-want, mapDiffM(&w.Map, &maps[i]))
+		// 越過目標的那個 frame 與它前後
+		run := 0
+		cross := -1
+		for j, r := range recs {
+			run += r.draws
+			if run > want && cross < 0 {
+				cross = j
+			}
+		}
+		for j := max0(cross-2); j <= cross && j < len(recs); j++ {
+			r := recs[j]
+			t.Logf("  frame %d：相位 %2d、Scycle %4d、抽 %d 次 %v",
+				j, r.phase, r.scycle, r.draws, r.sites)
+		}
+		t.Logf("  跨過目標前累計 %d，跨過後 %d", run-recs[cross].draws, run)
+		n := 0
+		for x := 0; x < WorldX && n < 12; x++ {
+			for y := 0; y < WorldY && n < 12; y++ {
+				if w.Map[x][y] != maps[i][x][y] {
+					t.Logf("  地圖差：(%d,%d) 我們 %d、原版 %d",
+						x, y, w.Map[x][y], maps[i][x][y])
+					n++
+				}
+			}
+		}
+		return
+	}
+}
+
+func max0(v int) int {
+	if v < 0 {
+		return 0
+	}
+	return v
+}

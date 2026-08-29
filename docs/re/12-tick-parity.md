@@ -178,6 +178,57 @@ SIMCITY_DEEP=1 SIMCITY_SEGS=12,14 tools/go.sh test ./internal/sim/ \
     -run SegmentParityDeep -v -timeout 60m
 ```
 
+### 搜到的解記下來，日常測試只驗不搜
+
+`TestSegmentParityDeep` 很慢，而且「搜得到」是個弱判準——搜尋範圍夠大
+時，它遲早會找到某個湊得出來的起點。所以把搜出來的
+`(段, 相位, CityTime%48, Scycle)` 記進 `segSolutions`，讓日常的
+`TestSegmentParity` 改成**驗**那些解：一段一個候選，二十三段不到一秒，
+而且判準變強——解驗不過就代表規則層真的被動到了。
+
+⚠ 段數只能靠 `SIMCITY_SEGS` 挑著搜。長段（一千次以上抽樣）的窮舉一段
+就要一個多小時，短段（一百次上下）只要兩三分鐘。
+
+## 六之二、接力：比逐段獨立搜更強的判準
+
+逐段對拍每一段都用「200 刻收斂」重建內部狀態，**那是虛構的**。真正的
+閥門、成長率記憶、交通密度是從上一段延續下來的，不是從那一段的起始
+地圖重新算出來的。收斂只是讓數字落在合理範圍，不是讓它們正確。
+
+而 `tools/oracle/tcl/tick-parity-seg.tcl` 顯示**段與段之間沒有玩家動作**
+（只有 `Speed 3` → `Speed 0` → 讀狀態 → 倒地圖）。所以合法的做法是接力：
+只在第一段搜起點，之後一路跑下去，中途什麼都不重設，地圖也不重設。
+
+這證明的是「連續 N 段逐次元一致」，比「N 段各自在某個湊出來的起點下
+一致」強得多。實作是 `TestSegmentParityChain`（1024 個 Scycle 全掃，
+十秒）。
+
+**現況：接力只連上 1 段。** 第 2 段斷在這裡：
+
+```
+要 1406 次抽樣、跑到 1426（多 20）
+frame 1245：相位 223、Scycle 341、抽 0 次
+frame 1246：相位 224、Scycle 342、抽 0 次
+frame 1247：相位 225、Scycle 342、抽 32 次
+             traffic.go:123 tryGo ×26、zone.go:122 growShrink ×1、
+             zone.go:125 growShrink ×2、zone.go:206 doResidential ×3
+```
+
+我們的 frame 邊界是 1394 與 1426，原版停在 1406——**夾在同一個 frame
+裡面**。原版的 `SimFrame` 一次只跑一個相位，停點應該落在 frame 邊界上，
+所以這不是「停在半路」，是那一個 frame 我們抽了 32 次而原版只抽了 12 次。
+差額整個落在 `tryGo`（交通尋路每走一步抽一次）。
+
+把 Scycle 0–1023 全掃過，接力長度都是 1，所以這不是起始狀態沒猜對。
+
+下一個實驗是**讓原版逐 frame 報數**：改一版 tcl，每跑一個 `SimFrame`
+就 `Speed 0` 讀一次亂數，得到原版每個 frame 的抽樣次數。有了那個序列，
+「哪一個 frame、哪一個相位開始分岔」就是查表，不必再猜。
+
+（地圖那 5 格差異是**時間點對不上的結果，不是獨立證據**：差的正好是
+`PWRBIT`（0x8000），落在腳本種下的那座煤電廠身上，而電力掃描每 5 個
+Scycle 才跑一次——在錯誤的時間點比地圖本來就會看到這種差。）
+
 ## 七、診斷工具
 
 `internal/sim/parityprobe_test.go` 有三層，資料由 `tools/oracle/` 產生後
@@ -188,6 +239,10 @@ SIMCITY_DEEP=1 SIMCITY_SEGS=12,14 tools/go.sh test ./internal/sim/ \
 | `TestMicroIndSegments` | 逐檢查點追，第一個追不到的區間就是分歧點所在 |
 | `TestMicroIndTrace` | 在那個區間裡逐次記下抽樣的**呼叫點**，並列出我們的 frame 邊界 |
 | `TestMicroIndScycleSearch` | 把 Scycle 也納入搜尋 |
+| `TestSegmentChainTrace` | 接力斷在哪一段、斷點那個 frame 抽了幾次、各是誰抽的、地圖差哪幾格（`SIMCITY_TRACE=1`）|
+
+`tools/go.sh` 會把 `SIMCITY_*` 開頭的環境變數帶進容器，所以
+`SIMCITY_DEEP`／`SIMCITY_SEGS`／`SIMCITY_TRACE` 直接寫在指令前面就行。
 
 呼叫點的追蹤靠 `Rand.Watch`——`Rand16` 是唯一推進狀態的地方，掛一個
 回呼就能逐次記下呼叫者。狀態只看得到結果，看不到來源；沒有這個鉤子

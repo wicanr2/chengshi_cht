@@ -18,8 +18,11 @@ Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家�
   （692.5／564.2／949.2 刻，地圖零差異），但整城的分段對拍 23 段裡只有
   9 段完全一致。工具已經準備好（把觀察不到的 `Scycle` 也納入搜尋），
   見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md) §6。
-- **音效**：容器格式解開了，但「哪一段對應哪個事件」還沒有證據，
-  所以聲音沒有接進遊戲。見 [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md) §4。
+- **音效**：容器格式解開了，但這八段 PCM **只走 DAC**，而手上的環境
+  兩條 DAC 路都走不通（Covox Sound Master 沒有模擬器、Tandy 缺 `tdy\`
+  圖形檔）。內建喇叭放的是程式自己合成的嗶聲，不是這些資料——換一份
+  音效檔錄同一組動作，聲音逐取樣相同。所以聲音沒有接進遊戲。
+  見 [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md) §4。
 
 ### 已盤點的素材
 
