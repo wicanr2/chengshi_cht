@@ -1,0 +1,52 @@
+# 工具盤辨識：逐格點一次，截狀態列看名稱與造價。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 6
+key Return
+wait 3
+click 311 190
+wait 3
+click 22 70
+wait 1
+shot t01
+click 49 70
+wait 1
+shot t02
+click 22 96
+wait 1
+shot t03
+click 49 96
+wait 1
+shot t04
+click 22 121
+wait 1
+shot t05
+click 49 121
+wait 1
+shot t06
+click 22 146
+wait 1
+shot t07
+click 49 146
+wait 1
+shot t08
+click 22 170
+wait 1
+shot t09
+click 49 170
+wait 1
+shot t10
+click 22 196
+wait 1
+shot t11
+click 49 196
+wait 1
+shot t12
+click 22 221
+wait 1
+shot t13
+click 49 221
+wait 1
+shot t14

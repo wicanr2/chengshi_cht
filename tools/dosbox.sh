@@ -19,7 +19,9 @@ ACTIONS="${ACTIONS:-$ROOT/tools/dosbox/act-none.txt}"
 mkdir -p "$ROOT/workplace/dosbox"
 [ -f "$ACTIONS" ] || { echo "找不到動作腳本 $ACTIONS"; exit 1; }
 
-docker run --rm \
+# 外層 timeout：容器裡的 DOSBox 卡住時不要把整個工作階段拖住。
+# 預設給動作腳本的時間加上開機與收尾的餘裕。
+exec timeout "${TIMEOUT:-600}" docker run --rm \
   --log-opt max-size=10m --log-opt max-file=3 \
   -u "$(id -u):$(id -g)" \
   --memory 2g --cpus 2 --pids-limit 256 \

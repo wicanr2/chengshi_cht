@@ -21,6 +21,12 @@ Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家�
 做法是給 oracle 加單步與觀測指令，見
 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 
+**也對到 DOS 執行檔本身了，但只到抽樣的程度。** DOSBox 裡跑原版、載入劇本、
+打開 Auto-Budget 讓它自己跑一段再存檔，remake 從同一份劇本跑到同一個
+`CityTime` 再逐格比。逐 tick 對拍對 DOS 版在原理上做不到（它載入時自己重播種），
+所以這條路量的是「同一起點、同一刻、地圖有多像」。結果與兩個量法上的坑寫在
+[`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md)。
+
 還沒收完的一件事：
 
 - **音效**：容器格式解開了，但這八段 PCM **只走 DAC**，而手上的環境
@@ -49,6 +55,7 @@ tools/screenshot.sh [秒] [檔名]     # 單張截圖，GAME_ARGS 帶遊戲參�
 tools/font.sh                       # 重烘點陣字圖集（改過譯文或註解後）
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文
 tools/dosbox.sh <秒> <前綴>         # 跑 DOS 原版當 oracle（截圖 ＋ 錄音 ＋ 動作腳本）
+MODE=run tools/dos_parity.sh        # DOS 原版 vs remake 的抽樣對拍（八個劇本）
 tools/oracle/build.sh               # 建 Micropolis oracle
 tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 ```
@@ -124,6 +131,8 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 |---|---|---|
 | `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
+| **商業人口與資金比 DOS 原版低 25%–30%** | 抽樣對拍量到的：分區格數逐項相同，格子裡的人口卻停在較低密度；原版 1851 年收稅 $901，我們 $588。五個種子都成立，不是亂數。⚠ remake 對 Micropolis 是 955 206 次抽樣逐 frame 全等，所以差異在 DOS↔Micropolis 之間 | 三個候選與下一步寫在 [`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md) §六。**在拆出「哪一邊對」之前不要動 `internal/sim`** |
+| DOS 原版顯示的年份與存檔裡的 `CityTime` 對不上 | 東京存檔 `CityTime` 2739（＝1957，與手冊相符），原版狀態列同一刻顯示 Feb 1906，第一次預算視窗標題 1851 | 還沒查。不影響對拍（讀的是存檔欄位），但寫年份相關 UI 之前要解掉 |
 
 ## 6. 現行工作清單
 

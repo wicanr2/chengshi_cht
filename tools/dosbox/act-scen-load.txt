@@ -1,0 +1,38 @@
+# DOS 原版載入劇本之後的狀態，存成城市檔帶出來。
+#
+# 這是**最短的**取樣點：進到遊戲之後立刻存檔，中間不動任何選單。
+# 它跑不到四刻，所以比出來的幾乎全是載入器的正確性，不是模擬的正確性——
+# 要比模擬用 act-scen-run.txt（打開 Auto-Budget、催到 Fastest、跑一段再存）。
+#
+# ⚠ 預算對話框每個遊戲年都會跳出來把模擬停住，但**它不會讓 Ctrl-S 失效**。
+# 先前記成「碰過選單之後就叫不出存檔對話框」是看錯了：那次畫面上其實是
+# OVERWRITE 確認框（城市名已經存過一次），不是沒有反應。
+#
+# 座標是 640×350 的 Hires EGA 畫面座標。
+#   標題畫面：SELECT SCENARIO (316,240)
+#   劇本選擇：兩列四行，x = 80／240／402／562，y = 103（上）／253（下）
+#   手冊查驗：Return ×2 之後點掉 Continue (311,190)
+#   存檔對話框：SAVE (328,80)
+#
+# ⚠ 劇本這條路的手冊查驗問的是「Enter population of city」＋兩個圖示
+# （密碼表上的那一對），不是新城市那句「Enter NAME of city」。
+# 這份副本一律判過，但那個對話框在的時候模擬是停的，一定要點掉 Continue。
+wait 3
+click 316 240
+wait 5
+click __SCEN_X__ __SCEN_Y__
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+shot 01-ingame
+key ctrl+s
+wait 3
+shot 02-save-dialog
+click 328 80
+wait 5
+snap A
+shot 03-saved

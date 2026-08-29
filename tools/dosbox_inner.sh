@@ -51,6 +51,24 @@ mark() { local t=$(( $(date +%s%3N) - START )); printf "%6d.%03d  %s\n" $((t/100
 
 shot() { xwd -root -silent | convert xwd:- "/out/$PREFIX-$1.png"; }
 
+# goto：把**遊戲裡的**游標移到畫面座標 (x,y)。
+#
+# ⚠ 不能只送一次絕對座標。DOS 的滑鼠驅動吃的是**相對位移**，DOSBox 把
+# 主機游標的移動換算成位移送進去——一旦遊戲自己搬過游標（對話框開啟時
+# 它會把游標移到預設鈕上），主機端與遊戲端就對不齊了，之後每一次點擊都
+# 落在別的地方，而且畫面上完全看不出來。實測症狀：開頭幾個點擊（標題
+# 畫面、劇本選擇）都對，跑一陣子之後預算對話框的按鈕怎麼點都點不到。
+#
+# 作法是每次先把主機游標移到視窗左上角**外面**，讓遊戲端的游標被夾在
+# (0,0)，再移到目標——這樣送進去的位移剛好等於目標座標。
+goto() {
+  # ⚠ 用螢幕原點 (0,0)，不要用「視窗左上角減幾百」——xdotool 不吃負座標
+  # （會報 `unrecognized option '-208'`）。視窗本來就不在 (0,0)，
+  # 移到螢幕原點就已經在視窗左上角外面了。
+  xdotool mousemove 0 0; sleep 0.1
+  xdotool mousemove $((OFFX + $1)) $((OFFY + $2))
+}
+
 sleep 8
 
 # 動作腳本裡的座標是 **DOS 畫面座標**（640×350 的左上角是 0,0）。
@@ -82,18 +100,26 @@ while read -r cmd a b c d; do
   case "$cmd" in
     "" | "#"*) ;;
     key)   mark "key $a";   xdotool key --clearmodifiers "$a" ;;
-    click) mark "click $a $b"
-           xdotool mousemove $((a+OFFX)) $((b+OFFY)); sleep 0.3
+    click) mark "click $a $b"; goto $a $b; sleep 0.3
            xdotool mousedown 1; sleep 0.15; xdotool mouseup 1 ;;
-    press) mark "press $a $b"
-           xdotool mousemove $((a+OFFX)) $((b+OFFY)); sleep 0.3; xdotool mousedown 1 ;;
+    press) mark "press $a $b"; goto $a $b; sleep 0.3; xdotool mousedown 1 ;;
+    # ⚠ move **不重新歸位**：它是給按住式選單用的（按住標題 → 移到項目 →
+    # 放開）。歸位會把游標拖出選單再拉回來，選單當場就關了。
     move)  mark "move $a $b";  xdotool mousemove $((a+OFFX)) $((b+OFFY)) ;;
     release) mark "release";   xdotool mouseup 1 ;;
     drag)  mark "drag $a $b -> $c $d"
-           xdotool mousemove $((a+OFFX)) $((b+OFFY)); sleep 0.3; xdotool mousedown 1
+           goto $a $b; sleep 0.3; xdotool mousedown 1
            xdotool mousemove $((c+OFFX)) $((d+OFFY)); sleep 0.3; xdotool mouseup 1 ;;
     wait)  sleep "$a" ;;
     shot)  shot "$a"; mark "shot $a" ;;
+    # snap：把遊戲**當下寫出來的城市檔**抓一份走。
+    # 需要它是因為 DOS 版的存檔對話框每次都預設同一個檔名，第二次存檔
+    # 會蓋掉第一次；要取兩個時間點的樣本就得在中間搬走。
+    snap)  mark "snap $a"
+           mkdir -p /out/save
+           for f in /tmp/game/*.[cC][tT][yY]; do
+             [ -e "$f" ] && cp "$f" "/out/save/$a.cty" && echo "snap $a <= $f"
+           done ;;
     mark)  mark "$a $b $c $d" ;;
     *)     echo "不認得的動作：$cmd" >&2 ;;
   esac
@@ -101,6 +127,18 @@ done < /conf/actions.txt
 
 sleep "$SECS"
 shot final
-kill $D 2>/dev/null || true; wait $D 2>/dev/null || true
+
+# 把遊戲寫出來的城市檔帶出去。DOS 版存的是原版 `.cty`，remake 讀得起來，
+# 所以它是「原版跑到什麼狀態」唯一精確、機器可讀的取樣管道
+# ——螢幕截圖看得到的東西，比不出人口、資金與評分。
+mkdir -p /out/save
+find /tmp/game -maxdepth 2 -iname '*.cty' -print -exec cp {} /out/save/ \; || true
+ls -l /out/save 2>/dev/null || true
+# ⚠ DOSBox-X 在有模態對話框時會吞掉 SIGTERM，`wait` 就永遠不回來
+# （實測：一個六秒的實驗掛了八分鐘還在跑）。給它兩秒再補 SIGKILL。
+kill $D 2>/dev/null || true
+for _ in 1 2 3 4; do kill -0 $D 2>/dev/null || break; sleep 0.5; done
+kill -9 $D 2>/dev/null || true
+wait $D 2>/dev/null || true
 echo "== 時間表 =="; cat "/out/$PREFIX.marks"
 ls -l /out/"$PREFIX"*

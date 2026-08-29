@@ -1,0 +1,5 @@
+# 偵察：劇本選擇畫面
+wait 3
+click 316 240
+wait 5
+shot 01-scen-menu

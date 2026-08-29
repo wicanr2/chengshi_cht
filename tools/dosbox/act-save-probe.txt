@@ -1,0 +1,16 @@
+# 偵察：進到一座新城市，關掉手冊查驗的對話框，按 Ctrl-S 看存檔介面。
+# 座標是 640×350 的 Hires EGA 畫面座標。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 6
+key Return
+wait 3
+shot 02-passed
+click 311 190
+wait 3
+shot 03-ingame
+key ctrl+s
+wait 3
+shot 04-ctrl-s

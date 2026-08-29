@@ -34,6 +34,10 @@ func main() {
 		cmdInspect(os.Args[2:])
 	case "flat":
 		cmdFlat(os.Args[2:])
+	case "dosparity-scen":
+		cmdDosParityScen(os.Args[2:])
+	case "dosparity":
+		cmdDosParity(os.Args[2:])
 	case "scenario":
 		cmdScenario(os.Args[2:])
 	default:

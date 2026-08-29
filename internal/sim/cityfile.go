@@ -187,6 +187,11 @@ func (w *World) LoadCityFile(cf *CityFile) {
 
 	// w_budget.c:83 InitFundingLevel()
 	w.PolicePercent, w.FirePercent, w.RoadPercent = 1.0, 1.0, 1.0
+
+	// ⚠ **載入城市會把劇本編號清成 0**（s_fileio.c:300 `ScenarioID = 0;`）。
+	// 也就是說：把一個劇本存下來再讀回去，它就不再是劇本了——災難排程與
+	// 勝敗判定都不會再觸發。這是原版的行為，不是漏掉。
+	w.Scenario = 0
 }
 
 // ToCityFile 把目前的世界狀態打包成一個可存檔的城市檔。

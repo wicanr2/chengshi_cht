@@ -464,3 +464,40 @@ func (w *World) FireAnalysis() {
 		}
 	}
 }
+
+// CountPops 從地圖直接數三種人口，**不動任何狀態、不擲亂數**。
+//
+// 為什麼需要它：`ResPop` 等欄位是 `MapScan` 逐段累加出來的，在一段掃描
+// 中途讀到的是半份census。逐 tick 對拍讀得到 Scycle，知道自己在哪一段；
+// 拿原版存檔當取樣點時讀不到，所以要一個與掃描相位無關的量。
+//
+// 演算法與 s_zone.c 的 doResidential／doCommercial／doIndustrial 同一組
+// 取值函式（rzPop／czPop／izPop／doFreePop），差別只在不做成長判定。
+//
+// 為什麼是這個量法：docs/re/18-dos-parity.md §五之二。
+func (w *World) CountPops() (res, com, ind int) {
+	for x := 0; x < WorldX; x++ {
+		for y := 0; y < WorldY; y++ {
+			t := w.Map[x][y]
+			if t&ZONEBIT == 0 {
+				continue
+			}
+			ch9 := int(t & LOMASK)
+			switch {
+			case ch9 > PORTBASE, ch9 >= HOSPITAL && ch9 < COMBASE:
+				// 特殊區與醫院／教堂不計入三種人口。
+			case ch9 < HOSPITAL:
+				if ch9 == FREEZ {
+					res += w.doFreePop(x, y)
+				} else {
+					res += rzPop(ch9)
+				}
+			case ch9 < INDBASE:
+				com += czPop(ch9)
+			default:
+				ind += izPop(ch9)
+			}
+		}
+	}
+	return
+}

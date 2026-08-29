@@ -29,6 +29,17 @@ var scenarioFile = [...]string{
 // 只讀七個陣列，其餘由劇本表寫死——所以 `snro.111` 裡殘留的 CityTime
 // 從來沒有生效過。細節見 docs/formats/01-city-file.md。
 func LoadScenario(dataDir string, n int) (*sim.World, error) {
+	return LoadScenarioSeed(dataDir, n, sim.RandomSeed())
+}
+
+// LoadScenarioSeed 同 LoadScenario，但種子由呼叫端指定。
+//
+// ⚠ **種子必須在 `DoSimInit` 之前設好。** `DoSimInit` 會跑一次
+// `MapScan`，而 `MapScan` 會擲亂數決定分區成長——載入後才重設種子的話，
+// 起始地圖已經被那一次掃描動過了，同一個種子跑兩次得到不同的城市。
+// 對拍工具實測過：同一份存檔連跑三次得到 10224／10215／10223 格相同
+// （docs/re/18-dos-parity.md §3）。
+func LoadScenarioSeed(dataDir string, n int, seed uint32) (*sim.World, error) {
 	if n < 1 || n > len(scenarioFile) {
 		return nil, fmt.Errorf("劇本編號 %d 超出範圍（1–8）", n)
 	}
@@ -61,7 +72,7 @@ func LoadScenario(dataDir string, n int) (*sim.World, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s：%w", scenarioFile[n-1], err)
 	}
-	w := sim.NewWorld(sim.RandomSeed())
+	w := sim.NewWorld(seed)
 	w.LoadScenarioFile(cf, sim.Scenario(n))
 	w.InitSimLoad = 1
 	w.DoSimInit()

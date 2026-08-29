@@ -1,0 +1,81 @@
+# DOS 原版：載入劇本 → 打開 Auto-Budget → 讓它自己跑一段 → 存檔帶出來。
+#
+# 與 act-scen-load.txt 的差別是**中間讓模擬真的跑**。載入後立刻存檔那一份
+# 只跑了一到四刻，比出來的東西幾乎全是載入器的正確性，不是模擬的正確性。
+#
+# 要讓它跑得下去有兩件事要處理（選單都是按住式的：press 標題、move 到項目、
+# release）：
+#
+# 1. **每個遊戲年的預算對話框會把模擬停住** —— OPTIONS → Auto-Budget 打開。
+# 2. **隨機災難會把兩邊的地圖炸開** —— DISASTERS → Disable 關掉。
+#    不關的話比出來的差異幾乎全是「原版那一側剛好起了一場火」：實測劇本 1
+#    跑 14 年，原版燒掉 26 格工業區留下 48 格廢墟，remake 這一側一場火都沒有，
+#    工業區的格數就差了 113%。兩邊的亂數數列對不起來，這種差異沒有意義。
+#    ⚠ 劇本自己腳本化的災難（漢堡大火、舊金山地震）**關不掉**，
+#    那是 DisasterEvent 走的另一條路。
+#
+# ⚠ **順序不能換**：Auto-Budget 要在把速度催到 Fastest **之前**打開。
+# 反過來的話第一個遊戲年在兩三秒內就到，預算對話框會先跳出來把模擬停住，
+# 而它蓋住選單列——後面那個 press 就落在對話框上，什麼都沒發生。
+# 實測：先按 4 再開 Auto-Budget，等 90 秒只前進了一年（1850→1851）。
+#
+# ⚠ 存檔對話框在城市名已經存過一次之後會多一層 OVERWRITE 確認，
+# Yes 在 (292,191)。點不到也無所謂——那一層出現代表檔案本來就在。
+#
+# 座標是 640×350 的 Hires EGA 畫面座標。
+#   標題畫面：SELECT SCENARIO (316,240)
+#   劇本選擇：兩列四行，x = 80／240／402／562，y = 103（上）／253（下）
+#   手冊查驗：Return ×2 之後點掉 Continue (311,190)
+#   OPTIONS 選單：標題 (252,10)，Auto-Budget (233,45)
+#   DISASTERS 選單：標題 (404,10)，Disable (388,128)
+#     —— Fire 30／Flood 45／Balloon Crash 59／Twister 73／Earthquake 87／
+#        Tumbleweed 101／分隔線／Disable 128
+#   速度：OPTIONS → Speed 的子選單列出 Fastest 4／Fast 3／Average 2／
+#         Slow 1／Pause 0 —— 那些數字就是鍵盤捷徑，直接按 `4` 就是最快，
+#         不必走選單。劇本載進來預設是 Slow。
+#   存檔對話框：SAVE (328,80)；OVERWRITE 的 Yes (292,191)
+#   訊息對話框的 Continue (311,232)；預算的 Go with these figures (315,317)
+#
+# ⚠ 存檔前那兩下盲點是**清擋路的對話框**用的：災難訊息（「A Giant
+# Tumbleweed has been sighted!!」）會把 Ctrl-S 擋掉，而且畫面上沒有任何
+# 錯誤訊息——症狀是存檔對話框沒出現，snap 拿不到檔案。
+wait 3
+click 316 240
+wait 5
+click __SCEN_X__ __SCEN_Y__
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+press 252 10
+wait 1
+move 233 45
+wait 1
+release
+wait 2
+press 404 10
+wait 1
+move 388 128
+wait 1
+release
+wait 2
+shot 01-options-set
+key 4
+wait __RUN__
+click 315 317
+wait 1
+click 311 232
+wait 2
+shot 02-ran
+key ctrl+s
+wait 3
+shot 03-save-dialog
+click 328 80
+wait 3
+click 292 191
+wait 5
+snap A
+shot 04-saved
