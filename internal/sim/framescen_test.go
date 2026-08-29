@@ -92,6 +92,16 @@ func loadPreState(t *testing.T, w *World, path string) {
 // 資料由 tools/oracle/tcl/frame-parity-scen.tcl 產生。
 const frameScenBudget = 8000
 
+// frameTokyoBudget 是東京劇本那一份的現況。
+//
+// 選東京是為了**精靈**：它的劇本災難就是怪獸，而 Dullsville 那份實測
+// 整段 0 個精靈。這是目前的前線——東京比 Dullsville 大得多
+// （8000 個 frame 共 892 678 次抽樣，是 Dullsville 的七倍半），
+// 第 50 個 frame 就少抽一次，而那個 frame 怪獸正在動。
+//
+// 這個門檻現在很低，但它是**真的護欄**：掉下去就代表規則層退步了。
+const frameTokyoBudget = 50
+
 // probMismatch 比對城市評估的分數與問題表；相同回空字串。
 //
 // 投票迴圈跑幾次由問題表決定，所以評估那個 frame 的抽樣次數對不上時，
@@ -117,25 +127,36 @@ func probMismatch(w *World, f frameCP) string {
 }
 
 func TestFrameParityScenario(t *testing.T) {
-	raw, err := os.ReadFile("../../workplace/ref/micropolis/micropolis-activity/res/snro.111")
+	runScenarioParity(t, "testdata/frame-scen", "snro.111",
+		ScenarioDullsville, frameScenBudget)
+}
+
+func TestFrameParityTokyo(t *testing.T) {
+	runScenarioParity(t, "testdata/frame-tokyo", "snro.555",
+		ScenarioTokyo, frameTokyoBudget)
+}
+
+func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) {
+	t.Helper()
+	raw, err := os.ReadFile("../../workplace/ref/micropolis/micropolis-activity/res/" + file)
 	if err != nil {
-		t.Skip("封存裡沒有 snro.111")
+		t.Skip("封存裡沒有 " + file)
 	}
 	cf, err := ParseCityFile(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := loadFrameMetaIn(t, "testdata/frame-scen")
-	wantStart := loadGoldenMap(t, "testdata/frame-scen/cp0.csv")
+	m := loadFrameMetaIn(t, dir)
+	wantStart := loadGoldenMap(t, dir+"/cp0.csv")
 
 	w := NewWorld(1)
-	loadPreState(t, w, "testdata/frame-scen/prestate.csv")
+	loadPreState(t, w, dir+"/prestate.csv")
 	_ = wantStart
 	// ⚠ 起點是**載入之前**的亂數狀態：DoSimInit 裡的 MapScan 會抽亂數，
 	// 而且會讓分區長大——所以事後把地圖蓋回去不夠，衍生陣列（地價、
 	// 汙染、犯罪）會是在另一張地圖上算出來的。
 	w.Rand.SetState(m.Init.PreState)
-	w.LoadScenarioFile(cf, ScenarioDullsville)
+	w.LoadScenarioFile(cf, sc)
 	// s_fileio.c:470 LoadScenario 尾巴：InitSimLoad = 1、DoInitialEval = 0，
 	// 然後 DoSimInit()（它自己會把 DoInitialEval 設回 1）。
 	w.InitSimLoad = 1
@@ -162,7 +183,7 @@ func TestFrameParityScenario(t *testing.T) {
 			"直接用原版的起始狀態覆蓋", d)
 	}
 	w.Map = wantStart
-	loadPreState(t, w, "testdata/frame-scen/poststate.csv")
+	loadPreState(t, w, dir+"/poststate.csv")
 	w.Rand.SetState(mustRec(m.Init.Rands))
 
 	trace := os.Getenv("SIMCITY_TRACE") != ""
@@ -209,7 +230,7 @@ func TestFrameParityScenario(t *testing.T) {
 	}
 	t.Logf("劇本逐 frame 完全一致 %d/%d 個（共 %d 次抽樣）", matched, len(m.Frames), total)
 	if matched == len(m.Frames) {
-		wantEnd := loadFrameEndMapIn(t, "testdata/frame-scen")
+		wantEnd := loadFrameEndMapIn(t, dir)
 		if d := mapDiffM(&w.Map, &wantEnd); d != 0 {
 			t.Errorf("抽樣全部對上，但終點地圖差 %d 格", d)
 		}
@@ -217,11 +238,10 @@ func TestFrameParityScenario(t *testing.T) {
 			t.Errorf("終點資金 %d，原版 %d", w.TotalFunds, m.End.Funds)
 		}
 	}
-	if matched < frameScenBudget {
-		t.Errorf("只對上 %d 個 frame，低於現況 %d —— 有東西退步了", matched, frameScenBudget)
+	if matched < budget {
+		t.Errorf("只對上 %d 個 frame，低於現況 %d —— 有東西退步了", matched, budget)
 	}
-	if matched > frameScenBudget {
-		t.Errorf("對上 %d 個 frame，比現況 %d 好 —— 請把 frameScenBudget 調到 %d",
-			matched, frameScenBudget, matched)
+	if matched > budget {
+		t.Errorf("對上 %d 個 frame，比現況 %d 好 —— 請把門檻調到 %d", matched, budget, matched)
 	}
 }

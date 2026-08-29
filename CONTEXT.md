@@ -12,11 +12,14 @@
 打得開，存讀檔用的是原版 `.cty` 格式（拿去餵 Micropolis 也讀得起來）。
 Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
 
-**逐次元對拍收斂了**。兩份 8000 個 frame（各 500 刻）的對拍都完全一致：
+**逐次元對拍收斂了**（精靈除外）。兩份 8000 個 frame（各 500 刻）的對拍都完全一致：
 空城實驗 13 582 次抽樣，**Dullsville 劇本 119 821 次抽樣**——每個 frame 的
 抽樣次數、亂數狀態、`Scycle`、需求閥門、城市評估的分數與問題表都相同，
 終點的 12 000 格地圖與資金也相同。做法是給 oracle 加單步與觀測指令，
 見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
+
+第三份（Tokyo，892 678 次抽樣）是**唯一會動到精靈的實驗**，目前對到
+第 50 個 frame，是現在的前線。
 
 還沒收完的一件事：
 
@@ -158,9 +161,8 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     （空城 13 582 次抽樣、Dullsville 劇本 119 821 次）。見 `docs/re/12-tick-parity.md`。
 13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
     `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
-    ⚠ **精靈本身還是沒有逐次元證據**：兩份逐 frame 對拍都沒有觸發精靈
-    （Dullsville 那份實測整段 0 個），因為沒有機場、港口與足夠的鐵路。
-    要驗精靈得另做一個會生出直昇機或火車的實驗。
+    精靈第一次有逐次元實驗了：**Tokyo 劇本**（劇本災難就是怪獸）的逐 frame
+    對拍 `TestFrameParityTokyo`。目前只對到第 50 個 frame——那是現在的前線。
 14. ~~訊息系統~~ **完成**：`docs/re/14-messages.md`，`internal/sim/message.go`。
     含分區上限旗標、人口里程碑與八個劇本的勝敗條件。
 15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，
