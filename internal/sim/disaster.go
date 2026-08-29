@@ -96,12 +96,16 @@ func (w *World) dropFireBombs() {
 	w.CrashX = w.Rand.Rand(WorldX - 1)
 	w.CrashY = w.Rand.Rand(WorldY - 1)
 	w.sprites().MakeExplosion(w.CrashX, w.CrashY)
+	// ⚠ 原版在這裡送 −30（`Firebombing reported !`），但 **DOS 1.10 的第 30 則
+	// 是「亂砍樹」**——照送會讓玩家看到不相干的字。DOS 版用哪一則未解，
+	// 所以這裡不送訊息，只留爆炸。見 docs/re/14-messages.md §5。
 }
 
 // MakeEarthquake 地震。s_disast.c:178
 //
 // 震動 300…1000 次擲點，每一點若是「可摧毀的」就變廢墟；四分之一機率變火。
 func (w *World) MakeEarthquake() {
+	w.SendMesAt(-MsgEarthquake, w.CCx, w.CCy)
 	t := w.Rand.Rand(700) + 300
 	for z := 0; z < t; z++ {
 		x := w.Rand.Rand(WorldX - 1)
@@ -135,6 +139,7 @@ func (w *World) SetFire() {
 	if t > LHTHR && t < LASTZONE {
 		w.Map[x][y] = uint16(FIRE + ANIMBIT + (w.Rand.Rand16() & 7))
 		w.CrashX, w.CrashY = x, y
+		w.SendMesAt(-MsgFire, x, y)
 	}
 }
 
@@ -153,6 +158,9 @@ func (w *World) MakeFire() {
 		v := int(z & LOMASK)
 		if v > 21 && v < LASTZONE {
 			w.Map[x][y] = uint16(FIRE + ANIMBIT + (w.Rand.Rand16() & 7))
+			// ⚠ 玩家放的火送**正數** 20，隨機火災（SetFire）送負數 −20。
+			// 差別在原版對負數會開圖片視窗、對正數只寫訊息欄。
+			w.SendMesAt(MsgFire, x, y)
 			return
 		}
 	}
@@ -191,6 +199,7 @@ func (w *World) MakeFlood() {
 			if cc == 0 || (cc&BULLBIT != 0 && cc&BURNBIT != 0) {
 				w.Map[xx][yy] = FLOOD
 				w.FloodCnt = 30
+				w.SendMesAt(-MsgFlood, xx, yy)
 				w.FloodX, w.FloodY = xx, yy
 				return
 			}

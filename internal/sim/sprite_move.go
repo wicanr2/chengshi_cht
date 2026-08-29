@@ -94,6 +94,7 @@ func (s *spriteSystem) doCopter(sp *Sprite) {
 		y := sp.Y >> 5
 		if x >= 0 && x < WorldX>>1 && y >= 0 && y < WorldY>>1 {
 			if s.w.TrfDensity[x][y] > 170 && s.w.Rand.Rand16()&7 == 0 {
+				s.w.SendMesAt(-MsgHeavyTraffic, (x<<1)+1, (y<<1)+1)
 				sp.SoundCount = 200
 			}
 		}
@@ -454,6 +455,9 @@ func (s *spriteSystem) doTornado(sp *Sprite) {
 // 爆炸播六格動畫，結束時在五個位置點火。
 func (s *spriteSystem) doExplosion(sp *Sprite) {
 	if s.cycle&1 == 0 {
+		if sp.Frame == 1 {
+			s.w.SendMesAt(MsgExplosion, (sp.X>>4)+3, sp.Y>>4)
+		}
 		sp.Frame++
 	}
 	if sp.Frame > 6 {

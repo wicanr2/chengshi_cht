@@ -32,7 +32,7 @@
 | [`docs/re/11-simulate-loop.md`](11-simulate-loop.md) | 十六相位主迴圈 | **已接** | `internal/sim/simulate.go` |
 | [`docs/re/12-tick-parity.md`](12-tick-parity.md) | 逐次元對拍工具與現況 | **已接** | `internal/sim/frameparity_test.go`、`internal/sim/tickparity_test.go`、`internal/sim/microzone_test.go` |
 | [`docs/re/13-sprites.md`](13-sprites.md) | 精靈系統（八種會動的東西）| **已接** | `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go` |
-| [`docs/re/14-messages.md`](14-messages.md) | 訊息、人口里程碑、劇本勝敗 | **已接** | `internal/sim/message.go` |
+| [`docs/re/14-messages.md`](14-messages.md) | 訊息、人口里程碑、劇本勝敗、災難與工具訊息 | **已接** | `internal/sim/message.go`；§五之二的十四個事件送出點接在 `disaster.go`／`sprite_effects.go`／`sprite_move.go`／`mapscan.go`／`power.go`／`census.go`／`internal/ui/game.go`，回歸測試 `message_disaster_test.go` |
 | [`docs/re/15-tools.md`](15-tools.md) | 玩家工具與自動接線 | **已接** | `internal/sim/tool.go`、`internal/sim/connect.go` |
 | [`docs/re/17-tile-animation.md`](17-tile-animation.md) | 圖塊動畫（`aniTile` 表）| **已接** | `internal/sim/animate.go`、`anitab.go`；由 `internal/ui` 每個畫格呼叫 |
 | [`docs/formats/00-dos110-inventory.md`](../formats/00-dos110-inventory.md) | DOS 1.10 素材盤點 | 不適用 | 素材盤點，規則在別處 |

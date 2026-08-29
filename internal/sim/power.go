@@ -220,6 +220,10 @@ func (w *World) DoPowerScan() PowerScanResult {
 	// 第 2 步：泛洪。
 	p.run(res.CoalPop, res.NuclearPop)
 	res.OutOfPower = p.OutOfPower
+	if p.OutOfPower {
+		// 供電到頂，剩下的電線一格都不通。s_power.c:202
+		w.SendMes(MsgBrownout)
+	}
 
 	return res
 }

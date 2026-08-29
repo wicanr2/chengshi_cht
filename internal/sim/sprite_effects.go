@@ -14,8 +14,17 @@ func (s *spriteSystem) explodeSprite(sp *Sprite) {
 	s.MakeExplosionAt(x, y)
 	s.w.CrashX = x >> 4
 	s.w.CrashY = y >> 4
-	// 原版在這裡依型別送不同的訊息（−24 飛機、−25 船、−26 火車、−27 直昇機）。
-	// 訊息系統還沒實作。
+	// 依型別送訊息。w_sprite.c:1383。公車照原版也送 −26（原始碼註記 `XXX for now`）。
+	switch sp.Type {
+	case SpriteAirplane:
+		s.w.SendMesAt(-MsgPlaneCrash, s.w.CrashX, s.w.CrashY)
+	case SpriteShip:
+		s.w.SendMesAt(-MsgShipwreck, s.w.CrashX, s.w.CrashY)
+	case SpriteTrain, SpriteBus:
+		s.w.SendMesAt(-MsgTrainCrash, s.w.CrashX, s.w.CrashY)
+	case SpriteCopter:
+		s.w.SendMesAt(-MsgCopterCrash, s.w.CrashX, s.w.CrashY)
+	}
 }
 
 // checkWet 判斷一格是不是「濕的」基礎建設（毀掉會變回河）。w_sprite.c:1415
@@ -254,6 +263,7 @@ func (s *spriteSystem) MakeMonster() {
 
 func (s *spriteSystem) monsterHere(x, y int) {
 	s.makeSprite(SpriteMonster, (x<<4)+48, y<<4)
+	s.w.SendMesAt(-MsgMonster, x+5, y)
 }
 
 // MakeTornado 生一個龍捲風。
@@ -265,6 +275,7 @@ func (s *spriteSystem) MakeTornado() {
 	x := s.w.Rand.Rand((WorldX<<4)-800) + 400
 	y := s.w.Rand.Rand((WorldY<<4)-200) + 100
 	s.makeSprite(SpriteTornado, x, y)
+	s.w.SendMesAt(-MsgTornado, (x>>4)+3, (y>>4)+2)
 }
 
 // MakeAirCrash 讓一架飛機墜毀。w_sprite.c:1052

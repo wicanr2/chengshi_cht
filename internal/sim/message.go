@@ -40,6 +40,32 @@ const (
 	MsgScenarioLose = 200 // 送出時取負值
 )
 
+// 災難、工具與預算訊息。s_disast.c／w_sprite.c／w_tool.c／w_budget.c 的
+// `SendMes` 引數，編號與 `.PTF` 第 0 段的索引差 1（索引 19 ＝ 訊息 20）。
+//
+// ⚠ **DOS 與 Micropolis 的訊息表只在第 30 則不一樣**：Micropolis 是
+// `Firebombing reported !`，DOS 1.10 是 `Bulldozing too many trees.`。
+// 所以空襲（`dropFireBombs`）不能照 Micropolis 送 −30——那會讓玩家看到
+// 「亂砍樹」。DOS 版空襲用哪一則還沒解（docs/re/14-messages.md §5）。
+const (
+	MsgFire         = 20 // 火警
+	MsgMonster      = 21 // 怪獸
+	MsgTornado      = 22 // 龍捲風
+	MsgEarthquake   = 23 // 大地震
+	MsgPlaneCrash   = 24 // 空難
+	MsgShipwreck    = 25 // 船難
+	MsgTrainCrash   = 26 // 火車事故
+	MsgCopterCrash  = 27 // 直升機事故
+	MsgBroke        = 29 // 破產
+	MsgExplosion    = 32 // 爆炸
+	MsgNoMoney      = 33 // 錢不夠
+	MsgNeedsClear   = 34 // 要先推平
+	MsgBrownout     = 40 // 供電到頂
+	MsgHeavyTraffic = 41 // 交通壅塞
+	MsgFlood        = 42 // 水災
+	MsgMeltdown     = 43 // 爐心熔毀
+)
+
 // 人口里程碑訊息（CheckGrowth）。
 const (
 	MsgPopTown    = 35 // 2 000

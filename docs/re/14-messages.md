@@ -78,6 +78,57 @@ ThisCityPop = (ResPop + ComPop*8 + IndPop*8) * 20;
 **過關只送訊息，不呼叫 `DoWinGame`**——原版只有輸的時候叫
 `DoLoseGame()`。贏的處理在 Tcl 那一層看到訊息編號才做。
 
+## 五之二、災難、精靈與工具的訊息
+
+`SendMessages`（十七個城市狀況）只佔訊息編號 1–19。編號 20 以上是**事件
+觸發**的：災難、精靈墜毀、工具錯誤、破產、供電到頂。這些送出點散在
+`s_disast.c`／`w_sprite.c`／`w_tool.c`／`w_budget.c`／`s_power.c`，
+每一支都是「做完事順手送一則」，不經過相位 10。
+
+| 訊息 | 送出點 | 接在 |
+|---:|---|---|
+| −20 火警（隨機）| `s_disast.c:218 SetFire` | `disaster.go SetFire` |
+| 20 火警（玩家放火）| `s_disast.c:237 MakeFire` | `disaster.go MakeFire` |
+| −21 怪獸 | `w_sprite.c:1590 MonsterHere` | `sprite_effects.go monsterHere` |
+| −22 龍捲風 | `w_sprite.c:1624 MakeTornado` | `sprite_effects.go MakeTornado` |
+| −23 大地震 | `s_disast.c:185 MakeEarthquake` | `disaster.go MakeEarthquake` |
+| −24／−25／−26／−27 空難／船難／火車／直升機 | `w_sprite.c:1387–1407 ExplodeSprite` | `sprite_effects.go explodeSprite` |
+| 29 破產 | `w_budget.c:214` | `census.go DoBudget` |
+| 32 爆炸 | `w_sprite.c:1126 DoExplosionSprite`（`frame == 1`）| `sprite_move.go doExplosion` |
+| 33 錢不夠／34 要先推平 | `w_tool.c:1553/1557 DoTool` | `internal/ui/game.go applyTool` |
+| 40 供電到頂 | `s_power.c:202 DoPowerScan` | `power.go DoPowerScan` |
+| −41 交通壅塞 | `w_sprite.c:767 DoCopterSprite` | `sprite_move.go` 直升機 |
+| −42 水災 | `s_disast.c:282 MakeFlood` | `disaster.go MakeFlood` |
+| −43 爐心熔毀 | `s_sim.c:1188 DoMeltdown` | `mapscan.go DoMeltdown` |
+
+正負號不是修飾：**負數會開圖片視窗、正數只寫訊息欄**。同一種事件在兩邊
+都出現過（火警 −20／20），差別是誰觸發的。
+
+回歸測試在 `message_disaster_test.go`：判準是**訊息編號**，不是「有沒有字」。
+編號錯了玩家照樣看到一行字，只是內容不相干——下一節就是那個坑。
+
+## 五之三、DOS 與 Micropolis 的訊息表在第 30 則岔開
+
+兩份表 1–29 與 31–43 逐則相同，但：
+
+| 編號 | Micropolis（`res/stri.301`）| DOS 1.10（`DATA/MESSAGE.PTF`）|
+|---:|---|---|
+| 30 | `Firebombing reported !` | `Bulldozing too many trees.` |
+| 44 | `They're rioting in the streets !!` | `Cannot build that on water.` |
+| 45 | `End of Demo !!` | `Cannot build that here.` |
+| 46 | `No Sound Server!` | `Cannot bulldoze here.` |
+
+後果有三個，都是**未解**，不要憑猜補上：
+
+1. **空襲不能送 −30。** Micropolis 的 `FireBomb()` 送 −30，但在 DOS 的表上
+   那是「亂砍樹」。所以 `dropFireBombs` 目前只放爆炸、不送訊息。
+   DOS 版空襲用哪一則，要反組譯 DOS 的空襲程式才知道。
+2. **「亂砍樹」這一則沒有規則。** Micropolis 沒有對應的檢查，DOS 有這行字。
+   觸發條件未解。
+3. **44／45／46 三則工具錯誤是 DOS 專屬。** Micropolis 對工具回傳 0
+   不出訊息。`internal/ui/game.go` 目前按工具分兩種（推土機 → 46、
+   其餘 → 45），**推論等級：假說**；44「不能蓋在水上」沒有觸發點。
+
 ## 六、汙染門檻的官方修改
 
 ```c

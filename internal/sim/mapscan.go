@@ -539,4 +539,6 @@ func (w *World) DoMeltdown(sx, sy int) {
 			w.Map[x][y] = RADTILE
 		}
 	}
+	w.ClearMes()
+	w.SendMesAt(-MsgMeltdown, sx, sy)
 }

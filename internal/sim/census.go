@@ -304,6 +304,7 @@ func (w *World) DoBudget() {
 	yum := w.TaxFund + w.TotalFunds
 
 	var fireValue, policeValue, roadValue int
+	broke := yum <= total && total > 0
 	switch {
 	case yum > total:
 		fireValue, policeValue, roadValue = fireInt, policeInt, roadInt
@@ -339,6 +340,12 @@ func (w *World) DoBudget() {
 	w.FireSpend, w.PoliceSpend, w.RoadSpend = fireValue, policeValue, roadValue
 	spent := fireValue + policeValue + roadValue
 	w.TotalFunds += w.TaxFund - spent
+	if broke {
+		// 稅收加存款付不起編列的預算。w_budget.c:214 走的是同一個分支
+		// （原版還會強制關掉自動預算並跳視窗，那是呈現層）。
+		w.ClearMes()
+		w.SendMes(MsgBroke)
+	}
 }
 
 func ratioOrZero(part, whole int) float64 {

@@ -523,12 +523,34 @@ func (g *Game) applyTool(tx, ty int) {
 			g.setMessage(fmt.Sprintf("花費 $%d", spent))
 		}
 	case sim.ToolNoMoney:
-		g.setMessage("資金不足")
+		g.toolMessage(sim.MsgNoMoney)
 	case sim.ToolNeedsClear:
-		g.setMessage("這裡不能蓋——地要先整平")
+		g.toolMessage(sim.MsgNeedsClear)
 	case sim.ToolBlocked:
-		g.setMessage("這裡蓋不了")
+		// ⚠ **推論等級：假說。** Micropolis 對回傳 0 不出訊息，而 DOS 1.10 的
+		// 訊息檔多了三則工具錯誤（44 不能蓋在水上、45 這裡不能蓋、
+		// 46 這裡不能推平），Micropolis 完全沒有。DOS 版怎麼分派這三則還沒解，
+		// 這裡按工具分兩種；44 目前沒有觸發點。見 docs/re/14-messages.md §5。
+		if g.tool == sim.ToolBulldozer {
+			g.toolMessage(msgCannotBulldozeHere)
+		} else {
+			g.toolMessage(msgCannotBuildHere)
+		}
 	}
+}
+
+// DOS 1.10 專屬的工具錯誤訊息（Micropolis 的訊息表沒有這三則）。
+const (
+	msgCannotBuildOnWater = 44
+	msgCannotBuildHere    = 45
+	msgCannotBulldozeHere = 46
+)
+
+// toolMessage 走訊息埠而不是直接寫字串——文字要從語言檔來，
+// 而原版也是走同一條路（w_tool.c:1553 `ClearMes(); SendMes(34);`）。
+func (g *Game) toolMessage(n int) {
+	g.world.ClearMes()
+	g.world.SendMes(n)
 }
 
 // Draw 畫一個 frame。
