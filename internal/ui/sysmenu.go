@@ -63,6 +63,8 @@ func (g *Game) sysMenuLen() int {
 		return 8
 	case winStyle:
 		return len(styleOrder)
+	case winSpeed:
+		return 5
 	}
 	return 0
 }
@@ -76,6 +78,8 @@ func (g *Game) sysMenuLabel(i int) string {
 		return game.ScenarioNameZH(i + 1)
 	case winStyle:
 		return styleOrder[i].name
+	case winSpeed:
+		return trimMenu(g.txt.S(i18n.SecSpeed, i))
 	}
 	return ""
 }
@@ -105,6 +109,12 @@ func (g *Game) sysMenuPick(i int) {
 		g.loadScenario(i + 1)
 	case winStyle:
 		g.loadStyle(styleOrder[i].key)
+	case winSpeed:
+		// 第 19 段由快到慢：最快 4、快速 3、普通 2、慢速 1、暫停 0。
+		// 規則層只有四段（0–3），「最快」與「快速」是同一段——
+		// 已知的未解，記在 docs/spec/controls.md。
+		g.setSpeed(min(4-i, 3))
+		g.win = winNone
 	case winSystem:
 		switch sysItems[i].kind {
 		case "about":

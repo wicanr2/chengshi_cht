@@ -132,7 +132,9 @@ type Game struct {
 	saveAs *saveAsBox
 
 	// openMenu 是拉開的下拉選單（0 ＝ 沒有，1–4 對應選單列四個標題）。
+	// menuRow 是游標停在哪一列（−1 ＝ 沒有）。
 	openMenu int
+	menuRow  int
 
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
@@ -300,6 +302,10 @@ func (g *Game) setMessage(s string) {
 }
 
 func (g *Game) handleKeys() {
+	// 下拉選單拉開時，鍵盤全部歸它——否則方向鍵會同時捲地圖。
+	if g.handleMenuKeys() {
+		return
+	}
 	// ⚠ 工具鍵要排除三種情況，每一種都造成過「按了甲卻順便做了乙」：
 	//
 	//   - **Ctrl 按著**：Ctrl-B（預算）會順便選到推土機。
@@ -362,14 +368,18 @@ func (g *Game) handleKeys() {
 		}
 	}
 
-	// 選單：原版用 Alt 拉下來（說明書 p.29–35）。
+	// 選單：原版用 Alt 拉下來（說明書 p.29–35）。四個標題各一個鍵。
 	if ebiten.IsKeyPressed(ebiten.KeyAlt) {
-		switch {
-		case inpututil.IsKeyJustPressed(ebiten.KeyD):
-			g.toggleWindow(winDisaster)
-		case inpututil.IsKeyJustPressed(ebiten.KeyS):
-			g.toggleWindow(winSystem)
-			g.sysRow = 0
+		for i, k := range []ebiten.Key{
+			ebiten.KeyS, ebiten.KeyO, ebiten.KeyD, ebiten.KeyW,
+		} {
+			if inpututil.IsKeyJustPressed(k) {
+				if g.openMenu == i+1 {
+					g.openMenu = 0
+				} else {
+					g.openMenu, g.menuRow = i+1, g.firstMenuRow(i)
+				}
+			}
 		}
 	}
 
@@ -471,7 +481,7 @@ func (g *Game) handleWindowKeys() {
 				g.layer = mapLayer(i)
 			}
 		}
-	case winSystem, winScenario, winStyle:
+	case winSystem, winScenario, winStyle, winSpeed:
 		g.handleSysMenuKeys()
 	case winSaveAs:
 		g.handleSaveAsKeys()
@@ -534,6 +544,9 @@ func (g *Game) adjustFunding(d float64) {
 
 func (g *Game) handleMouse() {
 	mx, my := ebiten.CursorPosition()
+	if g.handleMenuMouse(mx, my) {
+		return
+	}
 	pressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	just := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
@@ -632,6 +645,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawClassic(screen)
 	g.drawWindow(screen)
 	g.drawPicture(screen)
+	g.drawMenu(screen)
 }
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。

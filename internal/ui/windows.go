@@ -35,6 +35,8 @@ const (
 	winAbout
 	// winSaveAs 是「以……檔名儲存」（同段第 9 筆），遊戲裡唯一的文字輸入。
 	winSaveAs
+	// winSpeed 是功能選單的速度副選單（訊息檔第 19 段，五段速度）。
+	winSpeed
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -126,6 +128,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecSysMenu, 0)
 	case winSaveAs:
 		title = g.txt.S(i18n.SecSysMenu, 9)
+	case winSpeed:
+		title = g.txt.S(i18n.SecOptMenu, 4)
 	}
 	g.font.Draw(dst, trimMenu(title), x+20, y+14, colOn)
 	g.font.Draw(dst, "Esc 關閉", x+w-20-g.font.Measure("Esc 關閉"), y+14, colDim)
@@ -142,6 +146,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawEvalWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winDisaster:
 		g.drawDisasterWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winSpeed:
+		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	case winAbout:
 		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winSaveAs:
