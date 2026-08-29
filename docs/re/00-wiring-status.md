@@ -39,3 +39,5 @@
 | [`docs/formats/02-dos-lzss.md`](../formats/02-dos-lzss.md) | DOS 共用壓縮與四種資料檔 | **已接** | `internal/assets/lzss.go`、`ptf.go`、`psn.go` |
 | [`docs/formats/03-pgf-graphics.md`](../formats/03-pgf-graphics.md) | `.PGF` 圖形檔版面與圖形庫 | **已接** | `internal/assets/pgf.go` |
 | [`docs/formats/04-ptf-messages.md`](../formats/04-ptf-messages.md) | `.PTF` 訊息檔的分段結構 | **已接** | `internal/assets/ptf.go`、`internal/i18n/i18n.go` |
+| [`docs/formats/05-psf-sound.md`](../formats/05-psf-sound.md) | `.PSF`／`.V4` 音效檔的長度鏈與 4 位元取樣 | **已接** | `internal/assets/psf.go`、`cmd/simtool/sound.go`。⚠ 接的只有**容器格式**；每一段對應哪個事件與取樣率還沒有證據，所以聲音沒有接進遊戲（§5）|
+| [`docs/re/16-dos-oracle.md`](16-dos-oracle.md) | DOS 原版當 oracle：防拷、螢幕模式、音效裝置 | 不適用 | 工具鏈在 `tools/dosbox.sh`。§2 的防拷與 §3 的螢幕模式是關於原版環境的事實，不是 remake 要實作的規則 |
