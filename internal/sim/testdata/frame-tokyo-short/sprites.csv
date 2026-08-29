@@ -1,0 +1,4 @@
+# 第一行是 w_sprite.c 的全域（Cycle absDist CrashX CrashY），其餘每行一隻：
+# type,frame,x,y,orig_x,orig_y,dest_x,dest_y,count,sound_count,dir,new_dir,step,flag,control,turn,accel,speed
+globals,0,0,0,0
+1,1,89,502,0,0,0,0,0,0,4,0,0,0,-1,0,0,100

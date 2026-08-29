@@ -1,0 +1,11 @@
+{
+ "init": {
+  "fcycle": 0,
+  "scycle": 0,
+  "funds": 20000,
+  "rands": [],
+  "r0state": 5225190,
+  "prestate": 9791922
+ },
+ "end": null
+}

@@ -79,7 +79,10 @@ def main():
     os.makedirs(out, exist_ok=True)
 
     m0 = parse_map(find_line(res, "CP0"), "CP0")
-    mE = parse_map(find_line(res, "CPEND"), "CPEND")
+    try:
+        mE = parse_map(find_line(res, "CPEND"), "CPEND")
+    except SystemExit:
+        mE = m0  # 短版沒有跑到終點，不倒終點地圖
 
     with open(f"{out}/cp0.csv", "w") as fh:
         for row in m0:
@@ -148,16 +151,35 @@ def main():
                                   [v for o in ones for v in o.split()]) + "\n")
 
     init = find_line(res, "INIT").split()
-    r0 = find_line(res, "R0").split()
+    r0 = None
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("R0 "):
+                r0 = ln.split()
     pre = None
     for r in res:
         for ln in r["out"]:
             if ln.startswith("PRE "):
                 pre = int(ln.split()[1])
-    end = find_line(res, "END").split()
+    end = None
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("END "):
+                end = ln.split()
     frames = []
     for r in res:
         for ln in r["out"]:
+            if ln.startswith("FS "):
+                # 短版：FS i scycle rv cv iv state sf mo
+                q = ln.split()
+                frames.append({
+                    "i": int(q[1]), "scycle": int(q[2]),
+                    "valves": [int(x) for x in q[3:6]],
+                    "rands": None, "state": int(q[6]),
+                    "prob": None, "vote": None,
+                    "fstat": [int(q[7]), int(q[8])],
+                })
+                continue
             if not ln.startswith("F "):
                 continue
             p = ln.split()
@@ -167,6 +189,7 @@ def main():
                 "scycle": int(p[3]),
                 "valves": [int(x) for x in p[4:7]],
                 "rands": [int(x) for x in p[7:11]],
+                "state": None,
                 # sim Problems：CityScore CityYes CityNo | 表×10 | 票×10 | taken×10
                 "prob": ([int(x) for x in p[11:14]] +
                          [int(x) for x in p[15:22]]) if len(p) > 20 else None,
@@ -180,11 +203,19 @@ def main():
     # 把四個亂數讀數換算成抽樣次數。RecoverState 回的是**讀完四次之後**
     # 的狀態，而原版讀完就直接跑下一個 frame，所以相鄰兩個檢查點的距離
     # 是「這個 frame 的抽樣次數 + 4」。
-    prev = recover_state([int(x) for x in r0[1:5]])
+    if r0 is not None:
+        prev = recover_state([int(x) for x in r0[1:5]])
+    else:
+        # 短版直接讀 `sim RandState`，不抽四次來反推。
+        prev = int(find_line(res, "R0S").split()[1])
     rows = []
     for fr in frames:
-        cur = recover_state(fr["rands"])
-        d = lcg_distance(prev, cur) - 4
+        if fr["rands"] is not None:
+            cur = recover_state(fr["rands"])
+            d = lcg_distance(prev, cur) - 4  # 原版自己那四次 sim Rand
+        else:
+            cur = fr["state"]
+            d = lcg_distance(prev, cur)
         if d < 0:
             raise SystemExit(f"第 {fr['i']} 個 frame 的距離算出 {d}，不可能")
         row = [fr["i"], fr["scycle"], fr["valves"][0], fr["valves"][1],
@@ -207,10 +238,13 @@ def main():
     meta = {
         "init": {"fcycle": int(init[1]), "scycle": int(init[2]),
                  "funds": int(init[3]),
-                 "rands": [int(x) for x in r0[1:5]],
+                 "rands": [int(x) for x in r0[1:5]] if r0 else [],
+                 # 短版直接讀狀態，沒有那四次 sim Rand，所以也不必 +4。
+                 "r0state": (None if r0 else
+                             int(find_line(res, "R0S").split()[1])),
                  "prestate": pre},
-        "end": {"fcycle": int(end[1]), "scycle": int(end[2]),
-                "funds": int(end[3])},
+        "end": ({"fcycle": int(end[1]), "scycle": int(end[2]),
+                 "funds": int(end[3])} if end else None),
     }
     with open(f"{out}/meta.json", "w") as fh:
         json.dump(meta, fh, indent=1)

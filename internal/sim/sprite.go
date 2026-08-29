@@ -122,22 +122,22 @@ func (s *spriteSystem) getSprite(t int) *Sprite {
 
 // makeSprite 生一隻精靈。w_sprite.c:437 MakeSprite
 //
-// ⚠ 兩個容易寫錯的地方：
+// ⚠ 判斷是 `GlobalSprites[type] == NULL`，**不是**「那一隻還活著嗎」——
+// 同型別已經死掉（`frame == 0`）但節點還在時，原版是**原地重新初始化**，
+// 不生新節點。（`GetSprite` 才是看 `frame`，那是給「場上有沒有船」用的。）
 //
-//  1. **只有還活著的那一隻才會被原地重用。** 原版是
-//     `if ((sprite = GetSprite(type)) == NULL) sprite = NewSprite(...)`，
-//     而 `GetSprite` 對 `frame == 0`（已經死掉）的回 NULL。所以同型別
-//     已經死掉時會生一個**新節點**，而 `InitSprite` 只在 `GlobalSprites`
-//     是 NULL 時才更新它——也就是說全域指標還指著那隻死的。
-//  2. **新節點是前插的**（`sprite->next = sim->sprite; sim->sprite = sprite`），
-//     所以 `MoveObjects` 從最新的精靈開始跑。順序有觀察得到的效果：
-//     `absDist` 是所有精靈共用的一個全域，飛機拿「上一次算出來的距離」
-//     判斷到了沒——那一次可能是別隻精靈算的。
+// ⚠ 新節點加在**尾端**。原始碼的 `NewSprite` 寫的是前插
+// （`sprite->next = sim->sprite; sim->sprite = sprite`），但逐 frame 逐欄位
+// 對拍量出來的順序是**先舊後新**：把新節點放前面的話，第 2 個 frame 就對
+// 不上（船會排到火車前面）。順序有觀察得到的效果——`absDist` 是所有精靈
+// 共用的一個全域，飛機拿「上一次算出來的距離」判斷到了沒，而那一次可能
+// 是別隻精靈算的。**推論等級：強證據（實測），與原始碼的字面讀法衝突，
+// 原因未解**，記在 CONTEXT 的未解表。
 func (s *spriteSystem) makeSprite(t, x, y int) *Sprite {
-	sp := s.getSprite(t)
+	sp := s.globals[t]
 	if sp == nil {
 		sp = &Sprite{Type: t}
-		s.list = append([]*Sprite{sp}, s.list...)
+		s.list = append(s.list, sp)
 	}
 	s.initSprite(sp, x, y)
 	return sp

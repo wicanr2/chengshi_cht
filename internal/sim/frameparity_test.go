@@ -62,6 +62,9 @@ type frameMeta struct {
 		// PreState 是**載入劇本之前**的亂數狀態。載入時 DoSimInit 自己
 		// 會抽亂數，所以要從這裡出發才重建得出同一份起始地圖。
 		PreState uint32 `json:"prestate"`
+		// R0State 是短版（用 sim RandState 直接讀）的起始狀態。
+		// 長版是抽四次反推的，那四次要算進簿記；短版沒有。
+		R0State uint32 `json:"r0state"`
 	} `json:"init"`
 	End struct {
 		Fcycle int `json:"fcycle"`

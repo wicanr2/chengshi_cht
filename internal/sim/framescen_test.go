@@ -100,7 +100,12 @@ const frameScenBudget = 8000
 // 第 50 個 frame 就少抽一次，而那個 frame 怪獸正在動。
 //
 // 這個門檻現在很低，但它是**真的護欄**：掉下去就代表規則層退步了。
-const frameTokyoBudget = 55
+//
+// ⚠ 這個數字曾經是 55，後來降到 46——不是退步，是把精靈的插入順序改回
+// 尾端。判準來自 `spriteparity_test.go`：它逐 frame 比對每一隻精靈的十八個
+// 欄位，前插的話第 2 個 frame 就對不上（2/400），尾端則對到 54/400。
+// 那是比「抽樣次數對不對」強得多的證據。
+const frameTokyoBudget = 46
 
 // probMismatch 比對城市評估的分數與問題表；相同回空字串。
 //
