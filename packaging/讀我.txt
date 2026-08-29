@@ -1,0 +1,69 @@
+城市（chengshi_cht）
+模擬城市 SimCity 1.10 的繁體中文重製版
+https://github.com/wicanr2/chengshi_cht
+
+
+一、先準備原版
+
+本程式不含原版遊戲的任何素材。圖形、音效、劇本城市都要從你自己的
+SimCity 1.10（DOS）裡讀，所以你需要一份合法的原版，解開到某個目錄。
+解開後的目錄裡應該看得到這些子目錄：
+
+    CEGA/  mcga/  MONO/  sega/  DATA/  SCENARIO/
+
+
+二、開始玩
+
+Windows：
+
+    chengshi.exe -data "C:\path\to\SIMCITY 1.10"
+
+Linux：
+
+    ./chengshi -data "/path/to/SIMCITY 1.10"
+
+路徑不想每次打的話，設一個環境變數 CHENGSHI_DATA 指過去就好。
+
+
+三、常用參數
+
+    -style   城市風格：asia 古代亞洲／medi 中世紀／west 西部拓荒／
+             fusa 未來美國／feur 未來歐洲／moon 月球殖民地
+    -scenario N   直接開第 N 個悲情城市（1–8）
+    -load 檔案    讀一個 .cty 城市檔
+    -save 檔案    Ctrl-S 的存檔位置
+    -scale 1.5    視窗放大倍率
+    -seed N       指定地形亂數種子
+
+存檔用的是原版的 .cty 格式，可以拿去餵原版 SimCity 或 Micropolis，
+反過來也一樣。預設存到使用者資料目錄，不會寫進程式所在的位置。
+
+
+四、操作
+
+    滑鼠左鍵    使用目前的工具；道路、水路、鐵路、犁可以拖曳
+    右側清單    點一下換工具
+    方向鍵      捲動地圖（按住 Shift 加速）
+    F1–F4       模擬速度
+    Ctrl-M      地圖視窗（視窗開著時 1–9、0、- 切圖層）
+    Ctrl-G      統計圖視窗
+    Ctrl-B      預算視窗
+    Ctrl-U      評估視窗
+    Ctrl-S      存檔
+    Esc         關閉視窗／關掉整頁訊息
+
+工具的快速鍵：D 犁、R 道路、W 水路、T 鐵路、P 公園、1 住宅區、
+2 商業區、3 工業用地、4 警察局、5 消防隊、6 體育館、7 火力發電廠、
+8 核能發電廠、9 港口、0 機場、Q 查詢。
+（工具的名稱會跟著城市風格改，這是原版的設計。）
+
+
+五、授權
+
+本專案自己的部分採 PolyForm Noncommercial 1.0.0：非商業用途可以自由
+使用、修改與散布，商業使用請先聯絡 wicanr2@gmail.com。全文見 LICENSE。
+
+內建的點陣字型衍生自 Noto Sans CJK TC，採 SIL Open Font License 1.1，
+條款見 NotoSansCJK-copyright.txt。
+
+原版遊戲的著作權屬於各自的權利人，本程式不散布它們。

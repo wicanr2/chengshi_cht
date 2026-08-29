@@ -18,6 +18,10 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/ui"
 )
 
+// version 由 tools/release.sh 在連結時填（-X main.version=…）。
+// 從原始碼直接跑的話會是 dev。
+var version = "dev"
+
 // 六種城市風格。前綴是原版檔名用的，顯示名寫在 .PGF 的檔頭裡。
 // 中文名說明書沒有收，所以先用原名——見 translations/glossary.md 的待補。
 var styles = map[string]string{
@@ -40,7 +44,13 @@ func main() {
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
 	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval")
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
+	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
+
+	if *showVer {
+		fmt.Println("城市（chengshi_cht）", version)
+		return
+	}
 
 	if *data == "" {
 		*data = os.Getenv("CHENGSHI_DATA")
