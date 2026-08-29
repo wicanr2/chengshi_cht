@@ -129,9 +129,39 @@ Cannot open graphics file:C:\tdy\WESTCEGA.pgf
 
 - 一份帶 `tdy\` 圖形檔的 1.10 副本（Tandy 畫面 ＋ Tandy DAC 同時成立）；
 - 一個會模擬 Covox Sound Master 的環境；
-- 反組譯 `SIMCITY.EXE` 的發聲程式。⚠ 這比想像中麻煩：進入點在
-  `CS:0x1ea0`（檔尾附近）、重定位表是空的，而整個檔案裡找不到任何一個
-  操作元合理的 `out 40h/42h`——真正的程式碼是打包的，要先脫殼。
-  好消息是檔案裡有一份**明文的執行期符號表**（49 個名字，含
-  `_InitSounds`、`_SoundOff`、`_SoundWait`、`_RemoveSound`、`_soundMode`、
-  `_DoBudget`、`_MoveObjects`、`_Randomize`），脫殼後可以直接對上函式。
+- 反組譯 `SIMCITY.EXE` 的發聲程式。**進度見 §5。**
+
+## 五、脫殼與符號表（2026-08-30）
+
+`CS:0x1EA0` 那個進入點是**破解程式的 stub**，不是原版進入點；原版在
+`載入段 + 0xE0 : 0`，而且是自解壓的。脫殼的方法、LZSS 多的那一道
+`ror 1`、以及解壓瑕疵怎麼交叉檢查，全部寫在
+[`18-dos-parity.md`](18-dos-parity.md) §6.5，工具是
+[`tools/unpack_simcity_exe.py`](../../tools/unpack_simcity_exe.py)。
+第一個成果是汙染權重（同文件 §6.3）。
+
+**符號表解出來了**（[`tools/dos_symbols.py`](../../tools/dos_symbols.py)）。
+它在載入器區（明文，`0x1000` 起），紀錄格式是
+
+```
+[4 位元組 far 指標][種類 word][模組 word][位移 word][…][長度][名字][00]
+種類 0x0003 = 程式、0x0103 = 資料
+```
+
+**30 個符號**（不是先前記的 49——那是把帶雜訊的字串也數進去了）。
+音效相關的三支都在**模組 0x23**：
+
+| 符號 | 模組:位移 |
+|---|---|
+| `_SoundOff` | `0x23:0x0194` |
+| `_RemoveSound` | `0x23:0x01DE` |
+| `_InitSounds` | `0x23:0x02E4` |
+| `_ReadConfig` | `0x23:0x065E` |
+
+⚠ **模組編號還沒對應到解壓後映像的位址**，所以還讀不到那三支的內容。
+下一步是讀載入器的模組表（它就在 `0x1000` 起那段明文裡，符號表旁邊），
+把模組編號換算成映像位移。
+
+排掉的一個誤會：那些 `_InitSounds`、`_MoveObjects` 的名字**不在遊戲的
+程式碼裡**，而在載入器帶的這份表裡——所以「檔案裡看得到符號名」
+不代表程式碼是明文的。
