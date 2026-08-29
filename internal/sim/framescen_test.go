@@ -105,7 +105,7 @@ const frameScenBudget = 8000
 // 尾端。判準來自 `spriteparity_test.go`：它逐 frame 比對每一隻精靈的十八個
 // 欄位，前插的話第 2 個 frame 就對不上（2/400），尾端則對到 54/400。
 // 那是比「抽樣次數對不對」強得多的證據。
-const frameTokyoBudget = 1015
+const frameTokyoBudget = 8000
 
 // probMismatch 比對城市評估的分數與問題表；相同回空字串。
 //
@@ -206,6 +206,10 @@ func loadSprites(t *testing.T, w *World, path string) {
 		if len(v) == 19 {
 			sp.Named = v[18] != 0
 		}
+		// ⚠ 倒出來的十八個欄位**不含幾何**（寬高、偏移、熱點）。
+		// 少了熱點，`spriteNotInBounds` 會把 x = −47 的船算成 −47 < 0
+		// 而判成出界，船在第 0 個 frame 就消失。
+		applyGeom(sp)
 		w.spriteSys.list = append(w.spriteSys.list, sp)
 	}
 	// ⚠ 原版**開機時就把九型的節點全部建好，而且都是具名的**（不會被回收）。
@@ -280,9 +284,16 @@ func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) 
 	loadSprites(t, w, dir+"/sprites.csv")
 	w.Rand.SetState(mustRec(m.Init.Rands))
 
+	// 有 sprite-frames.csv 就逐 frame 比每一隻精靈的十八個欄位。
+	// 抽樣次數只看得到「多抽了幾次」，欄位看得到是誰的哪一格先偏。
+	var wantSpr [][][18]int
+	if _, err := os.Stat(dir + "/sprite-frames.csv"); err == nil {
+		wantSpr = loadSpriteFrames(t, dir+"/sprite-frames.csv")
+	}
+
 	trace := os.Getenv("SIMCITY_TRACE") != ""
 	matched, total := 0, 0
-	for _, f := range m.Frames {
+	for i, f := range m.Frames {
 		before := w.Rand.State()
 		sites := map[string]int{}
 		w.Rand.Watch = func() { sites[callerSite()]++ }
@@ -344,6 +355,14 @@ func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) 
 			t.Logf("第 %d 個 frame：抽樣次數對得上，但狀態 %d ≠ 原版 %d",
 				f.I, w.Rand.State(), f.State)
 			break
+		}
+		if i < len(wantSpr) {
+			if b := spriteMismatch(w, wantSpr[i]); b != "" {
+				t.Logf("第 %d 個 frame 的精靈狀態對不上：%s", f.I, b)
+				t.Logf("  上一個 frame 原版的精靈：%v", wantSpr[max(i-1, 0)])
+				t.Logf("  這個 frame 原版的精靈：%v", wantSpr[i])
+				break
+			}
 		}
 		// 地圖雜湊放在最後：抽樣次數、Scycle、閥門、狀態都對上了還差，
 		// 就是「不抽亂數的那條路徑」偏掉——例如怪獸拆房子。

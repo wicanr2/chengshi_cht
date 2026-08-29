@@ -12,14 +12,14 @@
 打得開，存讀檔用的是原版 `.cty` 格式（拿去餵 Micropolis 也讀得起來）。
 Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
 
-**逐次元對拍收斂了**（精靈除外）。兩份 8000 個 frame（各 500 刻）的對拍都完全一致：
-空城實驗 13 582 次抽樣，**Dullsville 劇本 119 821 次抽樣**——每個 frame 的
-抽樣次數、亂數狀態、`Scycle`、需求閥門、城市評估的分數與問題表都相同，
-終點的 12 000 格地圖與資金也相同。做法是給 oracle 加單步與觀測指令，
-見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
-
-第三、四份（Tokyo）是**唯一會動到精靈的實驗**：長版 46/8000、
-逐欄位的短版 51/400，是現在的前線；分岔只在精靈那一側。
+**逐次元對拍收斂了，精靈也在內。** 四份實驗、每份 8000 個 frame（400 個的
+短版一份）全部逐 frame 完全一致：空城 13 954 次抽樣、**Dullsville 劇本
+122 314 次**、**Tokyo 劇本 955 206 次**（大城，火車、船、飛機、直昇機、
+怪獸與爆炸全員上場）。每個 frame 比的是抽樣次數（規則層與精靈分開算）、
+亂數狀態、`Scycle`、需求閥門、城市評估的分數與問題表、**場上每一隻精靈的
+十八個欄位**，以及**整張 12 000 格地圖的雜湊**；終點地圖與資金也相同。
+做法是給 oracle 加單步與觀測指令，見
+[`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 
 還沒收完的一件事：
 
@@ -123,8 +123,6 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | 問題 | 現況 | 要怎麼定案 |
 |---|---|---|
 | 規則層扣款用 Micropolis 的 `CostOf[]`，顯示用原版訊息檔 | 兩者只差體育館（3000／5000）與海港（5000／3000）。顯示已改用訊息檔；扣款還沒改，因為 `CostOf[]` 是逐次元對拍的基準。 | 改扣款並重跑 `docs/re/12` 的逐 frame 對拍 |
-| Tokyo 短版的精靈對拍停在 51/400 | 串列順序與音效抽亂數那兩層已經解掉了 | 繼續用 `sim SpritesAll` 逐 frame 比 |
-| 精靈對拍**不比對地圖** | `Destroy`（怪獸拆房子）不抽亂數，所以以抽樣次數為判準的測試看不見它。`sim MapHash` 已做好，但加進逐 frame 輸出之後整份跑不完（沒加 2.6 秒） | 查清楚 MapHash 為什麼讓那份 oracle 跑不完，或改走檔案而不是 pty |
 | `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
 
@@ -159,24 +157,26 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 12. ~~交通、分區、災難、普查、需求閥、預算、評分、十六相位主迴圈~~
     **已實作**：`docs/re/07`–`11`，`internal/sim/{traffic,zone,mapscan,disaster,census,eval,simulate}.go`。
     驗收：**住宅／商業／工業三種分區的微實驗都逐次元完全一致**
-    （692.5／564.2／949.2 刻，地圖零差異）；整城逐 frame 對拍兩份都 8000/8000
-    （空城 13 582 次抽樣、Dullsville 劇本 119 821 次）。見 `docs/re/12-tick-parity.md`。
+    （692.5／564.2／949.2 刻，地圖零差異）；整城逐 frame 對拍三份都 8000/8000
+    （空城 13 954 次抽樣、Dullsville 122 314 次、Tokyo 955 206 次）。
+    見 `docs/re/12-tick-parity.md`。
 13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
     `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
-    精靈第一次有逐次元實驗了：**Tokyo 劇本**（劇本災難就是怪獸）的逐 frame
-    對拍 `TestFrameParityTokyo`（46/8000），以及**逐 frame 比對每一隻精靈
-    十八個欄位**的 `TestSpriteParity`（51/400）。分岔只在精靈那一側
-    （規則層一路相同）。追這條線修掉四個真的錯，其中一個是
-    **載入城市沒做 `InitWillStuff`**——遊戲裡讀第二座城市會留著前一座的
-    地價、汙染、犯罪、交通與精靈。見 `docs/re/12-tick-parity.md` §6之七。
+    驗收用 **Tokyo 劇本**（劇本災難就是怪獸，是唯一會讓精靈全員上場的城市）：
+    `TestFrameParityTokyo` **8000/8000**，判準包含每個 frame 場上每一隻精靈的
+    十八個欄位與整張地圖的雜湊；`TestSpriteParity` 是同判準的 400 個 frame 短版。
+    追這條線修掉七個真的錯，其中兩個會影響實際遊玩：
+    **載入城市沒做 `InitWillStuff`**（讀第二座城市會留著前一座的地價、汙染、
+    犯罪、交通與精靈）與 **`MoveObjects` 重建串列把爆炸蓋掉**（怪獸拆房子
+    不會爆炸）。見 `docs/re/12-tick-parity.md` §6之七、§6之十。
 14. ~~訊息系統~~ **完成**：`docs/re/14-messages.md`，`internal/sim/message.go`。
     含分區上限旗標、人口里程碑與八個劇本的勝敗條件。
 15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，
     `internal/sim/tool.go`、`internal/sim/connect.go`。
     自動接線用八座劇本城市驗證，15 447 格線路裡 99.83% 形狀一致。
-16. ~~逐次元對拍~~ **完成**：兩份 8000 個 frame 的對拍都完全一致
-    （空城 13 582 次抽樣、Dullsville 劇本 119 821 次），終點地圖與資金
-    零差異。見 `docs/re/12-tick-parity.md`。
+16. ~~逐次元對拍~~ **完成**：三份 8000 個 frame 的對拍都完全一致
+    （空城 13 954 次抽樣、Dullsville 122 314 次、Tokyo 955 206 次），
+    終點地圖與資金零差異。見 `docs/re/12-tick-parity.md`。
 17. ~~`.PGF` 圖形版面~~ **完成**：`docs/formats/03-pgf-graphics.md`，
     `internal/assets/pgf.go`。24 個風格圖形檔（4 種顯示模式 × 6 種風格）
     全部解開，第 0 庫一律 **960 張地圖圖塊**——與 Micropolis 的 `TILE_COUNT`

@@ -4,17 +4,17 @@
   "scycle": 0,
   "funds": 20000,
   "rands": [
-   21708,
-   33660,
-   13152,
-   40369
+   46791,
+   62092,
+   28523,
+   62533
   ],
   "r0state": null,
-  "prestate": 9688224
+  "prestate": 9845068
  },
  "end": {
   "fcycle": 832,
   "scycle": 500,
-  "funds": 3433
+  "funds": 3123
  }
 }

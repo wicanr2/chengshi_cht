@@ -169,6 +169,34 @@ func (s *spriteSystem) makeNewSprite(t, x, y int) *Sprite {
 	return sp
 }
 
+// spriteGeom 是每一型的固定幾何：寬高、繪圖偏移、熱點。w_sprite.c:272
+// `InitSprite` 的 switch 除了初始狀態之外就是設這六個值，而它們**只跟型別有關**，
+// 所以拆成一張表——對拍測試從 oracle 讀回來的十八個欄位不含幾何，
+// 要靠它補回去（少了熱點，`spriteNotInBounds` 會把還在圖上的船判成出界）。
+var spriteGeom = [SpriteTypeCount]struct {
+	W, H, XOff, YOff, XHot, YHot int
+}{
+	SpriteTrain:     {32, 32, 32, -16, 40, -8},
+	SpriteCopter:    {32, 32, 32, -16, 40, -8},
+	SpriteAirplane:  {48, 48, 24, 0, 48, 16},
+	SpriteShip:      {48, 48, 32, -16, 48, 0},
+	SpriteMonster:   {48, 48, 24, 0, 40, 16},
+	SpriteTornado:   {48, 48, 24, 0, 40, 36},
+	SpriteExplosion: {48, 48, 24, 0, 40, 16},
+	SpriteBus:       {32, 32, 30, -18, 40, -8},
+}
+
+// applyGeom 依型別套上固定幾何。
+func applyGeom(sp *Sprite) {
+	if sp.Type < 0 || sp.Type >= SpriteTypeCount {
+		return
+	}
+	g := spriteGeom[sp.Type]
+	sp.Width, sp.Height = g.W, g.H
+	sp.XOffset, sp.YOffset = g.XOff, g.YOff
+	sp.XHot, sp.YHot = g.XHot, g.YHot
+}
+
 // initSprite 設定一隻精靈的初值。w_sprite.c:272
 func (s *spriteSystem) initSprite(sp *Sprite, x, y int) {
 	sp.X, sp.Y = x, y
@@ -185,18 +213,13 @@ func (s *spriteSystem) initSprite(sp *Sprite, x, y int) {
 	if s.globals[sp.Type] == nil {
 		s.globals[sp.Type] = sp
 	}
+	applyGeom(sp)
 
 	switch sp.Type {
 	case SpriteTrain:
-		sp.Width, sp.Height = 32, 32
-		sp.XOffset, sp.YOffset = 32, -16
-		sp.XHot, sp.YHot = 40, -8
 		sp.Frame = 1
 		sp.Dir = 4
 	case SpriteShip:
-		sp.Width, sp.Height = 48, 48
-		sp.XOffset, sp.YOffset = 32, -16
-		sp.XHot, sp.YHot = 48, 0
 		switch {
 		case x < 4<<4:
 			sp.Frame = 3
@@ -213,9 +236,6 @@ func (s *spriteSystem) initSprite(sp *Sprite, x, y int) {
 		sp.Dir = 10
 		sp.Count = 1
 	case SpriteMonster:
-		sp.Width, sp.Height = 48, 48
-		sp.XOffset, sp.YOffset = 24, 0
-		sp.XHot, sp.YHot = 40, 16
 		if x > (WorldX<<4)/2 {
 			if y > (WorldY<<4)/2 {
 				sp.Frame = 10
@@ -232,18 +252,12 @@ func (s *spriteSystem) initSprite(sp *Sprite, x, y int) {
 		sp.DestY = s.w.PolMaxY << 4
 		sp.OrigX, sp.OrigY = sp.X, sp.Y
 	case SpriteCopter:
-		sp.Width, sp.Height = 32, 32
-		sp.XOffset, sp.YOffset = 32, -16
-		sp.XHot, sp.YHot = 40, -8
 		sp.Frame = 5
 		sp.Count = 1500
 		sp.DestX = s.w.Rand.Rand((WorldX << 4) - 1)
 		sp.DestY = s.w.Rand.Rand((WorldY << 4) - 1)
 		sp.OrigX, sp.OrigY = x-30, y
 	case SpriteAirplane:
-		sp.Width, sp.Height = 48, 48
-		sp.XOffset, sp.YOffset = 24, 0
-		sp.XHot, sp.YHot = 48, 16
 		if x > (WorldX-20)<<4 {
 			sp.X -= 100 + 48
 			sp.DestX = sp.X - 200
@@ -254,20 +268,11 @@ func (s *spriteSystem) initSprite(sp *Sprite, x, y int) {
 		}
 		sp.DestY = sp.Y
 	case SpriteTornado:
-		sp.Width, sp.Height = 48, 48
-		sp.XOffset, sp.YOffset = 24, 0
-		sp.XHot, sp.YHot = 40, 36
 		sp.Frame = 1
 		sp.Count = 200
 	case SpriteExplosion:
-		sp.Width, sp.Height = 48, 48
-		sp.XOffset, sp.YOffset = 24, 0
-		sp.XHot, sp.YHot = 40, 16
 		sp.Frame = 1
 	case SpriteBus:
-		sp.Width, sp.Height = 32, 32
-		sp.XOffset, sp.YOffset = 30, -18
-		sp.XHot, sp.YHot = 40, -8
 		sp.Frame = 1
 		sp.Dir = 1
 	}
