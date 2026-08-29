@@ -164,16 +164,20 @@ rose from Tokyo Bay」，CGW 也註明「the monster which attacks a city is not
 - **Dullsville 的官方難度是 Easy。** 手冊給八個劇本的難度標示如下；
   網路上流傳「Dullsville 最難」是玩家講法，與手冊相反。
 
-| 劇本 | 主題 | 官方難度 | 時限 | 過關條件 |
-|---|---|---|---|---|
-| DULLSVILLE, USA 1900 | 發展停滯 | Easy | 30 年 | 成長為 Metropolis |
-| SAN FRANCISCO, CA 1906 | 8.0 地震 ＋ 大火 | **Very Difficult** | 5 年 | Metropolis |
-| HAMBURG, GERMANY 1944 | 空襲火風暴 | **Very Difficult** | 5 年 | Metropolis |
-| BERN, SWITZERLAND 1965 | 交通壅塞 | Easy | 10 年 | 平均車流密度夠低 |
-| TOKYO, JAPAN 1957 | 怪獸襲擊 | Moderately Difficult | 5 年 | City Score > 500 |
-| DETROIT, MI 1972 | 犯罪 | Moderately Difficult | 10 年 | 平均犯罪密度夠低 |
-| BOSTON, MA 2010 | 核電廠熔毀 | **Very Difficult** | 5 年 | City Score > 500 |
-| RIO de JANEIRO, BRAZIL 2047 | 溫室效應海平面上升 | Moderately Difficult | 10 年 | City Score > 500 |
+| 劇本 | 說明書譯名 | 主題 | 英文手冊難度 | 中文說明書 | 時限 | 過關條件 |
+|---|---|---|---|---|---|---|
+| DULLSVILLE, USA 1900 | 達斯維利 | 發展停滯 | Easy | 易如反掌 | 30 年 | 大都會 |
+| SAN FRANCISCO, CA 1906 | 舊金山 | 8.0 地震 ＋ 大火 | **Very Difficult** | 比登天還難 | 5 年 | 大都會 |
+| HAMBURG, GERMANY 1944 | 漢堡 | 空襲火風暴 | **Very Difficult** | 難上加難 | 5 年 | 大都會 |
+| BERN, SWITZERLAND 1965 | 伯恩 | 交通壅塞 | Easy | 易如反掌 | 10 年 | 交通密度低疏 |
+| TOKYO, JAPAN 1957 | 東京 | 怪獸襲擊 | Moderately Difficult | 難上加難 | 5 年 | 整體成績超過 500 分 |
+| DETROIT, MI 1972 | 底特律 | 犯罪 | Moderately Difficult | 難易適中 | 10 年 | 低犯罪率 |
+| BOSTON, MA 2010 | 波士頓 | 核電廠熔毀 | **Very Difficult** | 難上加難 | 5 年 | 整體成績超過 500 分 |
+| RIO de JANEIRO, BRAZIL 2047 | 里約熱內盧 | 溫室效應海平面上升 | Moderately Difficult | 難易適中 | 10 年 | 整體成績超過 500 分 |
+
+中文那一欄有**四種說法**而英文只有三級，東京兩邊也對不起來——那是譯者的
+行文，不是另一套分級。逐城原文在
+[`docs/manual-cht/p09-22-entering.md`](docs/manual-cht/p09-22-entering.md)。
 
 手冊還教了一招規避劇本災難：存檔再讀回來。
 

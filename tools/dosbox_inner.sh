@@ -47,6 +47,20 @@ mark() { local t=$(( $(date +%s%3N) - START )); printf "%6d.%03d  %s\n" $((t/100
 shot() { xwd -root -silent | convert xwd:- "/out/$PREFIX-$1.png"; }
 
 sleep 8
+
+# 動作腳本裡的座標是 **DOS 畫面座標**（640×350 的左上角是 0,0）。
+# DOSBox 0.74 把視窗放在螢幕左上角，兩者剛好一樣；DOSBox-X 會把畫面
+# 置中，差了將近兩百個像素——照抄座標的話每一次點擊都落在畫面外，
+# 而且完全沒有錯誤訊息，只是「按了沒反應」。所以執行時問一次。
+OFFX=0; OFFY=0
+WID=$(xdotool search --name "DOSBox" 2>/dev/null | tail -1 || true)
+if [ -n "$WID" ]; then
+  eval "$(xdotool getwindowgeometry --shell "$WID" 2>/dev/null | grep -E '^(X|Y|WIDTH|HEIGHT)=')"
+  OFFX=${X:-0}; OFFY=${Y:-0}
+  echo "視窗在 ($OFFX,$OFFY)，大小 ${WIDTH:-?}×${HEIGHT:-?}"
+fi
+mark "視窗原點 $OFFX,$OFFY"
+
 mark 開機完成
 
 # 動作腳本：一行一個動作。
@@ -64,15 +78,15 @@ while read -r cmd a b c d; do
     "" | "#"*) ;;
     key)   mark "key $a";   xdotool key --clearmodifiers "$a" ;;
     click) mark "click $a $b"
-           xdotool mousemove "$a" "$b"; sleep 0.3
+           xdotool mousemove $((a+OFFX)) $((b+OFFY)); sleep 0.3
            xdotool mousedown 1; sleep 0.15; xdotool mouseup 1 ;;
     press) mark "press $a $b"
-           xdotool mousemove "$a" "$b"; sleep 0.3; xdotool mousedown 1 ;;
-    move)  mark "move $a $b";  xdotool mousemove "$a" "$b" ;;
+           xdotool mousemove $((a+OFFX)) $((b+OFFY)); sleep 0.3; xdotool mousedown 1 ;;
+    move)  mark "move $a $b";  xdotool mousemove $((a+OFFX)) $((b+OFFY)) ;;
     release) mark "release";   xdotool mouseup 1 ;;
     drag)  mark "drag $a $b -> $c $d"
-           xdotool mousemove "$a" "$b"; sleep 0.3; xdotool mousedown 1
-           xdotool mousemove "$c" "$d"; sleep 0.3; xdotool mouseup 1 ;;
+           xdotool mousemove $((a+OFFX)) $((b+OFFY)); sleep 0.3; xdotool mousedown 1
+           xdotool mousemove $((c+OFFX)) $((d+OFFY)); sleep 0.3; xdotool mouseup 1 ;;
     wait)  sleep "$a" ;;
     shot)  shot "$a"; mark "shot $a" ;;
     mark)  mark "$a $b $c $d" ;;

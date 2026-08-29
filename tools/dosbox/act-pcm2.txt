@@ -1,0 +1,38 @@
+# 一次一個動作，彼此隔十五秒。事後只靠**順序**對應，不靠絕對時間——
+# SDL 的 disk 音訊驅動寫得比實際時間快，錄音的時間軸和動作的時間戳
+# 對不起來（實測差了將近兩倍）。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 189
+wait 8
+shot 00-clean
+mark 基線
+wait 10
+
+mark 1-選道路工具
+click 49 70
+wait 15
+mark 2-在空地鋪路
+click 150 150
+wait 15
+mark 3-鋪到水裡
+click 520 290
+wait 15
+mark 4-選查詢工具
+click 49 221
+wait 15
+mark 5-查詢一格
+click 150 150
+wait 15
+mark 6-選推土機
+click 22 70
+wait 15
+mark 7-推一格
+click 160 160
+wait 15
+shot 99-after

@@ -1,0 +1,47 @@
+# 四個彼此隔很開的事件，用來把錄音切開並對到已知動作。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 189
+wait 6
+shot 00-clean
+mark 基線
+wait 8
+
+mark A-選道路
+click 49 70
+wait 5
+mark A-鋪路
+click 150 150
+wait 10
+
+mark B-蓋在樹上
+click 200 200
+wait 10
+
+mark C-火災
+press 404 8
+wait 2
+move 404 28
+release
+wait 6
+shot 10-fire
+mark C-關訊息
+click 311 231
+wait 10
+
+mark D-怪獸
+press 404 8
+wait 2
+move 404 99
+release
+wait 6
+shot 11-monster
+mark D-關訊息
+click 311 231
+wait 10
+shot 99-after
