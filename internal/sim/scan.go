@@ -396,6 +396,7 @@ func (w *World) PTLScan() {
 			}
 		}
 	}
+	w.PolluteTot, w.PolluteNum = ptot, pnum
 	if pnum != 0 {
 		w.PolluteAverage = ptot / pnum
 	} else {

@@ -36,6 +36,8 @@ func main() {
 		cmdFlat(os.Args[2:])
 	case "dosparity-scen":
 		cmdDosParityScen(os.Args[2:])
+	case "dosparity-poll":
+		cmdDosPoll(os.Args[2:])
 	case "dosparity":
 		cmdDosParity(os.Args[2:])
 	case "scenario":

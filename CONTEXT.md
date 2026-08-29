@@ -131,7 +131,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 |---|---|---|
 | `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
-| **汙染均值比 DOS 原版高 15%–60%** | 三個劇本方向一致（原版 40／31／51，我們 62／50／59）。下游整條鏈都跟著走：地價低 → 商業需求低（伯恩甚至變成負值）→ 商業與住宅人口少 → 稅收少 → 資金低三成。⚠ remake 對 Micropolis 是 955 206 次抽樣逐 frame 全等，所以差異在 DOS↔Micropolis 之間 | 逐格倒出 `PollutionMem` 與 `TrafficMem` 比分布，見 [`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md) §六。**在拆出「哪一邊對」之前不要動 `internal/sim`** |
+| **DOS 1.10 算的汙染比 Micropolis 低 8%–43%** | **已確認**（三方對質，16 份存檔全部同向）：同一張地圖走同一條載入路徑，DOS 自記 38–62、remake 46–96、Micropolis 46–90——**remake 與 Micropolis 全部落在 ±7 以內**。所以這不是移植錯誤。下游整條鏈跟著走：汙染低 → 地價高 → 稅收多 → 資金多三成（DOS 那側）| 還沒答的是「哪一段不同」：反組譯 `SIMCITY.EXE` 的 `PTLScan`，比 `getPValue` 的四個權重與均值的分母。見 [`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md) §六。**不動 `internal/sim`**——Micropolis 是第 1 順位證據，DOS 執行檔是第 4 |
 | DOS 原版顯示的年份與存檔裡的 `CityTime` 對不上 | 東京存檔 `CityTime` 2739（＝1957，與手冊相符），原版狀態列同一刻顯示 Feb 1906，第一次預算視窗標題 1851 | 還沒查。不影響對拍（讀的是存檔欄位），但寫年份相關 UI 之前要解掉 |
 
 ## 6. 現行工作清單

@@ -14,6 +14,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -198,7 +199,7 @@ func cmdDosParityScen(args []string) {
 	report(metrics(want), metrics(w))
 
 	if cf, err := game.LoadCityFileRaw(args[1]); err == nil {
-		reportMisc(cf, w)
+		reportMisc(cf, want, w)
 	}
 }
 
@@ -208,27 +209,47 @@ func cmdDosParityScen(args []string) {
 // 這一組是原版自己算完寫進 `MiscHis` 的。索引與 Micropolis 相同——
 // 用 run1.cty 驗過：[2]=446 與唯讀重數的住宅人口相同、[9]=1029 是 CityTime、
 // [51]=17216 是資金、[56]=7 是稅率，四個獨立錨點都對得上。
-func reportMisc(cf *sim.CityFile, w *sim.World) {
+func reportMisc(cf *sim.CityFile, want, w *sim.World) {
 	// ⚠ 人口用唯讀重數，不讀 w.ResPop——理由同 metrics（§五之二）。
 	res, com, ind := w.CountPops()
+	wres, wcom, wind := want.CountPops()
 	rows := []struct {
-		name string
-		idx  int
-		got  int
+		name     string
+		idx      int
+		onMap    int // 我們的程式碼掃**原版的地圖**算出來的
+		ours     int // remake 自己的城市
+		mapPure  bool
 	}{
-		{"住宅人口", 2, res}, {"商業人口", 3, com}, {"工業人口", 4, ind},
-		{"住宅需求", 5, w.RValve}, {"商業需求", 6, w.CValve}, {"工業需求", 7, w.IValve},
-		{"犯罪坡度", 10, w.CrimeRamp}, {"汙染坡度", 11, w.PolluteRamp},
-		{"地價均值", 12, w.LVAverage}, {"犯罪均值", 13, w.CrimeAverage},
-		{"汙染均值", 14, w.PolluteAverage},
-		{"城市等級", 16, w.CityClass}, {"城市評分", 17, w.CityScore},
+		{"住宅人口", 2, wres, res, true},
+		{"商業人口", 3, wcom, com, true},
+		{"工業人口", 4, wind, ind, true},
+		{"住宅需求", 5, want.RValve, w.RValve, false},
+		{"商業需求", 6, want.CValve, w.CValve, false},
+		{"工業需求", 7, want.IValve, w.IValve, false},
+		{"犯罪坡度", 10, want.CrimeRamp, w.CrimeRamp, false},
+		{"汙染坡度", 11, want.PolluteRamp, w.PolluteRamp, false},
+		{"地價均值", 12, want.LVAverage, w.LVAverage, false},
+		{"犯罪均值", 13, want.CrimeAverage, w.CrimeAverage, false},
+		{"汙染均值", 14, want.PolluteAverage, w.PolluteAverage, true},
+		{"城市等級", 16, want.CityClass, w.CityClass, false},
+		{"城市評分", 17, want.CityScore, w.CityScore, false},
 	}
-	fmt.Printf("\n原版自己記在 MiscHis 裡的值 vs remake 同一刻：\n")
-	fmt.Printf("%-10s %10s %10s %10s\n", "量", "原版", "remake", "差")
+	fmt.Printf("\n三欄比較（＋號的量是**地圖的純函數**，中欄與左欄該相同）：\n")
+	fmt.Printf("%-10s %10s %14s %10s\n", "量", "原版自記", "我們掃原版地圖", "remake")
 	for _, r := range rows {
-		a := int(cf.MiscHis[r.idx])
-		fmt.Printf("%-10s %10d %10d %+10d\n", r.name, a, r.got, r.got-a)
+		mark := " "
+		if r.mapPure {
+			mark = "＋"
+		}
+		fmt.Printf("%s%-9s %10d %14d %10d\n", mark, r.name, int(cf.MiscHis[r.idx]), r.onMap, r.ours)
 	}
+	fmt.Printf("\n＋號那幾列的左右兩欄如果不同，差別就在**公式**，與城市長成什麼樣無關。\n")
+	// 汙染均值 = ptot/pnum。拆開來看是分子不同還是分母不同：
+	// 半解析度地圖是 60×50 ＝ 3000 格，pnum 只數汙染非零的那些。
+	fmt.Printf("汙染拆開：我們掃原版地圖 ptot=%d pnum=%d（均值 %d）；"+
+		"若分母改成全部 3000 格會是 %d，原版自記 %d\n",
+		want.PolluteTot, want.PolluteNum, want.PolluteAverage,
+		want.PolluteTot/(sim.HWldX*sim.HWldY), int(cf.MiscHis[14]))
 }
 
 // bitDiff 把「圖塊編號相同、旗標不同」的格數依旗標拆開。
@@ -271,6 +292,44 @@ func bitDiff(a, b *sim.World) string {
 		out = "無"
 	}
 	return out
+}
+
+// cmdDosPoll 把汙染均值三方對質：原版自己記的、我們算的、Micropolis 算的。
+//
+// ⚠ **三邊要走同一條路。** 汙染均值不是地圖的純函數——`LoadCity` 之後的
+// `DoSimInit` 會先跑一次 `MapScan`，而 `MapScan` 會產生車流、把道路改寫成
+// 帶車流的圖塊（權重 50／75），所以「載入後讀到的汙染」比「直接對存檔裡的
+// 地圖算一次」高很多。實測劇本 1 的 run 存檔：直接算 76，走載入路徑 47。
+// 拿前者去跟原版自記的 40 比會得到「差 90%」這個假結論。
+//
+// Micropolis 那一欄要另外跑：tools/oracle/tcl/dos-pollution.tcl
+// （記得先把 DOS 的 27248 位元組存檔攤成 27120 —— Micropolis 的載入器
+// 只認得後者，餵錯大小它會**靜默地留在新遊戲的預設狀態**，讀出來是
+// 資金 20000、1900 年，看起來像「載進去了但城市是空的」）。
+func cmdDosPoll(args []string) {
+	if len(args) < 1 {
+		fmt.Fprintln(os.Stderr, "用法：simtool dosparity-poll <原版存檔.cty>…")
+		os.Exit(2)
+	}
+	fmt.Printf("%-14s %10s %14s %14s\n",
+		"存檔", "原版自記", "我們走載入路徑", "未經 MapScan")
+	for _, p := range args {
+		cf, err := game.LoadCityFileRaw(p)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		loaded, err := game.LoadCitySeed(p, 1) // 走 DoSimInit，與 Micropolis 同路
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		raw := sim.NewWorld(1)
+		raw.LoadCityFile(cf) // ⚠ 不呼叫 DoSimInit
+		raw.PTLScan()
+		fmt.Printf("%-14s %10d %14d %14d\n",
+			filepath.Base(p), cf.MiscHis[14], loaded.PolluteAverage, raw.PolluteAverage)
+	}
 }
 
 // report 印出兩邊的量與差。

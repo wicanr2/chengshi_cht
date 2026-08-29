@@ -42,3 +42,26 @@ tools/go.sh run ./cmd/simtool dosparity-scen 1 workplace/dosbox/save/run1.cty sw
 
 **還沒查**：原版狀態列顯示的年份與存檔裡的 `CityTime` 對不上
 （東京存檔 2739＝1957，狀態列顯示 Feb 1906）。
+
+### 同日續：把「資金差三成」追到頭
+
+換一組判準（原版自己記在 `MiscHis` 的值，`game.LoadCityFileRaw`）之後，
+鏈的頭是**汙染**，資金是最末端。再拿 DOS 的 16 份存檔去問 Micropolis
+（`tools/oracle/tcl/dos-pollution.tcl`），三方並排：
+
+    DOS 自記 38–62 ／ remake 46–96 ／ Micropolis 46–90
+    remake 與 Micropolis 16 份全部落在 ±7 以內；DOS 16 份全部偏低 8%–43%。
+
+**結論：不是移植錯誤，是 DOS 1.10 與 Micropolis 的汙染算法本來就不同。**
+照 §1.1 的順位留在 Micropolis 這邊。
+
+這一段又踩了三個坑：
+
+1. **汙染均值不是地圖的純函數**。`DoSimInit` 的 `MapScan` 會產生車流、
+   把道路改寫成帶車流的圖塊（權重 50／75）。直接對存檔算 76、走載入路徑 47。
+   三邊沒走同一條路的話會得到「差 90%」這個假結論。
+2. **Micropolis 的載入器只認得 27120 位元組**。餵 DOS 的 27248 不報錯，
+   **靜默地留在新遊戲預設狀態**——讀出來資金 20000、1900 年。
+   第一次就是這樣拿到一整排 `pollution 0`。
+3. **`drive.py` 是逐行送的**，多行 `foreach { ... }` 區塊會在第一行就斷。
+   要寫成一行。

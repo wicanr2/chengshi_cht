@@ -171,6 +171,12 @@ type World struct {
 	CCx, CCy             int // 城市重心（全解析度座標）
 	CCx2, CCy2           int // 重心的半解析度座標
 	PolMaxX, PolMaxY     int
+	// PolluteTot／PolluteNum 是 PolluteAverage 的分子與分母。原版沒有
+	// 這兩個變數（`s_scan.c:250` 是區域變數），這裡留下來純粹是為了
+	// 觀測：DOS 原版在同一張地圖上算出來的汙染均值比我們低 17%–48%，
+	// 要拆開是分子不同還是分母不同就得看得到這兩個數。
+	// 見 docs/re/18-dos-parity.md §六。
+	PolluteTot, PolluteNum int
 	CrimeMaxX, CrimeMaxY int
 	LVAverage            int // 地價平均
 	PolluteAverage       int // 汙染平均
