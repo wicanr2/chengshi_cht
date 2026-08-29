@@ -100,7 +100,7 @@ const frameScenBudget = 8000
 // 第 50 個 frame 就少抽一次，而那個 frame 怪獸正在動。
 //
 // 這個門檻現在很低，但它是**真的護欄**：掉下去就代表規則層退步了。
-const frameTokyoBudget = 50
+const frameTokyoBudget = 55
 
 // probMismatch 比對城市評估的分數與問題表；相同回空字串。
 //
@@ -134,6 +134,58 @@ func TestFrameParityScenario(t *testing.T) {
 func TestFrameParityTokyo(t *testing.T) {
 	runScenarioParity(t, "testdata/frame-tokyo", "snro.555",
 		ScenarioTokyo, frameTokyoBudget)
+}
+
+// loadSprites 把 oracle 在載入完成當下的精靈狀態倒進來。
+//
+// ⚠ 精靈是**重建不出來的狀態**：`DoSimInit` 的 MapScan 會依當下的亂數
+// 決定要不要生飛機、直昇機、船、火車，而 `InitWillStuff` 在那之前才剛
+// `RandomlySeedRand()` 重設過種子。外面沒有辦法算出同一組，只能倒。
+// 檔案不在就跳過（空城實驗沒有精靈）。
+func loadSprites(t *testing.T, w *World, path string) {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	for _, ln := range strings.Split(strings.TrimSpace(string(b)), "\n") {
+		if ln == "" || strings.HasPrefix(ln, "#") {
+			continue
+		}
+		f := strings.Split(ln, ",")
+		if f[0] == "globals" {
+			// Cycle absDist CrashX CrashY —— 四個載入時不重設的全域。
+			n, err := strconv.Atoi(f[1])
+			if err != nil {
+				t.Fatalf("sprites.csv 的 globals 讀不了：%q", ln)
+			}
+			w.spriteSys.cycle = n
+			if d, err := strconv.Atoi(f[2]); err == nil {
+				w.spriteSys.absDist = d
+			}
+			continue
+		}
+		if len(f) != 18 {
+			t.Fatalf("sprites.csv 這行有 %d 欄，應該 18：%q", len(f), ln)
+		}
+		v := make([]int, 18)
+		for i := range f {
+			n, err := strconv.Atoi(strings.TrimSpace(f[i]))
+			if err != nil {
+				t.Fatalf("sprites.csv 這行讀不了：%q", ln)
+			}
+			v[i] = n
+		}
+		sp := &Sprite{
+			Type: v[0], Frame: v[1], X: v[2], Y: v[3],
+			OrigX: v[4], OrigY: v[5], DestX: v[6], DestY: v[7],
+			Count: v[8], SoundCount: v[9], Dir: v[10], NewDir: v[11],
+			Step: v[12], Flag: v[13], Control: v[14], Turn: v[15],
+			Accel: v[16], Speed: v[17],
+		}
+		w.spriteSys.list = append(w.spriteSys.list, sp)
+		w.spriteSys.globals[sp.Type] = sp
+	}
 }
 
 func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) {
@@ -184,6 +236,9 @@ func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) 
 	}
 	w.Map = wantStart
 	loadPreState(t, w, dir+"/poststate.csv")
+	w.spriteSys.list = w.spriteSys.list[:0]
+	w.spriteSys.globals = [SpriteTypeCount]*Sprite{}
+	loadSprites(t, w, dir+"/sprites.csv")
 	w.Rand.SetState(mustRec(m.Init.Rands))
 
 	trace := os.Getenv("SIMCITY_TRACE") != ""
@@ -191,16 +246,26 @@ func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) 
 	for _, f := range m.Frames {
 		before := w.Rand.State()
 		sites := map[string]int{}
-		if trace {
-			w.Rand.Watch = func() { sites[callerSite()]++ }
+		w.Rand.Watch = func() { sites[callerSite()]++ }
+		_ = trace
+		// 拆成兩段跑（等同 Frame()），才比得出少抽的那一次在規則還是精靈。
+		w.SimFrame()
+		sf := drawsBetween(before, w.Rand.State())
+		mid := w.Rand.State()
+		if w.spriteSys != nil {
+			w.spriteSys.MoveObjects()
 		}
-		w.Frame()
+		mo := drawsBetween(mid, w.Rand.State())
 		w.Rand.Watch = nil
-		got := drawsBetween(before, w.Rand.State())
+		got := sf + mo
 		bad := probMismatch(w, f)
 		if bad != "" || got != f.Draws || w.Scycle != f.Scycle || !valvesEqual(w, f) {
 			for k, v := range sites {
 				t.Logf("  %s ×%d", k, v)
+			}
+			if f.HasFStat {
+				t.Logf("  我們：規則抽 %d、精靈抽 %d；原版：規則 %d、精靈 %d",
+					sf, mo, f.FStat[0], f.FStat[1])
 			}
 			if f.HasVote {
 				t.Logf("  原版：投票迴圈抽 %d、市民投票抽 %d、迭代 %d、成功 %d",
@@ -209,6 +274,22 @@ func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) 
 		}
 		if bad != "" {
 			t.Logf("第 %d 個 frame 的評估狀態就對不上了：%s", f.I, bad)
+			break
+		}
+		if f.HasFStat && (sf != f.FStat[0] || mo != f.FStat[1]) {
+			for k, v := range sites {
+				t.Logf("  %s ×%d", k, v)
+			}
+			for _, sp := range w.spriteSys.list {
+				if sp.Frame != 0 {
+					t.Logf("  精靈 type=%d frame=%d (%d,%d) dest=(%d,%d) "+
+						"count=%d dir=%d/%d step=%d flag=%d control=%d",
+						sp.Type, sp.Frame, sp.X, sp.Y, sp.DestX, sp.DestY,
+						sp.Count, sp.Dir, sp.NewDir, sp.Step, sp.Flag, sp.Control)
+				}
+			}
+			t.Logf("第 %d 個 frame 分岔：規則抽 %d（原版 %d）、精靈抽 %d（原版 %d）",
+				f.I, sf, f.FStat[0], mo, f.FStat[1])
 			break
 		}
 		if got != f.Draws || w.Scycle != f.Scycle || !valvesEqual(w, f) {

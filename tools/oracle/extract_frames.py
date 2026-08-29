@@ -113,6 +113,40 @@ def main():
             for name, vals in posts:
                 fh.write(f"{name},{vals}\n")
 
+    spr = None
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("SPR "):
+                spr = ln[4:]
+    if spr is not None:
+        cyc, _, rest = spr.partition(" ; ")
+        with open(f"{out}/sprites.csv", "w") as fh:
+            fh.write("# 第一行是 w_sprite.c 的全域（Cycle absDist CrashX CrashY），"
+                     "其餘每行一隻：\n"
+                     "# type,frame,x,y,orig_x,orig_y,dest_x,dest_y,count,"
+                     "sound_count,dir,new_dir,step,flag,control,turn,accel,speed\n")
+            # 第一欄是 Cycle absDist CrashX CrashY 四個全域
+            fh.write("globals," + ",".join(cyc.split()) + "\n")
+            for one in rest.split(" ; "):
+                one = one.strip()
+                if one:
+                    fh.write(",".join(one.split()) + "\n")
+
+    steps = []
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("S "):
+                head, _, rest = ln.partition(" ; ")
+                steps.append((head.split()[1], rest))
+    if steps:
+        with open(f"{out}/sprite-frames.csv", "w") as fh:
+            fh.write("# 每個 frame 之後的精靈狀態：frame,隻數,"
+                     "然後每隻 18 個欄位（同 sprites.csv）\n")
+            for i, rest in steps:
+                ones = [o.strip() for o in rest.split(" ; ") if o.strip()]
+                fh.write(",".join([i, str(len(ones))] +
+                                  [v for o in ones for v in o.split()]) + "\n")
+
     init = find_line(res, "INIT").split()
     r0 = find_line(res, "R0").split()
     pre = None
@@ -135,9 +169,13 @@ def main():
                 "rands": [int(x) for x in p[7:11]],
                 # sim Problems：CityScore CityYes CityNo | 表×10 | 票×10 | taken×10
                 "prob": ([int(x) for x in p[11:14]] +
-                         [int(x) for x in p[15:22]]) if len(p) > 14 else None,
+                         [int(x) for x in p[15:22]]) if len(p) > 20 else None,
                 # sim VoteStats：投票迴圈抽樣、市民投票抽樣、迭代、成功
-                "vote": [int(x) for x in p[-4:]] if len(p) > 40 else None,
+                # 兩種版面：完整版（Problems ＋ VoteStats ＋ FrameStats）
+                # 與精簡版（只有 FrameStats）。用 token 數分辨。
+                "vote": [int(x) for x in p[-6:-2]] if len(p) > 42 else None,
+                # sim FrameStats：SimFrame（規則）與 MoveObjects（精靈）各抽幾次
+                "fstat": [int(x) for x in p[-2:]] if len(p) in (13, 53) else None,
             })
     # 把四個亂數讀數換算成抽樣次數。RecoverState 回的是**讀完四次之後**
     # 的狀態，而原版讀完就直接跑下一個 frame，所以相鄰兩個檢查點的距離
@@ -155,12 +193,14 @@ def main():
             row += fr["prob"]
         if fr["vote"]:
             row += fr["vote"]
+        if fr["fstat"]:
+            row += fr["fstat"]
         rows.append(tuple(row))
         prev = cur
     with open(f"{out}/frames.csv", "w") as fh:
         fh.write("# i,scycle,rvalve,cvalve,ivalve,draws,state"
                  "[,cityscore,cityyes,cityno,問題表0..6"
-                 ",投票抽樣,市民抽樣,迭代,成功]\n")
+                 ",投票抽樣,市民抽樣,迭代,成功[,規則抽樣,精靈抽樣]]\n")
         for r in rows:
             fh.write(",".join(str(v) for v in r) + "\n")
 

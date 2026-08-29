@@ -25,6 +25,9 @@ type SpriteHooks interface {
 	HasShip() bool
 	// BoatDistance 回傳最近的船到 (x,y) 的距離；沒有船時原版回 99999。
 	BoatDistance(x, y int) int
+	// DestroyAll 把場上的精靈全部收掉。載入城市時要做（w_sprite.c:384
+	// DestroyAllSprites，由 InitWillStuff 呼叫）。
+	DestroyAll()
 }
 
 // noSprites 是預設的空實作。
@@ -38,6 +41,7 @@ func (noSprites) MakeExplosionAt(x, y int)  {}
 func (noSprites) MakeExplosion(x, y int)    {}
 func (noSprites) HasShip() bool             { return false }
 func (noSprites) BoatDistance(x, y int) int { return 99999 }
+func (noSprites) DestroyAll()               {}
 
 func (w *World) sprites() SpriteHooks {
 	if w.Sprites == nil {

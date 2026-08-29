@@ -98,13 +98,14 @@ func (s *spriteSystem) MoveObjects() {
 			kept = append(kept, sp)
 			continue
 		}
-		// frame 0 且無名的精靈會被回收（w_sprite.c:643）。
+		// frame 0 且無名的精靈會被回收（w_sprite.c:643 → DestroySprite）。
+		// ⚠ 回收時**要把 GlobalSprites 指過來的那一格清掉**（w_sprite.c:403）。
 		if sp.Named {
 			kept = append(kept, sp)
-		} else if s.globals[sp.Type] == sp {
-			// 原版的 GlobalSprites 仍指著被銷毀的那隻；
-			// GetSprite 靠 frame == 0 判斷「不在場上」。
-			kept = append(kept, sp)
+			continue
+		}
+		if s.globals[sp.Type] == sp {
+			s.globals[sp.Type] = nil
 		}
 	}
 	s.list = kept
@@ -119,13 +120,24 @@ func (s *spriteSystem) getSprite(t int) *Sprite {
 	return sp
 }
 
-// makeSprite 生一隻精靈；同型別已存在就原地重新初始化。w_sprite.c:437
+// makeSprite 生一隻精靈。w_sprite.c:437 MakeSprite
+//
+// ⚠ 兩個容易寫錯的地方：
+//
+//  1. **只有還活著的那一隻才會被原地重用。** 原版是
+//     `if ((sprite = GetSprite(type)) == NULL) sprite = NewSprite(...)`，
+//     而 `GetSprite` 對 `frame == 0`（已經死掉）的回 NULL。所以同型別
+//     已經死掉時會生一個**新節點**，而 `InitSprite` 只在 `GlobalSprites`
+//     是 NULL 時才更新它——也就是說全域指標還指著那隻死的。
+//  2. **新節點是前插的**（`sprite->next = sim->sprite; sim->sprite = sprite`），
+//     所以 `MoveObjects` 從最新的精靈開始跑。順序有觀察得到的效果：
+//     `absDist` 是所有精靈共用的一個全域，飛機拿「上一次算出來的距離」
+//     判斷到了沒——那一次可能是別隻精靈算的。
 func (s *spriteSystem) makeSprite(t, x, y int) *Sprite {
-	sp := s.globals[t]
+	sp := s.getSprite(t)
 	if sp == nil {
 		sp = &Sprite{Type: t}
-		s.list = append(s.list, sp)
-		s.globals[t] = sp
+		s.list = append([]*Sprite{sp}, s.list...)
 	}
 	s.initSprite(sp, x, y)
 	return sp
@@ -353,4 +365,14 @@ func getDis(x1, y1, x2, y2 int) int {
 func checkSpriteCollision(a, b *Sprite) bool {
 	return a.Frame != 0 && b.Frame != 0 &&
 		getDis(a.X+a.XHot, a.Y+a.YHot, b.X+b.XHot, b.Y+b.YHot) < 30
+}
+
+// DestroyAll 把場上的精靈全部收掉。w_sprite.c:384 DestroyAllSprites
+//
+// 原版是把每一個 sprite 的 frame 設成 0（frame 0 代表「不存在」），
+// 節點本身留在串列裡等著被重用。這裡照做。
+func (s *spriteSystem) DestroyAll() {
+	for _, sp := range s.list {
+		sp.Frame = 0
+	}
 }

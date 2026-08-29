@@ -18,8 +18,8 @@ Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家�
 終點的 12 000 格地圖與資金也相同。做法是給 oracle 加單步與觀測指令，
 見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 
-第三份（Tokyo，892 678 次抽樣）是**唯一會動到精靈的實驗**，目前對到
-第 50 個 frame，是現在的前線。
+第三份（Tokyo，818 127 次抽樣）是**唯一會動到精靈的實驗**，目前對到
+第 55 個 frame，是現在的前線；分岔只在精靈那一側。
 
 還沒收完的一件事：
 
@@ -162,7 +162,10 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
     `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
     精靈第一次有逐次元實驗了：**Tokyo 劇本**（劇本災難就是怪獸）的逐 frame
-    對拍 `TestFrameParityTokyo`。目前只對到第 50 個 frame——那是現在的前線。
+    對拍 `TestFrameParityTokyo`，目前對到第 55 個 frame，而且分岔只在精靈
+    那一側（規則層一路相同）。追這條線修掉四個真的錯，其中一個是
+    **載入城市沒做 `InitWillStuff`**——遊戲裡讀第二座城市會留著前一座的
+    地價、汙染、犯罪、交通與精靈。見 `docs/re/12-tick-parity.md` §6之七。
 14. ~~訊息系統~~ **完成**：`docs/re/14-messages.md`，`internal/sim/message.go`。
     含分區上限旗標、人口里程碑與八個劇本的勝敗條件。
 15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，

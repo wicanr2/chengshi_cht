@@ -326,3 +326,42 @@ func (w *World) Frame() {
 		w.spriteSys.MoveObjects()
 	}
 }
+
+// InitWillStuff 是「載入城市／劇本」與「開新城市」共用的清場。s_init.c
+//
+// ⚠ **它會把所有衍生陣列歸零，並清掉所有精靈。** 少了這一步，在遊戲裡
+// 讀第二座城市時，前一座的地價、汙染、犯罪、交通密度、警消覆蓋與精靈
+// 都會留著——畫面看起來正常，數字全錯。
+//
+// 原版這裡還會 `RandomlySeedRand()`。**本專案不重設種子**：`internal/sim`
+// 的決定性是逐 frame 對拍的前提（見 `docs/re/12-tick-parity.md`），
+// 要重現就用固定種子開局。
+func (w *World) InitWillStuff() {
+	w.RoadEffect = 32
+	w.PoliceEffect = 1000
+	w.FireEffect = 1000
+	w.CityScore = 500
+	w.Eval.CityScore = 500
+
+	w.MessagePort = 0
+	w.RoadFund, w.PoliceFund, w.FireFund = 0, 0, 0
+
+	if w.Sprites != nil {
+		w.Sprites.DestroyAll()
+	}
+
+	w.DisasterEvent = 0
+	w.TaxFlag = false
+
+	w.PopDensity = [HWldX][HWldY]uint8{}
+	w.TrfDensity = [HWldX][HWldY]uint8{}
+	w.PollutionMem = [HWldX][HWldY]uint8{}
+	w.LandValueMem = [HWldX][HWldY]uint8{}
+	w.CrimeMem = [HWldX][HWldY]uint8{}
+	w.TerrainMem = [QWX][QWY]uint8{}
+	w.RateOGMem = [SmX][SmY]int16{}
+	w.FireRate = [SmX][SmY]int16{}
+	w.ComRate = [SmX][SmY]int16{}
+	w.PoliceMap = [SmX][SmY]int16{}
+	w.PoliceMapEffect = [SmX][SmY]int16{}
+}

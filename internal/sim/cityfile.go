@@ -154,6 +154,10 @@ func (cf *CityFile) SoundOn() bool      { return cf.MiscHis[miscUserSoundOn] != 
 // （w_budget.c:83），所以檔案裡那三個欄位**從來沒有生效過**。
 // 這裡直接照最終行為做，並在筆記裡記下那個死 bug。
 func (w *World) LoadCityFile(cf *CityFile) {
+	// ⚠ 先清場，同 LoadScenarioFile：原版 loadFile() 之後會呼叫
+	// InitWillStuff()，把衍生陣列歸零並清掉精靈。
+	w.InitWillStuff()
+
 	w.Map = cf.Map
 	w.ResHis = cf.ResHis
 	w.ComHis = cf.ComHis

@@ -1,4 +1,6 @@
-# 逐 frame 對拍（劇本版・東京）：載入 Tokyo，然後單步 8000 個 frame。
+# 逐 frame 對拍（劇本版・東京・短版）：只跑 400 個 frame，但**每個 frame
+# 都倒出所有精靈的完整狀態**。專門用來追精靈那一側的分岔：
+# 長版只知道「這個 frame 精靈多抽了幾次」，短版知道是哪一隻的哪個欄位先偏。
 #
 # 選東京是為了**精靈**：它的劇本災難就是怪獸，而怪獸是精靈系統唯一
 # 在對拍實驗裡穩定出現得了的東西（Dullsville 那份實測整段 0 個精靈）。
@@ -43,6 +45,6 @@ puts stdout "CHK [sim Mem LandValueMem 30 25] [sim Mem PopDensity 30 25] [sim Me
 puts stdout "INIT [sim Fcycle] [sim Scycle] [sim Funds]"
 puts stdout "R0 [sim Rand] [sim Rand] [sim Rand] [sim Rand]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CP0 [llength $_m] [join $_m ,]"
-for {set i 0} {$i < 8000} {incr i} { sim Frame 1 ; puts stdout "F $i [sim Fcycle] [sim Scycle] [sim Valves] [sim Rand] [sim Rand] [sim Rand] [sim Rand] [sim FrameStats]" ; if {$i < 120} { puts stdout "S $i ; [sim Sprites]" } }
+for {set i 0} {$i < 400} {incr i} { sim Frame 1 ; puts stdout "F $i [sim Fcycle] [sim Scycle] [sim Valves] [sim Rand] [sim Rand] [sim Rand] [sim Rand] [sim FrameStats]" ; if {$i < 400} { puts stdout "S $i ; [sim Sprites]" } }
 puts stdout "END [sim Fcycle] [sim Scycle] [sim Funds]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CPEND [llength $_m] [join $_m ,]"

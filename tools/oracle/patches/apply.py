@@ -35,7 +35,75 @@ import sys
 MARK = "/* chengshi:"
 
 CMDS = r'''
-/* chengshi: 跑 N 個模擬 frame（預設 1），不經過事件迴圈。只加觀測手段。 */
+/* chengshi: 跑 N 個模擬 frame（預設 1），不經過事件迴圈。只加觀測手段。
+   順便把抽樣拆成「SimFrame（規則）」與「MoveObjects（精靈）」兩段——
+   逐 frame 對拍少抽一次時，第一件事就是問它在哪一邊。 */
+extern unsigned int chengshi_rand_calls;
+unsigned int chengshi_sf_draws, chengshi_mo_draws;
+
+int SimCmdFrameStats(ARGS)
+{
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  sprintf(interp->result, "%u %u", chengshi_sf_draws, chengshi_mo_draws);
+  return (TCL_OK);
+}
+
+/* chengshi: 倒出場上所有精靈的完整狀態，一隻一行的欄位串在一起。
+   載入城市之後精靈是**不可重建的狀態**：DoSimInit 的 MapScan 會依當下的
+   亂數決定要不要生飛機／直昇機，而載入時 RandomlySeedRand 重設過種子，
+   所以外面重建不出同一組。要逐 frame 對拍精靈，只能把它倒出來。
+   欄位順序：type frame x y orig_x orig_y dest_x dest_y count sound_count
+             dir new_dir step flag control turn accel speed */
+int SimCmdSprites(ARGS)
+{
+  SimSprite *sp;
+  char buf[4096];
+  int n = 0;
+
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  for (sp = sim->sprite; sp != NULL; sp = sp->next) {
+    if (!sp->frame) continue;
+    if (n > 3500) break;
+    n += sprintf(buf + n, "%s%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+		 n ? " ; " : "",
+		 sp->type, sp->frame, sp->x, sp->y, sp->orig_x, sp->orig_y,
+		 sp->dest_x, sp->dest_y, sp->count, sp->sound_count,
+		 sp->dir, sp->new_dir, sp->step, sp->flag, sp->control,
+		 sp->turn, sp->accel, sp->speed);
+  }
+  buf[n] = 0;
+  /* ⚠ 不能寫進 interp->result：那是 199 位元組的固定緩衝
+     （tcl.h 的 TCL_RESULT_SIZE），精靈一多就寫爆，症狀是整個直譯器
+     開始亂跑、指令變得極慢。長字串一律走 Tcl_SetResult。 */
+  Tcl_SetResult(interp, buf, TCL_VOLATILE);
+  return (TCL_OK);
+}
+
+
+/* chengshi: w_sprite.c 的四個檔案層級全域，**載入城市時都不會重設**：
+   Cycle    動畫計數器，DoCopter／DoPlane 用 `% 3`／`% 5` 決定要不要重算
+            方向——也就是要不要抽亂數。
+   absDist  GetDir 的副作用輸出。飛機用「上一次算出來的距離」判斷到了沒，
+            而那一次可能是別隻精靈算的、甚至是上一座城市算的。
+   CrashX/Y 墜機位置。 */
+extern short Cycle;
+extern int absDist;
+extern short CrashX, CrashY;
+
+int SimCmdSpriteCycle(ARGS)
+{
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  sprintf(interp->result, "%d %d %d %d", Cycle, absDist, CrashX, CrashY);
+  return (TCL_OK);
+}
+
+
 int SimCmdFrame(ARGS)
 {
   int n = 1, i, saved;
@@ -51,9 +119,14 @@ int SimCmdFrame(ARGS)
 
   saved = SimSpeed;
   SimSpeed = 3;			/* SimFrame 在 SimSpeed 為 0 時會直接返回 */
+  chengshi_sf_draws = chengshi_mo_draws = 0;
   for (i = 0; i < n; i++) {
+    unsigned int a = chengshi_rand_calls;
     SimFrame();
+    chengshi_sf_draws += chengshi_rand_calls - a;
+    a = chengshi_rand_calls;
     MoveObjects();
+    chengshi_mo_draws += chengshi_rand_calls - a;
   }
   SimSpeed = saved;
 
@@ -204,7 +277,8 @@ int SimCmdProblems(ARGS)
   for (i = 0; i < 10; i++) n += sprintf(buf + n, " %d", ProblemVotes[i]);
   n += sprintf(buf + n, " |");
   for (i = 0; i < 10; i++) n += sprintf(buf + n, " %d", ProblemTaken[i]);
-  sprintf(interp->result, "%s", buf);
+  buf[n] = 0;
+  Tcl_SetResult(interp, buf, TCL_VOLATILE);	/* 同上，可能超過 199 */
   return (TCL_OK);
 }
 
@@ -228,7 +302,10 @@ REG = ("  /* chengshi */ SIM_CMD(Frame);\n"
        "  /* chengshi */ SIM_CMD(Mem);\n"
        "  /* chengshi */ SIM_CMD(RandState);\n"
        "  /* chengshi */ SIM_CMD(Problems);\n"
-       "  /* chengshi */ SIM_CMD(VoteStats);\n")
+       "  /* chengshi */ SIM_CMD(VoteStats);\n"
+       "  /* chengshi */ SIM_CMD(FrameStats);\n"
+       "  /* chengshi */ SIM_CMD(Sprites);\n"
+       "  /* chengshi */ SIM_CMD(SpriteCycle);\n")
 
 
 EVALC_OLD = """  x = 0;

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -46,6 +47,10 @@ type frameCP struct {
 	ProbTable [7]int
 	HasVote   bool
 	Vote      [4]int // 投票迴圈抽樣、市民投票抽樣、迭代、成功
+	// HasFStat／FStat 是把一個 frame 的抽樣拆成「SimFrame（規則）」與
+	// 「MoveObjects（精靈）」兩段。少抽一次的時候，第一件事是問它在哪一邊。
+	HasFStat bool
+	FStat    [2]int
 }
 
 type frameMeta struct {
@@ -88,18 +93,36 @@ func loadFrameMetaIn(t *testing.T, dir string) frameMeta {
 			continue
 		}
 		var f frameCP
-		n, err := fmt.Sscanf(ln,
-			"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
-			&f.I, &f.Scycle, &f.Valves[0], &f.Valves[1], &f.Valves[2], &f.Draws,
-			&f.State, &f.CityScore, &f.CityYes, &f.CityNo,
-			&f.ProbTable[0], &f.ProbTable[1], &f.ProbTable[2], &f.ProbTable[3],
-			&f.ProbTable[4], &f.ProbTable[5], &f.ProbTable[6],
-			&f.Vote[0], &f.Vote[1], &f.Vote[2], &f.Vote[3])
-		if n < 7 {
-			t.Fatalf("frames.csv 這行讀不了：%q（%v）", ln, err)
+		cols := strings.Split(ln, ",")
+		nums := make([]int, len(cols))
+		for i, c := range cols {
+			v, err := strconv.Atoi(strings.TrimSpace(c))
+			if err != nil {
+				t.Fatalf("frames.csv 這行讀不了：%q（%v）", ln, err)
+			}
+			nums[i] = v
 		}
-		f.HasProb = n >= 17
-		f.HasVote = n == 21
+		// 三種版面，用欄數分辨：
+		//   7  基本（空城實驗）
+		//   9  基本 ＋ FrameStats（規則／精靈各抽幾次）
+		//   21 基本 ＋ 城市評估 ＋ 投票計數
+		if len(nums) != 7 && len(nums) != 9 && len(nums) != 21 {
+			t.Fatalf("frames.csv 的欄數 %d 不認得：%q", len(nums), ln)
+		}
+		f.I, f.Scycle = nums[0], nums[1]
+		f.Valves = [3]int{nums[2], nums[3], nums[4]}
+		f.Draws, f.State = nums[5], uint32(nums[6])
+		switch len(nums) {
+		case 9:
+			f.HasFStat = true
+			f.FStat = [2]int{nums[7], nums[8]}
+		case 21:
+			f.HasProb = true
+			f.CityScore, f.CityYes, f.CityNo = nums[7], nums[8], nums[9]
+			copy(f.ProbTable[:], nums[10:17])
+			f.HasVote = true
+			copy(f.Vote[:], nums[17:21])
+		}
 		m.Frames = append(m.Frames, f)
 	}
 	return m

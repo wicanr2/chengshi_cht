@@ -68,6 +68,11 @@ func (s Scenario) Info() ScenarioInfo {
 func (w *World) LoadScenarioFile(cf *CityFile, s Scenario) {
 	info := s.Info()
 
+	// ⚠ 先清場。原版的 LoadScenario 在 `_load_file()` 之後呼叫
+	// `InitWillStuff()`（s_fileio.c:470），而它會把所有衍生陣列歸零、
+	// 清掉精靈。少了這一步，讀第二座城市會留著前一座的地價與汙染。
+	w.InitWillStuff()
+
 	// _load_file()：只讀七個陣列。
 	w.Map = cf.Map
 	w.ResHis = cf.ResHis
