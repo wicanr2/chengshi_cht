@@ -1,0 +1,137 @@
+"""把逐 frame 對拍的 oracle 輸出轉成測試資料。
+
+用法：
+    python3 tools/oracle/extract_frames.py <frame-parity.json> <輸出目錄>
+
+產出：
+    cp0.csv    起始地圖（跑第一個 frame 之前）
+    cpend.diff 最後一個 frame 之後的地圖，存成相對 cp0 的差異
+    meta.json  起始與結束的 Fcycle／Scycle／資金，起始的四個亂數讀數
+    frames.csv 每個 frame 一列：`i,scycle,rvalve,cvalve,ivalve,draws`
+
+⚠ **每個 frame 存的是抽樣次數，不是四個亂數讀數。** 兩者等價（LCG 的
+狀態由起點與步數唯一決定），但次數只要幾個位元組，而且它就是對拍的判準。
+換算在這裡做：`draws = LCG 距離(上一個檢查點的狀態, 這個檢查點的狀態) − 4`，
+那個 4 是原版自己那四次 `sim Rand`。
+
+⚠ `sim Tile` 回的是**有號 int16**，負數要 `& 0xFFFF` 還原。
+"""
+
+import json
+import os
+import sys
+
+WX, WY = 120, 100
+
+A, C, MASK = 1103515245, 12345, 0xFFFFFF
+
+
+def recover_state(outs):
+    """從連續的 Rand16 輸出反推 24 位元狀態（同 internal/sim RecoverState）。"""
+    cands = [(outs[0] << 8) | lo for lo in range(256)]
+    for want in outs[1:]:
+        cands = [n for n in ((c * A + C) & MASK for c in cands) if (n >> 8) == want]
+        if not cands:
+            raise SystemExit(f"反推不出狀態：{outs}")
+    if len(cands) != 1:
+        raise SystemExit(f"狀態不唯一：{outs}")
+    return cands[0]
+
+
+def lcg_distance(a, b, limit=5_000_000):
+    n, s = 0, a
+    while n < limit and s != b:
+        s = (s * A + C) & MASK
+        n += 1
+    if s != b:
+        raise SystemExit("距離超過上限")
+    return n
+
+
+def find_line(results, tag):
+    for r in results:
+        for ln in r["out"]:
+            if ln.startswith(tag + " "):
+                return ln
+    raise SystemExit(f"輸出裡找不到 {tag}")
+
+
+def parse_map(ln, tag):
+    body = ln[len(tag) + 1:]
+    n, _, vals = body.partition(" ")
+    v = [int(x) & 0xFFFF for x in vals.split(",")]
+    if len(v) != int(n) or len(v) != WX * WY:
+        raise SystemExit(f"{tag} 的格數不對：{len(v)}")
+    # oracle 是 y 外層、x 內層
+    m = [[0] * WX for _ in range(WY)]
+    for i, val in enumerate(v):
+        m[i // WX][i % WX] = val
+    return m
+
+
+def main():
+    src, out = sys.argv[1], sys.argv[2]
+    d = json.load(open(src))
+    res = d["results"]
+    os.makedirs(out, exist_ok=True)
+
+    m0 = parse_map(find_line(res, "CP0"), "CP0")
+    mE = parse_map(find_line(res, "CPEND"), "CPEND")
+
+    with open(f"{out}/cp0.csv", "w") as fh:
+        for row in m0:
+            fh.write(",".join(str(v) for v in row) + "\n")
+    with open(f"{out}/cpend.diff", "w") as fh:
+        for y in range(WY):
+            for x in range(WX):
+                if m0[y][x] != mE[y][x]:
+                    fh.write(f"{x},{y},{mE[y][x]}\n")
+
+    init = find_line(res, "INIT").split()
+    r0 = find_line(res, "R0").split()
+    end = find_line(res, "END").split()
+    frames = []
+    for r in res:
+        for ln in r["out"]:
+            if not ln.startswith("F "):
+                continue
+            p = ln.split()
+            frames.append({
+                "i": int(p[1]),
+                "fcycle": int(p[2]),
+                "scycle": int(p[3]),
+                "valves": [int(x) for x in p[4:7]],
+                "rands": [int(x) for x in p[7:11]],
+            })
+    # 把四個亂數讀數換算成抽樣次數。RecoverState 回的是**讀完四次之後**
+    # 的狀態，而原版讀完就直接跑下一個 frame，所以相鄰兩個檢查點的距離
+    # 是「這個 frame 的抽樣次數 + 4」。
+    prev = recover_state([int(x) for x in r0[1:5]])
+    rows = []
+    for fr in frames:
+        cur = recover_state(fr["rands"])
+        d = lcg_distance(prev, cur) - 4
+        if d < 0:
+            raise SystemExit(f"第 {fr['i']} 個 frame 的距離算出 {d}，不可能")
+        rows.append((fr["i"], fr["scycle"], fr["valves"][0], fr["valves"][1],
+                     fr["valves"][2], d))
+        prev = cur
+    with open(f"{out}/frames.csv", "w") as fh:
+        fh.write("# i,scycle,rvalve,cvalve,ivalve,draws\n")
+        for r in rows:
+            fh.write(",".join(str(v) for v in r) + "\n")
+
+    meta = {
+        "init": {"fcycle": int(init[1]), "scycle": int(init[2]),
+                 "funds": int(init[3]),
+                 "rands": [int(x) for x in r0[1:5]]},
+        "end": {"fcycle": int(end[1]), "scycle": int(end[2]),
+                "funds": int(end[3])},
+    }
+    with open(f"{out}/meta.json", "w") as fh:
+        json.dump(meta, fh, indent=1)
+    print(f"{len(frames)} 個 frame，共 {sum(r[5] for r in rows)} 次抽樣；地圖差 "
+          f"{sum(1 for y in range(WY) for x in range(WX) if m0[y][x] != mE[y][x])} 格")
+
+
+main()

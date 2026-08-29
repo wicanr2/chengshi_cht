@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SRC="$ROOT/workplace/ref/micropolis/micropolis-activity"
+SRC="$ROOT/workplace/oracle-build/micropolis-activity"
 OUT="$ROOT/workplace/oracle"
 IMAGE="simcity-oracle:bookworm"
 SCRIPT="${1:?要給一個 Tcl 指令檔}"
@@ -20,7 +20,7 @@ docker run --rm \
   --memory 2g --cpus 2 --pids-limit 256 \
   --network none \
   -v "$SRC:/work" -v "$OUT:/out" -v "$ROOT/tools/oracle:/drv:ro" \
-  -w /work -e SIMHOME=/work -e HOME=/tmp \
+  -w /work -e SIMHOME=/work -e HOME=/tmp -e ORACLE_TIMEOUT="${ORACLE_TIMEOUT:-600}" \
   "$IMAGE" \
   bash -c "
     set -e

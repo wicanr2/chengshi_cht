@@ -30,7 +30,7 @@
 | [`docs/re/09-census-valves-budget.md`](09-census-valves-budget.md) | 普查、需求閥、稅收與預算 | **已接** | `internal/sim/census.go` |
 | [`docs/re/10-evaluation.md`](10-evaluation.md) | 城市評分與投票 | **已接** | `internal/sim/eval.go` |
 | [`docs/re/11-simulate-loop.md`](11-simulate-loop.md) | 十六相位主迴圈 | **已接** | `internal/sim/simulate.go` |
-| [`docs/re/12-tick-parity.md`](12-tick-parity.md) | 逐次元對拍工具與現況 | **已接** | `internal/sim/tickparity_test.go`、`internal/sim/segparity_test.go`、`internal/sim/microzone_test.go` |
+| [`docs/re/12-tick-parity.md`](12-tick-parity.md) | 逐次元對拍工具與現況 | **已接** | `internal/sim/frameparity_test.go`、`internal/sim/tickparity_test.go`、`internal/sim/microzone_test.go` |
 | [`docs/re/13-sprites.md`](13-sprites.md) | 精靈系統（八種會動的東西）| **已接** | `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go` |
 | [`docs/re/14-messages.md`](14-messages.md) | 訊息、人口里程碑、劇本勝敗 | **已接** | `internal/sim/message.go` |
 | [`docs/re/15-tools.md`](15-tools.md) | 玩家工具與自動接線 | **已接** | `internal/sim/tool.go`、`internal/sim/connect.go` |

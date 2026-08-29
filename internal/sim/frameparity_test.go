@@ -1,0 +1,199 @@
+package sim
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+	"testing"
+)
+
+// 逐 frame 對拍。
+//
+// 早期的分段對拍段界由 oracle 的事件迴圈決定，長度不可控
+// （實測 85 到 2039 次抽樣），而且起始的 Fcycle／Scycle 觀察不到，只能搜。
+// 給 oracle 加了三個觀測指令之後（`sim Frame N`、`sim Scycle`、`sim Fcycle`，
+// 見 tools/oracle/patches/apply.py），這兩個問題一起消失：
+//
+//   - 單步：每個 frame 都有自己的亂數讀數，分歧點是**查表**不是搜尋。
+//   - 起點：Fcycle 與 Scycle 都是 0，不必猜。
+//
+// 判準仍然是抽樣次數——LCG 的狀態由起點與步數唯一決定。
+//
+// 資料由 tools/oracle/tcl/frame-parity.tcl 產生、
+// tools/oracle/extract_frames.py 轉檔。
+
+// frameParityBudget 是目前逐 frame 完全一致的 frame 數。
+const frameParityBudget = 8000
+
+// frameCP 是一個 frame 的原版讀數。
+//
+// ⚠ 存的是**抽樣次數**不是亂數值：LCG 的狀態由起點與步數唯一決定，
+// 所以次數與狀態等價，而次數就是對拍的判準（`docs/re/02-rng.md` §2）。
+type frameCP struct {
+	I      int
+	Scycle int
+	Valves [3]int
+	Draws  int
+}
+
+type frameMeta struct {
+	Init struct {
+		Fcycle int   `json:"fcycle"`
+		Scycle int   `json:"scycle"`
+		Funds  int   `json:"funds"`
+		Rands  []int `json:"rands"`
+	} `json:"init"`
+	End struct {
+		Fcycle int `json:"fcycle"`
+		Scycle int `json:"scycle"`
+		Funds  int `json:"funds"`
+	} `json:"end"`
+	Frames []frameCP
+}
+
+func loadFrameMeta(t *testing.T) frameMeta {
+	t.Helper()
+	b, err := os.ReadFile("testdata/frame/meta.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m frameMeta
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatal(err)
+	}
+	csv, err := os.ReadFile("testdata/frame/frames.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, ln := range strings.Split(strings.TrimSpace(string(csv)), "\n") {
+		if ln == "" || strings.HasPrefix(ln, "#") {
+			continue
+		}
+		var f frameCP
+		if _, err := fmt.Sscanf(ln, "%d,%d,%d,%d,%d,%d", &f.I, &f.Scycle,
+			&f.Valves[0], &f.Valves[1], &f.Valves[2], &f.Draws); err != nil {
+			t.Fatalf("frames.csv 這行讀不了：%q", ln)
+		}
+		m.Frames = append(m.Frames, f)
+	}
+	return m
+}
+
+// newFrameParityWorld 重建逐 frame 實驗的起始狀態。
+// 順序與 newTickParityWorld 相同（先裸地形跑 DoSimInit，再蓋上建物）。
+func newFrameParityWorld(t *testing.T, m frameMeta) *World {
+	t.Helper()
+	start := loadGoldenMap(t, "testdata/frame/cp0.csv")
+	w := newTickParityWorld(start, 0, m.Init.Funds, m.Init.Scycle, true)
+	w.Fcycle = m.Init.Fcycle
+	w.Rand.SetState(mustRec(m.Init.Rands))
+	return w
+}
+
+// loadFrameEndMap 讀最後一個 frame 之後的地圖（存成相對 cp0 的差異）。
+func loadFrameEndMap(t *testing.T) [WorldX][WorldY]uint16 {
+	t.Helper()
+	m := loadGoldenMap(t, "testdata/frame/cp0.csv")
+	b, err := os.ReadFile("testdata/frame/cpend.diff")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, ln := range strings.Split(strings.TrimSpace(string(b)), "\n") {
+		if ln == "" {
+			continue
+		}
+		var x, y, v int
+		if _, err := fmt.Sscanf(ln, "%d,%d,%d", &x, &y, &v); err != nil {
+			t.Fatalf("cpend.diff 這行讀不了：%q", ln)
+		}
+		m[x][y] = uint16(v)
+	}
+	return m
+}
+
+func TestFrameParity(t *testing.T) {
+	m := loadFrameMeta(t)
+	w := newFrameParityWorld(t, m)
+	wantEnd := loadFrameEndMap(t)
+
+	// ⚠ 起始狀態就是 R0 那四次讀完之後的值，**不要再往前推四次**。
+	// 推了的話抽樣次數還是對得上（差是常數 4），但每個 frame 吃到的亂數值
+	// 整整晚四個，分支結果會在某個看起來無關的地方才爆掉——那個坑花了
+	// 一整輪才找到（`docs/re/12-tick-parity.md` §6之四）。
+	matched, total := 0, 0
+	for _, f := range m.Frames {
+		before := w.Rand.State()
+		w.Frame()
+		got := drawsBetween(before, w.Rand.State())
+		if got != f.Draws || w.Scycle != f.Scycle || !valvesEqual(w, f) {
+			t.Logf("第 %d 個 frame 分岔：抽樣 %d 次（原版 %d 次）、Scycle %d（原版 %d）、"+
+				"閥門 %d/%d/%d（原版 %d/%d/%d）",
+				f.I, got, f.Draws, w.Scycle, f.Scycle,
+				w.RValve, w.CValve, w.IValve, f.Valves[0], f.Valves[1], f.Valves[2])
+			break
+		}
+		// 原版每個 frame 之後自己抽了四次（sim Rand ×4）。
+		w.Rand.SetState(advanceRand(w.Rand.State(), 4))
+		matched++
+		total += f.Draws
+	}
+
+	t.Logf("逐 frame 完全一致 %d/%d 個（共 %d 次抽樣）", matched, len(m.Frames), total)
+	if matched == len(m.Frames) {
+		if d := mapDiffM(&w.Map, &wantEnd); d != 0 {
+			t.Errorf("抽樣全部對上，但終點地圖差 %d 格", d)
+		}
+		if w.TotalFunds != m.End.Funds {
+			t.Errorf("終點資金 %d，原版 %d", w.TotalFunds, m.End.Funds)
+		}
+	}
+	if matched < frameParityBudget {
+		t.Errorf("只對上 %d 個 frame，低於現況 %d —— 有東西退步了", matched, frameParityBudget)
+	}
+	if matched > frameParityBudget {
+		t.Errorf("對上 %d 個 frame，比現況 %d 好 —— 請把 frameParityBudget 調到 %d",
+			matched, frameParityBudget, matched)
+	}
+}
+
+// TestFrameParityTrace 印出分岔那個 frame 是誰在抽樣。只在設了
+// SIMCITY_TRACE 時跑。
+func TestFrameParityTrace(t *testing.T) {
+	if os.Getenv("SIMCITY_TRACE") == "" {
+		t.Skip("設 SIMCITY_TRACE=1 才跑（只印診斷）")
+	}
+	m := loadFrameMeta(t)
+	w := newFrameParityWorld(t, m)
+
+	for _, f := range m.Frames {
+		before := w.Rand.State()
+		sites := map[string]int{}
+		w.Rand.Watch = func() { sites[callerSite()]++ }
+		ph, sc := (w.Fcycle+1)&15, w.Scycle
+		w.Frame()
+		w.Rand.Watch = nil
+		got := drawsBetween(before, w.Rand.State())
+		want := f.Draws
+		if got == want && w.Scycle == f.Scycle && valvesEqual(w, f) {
+			w.Rand.SetState(advanceRand(w.Rand.State(), 4))
+			continue
+		}
+		t.Logf("第 %d 個 frame 分岔（相位 %d、Scycle %d）：我們抽 %d 次、原版 %d 次；"+
+			"閥門 %d/%d/%d（原版 %d/%d/%d）",
+			f.I, ph, sc, got, want,
+			w.RValve, w.CValve, w.IValve, f.Valves[0], f.Valves[1], f.Valves[2])
+		for k, v := range sites {
+			t.Logf("  %s ×%d", k, v)
+		}
+		return
+	}
+	t.Logf("八百個 frame 全部一致")
+}
+
+// valvesEqual 比對三個需求閥門。它們決定分區長不長，是分岔時第一個
+// 要看的量——抽樣次數不同通常是因為某個分區的 zscore 不同。
+func valvesEqual(w *World, f frameCP) bool {
+	return w.RValve == f.Valves[0] && w.CValve == f.Valves[1] &&
+		w.IValve == f.Valves[2]
+}

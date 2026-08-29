@@ -5,10 +5,22 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SRC="$ROOT/workplace/ref/micropolis/micropolis-activity"
+ARCHIVE="$ROOT/workplace/ref/micropolis/micropolis-activity"
+SRC="$ROOT/workplace/oracle-build/micropolis-activity"
 IMAGE="simcity-oracle:bookworm"
 
-[ -d "$SRC" ] || { echo "找不到 $SRC —— 先取得 Micropolis 封存"; exit 1; }
+[ -d "$ARCHIVE" ] || { echo "找不到 $ARCHIVE —— 先取得 Micropolis 封存"; exit 1; }
+
+# 建置在**副本**上進行，封存那份保持乾淨——它是規則層的一手依據，
+# 不該混進我們為了觀測加的指令。FRESH=1 可以強制重來。
+if [ "${FRESH:-}" = 1 ]; then rm -rf "$ROOT/workplace/oracle-build"; fi
+if [ ! -d "$SRC" ]; then
+  echo "== 複製封存到 workplace/oracle-build/ =="
+  mkdir -p "$ROOT/workplace/oracle-build"
+  cp -a "$ARCHIVE" "$SRC"
+fi
+echo "== 套用觀測用的修補（冪等）=="
+python3 "$ROOT/tools/oracle/patches/apply.py" "$SRC"
 
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "== 建 image $IMAGE =="

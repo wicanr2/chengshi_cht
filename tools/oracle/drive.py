@@ -92,7 +92,8 @@ def main():
             results.append({"cmd": cmd, "out": []})
             continue
         os.write(master, (cmd + "\n").encode())
-        raw = read_until_prompt(master, timeout=60.0)
+        # 單步 800 個 frame 的那一行會跑很久，逾時放寬（可用 ORACLE_TIMEOUT 調）。
+        raw = read_until_prompt(master, timeout=float(os.environ.get("ORACLE_TIMEOUT", "600")))
         text = raw.decode("utf-8", "replace")
         # 回顯的指令與提示字元都去掉，剩下的才是結果
         lines = [ln for ln in text.splitlines()

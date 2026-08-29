@@ -19,15 +19,15 @@ import "testing"
 //
 // 起始的 Fcycle／Scycle 不可觀測（GenerateSomeCity 之後到暫停之間可能跑了
 // 幾個 frame），所以在小範圍內搜尋。
-// 目前的對拍水準：Go 版重現原版 108 格變化中的 101 格。
+// 目前的對拍水準：原版改變的 108 格**一格不差**全部重現。
 //
-// ⚠ **這還不是逐指令等價。** 亂數狀態始終對不上，代表某處的抽樣次數與原版不同，
-// 而抽樣次數一旦差一次，之後的數列全部錯開。已知還沒實作的東西（精靈系統、
-// 訊息系統）都會影響抽樣次數，所以在它們補上之前不預期能對齊。
+// 收尾的是 `SetValves` 的單精度與整數除法（`docs/re/12-tick-parity.md`
+// §6之三）。在那之前差 8 格，怎麼調都收不掉——因為根本不是分區規則的問題，
+// 是需求閥門每一刻都差個一兩點。
 //
-// 這個測試是**回歸護欄**：差異格數不得比現況更差。修好一處就把門檻調緊，
-// 直到亂數狀態也能對上為止。進度記在 docs/re/12-tick-parity.md。
-const tickParityBudget = 8
+// 這個測試是**回歸護欄**：差異格數不得比現況更差。逐 frame 的等價由
+// `TestFrameParity` 判定，那個嚴格得多。
+const tickParityBudget = 0
 
 func TestTickParityBestEffort(t *testing.T) {
 	s0, ok := RecoverState([]int{38231, 17264, 16134, 55346})

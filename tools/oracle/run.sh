@@ -6,7 +6,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SRC="$ROOT/workplace/ref/micropolis/micropolis-activity"
+SRC="$ROOT/workplace/oracle-build/micropolis-activity"
 OUT="$ROOT/workplace/oracle"
 IMAGE="simcity-oracle:bookworm"
 WAIT="${1:-8}"

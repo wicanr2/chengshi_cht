@@ -12,12 +12,13 @@
 打得開，存讀檔用的是原版 `.cty` 格式（拿去餵 Micropolis 也讀得起來）。
 Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
 
-還沒收完的兩件事：
+**逐次元對拍收斂了**：8000 個 frame（500 刻、13 582 次抽樣）逐 frame
+完全一致——每個 frame 的抽樣次數、`Scycle`、三個需求閥門都相同，終點的
+12 000 格地圖與資金也相同。做法是給 oracle 加單步指令，見
+[`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 
-- **逐刻對拍**：住宅／商業／工業三種分區的微實驗都逐次元完全一致
-  （692.5／564.2／949.2 刻，地圖零差異），但整城的分段對拍 23 段裡只有
-  9 段完全一致。工具已經準備好（把觀察不到的 `Scycle` 也納入搜尋），
-  見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md) §6。
+還沒收完的一件事：
+
 - **音效**：容器格式解開了，但這八段 PCM **只走 DAC**，而手上的環境
   兩條 DAC 路都走不通（Covox Sound Master 沒有模擬器、Tandy 缺 `tdy\`
   圖形檔）。內建喇叭放的是程式自己合成的嗶聲，不是這些資料——換一份
@@ -117,7 +118,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 
 | 問題 | 現況 | 要怎麼定案 |
 |---|---|---|
-| 規則層扣款用 Micropolis 的 `CostOf[]`，顯示用原版訊息檔 | 兩者只差體育館（3000／5000）與海港（5000／3000）。顯示已改用訊息檔；扣款還沒改，因為 `CostOf[]` 是逐次元對拍的基準，動它要重跑對拍。 | 改扣款並重跑 `docs/re/12` 的三層對拍 |
+| 規則層扣款用 Micropolis 的 `CostOf[]`，顯示用原版訊息檔 | 兩者只差體育館（3000／5000）與海港（5000／3000）。顯示已改用訊息檔；扣款還沒改，因為 `CostOf[]` 是逐次元對拍的基準。 | 改扣款並重跑 `docs/re/12` 的逐 frame 對拍 |
 | `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
 
@@ -152,7 +153,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 12. ~~交通、分區、災難、普查、需求閥、預算、評分、十六相位主迴圈~~
     **已實作**：`docs/re/07`–`11`，`internal/sim/{traffic,zone,mapscan,disaster,census,eval,simulate}.go`。
     驗收：**住宅／商業／工業三種分區的微實驗都逐次元完全一致**
-    （692.5／564.2／949.2 刻，地圖零差異）；分段對拍 23 段中 9 段完全一致。
+    （692.5／564.2／949.2 刻，地圖零差異）；整城逐 frame 對拍 8000/8000。
     見 `docs/re/12-tick-parity.md`。
 13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
     `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
@@ -163,9 +164,8 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，
     `internal/sim/tool.go`、`internal/sim/connect.go`。
     自動接線用八座劇本城市驗證，15 447 格線路裡 99.83% 形狀一致。
-16. 逐次元對拍：微實驗完全一致；分段對拍 23 段中 9 段完全一致。
-    見 `docs/re/12-tick-parity.md`。剩下的差距多半是重建不出來的
-    內部狀態，不一定是實作錯誤——**繼續縮小要靠新的微實驗**。
+16. ~~逐次元對拍~~ **完成**：8000 個 frame（500 刻、13 582 次抽樣）
+    逐 frame 完全一致，終點地圖與資金零差異。見 `docs/re/12-tick-parity.md`。
 17. ~~`.PGF` 圖形版面~~ **完成**：`docs/formats/03-pgf-graphics.md`，
     `internal/assets/pgf.go`。24 個風格圖形檔（4 種顯示模式 × 6 種風格）
     全部解開，第 0 庫一律 **960 張地圖圖塊**——與 Micropolis 的 `TILE_COUNT`
@@ -186,11 +186,13 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 22. ~~發行包、README 更新~~ **完成**：`tools/release.sh` 打 Linux 與 Windows 兩個包，
     `tools/verify_release.sh` 驗包本身（解到乾淨目錄、從那裡執行、資料放別處）。
     README 改寫成現況並附四張畫面。
-23. 逐刻對拍收斂。三種分區的微實驗**都逐次元一致**了（住宅 692.5 刻、
-    商業 564.2 刻、工業 949.2 刻，地圖零差異）——工業區原本對不上，
-    原因是 `Scycle` 觀察不到而實驗把它當 0，不是實作錯誤。
-    下一步是把 Scycle 用「接力」的方式套進分段對拍（只在第一段搜，
-    之後由刻數推出來）。見 `docs/re/12-tick-parity.md` §6。
+23. ~~逐刻對拍收斂~~ **完成**。關鍵是**給 oracle 加觀測指令**
+    （`sim Frame N`／`Scycle`／`Fcycle`／`Valves`／`Mem`，
+    `tools/oracle/patches/apply.py`，建在副本上、封存保持乾淨）。
+    在那之前所有對拍都在跟看不到的內部狀態搏鬥，而那些搏鬥掩蓋了兩個
+    真正的錯：`SetValves` 該用單精度與整數除法（整城對拍因此從差 8 格
+    變成 0 格），以及對拍腳手架自己多推了四步亂數。
+    分段對拍（`segparity_test.go`）已被逐 frame 對拍取代並移除。
 24. ~~基本風格（`CEGADAT.PGF`）的圖形庫表~~ **完成**：表是**行內**的，
     每個庫前面三個位元組是「平面數 ＋ u16 長度」，每張圖前面四個位元組是
     寬高。四個模式的檔案都解得開（`docs/formats/03-pgf-graphics.md` §8、
