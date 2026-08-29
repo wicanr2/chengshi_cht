@@ -36,6 +36,8 @@ func main() {
 		cmdFlat(os.Args[2:])
 	case "dosparity-scen":
 		cmdDosParityScen(os.Args[2:])
+	case "play":
+		cmdPlay(os.Args[2:])
 	case "dosparity-poll":
 		cmdDosPoll(os.Args[2:])
 	case "dosparity":

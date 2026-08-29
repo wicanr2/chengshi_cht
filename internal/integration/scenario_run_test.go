@@ -14,8 +14,9 @@ import (
 // 該觸發的那一刻觸發，而且勝敗兩種結果都出得來**——劇本災難、分區成長、
 // 普查、評估、訊息與勝敗判定要全部串起來，這條路徑才走得完。
 //
-// 玩家真的動手時結果當然不同（Dullsville 不出手必輸，出手就是官方標的
-// Easy）。要衡量「玩得完」得另外做，記在 README 的自評表。
+// 玩家真的動手時結果不同：`TestAutoPlayerWinsScenarios` 用同一組劇本跑
+// 自動玩家，過五個。兩支一起看才完整——這一支說「判定會觸發」，
+// 那一支說「玩得贏」。
 func TestAllScenariosReachVerdict(t *testing.T) {
 	dir := dosDir(t)
 	// 每個劇本的判定等待刻數。s_sim.c 的 scoreWaitTab。
@@ -23,7 +24,9 @@ func TestAllScenariosReachVerdict(t *testing.T) {
 
 	win := 0
 	for n := 1; n <= 8; n++ {
-		w, err := game.LoadScenario(dir, n)
+		// ⚠ 固定種子。載入路徑會擲亂數（DoSimInit 的 MapScan），
+		// 用時鐘播種的話這支測試的通關數會在 1/8 與 2/8 之間跳。
+		w, err := game.LoadScenarioSeed(dir, n, 1)
 		if err != nil {
 			t.Fatalf("第 %d 個劇本載入失敗：%v", n, err)
 		}

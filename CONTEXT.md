@@ -56,6 +56,7 @@ tools/font.sh                       # 重烘點陣字圖集（改過譯文或註
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文
 tools/dosbox.sh <秒> <前綴>         # 跑 DOS 原版當 oracle（截圖 ＋ 錄音 ＋ 動作腳本）
 MODE=run tools/dos_parity.sh        # DOS 原版 vs remake 的抽樣對拍（八個劇本）
+tools/go.sh run ./cmd/simtool play all   # 自動玩家把八個劇本各玩一次
 tools/oracle/build.sh               # 建 Micropolis oracle
 tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 ```

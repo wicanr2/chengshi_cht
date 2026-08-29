@@ -214,11 +214,11 @@ func reportMisc(cf *sim.CityFile, want, w *sim.World) {
 	res, com, ind := w.CountPops()
 	wres, wcom, wind := want.CountPops()
 	rows := []struct {
-		name     string
-		idx      int
-		onMap    int // 我們的程式碼掃**原版的地圖**算出來的
-		ours     int // remake 自己的城市
-		mapPure  bool
+		name    string
+		idx     int
+		onMap   int // 我們的程式碼掃**原版的地圖**算出來的
+		ours    int // remake 自己的城市
+		mapPure bool
 	}{
 		{"住宅人口", 2, wres, res, true},
 		{"商業人口", 3, wcom, com, true},
