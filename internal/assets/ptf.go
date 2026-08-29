@@ -149,3 +149,40 @@ func PictureID(sec Section, i int) int {
 	}
 	return int(int16(uint16(next[1]) | uint16(next[2])<<8))
 }
+
+// 訊息類別（段落 0 每一筆後面那兩個位元組的第二個）。
+// 原版的訊息派送常式拿它決定要不要播警笛：類別 6 或 7 且是第一次顯示時
+// 播段 3，唯一的例外是爆炸（訊息 32），因為爆炸精靈自己已經播過段 1。
+// 證據：docs/formats/04-ptf-messages.md §二、docs/re/16-dos-oracle.md §五之四。
+const (
+	MsgClassAdvice   = 2 // 建議蓋東西
+	MsgClassProblem  = 3 // 城市問題
+	MsgClassUrgent   = 4 // 要蓋發電廠、道路失修
+	MsgClassNotice   = 5 // 停電、破產、人口里程碑
+	MsgClassDisaster = 6 // 災難
+	MsgClassQuake    = 7 // 大地震
+	MsgClassTraffic  = 8 // 交通壅塞、不能推平
+	MsgClassToolFail = 9 // 工具錯誤
+)
+
+// MessageClass 回傳段落 0 第 msg 則狀態訊息的類別。
+//
+// ⚠ 參數是**訊息序號**，不是 Strings 的索引。段落 0 一則訊息佔兩個字串
+// （文字在 `2*msg`、類別在 `2*msg+1`），這是整份檔案裡唯一長這樣的段落——
+// 拿 PictureID 那種「下一個字串」的算法套過來會整批查不到。
+//
+// 光看檔案，「類別屬於前一則還是後一則」兩種讀法都自洽。分得出來的是
+// 程式碼：爆炸（訊息編號 32，即 msg == 31）被派送常式特例排除，只有在
+// 「屬於前一則」時它才是類別 6，那行特例才有意義。
+//
+// 回傳 0 代表查不到。
+func MessageClass(sec Section, msg int) int {
+	if msg < 0 || 2*msg+1 >= len(sec.Strings) {
+		return 0
+	}
+	attr := sec.Strings[2*msg+1]
+	if len(attr) < 2 || attr[0] != 0xFE {
+		return 0
+	}
+	return int(attr[1])
+}

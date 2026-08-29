@@ -29,14 +29,16 @@ Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家�
 
 還沒收完的一件事：
 
-- **音效**：容器格式解開了，但這八段 PCM **只走 DAC**，而手上的環境
-  兩條 DAC 路都走不通（Covox Sound Master 沒有模擬器、Tandy 缺 `tdy\`
-  圖形檔）。內建喇叭放的是程式自己合成的嗶聲，不是這些資料——換一份
-  音效檔錄同一組動作，聲音逐取樣相同。所以聲音沒有接進遊戲。
-  見 [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md) §4。
-  **2026-08-30 進度**：執行檔脫了殼、符號表解出來了，音效的三支常式
-  （`_InitSounds`／`_SoundOff`／`_RemoveSound`）都在模組 `0x23`（同文件 §5）。
-  卡在**模組編號還沒對應到脫殼後映像的位址**，下一步是讀載入器的模組表。
+- **音效**：容器格式與**八段的事件對應**都解開了（0 交通壅塞、1 爆炸、
+  2 怪獸、3 警笛、4 船笛、5／6 工具成功、7 工具失敗），證據是反組譯
+  `PlaySound(n)` 的十一個呼叫點並與 Micropolis 的對應函式逐項比對
+  ——見 [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md) §五之四。
+  **只差取樣率**：長度比量出 5300–5450 Hz（強證據，§五之五），
+  但還沒從程式碼直讀。下一個入口是 `_InitSounds` 與音效卡驅動的命令碼表
+  （那是一張 DMA 驅動的卡，取樣率由卡上設定，不是 PIT）。
+  在取樣率定值之前不接進遊戲。
+  用耳朵驗收這件事目前做不到：Tandy 走 `INT 1Ah AH=83h`（DOSBox-X 沒實作）、
+  Covox Sound Master 沒有模擬器，而內建喇叭放的是程式自己合成的嗶聲。
 
 ### 已盤點的素材
 
@@ -142,6 +144,10 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 > 讀到位元組定案（六個權重全部是 Micropolis 註解裡的舊值），見
 > [`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md) §6.3。
 > remake 照 Micropolis，不往 1991 年調。
+>
+> 2026-08-30 再移出一列：**八段音效各是什麼事件**，已從 `PlaySound(n)` 的
+> 十一個呼叫點定案，見 [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md)
+> §五之四。取樣率仍未定案，留在下表。
 
 - **維修費**：《參考手冊》p.63 寫「道路 $1、橋 $4、鐵路 $4、隧道 $10」，
   Micropolis 算出來是道路 1、橋 5、鐵路 2、隧道不存在。這一項沒有 DOS
@@ -152,6 +158,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 |---|---|---|
 | `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
+| `.PSF` 八段的取樣率 | 三段獨立的長度比（段 0／1／4 對 X11 的 `traffic`／`expl-hi`／`honk-low`）落在 0.673–0.678，指向 5300–5450 Hz；沒有從程式碼直讀 | 讀 `_InitSounds` 與 segment `24ABh` 那套驅動的命令碼表，找設定取樣率的那個 `AH`。已排除 PIT（整份執行檔沒有 `out 40h`）|
 | DOS 原版顯示的年份與存檔裡的 `CityTime` 對不上 | 東京存檔 `CityTime` 2739（＝1957，與手冊相符），原版狀態列同一刻顯示 Feb 1906，第一次預算視窗標題 1851 | 還沒查。不影響對拍（讀的是存檔欄位），但寫年份相關 UI 之前要解掉 |
 
 ## 6. 現行工作清單
@@ -256,15 +263,15 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     每個庫前面三個位元組是「平面數 ＋ u16 長度」，每張圖前面四個位元組是
     寬高。四個模式的檔案都解得開（`docs/formats/03-pgf-graphics.md` §8、
     `internal/assets/pgfbase.go`）。`-style base` 現在是預設值。
-25. 聲音：**容器格式已解**（`docs/formats/05-psf-sound.md`、`internal/assets/psf.go`）——
-    九份檔案各切成八段 4 位元 PCM。**還缺事件對應與取樣率**，而且
-    **DOSBox 這條路已經走到底、問不出答案**：`Sound: I`（內建喇叭）放的是
-    程式合成的嗶聲，不是這八段資料——換成 MOON 的音效檔（第 4、5 段長度
-    差 1.7～2 倍）錄到的聲音逐取樣相同（相關 0.99／0.89／0.96）。
-    八段 PCM 只走 DAC，而 Covox Sound Master 沒有模擬器、Tandy 缺 `tdy\`
-    圖形檔。見 `docs/re/16-dos-oracle.md` §4。剩下的路：帶 `tdy\` 的副本、
-    會模擬 Sound Master 的環境，或脫殼反組譯 `SIMCITY.EXE`（檔案裡有
-    明文符號表可以對函式名）。**在對出來之前不接進遊戲**。
+25. 聲音：**容器格式與事件對應都已解**（`docs/formats/05-psf-sound.md` §五、
+    `docs/re/16-dos-oracle.md` §五之四）——九份檔案各八段 4 位元 PCM，
+    八段分別是交通壅塞、爆炸、怪獸、警笛、船笛、兩種工具成功、工具失敗。
+    **只剩取樣率**：三段獨立的長度比指向 5300–5450 Hz（強證據），
+    但還沒從程式碼直讀，下一個入口是 `_InitSounds` 與音效卡驅動的命令碼表。
+    **在取樣率定值之前不接進遊戲。**
+    順帶釘死：整份執行檔沒有一次 `out 40h`，所以「用 PIT 中斷餵取樣」
+    可以排除；那張卡是 DMA 驅動的。用耳朵驗收目前做不到（Tandy 走
+    `INT 1Ah AH=83h`，DOSBox-X 沒實作；Sound Master 沒有模擬器）。
 26. ~~macOS 版~~ **完成**：`docker/osxcross.Dockerfile` ＋ `tools/build-mac.sh`，
     arm64 與 x86_64 各編一次再 lipo 成 universal，附靜態驗收（雙架構、
     arm64 的 ad-hoc 簽章、只相依系統庫、含得到中文字串）。`.app` 未簽名，

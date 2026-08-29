@@ -326,3 +326,42 @@ func TestPaletteIsStandardEGA(t *testing.T) {
 		}
 	}
 }
+
+// TestMessageClassAnchors 釘住段落 0 的訊息類別，順便釘住「類別屬於前一筆」
+// 這個對齊。判準取自原版的訊息派送常式（docs/re/16-dos-oracle.md §五之四）：
+// 十則災難訊息是類別 6、大地震是 7、四則工具錯誤是 9。
+//
+// 這是回歸哨兵：對齊差一筆的話，爆炸會變成類別 3，而整份檔案仍然「解得出來」。
+func TestMessageClassAnchors(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join(dosDir(t), "DATA", "MESSAGE.PTF"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	secs, err := LoadPTF(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sec := secs[0]
+
+	want := map[int]int{
+		19: MsgClassDisaster, // Fire reported !
+		20: MsgClassDisaster, // A Monster has been sighted !!
+		22: MsgClassQuake,    // Major earthquake reported !!!
+		31: MsgClassDisaster, // Explosion detected !（派送常式特例排除的那一則）
+		40: MsgClassTraffic,  // Heavy Traffic reported.
+		32: MsgClassToolFail, // Insufficient funds to build that.
+		44: MsgClassToolFail, // Cannot build that here.
+	}
+	for i, w := range want {
+		if got := MessageClass(sec, i); got != w {
+			t.Errorf("第 %d 筆（%q）類別 %d，要 %d", i, TrimPrefix(sec.Strings[2*i]), got, w)
+		}
+	}
+
+	// 每一筆都要查得到類別，最後一筆（終止記錄）除外。
+	for i := 0; i < 49; i++ {
+		if MessageClass(sec, i) == 0 {
+			t.Errorf("第 %d 筆查不到類別", i)
+		}
+	}
+}
