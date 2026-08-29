@@ -99,9 +99,10 @@ type Game struct {
 	font  *Font
 	txt   *i18n.Catalog
 
-	win       window
-	layer     mapLayer
-	budgetRow int
+	win         window
+	layer       mapLayer
+	budgetRow   int
+	disasterRow int
 
 	tool     sim.Tool
 	camX     int // 視野左上角的格子座標
@@ -295,6 +296,11 @@ func (g *Game) handleKeys() {
 		}
 	}
 
+	// 災難選單：原版是 Alt-D 拉下來的下拉選單（說明書 p.34）。
+	if ebiten.IsKeyPressed(ebiten.KeyAlt) && inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		g.toggleWindow(winDisaster)
+	}
+
 	// 視窗快速鍵沿用原版（說明書 p.35）。
 	ctrl := ebiten.IsKeyPressed(ebiten.KeyControl)
 	if ctrl {
@@ -341,6 +347,16 @@ func (g *Game) handleKeys() {
 	g.handleWindowKeys()
 }
 
+// fireDisaster 發動災難選單的第 i 項，然後把選單收掉。
+func (g *Game) fireDisaster(i int) {
+	if i < 0 || i >= len(disasterItems) {
+		return
+	}
+	disasterItems[i](g.world)
+	g.setMessage(trimMenu(g.txt.S(i18n.SecDisaster, i)))
+	g.win = winNone
+}
+
 func (g *Game) toggleWindow(w window) {
 	if g.win == w {
 		g.win = winNone
@@ -363,6 +379,23 @@ func (g *Game) handleWindowKeys() {
 			if inpututil.IsKeyJustPressed(k) && i < int(layerCount) {
 				g.layer = mapLayer(i)
 			}
+		}
+	case winDisaster:
+		n := len(disasterItems)
+		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+			g.disasterRow = (g.disasterRow + 1) % n
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+			g.disasterRow = (g.disasterRow + n - 1) % n
+		}
+		for i := 0; i < n; i++ {
+			if inpututil.IsKeyJustPressed(ebiten.Key1 + ebiten.Key(i)) {
+				g.disasterRow = i
+			}
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
+			inpututil.IsKeyJustPressed(ebiten.KeyKPEnter) {
+			g.fireDisaster(g.disasterRow)
 		}
 	case winBudget:
 		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {

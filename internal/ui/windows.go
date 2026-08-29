@@ -22,7 +22,21 @@ const (
 	winGraphs
 	winBudget
 	winEval
+	// winDisaster 是災難選單（原版 Alt-D，說明書 p.34）。原版是下拉選單，
+	// 這裡做成視窗，選項與順序照訊息檔第 20 段。
+	winDisaster
 )
+
+// disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
+// 原版的選單直接呼叫這六支（`res/whead.tcl:271` 起）。
+var disasterItems = []func(*sim.World){
+	(*sim.World).MakeFire,
+	(*sim.World).MakeFlood,
+	(*sim.World).MakeAirCrash,
+	(*sim.World).MakeTornado,
+	(*sim.World).MakeEarthquake,
+	(*sim.World).MakeMonster,
+}
 
 // 地圖視窗的十種全貌圖。順序與訊息檔第 10 段一致，名稱從那裡取。
 type mapLayer int
@@ -90,6 +104,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecWinMenu, 2)
 	case winEval:
 		title = g.txt.S(i18n.SecWinMenu, 4)
+	case winDisaster:
+		title = g.txt.S(i18n.SecMenu, 2)
 	}
 	g.font.Draw(dst, trimMenu(title), x+20, y+14, colOn)
 	g.font.Draw(dst, "Esc 關閉", x+w-20-g.font.Measure("Esc 關閉"), y+14, colDim)
@@ -104,7 +120,27 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawBudgetWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winEval:
 		g.drawEvalWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winDisaster:
+		g.drawDisasterWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	}
+}
+
+// drawDisasterWindow 畫災難選單。六個項目 ＋ 一列取消，名稱取自訊息檔。
+func (g *Game) drawDisasterWindow(dst *ebiten.Image, x, y, w, h int) {
+	g.font.Draw(dst, "上下鍵選擇，Enter 發動，Esc 取消", x, y, colDim)
+	for i := range disasterItems {
+		c := colDim
+		mark := "  "
+		if i == g.disasterRow {
+			c, mark = colOn, "> "
+		}
+		label := fmt.Sprintf("%s%d. %s", mark, i+1,
+			trimMenu(g.txt.S(i18n.SecDisaster, i)))
+		g.font.Draw(dst, label, x+8, y+40+i*28, c)
+	}
+	// 訊息檔第 20 段第 7 筆就是「取消」。
+	g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecDisaster, 7)),
+		x+8, y+40+len(disasterItems)*28+16, colDim)
 }
 
 // drawMapWindow 畫全市小地圖與十個圖層。

@@ -46,7 +46,7 @@
 `0`–`4` 速度、`B` 堆土機、`R` 道路、`P` 電力線、`T` 鐵軌、`Q` 質詢、
 `Shift` 加速捲動、`Esc` 關視窗、
 `Ctrl-A`／`Ctrl-B`／`Ctrl-C`／`Ctrl-E`／`Ctrl-G`／`Ctrl-H`／`Ctrl-M`／
-`Ctrl-S`／`Ctrl-U`。
+`Ctrl-S`／`Ctrl-U`、`Alt-D`（災難選單）。
 
 ### 本專案新增（原版沒有給這些工具鍵）
 
@@ -67,7 +67,21 @@
 | `Tab` 前往災區 | 沒接 | 需要「上一個訊息的座標」這個狀態 |
 | 數字鍵盤九向移動、`ScrollLock` | 沒接 | remake 用方向鍵捲動 |
 | `Y`／`N` | 沒接 | remake 沒有需要是非作答的對話框 |
-| `Alt` 選單、`F1`–`F10` 拉選單 | 沒接（`F1`–`F4` 挪去當速度別名）| remake 沒有下拉選單，功能都在視窗與快速鍵上 |
+| `Alt-S`／`Alt-O`／`Alt-W` 選單、`F1`–`F10` 拉選單 | 沒接（`F1`–`F4` 挪去當速度別名）| remake 沒有下拉選單，功能都在視窗與快速鍵上。**`Alt-D` 有接**——災難選單做成視窗 |
+| `Ctrl-P` 視窗位置、`Ctrl-R` 調整編輯窗大小 | 沒接 | 這兩個不在參考附表上，是**訊息檔第 21 段自己列的**（視窗選單）。remake 的視窗大小固定 |
+
+## 三之二、災難選單（`Alt-D`）
+
+原版是下拉選單，六個項目照訊息檔第 20 段：火災、水災、空難、龍捲風、
+地震、怪獸（第 7 筆是「取消」）。remake 做成視窗，上下鍵選、Enter 發動。
+
+六個項目直接對到 `internal/sim` 的六支，與原版的選單一一對應
+（`res/whead.tcl:271` 起：`sim MakeFire`／`MakeFlood`／`MakeAirCrash`／
+`MakeTornado`／`MakeEarthquake`／`UIMakeMonster`）。
+
+⚠ 原版的 `UIMakeMonster` 寫成 `sim MakeMonster [sim Rand 120] [sim Rand 100]`，
+但 C 那邊的 `MakeMonster()` **不吃參數**、自己挑位置——那兩次 `Rand` 是
+介面層白抽的（同 `docs/re/12` §6之五）。remake 不抽。
 
 ## 四、這條線抓到的一個真的 bug
 

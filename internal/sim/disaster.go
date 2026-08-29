@@ -247,3 +247,14 @@ func (w *World) makeMonster() {
 		w.spriteSys.MakeMonster()
 	}
 }
+
+// 玩家從災難選單觸發的六種災難。原版的選單直接呼叫這六支
+// （`res/whead.tcl:271` 起：`sim MakeFire`／`MakeFlood`／`MakeAirCrash`／
+// `MakeTornado`／`MakeEarthquake`／`UIMakeMonster`）。
+//
+// ⚠ 原版的 `UIMakeMonster` 寫成 `sim MakeMonster [sim Rand 120] [sim Rand 100]`，
+// 但 C 那邊的 `MakeMonster()` **不吃參數**、自己挑位置——那兩次 `sim Rand`
+// 是介面層白抽的，和 `docs/re/12` §6之五 講的是同一件事。這裡不抽。
+func (w *World) MakeAirCrash() { w.makeAirCrash() }
+func (w *World) MakeTornado()  { w.makeTornado() }
+func (w *World) MakeMonster()  { w.makeMonster() }
