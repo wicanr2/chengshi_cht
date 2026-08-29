@@ -9,7 +9,21 @@
 // 的事**。它不呼叫任何規則層的內部捷徑，不改參數，不給錢。
 //
 // 它不是 AI，是一份寫成程式的攻略：每年動一次手，照劇本的過關條件分四種
-// 打法。目前八個劇本過五個（達斯維利、舊金山、里約沒過）。
+// 打法。種子 1–5 的實測（每個劇本各跑五顆種子）：
+//
+//	漢堡 5/5　伯恩 5/5　東京 5/5　波士頓 5/5
+//	底特律 3/5　里約 2/5
+//	達斯維利 0/5　舊金山 0/5
+//
+// 每顆種子平均過五個，不出手是一個。
+//
+// 兩個過不了的劇本各有各的難處：
+//
+//   - **達斯維利**是 bootstrap 問題。開局 $5 000，存款三十年都在
+//     3 000–6 000 之間打轉，累積不出資本；三十年只長到 26 740，
+//     而過關要加權人口 100 000。
+//   - **舊金山**只有五年，而地震把路網打斷了。現在的鋪路策略是
+//     「從最近的路拉一條 L 形」，接不回被震斷的主幹道。
 package autoplay
 
 import (
@@ -44,6 +58,8 @@ var ScenarioGoal = [9]Goal{0, goalPop, goalPop, goalPop, goalTraffic, goalScore,
 type Player struct {
 	w    *sim.World
 	goal Goal
+	// FixedTax 不為 0 時蓋掉稅率策略，用來掃「這個劇本到底該收幾趴」。
+	FixedTax int
 }
 
 // New 建一個自動玩家。
@@ -59,42 +75,50 @@ func (p *Player) Year() { p.year() }
 // 這一版的規則：稅率隨存款調整，存款不夠就不蓋。
 func (p *Player) year() {
 	w := p.w
-	// 稅率：照劇本目標定，外加一道破產保險。
+	// 稅率是固定的，只分兩檔。
 	//
-	// 試過兩種「聰明」的控制器，都比這個死板的版本差：
-	//   - 看存款有沒有掉 → 蓋東西也算掉，達斯維利被自己的稅率掐死
-	//     （三十年只長到 2300 人）。
-	//   - 看 `CashFlow` → 八個劇本從 5/8 掉到 2/8。那個欄位在預算週期
-	//     裡才更新，一年抓一次抓到的相位不對。
-	// 留在這裡當紀錄：這一格再要改，得先想清楚讀的是哪一刻的數字。
-	switch {
-	case w.TotalFunds < 3000:
-		w.CityTax = 12
-	case p.goal == goalCrime:
+	// 這一格試過四種寫法，掃了 4%–13% 的實測結果才定下來：
+	//   - 「錢少就加稅」的保險條款（<3000 → 12%）**是有害的**。稅率在
+	//     評分公式裡是 `ProblemTable[ProbTaxes] = CityTax * 10`，
+	//     而評分是 `(256 − 問題總和/3) × 4`——12% 比 6% 直接少 80 分。
+	//     里約實測：固定 6% 通關（評分 547），加了保險條款只有 226。
+	//   - 看存款變化或 `CashFlow` 的控制器都更差，理由記在 WORKLOG。
+	// 掃出來的最佳點很平：4%–9% 之間差不多，10% 以上急速崩壞
+	// （城市萎縮），所以取中間的 6%。
+	//
+	// 追犯罪的底特律例外：它要養得起警力，收 9% 換得起。
+	if p.FixedTax != 0 {
+		w.CityTax = p.FixedTax
+	} else if p.goal == goalCrime {
 		w.CityTax = 9
-	case p.goal == goalPop && w.TotalFunds > 8000:
-		w.CityTax = 5
-	default:
-		w.CityTax = 7
+	} else {
+		w.CityTax = 6
 	}
 
 	p.clearRubble(40)
 	p.power() // 沒電就不會長，這一項排在服務前面
 
-	if w.TotalFunds > 6000 {
-		p.services()
+	// ⚠ **留準備金。** 破產一次，自動預算就撥不出警消經費
+	// （`PoliceEffect`／`FireEffect` 掉下來，評分乘 0.9 兩次），
+	// 犯罪與火災跟著失控——實測東京存款歸零那一年評分從 654 掉到 155。
+	// 蓋東西是投資，但投到見底就不是投資了。
+	const reserve = 6000
+	spare := w.TotalFunds - reserve
+	if spare <= 0 {
+		return
 	}
-	if w.TotalFunds > 5000 {
-		p.parks(4)
+	p.services()
+	p.parks(4)
+	// 一格分區 100 元，加上整地大約 150。用可動用的錢決定這一年蓋幾格，
+	// 而不是固定值——小城蓋不動大城蓋不夠。
+	n := spare / 300
+	if p.goal != goalPop && n > 6 {
+		n = 6
 	}
-	// ⚠ 追人口的劇本門檻要低。達斯維利開局只有 $5 000，門檻設在 8 000
-	// 的話它**一格分區都不會蓋**——三十年下來還是個村莊（17 800 人，
-	// 目標是 100 000）。小城要的是投資，不是存錢。
-	if p.goal == goalPop && w.TotalFunds > 3000 {
-		p.grow(16)
-	} else if w.TotalFunds > 12000 {
-		p.grow(6)
+	if n > 20 {
+		n = 20
 	}
+	p.grow(n)
 }
 
 // power 檢查有沒有分區沒電；超過一成就補一座燃煤電廠並拉線接上。
@@ -103,7 +127,7 @@ func (p *Player) year() {
 // 直接設成 −500）。自動玩家一直放新分區卻沒發電量的話，放再多都是空的。
 func (p *Player) power() {
 	w := p.w
-	if w.TotalFunds < 5000 {
+	if w.TotalFunds < 9000 {
 		return
 	}
 	zones, dark := 0, 0
@@ -203,13 +227,18 @@ func (p *Player) clearRubble(budget int) {
 // services 在犯罪最高、又沒有警局覆蓋的地方蓋警局；火災風險最高的地方蓋消防隊。
 func (p *Player) services() {
 	w := p.w
-	if w.TotalFunds > 6000 {
-		// 犯罪高、警力覆蓋低的地方。
+	// 追犯罪的劇本一年蓋三座警局；其餘一座就好。底特律的犯罪均值要從
+	// 120 壓到 60 以下，一年一座十年也追不上。
+	stations := 1
+	if p.goal == goalCrime {
+		stations = 6
+	}
+	for i := 0; i < stations && w.TotalFunds > 6500; i++ {
 		p.build(sim.ToolPolice, p.bestSites(func(hx, hy int) int {
 			return int(w.CrimeMem[hx][hy])*4 - int(w.PoliceMap[hx>>2][hy>>2])
 		}, 40))
 	}
-	if w.TotalFunds > 6000 {
+	if w.TotalFunds > 6500 {
 		// 有東西可燒、消防覆蓋低的地方。用人口密度當「有東西可燒」的代理。
 		p.build(sim.ToolFireStation, p.bestSites(func(hx, hy int) int {
 			return int(w.PopDensity[hx][hy])*2 - int(w.FireStMap[hx>>2][hy>>2])
@@ -365,7 +394,7 @@ func (p *Player) parks(n int) {
 	w := p.w
 	for i := 0; i < n; i++ {
 		x, y, ok := p.emptyNearDevelopment()
-		if !ok || w.TotalFunds < 4000 {
+		if !ok || w.TotalFunds < 6000 {
 			return
 		}
 		w.ApplyTool(sim.ToolPark, x, y)
@@ -380,7 +409,7 @@ func (p *Player) grow(n int) {
 	w := p.w
 	sites := p.growSites()
 	for i := 0; i < n; i++ {
-		if w.TotalFunds < 1500 {
+		if w.TotalFunds < 5500 {
 			return
 		}
 		if i >= len(sites) {
@@ -469,11 +498,11 @@ func (p *Player) extendRoad() {
 		return -1
 	}
 	x, y := rx, ry
-	for x != bx && w.TotalFunds > 1500 {
+	for x != bx && w.TotalFunds > 5500 {
 		x += step(x, bx)
 		w.ApplyTool(sim.ToolRoad, x, y)
 	}
-	for y != by && w.TotalFunds > 1500 {
+	for y != by && w.TotalFunds > 5500 {
 		y += step(y, by)
 		w.ApplyTool(sim.ToolRoad, x, y)
 	}

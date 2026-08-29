@@ -24,6 +24,7 @@ func cmdPlay(args []string) {
 	noop := fs.Bool("noop", false, "不出手，只跑")
 	verbose := fs.Bool("v", false, "每年印一行狀態")
 	dbg := fs.Bool("debug", false, "印出每次動作的結果")
+	tax := fs.Int("tax", 0, "固定稅率（0 = 用策略）")
 	dir := fs.String("data", os.Getenv("SIMCITY_DATA"), "SIMCITY 1.10 目錄")
 	_ = fs.Parse(args)
 	autoplay.Debug = *dbg
@@ -55,6 +56,7 @@ func cmdPlay(args []string) {
 		}
 		w.AutoBudget = true
 		p := autoplay.New(w, autoplay.ScenarioGoal[n])
+		p.FixedTax = *tax
 		verdict, ticks := 0, 0
 		for i := 0; i < (autoplay.ScoreWait[n]+48)*16 && verdict == 0; i++ {
 			w.Frame()
