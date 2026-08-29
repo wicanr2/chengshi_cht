@@ -148,7 +148,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     `internal/assets/pgf.go`。24 個風格圖形檔（4 種顯示模式 × 6 種風格）
     全部解開，第 0 庫一律 **960 張地圖圖塊**——與 Micropolis 的 `TILE_COUNT`
     對得上，是圖塊編號的獨立佐證。
-    下一步：呈現層（`internal/ui`，Ebiten）。
+
 18. ~~軟體世界說明書轉錄~~ **操作手冊部分完成**：`docs/manual-cht/`。
     譯名表長出 118 條有一手依據的詞（工具、災難、選單、地圖圖層、預算、
     評估）。安裝步驟、密碼表與參考手冊的策略討論還沒轉錄。
@@ -161,7 +161,17 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     開視窗、真的敲鍵、真的點滑鼠，走完「開新城市 → 蓋發電廠／電線／道路／
     分區 → 四個視窗 → 查詢 → 捲動 → 存檔 → 離開 → 重開讀檔 → 劇本」，
     每一步截圖，最後用存檔內容做機械判定。
-22. 發行包、README 更新。
+22. ~~發行包、README 更新~~ **完成**：`tools/release.sh` 打 Linux 與 Windows 兩個包，
+    `tools/verify_release.sh` 驗包本身（解到乾淨目錄、從那裡執行、資料放別處）。
+    README 改寫成現況並附四張畫面。
+23. 逐刻對拍收斂：23 段裡還有 14 段有差異。要靠新的微實驗一段一段歸因，
+    不是重跑同一組參數。見 `docs/re/12-tick-parity.md`。
+24. 基本風格（`CEGADAT.PGF`）的圖形庫表。沒有表，尺寸多半寫死在 `SIMCITY.EXE`，
+    要反組譯。已知的部分見 `docs/formats/03-pgf-graphics.md` §7。
+25. 聲音：`.PSF` 解得開但還沒接到播放。
+26. macOS 版：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross
+    （有 skill `osxcross-macos-cross-build`）。
+27. 說明書剩下的章節（安裝步驟、密碼表、參考手冊的策略討論）。譯名價值低，排最後。
 
 ## 7. 現行驗證入口
 
