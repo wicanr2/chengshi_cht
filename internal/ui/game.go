@@ -103,6 +103,13 @@ type Game struct {
 	layer       mapLayer
 	budgetRow   int
 	disasterRow int
+	sysRow      int
+
+	// dataDir／style 讓系統選單換得了劇本與圖形集（見 sysmenu.go）。
+	dataDir string
+	style   string
+	// quit 由「跳出遊戲」設起來，Update 下一次回報給 Ebiten。
+	quit bool
 
 	tool     sim.Tool
 	camX     int // 視野左上角的格子座標
@@ -195,6 +202,9 @@ func (g *Game) Layout(int, int) (int, int) { return CanvasW, CanvasH }
 // ⚠ 順序不能反。玩家這一個 frame 蓋的東西要在同一個 frame 進模擬，
 // 否則「按下去到看到反應」會多一格延遲，手感會鬆。
 func (g *Game) Update() error {
+	if g.quit {
+		return ebiten.Termination
+	}
 	g.handleKeys()
 	g.handleMouse()
 	g.world.Frame()
@@ -302,9 +312,15 @@ func (g *Game) handleKeys() {
 		}
 	}
 
-	// 災難選單：原版是 Alt-D 拉下來的下拉選單（說明書 p.34）。
-	if ebiten.IsKeyPressed(ebiten.KeyAlt) && inpututil.IsKeyJustPressed(ebiten.KeyD) {
-		g.toggleWindow(winDisaster)
+	// 選單：原版用 Alt 拉下來（說明書 p.29–35）。
+	if ebiten.IsKeyPressed(ebiten.KeyAlt) {
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyD):
+			g.toggleWindow(winDisaster)
+		case inpututil.IsKeyJustPressed(ebiten.KeyS):
+			g.toggleWindow(winSystem)
+			g.sysRow = 0
+		}
 	}
 
 	// 視窗快速鍵沿用原版（說明書 p.35）。
@@ -323,6 +339,10 @@ func (g *Game) handleKeys() {
 			// 原版：Ctrl-C 關閉前視窗、Ctrl-H 隱藏前視窗。
 			// 本專案的視窗只有開／關兩態，兩個鍵做同一件事。
 			g.win = winNone
+		case inpututil.IsKeyJustPressed(ebiten.KeyL):
+			g.load()
+		case inpututil.IsKeyJustPressed(ebiten.KeyX):
+			g.quit = true
 		case inpututil.IsKeyJustPressed(ebiten.KeyE):
 			// 原版：Ctrl-E 打開編輯視窗。這裡的地圖本身就是編輯視窗，
 			// 所以等同「把蓋在上面的視窗收掉」。
@@ -386,6 +406,8 @@ func (g *Game) handleWindowKeys() {
 				g.layer = mapLayer(i)
 			}
 		}
+	case winSystem, winScenario, winStyle:
+		g.handleSysMenuKeys()
 	case winDisaster:
 		n := len(disasterItems)
 		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {

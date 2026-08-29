@@ -25,6 +25,11 @@ const (
 	// winDisaster 是災難選單（原版 Alt-D，說明書 p.34）。原版是下拉選單，
 	// 這裡做成視窗，選項與順序照訊息檔第 20 段。
 	winDisaster
+	// winSystem 是系統選單（原版 Alt-S，說明書 p.29–31），
+	// winScenario／winStyle 是它的兩個副選單。見 sysmenu.go。
+	winSystem
+	winScenario
+	winStyle
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -106,6 +111,12 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecWinMenu, 4)
 	case winDisaster:
 		title = g.txt.S(i18n.SecMenu, 2)
+	case winSystem:
+		title = g.txt.S(i18n.SecMenu, 0)
+	case winScenario:
+		title = g.txt.S(i18n.SecSysMenu, 5)
+	case winStyle:
+		title = g.txt.S(i18n.SecSysMenu, 3)
 	}
 	g.font.Draw(dst, trimMenu(title), x+20, y+14, colOn)
 	g.font.Draw(dst, "Esc 關閉", x+w-20-g.font.Measure("Esc 關閉"), y+14, colDim)
@@ -122,6 +133,20 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawEvalWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winDisaster:
 		g.drawDisasterWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
+	case winSystem, winScenario, winStyle:
+		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
+	}
+}
+
+// drawSysMenu 畫系統選單與它的兩個副選單。三個共用同一套排版與游標。
+func (g *Game) drawSysMenu(dst *ebiten.Image, x, y int) {
+	g.font.Draw(dst, "上下鍵選擇，Enter 確定，Esc 取消", x, y, colDim)
+	for i := 0; i < g.sysMenuLen(); i++ {
+		c, mark := colDim, "  "
+		if i == g.sysRow {
+			c, mark = colOn, "> "
+		}
+		g.font.Draw(dst, mark+g.sysMenuLabel(i), x+8, y+40+i*28, c)
 	}
 }
 

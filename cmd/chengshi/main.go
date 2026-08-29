@@ -144,6 +144,8 @@ func main() {
 		g.LookAt(demoX+6, demoY+6)
 	}
 	g.SetSavePath(*save)
+	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
+	g.SetDataDir(*data, *style)
 	g.ShowScenarioBrief()
 	if *win != "" {
 		if !g.OpenWindow(*win) {
