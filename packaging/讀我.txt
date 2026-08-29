@@ -27,8 +27,8 @@ Linux：
 
 三、常用參數
 
-    -style   城市風格：asia 古代亞洲／medi 中世紀／west 西部拓荒／
-             fusa 未來美國／feur 未來歐洲／moon 月球殖民地
+    -style   城市風格：base 基本（預設）／asia 古代亞洲／medi 中世紀／
+             west 西部拓荒／fusa 未來美國／feur 未來歐洲／moon 月球殖民地
     -scenario N   直接開第 N 個悲情城市（1–8）
     -load 檔案    讀一個 .cty 城市檔
     -save 檔案    Ctrl-S 的存檔位置

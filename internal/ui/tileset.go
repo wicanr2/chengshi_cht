@@ -32,23 +32,44 @@ var graphicsDirs = []struct {
 	dir  string
 	ext  string
 	tile int
+	bpp  int
 }{
-	{"CEGA", ".PGF", 16},
-	{"cega", ".pgf", 16},
-	{"MONO", ".PGF", 16},
-	{"sega", ".pgf", 8},
-	{"mcga", ".pgf", 8},
+	{"CEGA", ".PGF", 16, 4},
+	{"cega", ".pgf", 16, 4},
+	{"MONO", ".PGF", 16, 1},
+	{"sega", ".pgf", 8, 4},
+	{"mcga", ".pgf", 8, 8},
 }
+
+// StyleBase 是「沒有資料片的原始城市外觀」。
+//
+// 它的圖形檔叫 <模式>DAT.PGF，版面與六個風格檔不一樣（沒有圖形庫表，
+// 表是行內的），所以走另一條解析路徑。見 internal/assets/pgfbase.go。
+const StyleBase = "base"
 
 // LoadTileSet 從 DOS 1.10 的目錄讀一組圖形。
 //
-// style 是六個前綴之一（asia／medi／west／fusa／feur／moon）。
+// style 是六個資料片前綴之一（asia／medi／west／fusa／feur／moon），
+// 或 StyleBase（基本外觀）。
 func LoadTileSet(dataDir, style string) (*TileSet, error) {
 	var lastErr error
 	for _, g := range graphicsDirs {
 		dir := filepath.Join(dataDir, g.dir)
 		if _, err := os.Stat(dir); err != nil {
 			continue
+		}
+		if style == StyleBase {
+			raw, err := readAnyCase(dir, g.dir+"dat"+g.ext)
+			if err != nil {
+				lastErr = err
+				continue
+			}
+			pgf, err := assets.LoadPGFBase(raw, g.tile, g.bpp)
+			if err != nil {
+				lastErr = err
+				continue
+			}
+			return buildTileSet(pgf)
 		}
 		// 檔名是 <風格><模式>.PGF，例如 ASIACEGA.PGF、asiamcga.pgf。
 		// 大小寫在兩批發行裡不一致，所以逐一比對而不是拼字串。
@@ -150,6 +171,7 @@ func (t *TileSet) TileImage(n int) *ebiten.Image {
 // 電腦玩家那篇回顧提到資料片系列叫「古城風情系列」與「回到未來系列」，
 // 那是**資料片的商品名**不是各風格的名字，不能拿來當譯名。
 var styleNameZH = map[string]string{
+	"基本":             "基本",
 	"Ancient Asia":   "古代亞洲",
 	"Medieval Times": "中世紀",
 	"Wild West":      "西部拓荒",
@@ -164,4 +186,19 @@ func StyleNameZH(s string) string {
 		return z
 	}
 	return s
+}
+
+// readAnyCase 不分大小寫地讀一個檔。兩批 DOS 發行的檔名大小寫不一致
+// （`CEGADAT.PGF` 與 `mcgadat.pgf`），拼字串比對會漏掉一半。
+func readAnyCase(dir, name string) ([]byte, error) {
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range ents {
+		if strings.EqualFold(e.Name(), name) {
+			return os.ReadFile(filepath.Join(dir, e.Name()))
+		}
+	}
+	return nil, fmt.Errorf("%s 底下沒有 %s", dir, name)
 }

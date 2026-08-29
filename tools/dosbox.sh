@@ -26,10 +26,10 @@ docker run --rm \
   --network none \
   -v "$ROOT/workplace/dos110:/orig:ro" \
   -v "$ROOT/workplace/dosbox:/out" \
-  -v "$ROOT/tools/dosbox/dosbox.conf:/conf/dosbox.conf:ro" \
+  -v "$ROOT/${CONF:-tools/dosbox/dosbox-x.conf}:/conf/dosbox.conf:ro" \
   -v "$ACTIONS:/conf/actions.txt:ro" \
   -v "$ROOT/tools/dosbox_inner.sh:/conf/inner.sh:ro" \
   -e HOME=/tmp -e SECS="$SECS" -e PREFIX="$PREFIX" -e RUN="${RUN:-}" \
   -e CFG_SOUND="${CFG_SOUND:-}" -e CFG_SCREEN="${CFG_SCREEN:-}" \
-  -e MACHINE="${MACHINE:-}" \
-  simcity-dosbox:0.74 bash /conf/inner.sh
+  -e MACHINE="${MACHINE:-}" -e DOSBOX_BIN="${DOSBOX_BIN:-dosbox-x}" \
+  "${IMAGE:-simcity-dosbox:x}" bash /conf/inner.sh

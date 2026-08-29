@@ -173,8 +173,10 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     README 改寫成現況並附四張畫面。
 23. 逐刻對拍收斂：23 段裡還有 14 段有差異。要靠新的微實驗一段一段歸因，
     不是重跑同一組參數。見 `docs/re/12-tick-parity.md`。
-24. 基本風格（`CEGADAT.PGF`）的圖形庫表。沒有表，尺寸多半寫死在 `SIMCITY.EXE`，
-    要反組譯。已知的部分見 `docs/formats/03-pgf-graphics.md` §7。
+24. ~~基本風格（`CEGADAT.PGF`）的圖形庫表~~ **完成**：表是**行內**的，
+    每個庫前面三個位元組是「平面數 ＋ u16 長度」，每張圖前面四個位元組是
+    寬高。四個模式的檔案都解得開（`docs/formats/03-pgf-graphics.md` §8、
+    `internal/assets/pgfbase.go`）。`-style base` 現在是預設值。
 25. 聲音：**容器格式已解**（`docs/formats/05-psf-sound.md`、`internal/assets/psf.go`）——
     九份檔案各切成八段 4 位元 PCM。**還缺兩件事**才能接進遊戲：
     每一段對應哪一個事件、取樣率是多少。DOSBox 實跑的設施已經做好

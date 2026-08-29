@@ -68,9 +68,9 @@ do_until() {
     shot _after
     local d
     d=$(diffpct "$OUT/_before.png" "$OUT/_after.png")
-    if [ "$d" -ge "$need" ]; then pass "$label（${d}‰）"; return 0; fi
+    if [ "$d" -ge "$need" ]; then pass "$label（${d} 像素）"; return 0; fi
   done
-  fail "$label 沒生效（畫面只差 ${d}‰，要 ${need}‰）"
+  fail "$label 沒生效（畫面只差 ${d} 個像素，要 ${need}）"
   return 0
 }
 
@@ -118,9 +118,11 @@ alive || fail "開場就崩了"
 # 而時鐘一走、煙囪一冒，畫面自己就會變，判準就廢了。
 key F1
 
-# 門檻是量出來的，不是照面積算的：一塊 3×3 的分區佔畫面 12‰，但剛劃
-# 好的空地和周圍的泥土幾乎同色，真正變色的只有外框和中間那個字母 ——
-# 實測 3‰。按面積抓門檻會把蓋成功的判成失敗。
+# 門檻是量出來的，不是照面積算的：一塊 3×3 的分區佔 9216 個像素，但剛劃
+# 好的空地和周圍的泥土幾乎同色，真正變色的只有外框和中間那個字母，
+# 實測兩千出頭。而且**換一種城市外觀數字就會變**——基本外觀的電線又細
+# 又暗，一整條四格只改一千個像素上下，古代亞洲的水路則明顯得多。
+# 所以門檻取「明顯大於 0、明顯小於實測值」的數量級，不追求貼合。
 # 這些門檻只有在遊戲暫停時才成立（時鐘與煙囪動畫都停著，雜訊是 0）。
 build_plant() { key 7; click $((FX+1)) $((FY+1)); }
 build_wire()  { key w; drag $((FX+4)) $((FY+1)) $((FX+7)) $((FY+1)); }
@@ -130,13 +132,13 @@ build_road()  { key r; drag $((FX+4)) $((FY+6)) $((FX+11)) $((FY+6)); }
 build_elec()  { key w; drag $((FX+4)) $((FY+6)) $((FX+11)) $((FY+6)); }
 build_com()   { key 2; click $((FX+6)) $((FY+8)); }
 
-do_until 10 "蓋發電廠"       build_plant
-do_until  3 "拉電線到住宅區" build_wire
-do_until  1 "電線轉折"       build_drop
-do_until  2 "劃住宅區"       build_res
-do_until  3 "鋪道路"         build_road
-do_until  3 "在路上拉電線"   build_elec
-do_until  2 "劃商業區"       build_com
+do_until 4000 "蓋發電廠"       build_plant
+do_until  150 "拉電線到住宅區" build_wire
+do_until   20 "電線轉折"       build_drop
+do_until  400 "劃住宅區"       build_res
+do_until  300 "鋪道路"         build_road
+do_until  150 "在路上拉電線"   build_elec
+do_until  400 "劃商業區"       build_com
 shot 02-蓋好
 key F4   # 恢復最快速度
 
@@ -149,7 +151,7 @@ close_window() {
   for i in $(seq 1 12); do
     key Escape
     shot _tmp
-    [ "$(diffpct "$OUT/02-蓋好.png" "$OUT/_tmp.png")" -lt 120 ] && return 0
+    [ "$(diffpct "$OUT/02-蓋好.png" "$OUT/_tmp.png")" -lt 90000 ] && return 0
   done
   fail "視窗關不掉"
 }
@@ -157,7 +159,7 @@ open_window() { # 快速鍵 截圖名 說明
   for i in $(seq 1 6); do
     key "$1"; shot "$2"
     local d; d=$(diffpct "$OUT/02-蓋好.png" "$OUT/$2.png")
-    if [ "$d" -ge 300 ]; then pass "$3 開起來了（${d}‰）"; close_window; return 0; fi
+    if [ "$d" -ge 400000 ]; then pass "$3 開起來了（${d} 像素）"; close_window; return 0; fi
   done
   fail "$3 沒開"
   close_window
@@ -171,7 +173,7 @@ open_window "ctrl+u" 06-評估   "評估視窗"
 echo "== 第三段：查詢與捲動 =="
 key q; click $((FX+1)) $((FY+1)); sleep 0.5; shot 07-查詢
 key 1
-do_until 250 "方向鍵捲動" xdotool key --clearmodifiers --repeat 30 --repeat-delay 30 Right
+do_until 200000 "方向鍵捲動" xdotool key --clearmodifiers --repeat 30 --repeat-delay 30 Right
 shot 08-捲動後
 
 echo "== 第四段：存檔 =="
@@ -211,7 +213,7 @@ fi
 echo "== 第六段：劇本（另一種風格）=="
 run_game -scenario 5 -style asia
 sleep 1; shot 11-劇本簡介
-do_until 200 "劇本簡介關得掉" key space
+do_until 150000 "劇本簡介關得掉" key space
 shot 12-劇本城市
 alive || fail "劇本崩了"
 stop_game

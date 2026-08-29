@@ -224,6 +224,28 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 		t.Fatalf("存出 %d 位元組，原版格式是 %d", len(raw), sim.CityFileSize1x1)
 	}
 
+	// 地圖的 round-trip 要在**序列化這一層**比，不能比 LoadCity 的結果。
+	//
+	// LoadCity 照原版走 DoSimInit，而 DoSimInit 裡有一次
+	// MapScan(0, WORLD_X)（s_sim.c 的載入路徑就是這樣），那一次掃描會抽
+	// 亂數、可能長出或改掉一格。拿它跟存檔前的地圖比，大約每五次會
+	// 掉一次「地圖有 1 格對不上」——看起來像存檔壞了，其實是模擬跑了一步。
+	back, err := sim.ParseCityFile(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	diff := 0
+	for x := 0; x < sim.WorldX; x++ {
+		for y := 0; y < sim.WorldY; y++ {
+			if back.Map[x][y] != w.Map[x][y] {
+				diff++
+			}
+		}
+	}
+	if diff != 0 {
+		t.Errorf("存出來的地圖有 %d 格與記憶體裡的不同", diff)
+	}
+
 	w2, err := game.LoadCity(path)
 	if err != nil {
 		t.Fatal(err)
@@ -236,17 +258,6 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 	if w2.CityTax != 11 {
 		t.Errorf("稅率 %d ≠ 11", w2.CityTax)
-	}
-	diff := 0
-	for x := 0; x < sim.WorldX; x++ {
-		for y := 0; y < sim.WorldY; y++ {
-			if w2.Map[x][y] != w.Map[x][y] {
-				diff++
-			}
-		}
-	}
-	if diff != 0 {
-		t.Errorf("地圖有 %d 格對不上", diff)
 	}
 	// 存檔後 MiscHis 的其餘欄位不能被清掉
 	for i := range w.MiscHis {

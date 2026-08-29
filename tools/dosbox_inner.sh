@@ -35,7 +35,7 @@ export SDL_DISKAUDIOFILE="/out/$PREFIX.raw"
 export SDL_DISKAUDIODELAY=46
 rm -f "$SDL_DISKAUDIOFILE"
 
-dosbox -conf /tmp/dosbox.conf >"/out/$PREFIX.log" 2>&1 &
+"${DOSBOX_BIN:-dosbox-x}" -conf /tmp/dosbox.conf >"/out/$PREFIX.log" 2>&1 &
 D=$!
 START=$(date +%s%3N)
 

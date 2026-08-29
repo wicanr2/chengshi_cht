@@ -22,9 +22,13 @@ import (
 // 從原始碼直接跑的話會是 dev。
 var version = "dev"
 
-// 六種城市風格。前綴是原版檔名用的，顯示名寫在 .PGF 的檔頭裡。
+// 城市風格。前綴是原版檔名用的，顯示名寫在 .PGF 的檔頭裡。
 // 中文名說明書沒有收，所以先用原名——見 translations/glossary.md 的待補。
+//
+// base 是「沒有資料片的原始外觀」，圖形檔叫 <模式>DAT.PGF，
+// 版面與六個資料片不一樣（見 internal/assets/pgfbase.go）。
 var styles = map[string]string{
+	"base": "基本",
 	"asia": "Ancient Asia",
 	"medi": "Medieval Times",
 	"west": "Wild West",
@@ -35,7 +39,7 @@ var styles = map[string]string{
 
 func main() {
 	data := flag.String("data", "", "解開的 SIMCITY 1.10 目錄（裡面要有 CEGA/、mcga/、DATA/）")
-	style := flag.String("style", "asia", "城市風格：asia／medi／west／fusa／feur／moon")
+	style := flag.String("style", "base", "城市風格：base 基本／asia／medi／west／fusa／feur／moon")
 	seed := flag.Int("seed", 0, "地形亂數種子（0 = 隨機）")
 	scen := flag.Int("scenario", 0, "載入第幾個悲情城市（1–8，0 = 新城市）")
 	load := flag.String("load", "", "讀取一個城市檔（.cty，原版格式）")
