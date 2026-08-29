@@ -417,3 +417,21 @@ DMA page register、PIC 遮罩與 `int 15h AX=91F0h`——**是 DMA 驅動的卡
 `sub_D956(8,8)` 是音量（`AH=0Eh`），不是速率。整份執行檔沒有一次
 `out 40h`，所以「PIT 中斷餵樣本」可以排除。下一個入口是 `_InitSounds`
 （符號表：模組 0x23 位移 `0x02e4`）與 `sub_DD83` 的命令碼表。
+
+### 同日續六 — 取樣率的參數找到了，單位還缺
+
+初始化在映像 `0xCC20`：先 `int 1Ah AH=81h` 問 Tandy 音效 BIOS（答 `AX=0C4h`
+就走 Tandy、回傳裝置碼 2），否則裝 Sound Master 驅動、回傳 3。
+**這就是 `PlaySample` 裡 `byte_29A7` 的來源**（3 ＝ Sound Master、2 ＝ Tandy）。
+
+遊戲對驅動只設三樣：腳位（`sub_D5D2`：1 → DMA 2／IRQ 3／page 83h，
+3 → DMA 6／IRQ 7／page 82h）、音量（`sub_D956(12,12)`）、
+以及 `sub_D622(0x14)` → `sub_D79B`，後者把 `dx` 拆成兩半以命令 `AH=04h`／`05h`
+送出——**一個 16 位元參數，值 20**。全套驅動掃下來只有這一個速率型參數。
+
+單位查不出來（第三方卡的命令集，沒有規格）。若 20 是除數，配上量到的
+5300–5450 Hz 反推卡上時脈約 108 kHz。**不往下猜。**
+
+順帶：字串表裡音效檔名只有一個 `sounddat.psf`，緊鄰 `message.ptf`／
+`monodat.pgf`／`Classic`／`DATA`——像是基本組的檔名記錄。這是
+「兩份 `SOUNDDAT.PSF` 哪一份被讀」的線索，但路徑怎麼組還沒讀，不下結論。

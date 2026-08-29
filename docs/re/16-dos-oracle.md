@@ -522,8 +522,33 @@ if ((attr == 6 || attr == 7) && firstTime && msg != 32) PlaySound(3);
   透過 `sub_DD83`（`AH` ＝ 命令、`AL` ＝ 資料）設定。
 
 所以取樣率的常數在**初始化**那一段，不在播放那一段。
-下一個入口：`_InitSounds`（符號表有，模組 0x23 位移 `0x02e4`）與
-`sub_DD83` 的命令碼表，找 `AH` ＝ 設定取樣率的那個命令。
+
+初始化找到了，在映像 `0xCC20`：
+
+```
+mov ah,81h / int 1Ah        ; 問 Tandy 音效 BIOS
+cmp ax,0C4h / jnz ...       ; 答得出來 → 走 Tandy，回傳裝置碼 2
+...
+call sub_D338               ; 裝 Sound Master 驅動
+mov ax,14h / push ax / call sub_D622    ; ← 唯一一個速率型參數：20
+mov ax,1  / push ax / call sub_D5A8
+mov ax,0Ch / push ax / push ax / call sub_D956   ; 音量 12／12
+mov ax,3 / retf             ; 回傳裝置碼 3
+```
+
+這同時解釋了 `PlaySample` 裡的 `byte_29A7`：**3 ＝ Sound Master、2 ＝ Tandy**，
+值就是這支初始化的回傳碼。
+
+`sub_D622(0x14)` → `sub_D79B`，而 `sub_D79B` 把 `dx` 拆成兩半，
+以命令 `AH=04h`（低位元組）與 `AH=05h`（高位元組）送給卡：
+**一個 16 位元參數，遊戲設 20。** 掃過整套驅動，遊戲只設三樣東西——
+裝置腳位（`sub_D5D2`：1 → DMA 2／IRQ 3／page port 83h，3 → DMA 6／IRQ 7／page port 82h）、
+音量、以及這個 20。**所以 20 就是取樣率那個參數**，剩下的是它的單位。
+
+單位查不出來：那是第三方音效卡的命令集，手上沒有規格。
+如果 20 是除數，配上量到的 5300–5450 Hz 反推卡上時脈約 108 kHz。
+**這一步不要用猜的往下寫。** 下一個入口是 Covox Sound Master 的
+程式設計文件，或一個會模擬它的環境。
 
 另外兩件事順帶釘死：
 
