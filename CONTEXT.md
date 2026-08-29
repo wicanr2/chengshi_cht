@@ -115,8 +115,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | 問題 | 現況 | 要怎麼定案 |
 |---|---|---|
 | 規則層扣款用 Micropolis 的 `CostOf[]`，顯示用原版訊息檔 | 兩者只差體育館（3000／5000）與海港（5000／3000）。顯示已改用訊息檔；扣款還沒改，因為 `CostOf[]` 是逐次元對拍的基準，動它要重跑對拍。 | 改扣款並重跑 `docs/re/12` 的三層對拍 |
-| `.PGF` 每張圖那四個位元組的表頭 | 多半是繪製偏移或裁切框 | 比對同一張圖在不同風格的值，或反組譯繪圖常式 |
-| MCGA／CEGA 圖形檔尾端約 9 KB 的資料 | 看起來仍是像素值 | 同上 |
+| `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
 
 ## 6. 現行工作清單
@@ -194,11 +193,14 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     寬高。四個模式的檔案都解得開（`docs/formats/03-pgf-graphics.md` §8、
     `internal/assets/pgfbase.go`）。`-style base` 現在是預設值。
 25. 聲音：**容器格式已解**（`docs/formats/05-psf-sound.md`、`internal/assets/psf.go`）——
-    九份檔案各切成八段 4 位元 PCM。**還缺事件對應與取樣率**。
-    DOSBox-X 的 `pcspeaker=impulse` 錄得到四種可重現的長度並對得到具體動作，
-    但只有一段比對得上（`docs/re/16-dos-oracle.md` §4）。剩下的路：
-    找一份帶 `tdy\` 圖形檔的 1.10 副本走 Tandy DAC，或反組譯
-    `SIMCITY.EXE` 的發聲程式。**在對出來之前不接進遊戲**。
+    九份檔案各切成八段 4 位元 PCM。**還缺事件對應與取樣率**，而且
+    **DOSBox 這條路已經走到底、問不出答案**：`Sound: I`（內建喇叭）放的是
+    程式合成的嗶聲，不是這八段資料——換成 MOON 的音效檔（第 4、5 段長度
+    差 1.7～2 倍）錄到的聲音逐取樣相同（相關 0.99／0.89／0.96）。
+    八段 PCM 只走 DAC，而 Covox Sound Master 沒有模擬器、Tandy 缺 `tdy\`
+    圖形檔。見 `docs/re/16-dos-oracle.md` §4。剩下的路：帶 `tdy\` 的副本、
+    會模擬 Sound Master 的環境，或脫殼反組譯 `SIMCITY.EXE`（檔案裡有
+    明文符號表可以對函式名）。**在對出來之前不接進遊戲**。
 26. ~~macOS 版~~ **完成**：`docker/osxcross.Dockerfile` ＋ `tools/build-mac.sh`，
     arm64 與 x86_64 各編一次再 lipo 成 universal，附靜態驗收（雙架構、
     arm64 的 ad-hoc 簽章、只相依系統庫、含得到中文字串）。`.app` 未簽名，

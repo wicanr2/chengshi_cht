@@ -17,6 +17,11 @@ fi
 if [ -n "${CFG_SCREEN:-}" ]; then
   sed -i "s/^Screen Mode: .*/Screen Mode: $CFG_SCREEN/" /tmp/game/SIMCITY.CFG
 fi
+# 換圖形風格會連音效檔一起換（WESTCEGA → DATA/WEST_SND.PSF）。
+# 這是「同一個動作、不同長度的音效」預測實驗的開關。
+if [ -n "${CFG_GFX:-}" ]; then
+  sed -i "s/^Graphics Set: .*/Graphics Set: $CFG_GFX/" /tmp/game/SIMCITY.CFG
+fi
 head -5 /tmp/game/SIMCITY.CFG
 
 cp /conf/dosbox.conf /tmp/dosbox.conf
