@@ -1,6 +1,7 @@
 # 11 — 十六相位主迴圈
 
-**推論等級：已確認（讀出來的部分）／未驗收（整刻對拍尚未對齊）**。
+**推論等級：已確認**（空城與 Dullsville 兩份逐 frame 對拍各 8000/8000，
+見 [`12-tick-parity.md`](12-tick-parity.md)）。
 日期 2026-08-29。接線：`internal/sim/simulate.go`。
 
 ## 一、一刻分成十六個相位
@@ -65,7 +66,8 @@ SetValves → ClearCensus → MapScan(全圖) → DoPowerScan → NewPower = 1
 `CityEvaluation` 走完整路徑（而不是 `EvalInit`），
 而那一次評分會消耗約 650 個亂數。這對整刻對拍是關鍵細節。
 
-## 五、還沒實作
+## 五、相位 10 的訊息系統
 
-`SendMessages()`（相位 10）是空的。訊息系統在 `s_msg.c`，
-包含 `CheckGrowth`（人口里程碑）與劇本勝敗判定（`DoScenarioScore`）。
+`SendMessages()` 實作在 `internal/sim/message.go`（機制在
+[`14-messages.md`](14-messages.md)），包含 `CheckGrowth`（人口里程碑）
+與劇本勝敗判定（`DoScenarioScore`）。

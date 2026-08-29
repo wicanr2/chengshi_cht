@@ -43,6 +43,12 @@ puts stdout "CHK [sim Mem LandValueMem 30 25] [sim Mem PopDensity 30 25] [sim Me
 puts stdout "INIT [sim Fcycle] [sim Scycle] [sim Funds]"
 puts stdout "R0 [sim Rand] [sim Rand] [sim Rand] [sim Rand]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CP0 [llength $_m] [join $_m ,]"
-for {set i 0} {$i < 8000} {incr i} { sim Frame 1 ; puts stdout "F $i [sim Fcycle] [sim Scycle] [sim Valves] [sim Rand] [sim Rand] [sim Rand] [sim Rand] [sim FrameStats]" ; if {$i < 120} { puts stdout "S $i ; [sim Sprites]" } }
+# ⚠ 逐 frame 的資料**寫檔案，不走 pty**（drive.py 收尾時把 /out/lines.txt
+# 併回結果）。走 pty 會在某些輸出組合下卡到一行都不吐；走檔案沒有這問題，
+# 而且快得多。原因見 docs/re/12 §六之九。
+set fh [open /out/lines.txt w]
+for {set i 0} {$i < 8000} {incr i} { sim Frame 1 ; puts $fh "F $i [sim Fcycle] [sim Scycle] [sim Valves] [sim Rand] [sim Rand] [sim Rand] [sim Rand] [sim FrameStats]" ; puts $fh "MH $i [sim MapHash]" ; if {$i < 120} { puts $fh "S $i ; [sim Sprites]" } }
+close $fh
+puts stdout "LOOPDONE"
 puts stdout "END [sim Fcycle] [sim Scycle] [sim Funds]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CPEND [llength $_m] [join $_m ,]"

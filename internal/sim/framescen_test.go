@@ -105,7 +105,7 @@ const frameScenBudget = 8000
 // 尾端。判準來自 `spriteparity_test.go`：它逐 frame 比對每一隻精靈的十八個
 // 欄位，前插的話第 2 個 frame 就對不上（2/400），尾端則對到 54/400。
 // 那是比「抽樣次數對不對」強得多的證據。
-const frameTokyoBudget = 46
+const frameTokyoBudget = 1015
 
 // probMismatch 比對城市評估的分數與問題表；相同回空字串。
 //
@@ -343,6 +343,14 @@ func runScenarioParity(t *testing.T, dir, file string, sc Scenario, budget int) 
 		if f.State != 0 && w.Rand.State() != f.State {
 			t.Logf("第 %d 個 frame：抽樣次數對得上，但狀態 %d ≠ 原版 %d",
 				f.I, w.Rand.State(), f.State)
+			break
+		}
+		// 地圖雜湊放在最後：抽樣次數、Scycle、閥門、狀態都對上了還差，
+		// 就是「不抽亂數的那條路徑」偏掉——例如怪獸拆房子。
+		if f.HasMapHash && mapHash(w) != f.MapHash {
+			t.Logf("第 %d 個 frame 的**地圖**對不上：我們 %d、原版 %d"+
+				"（抽樣次數、Scycle、閥門、亂數狀態全都是對的）",
+				f.I, mapHash(w), f.MapHash)
 			break
 		}
 		matched++

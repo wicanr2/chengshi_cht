@@ -9,11 +9,10 @@ package sim
 
 // SpriteHooks 是精靈系統的介面。
 //
-// **精靈（w_sprite.c）還沒實作。** 它包含怪獸、龍捲風、飛機、船、火車、
-// 直昇機、爆炸與起火點——這些是**規則**而不是呈現層，儘管檔名前綴是 w_
-// （機制筆記的原始碼地圖已更正過那個誤判）。
-// 在它實作出來之前，這個介面讓規則層可以照原版的位置呼叫，
-// 而預設實作什麼都不做——**這是已知差異，記在 docs/re/07 §5。**
+// 精靈（w_sprite.c）包含怪獸、龍捲風、飛機、船、火車、直昇機、爆炸與起火點
+// ——這些是**規則**而不是呈現層，儘管檔名前綴是 w_（機制筆記的原始碼地圖
+// 已更正過那個誤判）。實作在 sprite*.go；`Sprites` 留 nil 時走 noSprites
+// 空實作，讓不關心精靈的規則層測試不必建整套系統。
 type SpriteHooks interface {
 	GenerateShip()
 	GeneratePlane(x, y int)
@@ -28,6 +27,9 @@ type SpriteHooks interface {
 	// DestroyAll 把場上的精靈全部收掉。載入城市時要做（w_sprite.c:384
 	// DestroyAllSprites，由 InitWillStuff 呼叫）。
 	DestroyAll()
+	// SetCopterDest 把直昇機的目的地改到塞車點。只有在場上有直昇機、
+	// 而且它處於 control == -1（自動巡邏）時才動（s_traf.c:126）。
+	SetCopterDest(x, y int)
 }
 
 // noSprites 是預設的空實作。
@@ -42,6 +44,7 @@ func (noSprites) MakeExplosion(x, y int)    {}
 func (noSprites) HasShip() bool             { return false }
 func (noSprites) BoatDistance(x, y int) int { return 99999 }
 func (noSprites) DestroyAll()               {}
+func (noSprites) SetCopterDest(x, y int)    {}
 
 func (w *World) sprites() SpriteHooks {
 	if w.Sprites == nil {
@@ -183,8 +186,8 @@ func (w *World) doRoad() {
 
 // doBridge 開關吊橋。s_sim.c:813
 //
-// ⚠ 開關的條件靠 `GetBoatDis()`——場上沒有船時原版回 99999，
-// 所以橋會一直保持關閉。精靈還沒實作，行為等同「永遠沒有船」。
+// ⚠ 開關的條件靠 `GetBoatDis()`——場上沒有船時原版回 99999，橋保持關閉。
+// 精靈系統沒接上時（`Sprites` 是 nil）走 noSprites，行為等同「永遠沒有船」。
 func (w *World) doBridge() bool {
 	hDx := [7]int{-2, 2, -2, -1, 0, 1, 2}
 	hDy := [7]int{-1, -1, 0, 0, 0, 0, 0}

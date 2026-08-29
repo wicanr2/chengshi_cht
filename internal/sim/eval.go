@@ -21,9 +21,9 @@ type Evaluation struct {
 	// ⚠ 它**必須跨評估保留**：原版是在 `VoteProblems()` **之後**才清零的
 	// （s_eval.c:169 起），而投票迴圈的越界讀取 `ProblemTable[10]` 讀到的
 	// 正好是 `ProblemTaken[0]`——也就是**上一輪**的值。見下面 voteProblems。
-	ProblemTaken    [ProbNum]bool
-	ProblemOrder    [4]int // 前四大問題的索引；7 代表「沒問題」
-	TrafficAverage  int
+	ProblemTaken   [ProbNum]bool
+	ProblemOrder   [4]int // 前四大問題的索引；7 代表「沒問題」
+	TrafficAverage int
 }
 
 // 問題索引。s_eval.c:163-169

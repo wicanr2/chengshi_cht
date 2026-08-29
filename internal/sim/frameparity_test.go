@@ -55,6 +55,10 @@ type frameCP struct {
 	// 精靈那一側分岔時，這個直接指出是哪一型多抽的。
 	HasSprDraws bool
 	SprDraws    [9]int
+	// MapHash 是整張地圖的 FNV-1a（原版在 C 裡算）。地圖偏掉但抽樣次數
+	// 正常的情況——例如怪獸拆房子（Destroy 不抽亂數）——只有它抓得到。
+	HasMapHash bool
+	MapHash    uint32
 }
 
 type frameMeta struct {
@@ -109,13 +113,18 @@ func loadFrameMetaIn(t *testing.T, dir string) frameMeta {
 			}
 			nums[i] = v
 		}
-		// 三種版面，用欄數分辨：
-		//   7  基本（空城實驗）
-		//   9  基本 ＋ FrameStats（規則／精靈各抽幾次）
-		//   18 基本 ＋ FrameStats ＋ 逐型精靈的抽樣次數
-		//   21 基本 ＋ 城市評估 ＋ 投票計數
+		// 版面用欄數分辨。基本七欄之後可以接：
+		//   ＋2  FrameStats（規則／精靈各抽幾次）
+		//   ＋11 FrameStats ＋ 逐型精靈的抽樣次數
+		//   ＋14 城市評估 ＋ 投票計數
+		// 最後**可以再多一欄地圖雜湊**，所以每種版面都有 +1 的變體。
+		if n := len(nums); n == 8 || n == 10 || n == 19 || n == 22 {
+			f.HasMapHash = true
+			f.MapHash = uint32(nums[n-1])
+			nums = nums[:n-1]
+		}
 		if len(nums) != 7 && len(nums) != 9 && len(nums) != 18 && len(nums) != 21 {
-			t.Fatalf("frames.csv 的欄數 %d 不認得：%q", len(nums), ln)
+			t.Fatalf("frames.csv 的欄數 %d 不認得：%q", len(cols), ln)
 		}
 		f.I, f.Scycle = nums[0], nums[1]
 		f.Valves = [3]int{nums[2], nums[3], nums[4]}
@@ -200,6 +209,12 @@ func TestFrameParity(t *testing.T) {
 		}
 		// 原版每個 frame 之後自己抽了四次（sim Rand ×4）。
 		w.Rand.SetState(advanceRand(w.Rand.State(), 4))
+		// 地圖雜湊放最後：抽樣次數對上了還差，就是「不抽亂數的那條路徑」偏掉。
+		if f.HasMapHash && mapHash(w) != f.MapHash {
+			t.Logf("第 %d 個 frame 的**地圖**對不上：我們 %d、原版 %d（抽樣次數是對的）",
+				f.I, mapHash(w), f.MapHash)
+			break
+		}
 		matched++
 		total += f.Draws
 	}

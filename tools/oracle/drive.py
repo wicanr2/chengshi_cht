@@ -19,9 +19,14 @@ import re
 import select
 import subprocess
 import sys
+import termios
 import time
+import tty
 
 PROMPT = re.compile(rb"^sim:\s*$", re.M)
+
+# 指令行的長度上限（見 main() 裡那段註解）。留一點餘裕。
+MAX_CMD = 180
 
 
 def read_until_prompt(fd, timeout=30.0, want=1):
@@ -67,6 +72,12 @@ def main():
         cmds.append(ln)
 
     master, slave = pty.openpty()
+    # ⚠ **把 pty 切成 raw**（關掉 ICANON 與 ECHO）。
+    # 需要 pty 是因為 `sim -t` 只在 `isatty(0)` 為真時才開 REPL；
+    # 但**不需要行規則**。留著 canonical 模式的話，長的指令行會在某些
+    # 組合下整條卡住：sim 的 CPU 掉到 0（在等輸入），而下一次寫入一送出，
+    # 前一條就連同輸出一起冒出來。切成 raw 之後沒再看過這個現象。
+    tty.setraw(slave, termios.TCSANOW)
     proc = subprocess.Popen(
         ["res/sim", "-t"],
         stdin=slave, stdout=slave, stderr=subprocess.STDOUT,
@@ -91,7 +102,20 @@ def main():
                         break
             results.append({"cmd": cmd, "out": []})
             continue
-        os.write(master, (cmd + "\n").encode())
+        # ⚠ **一行不能超過 199 個字元。** oracle 的 stdin 讀取器是
+        # `w_tk.c:508 StdinProc` 的 `char line[200]` ＋ `fgets(line, 200, stdin)`：
+        # 更長的一行會被切成兩段，第一段組不成完整指令（`gotPartial = 1`）就
+        # return，而**剩下的位元組已經在 stdio 的緩衝裡、不在 fd 上**——
+        # `Tk_CreateFileHandler` 的 select 因此永遠不再說「可讀」，整個 REPL
+        # 就停在那裡（CPU 掉到 0），直到下一次寫入才把前一條連同輸出一起吐出來。
+        # 對策：太長的指令寫成檔案再 `source`，那一行只有二十幾個字元。
+        if len(cmd) > MAX_CMD:
+            side = os.path.join(os.path.dirname(out_path) or ".", "_cmd.tcl")
+            with open(side, "w", encoding="utf-8") as fh:
+                fh.write(cmd + "\n")
+            os.write(master, f"source {side}\n".encode())
+        else:
+            os.write(master, (cmd + "\n").encode())
         # 單步 800 個 frame 的那一行會跑很久，逾時放寬（可用 ORACLE_TIMEOUT 調）。
         raw = read_until_prompt(master, timeout=float(os.environ.get("ORACLE_TIMEOUT", "600")))
         text = raw.decode("utf-8", "replace")
@@ -113,6 +137,17 @@ def main():
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
         proc.kill()
+
+    # 側錄檔：Tcl 腳本可以 `set fh [open /out/lines.txt w]` 把逐 frame 的資料
+    # 寫成檔案，不走 pty。**大量逐 frame 輸出一定要走這條**——同一個迴圈
+    # （400 個 frame、含 MapHash）走 pty 會卡住不吐任何一行，走檔案 3 秒跑完。
+    # 卡住的確切機制沒查出來，但兩邊的對照很乾淨，記在 docs/re/12 §六之九。
+    side = os.path.join(os.path.dirname(out_path) or ".", "lines.txt")
+    if os.path.exists(side):
+        with open(side, encoding="utf-8", errors="replace") as fh:
+            results.append({"cmd": "<lines.txt>",
+                            "out": [ln.rstrip("\n") for ln in fh if ln.strip()]})
+        os.remove(side)
 
     with open(out_path, "w", encoding="utf-8") as fh:
         json.dump({"ok": ok,

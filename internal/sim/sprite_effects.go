@@ -283,3 +283,13 @@ func (s *spriteSystem) MakeAirCrash() {
 	}
 	s.explodeSprite(s.getSprite(SpriteAirplane))
 }
+
+// SetCopterDest 把直昇機引到塞車點。s_traf.c:126
+//
+// ⚠ 只有 `control == -1`（自動巡邏）的直昇機才會被改目的地；玩家用
+// 「直昇機目標」下過指令的那一台不受影響。
+func (s *spriteSystem) SetCopterDest(x, y int) {
+	if sp := s.getSprite(SpriteCopter); sp != nil && sp.Control == -1 {
+		sp.DestX, sp.DestY = x, y
+	}
+}

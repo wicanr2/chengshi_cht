@@ -62,13 +62,12 @@
 
 震動次數是 `Rand(700) + 300`，每次擲一點；四分之三變廢墟、四分之一變火。
 
-## 五、還沒實作
+## 五、靠精靈的三種災難
 
-| 項目 | 為什麼 |
-|---|---|
-| 空難 `MakeAirCrash` | 要生一架飛機再讓它墜毀（精靈系統）|
-| 龍捲風 `MakeTornado` | 龍捲風本身就是一個精靈 |
-| 怪獸 `MakeMonster` | 同上；牠會朝汙染最高點移動（`PolMaxX/Y`）|
-| 訊息 | `SendMesAt` 那一串在 `s_msg.c` |
+空難、龍捲風、怪獸本身就是精靈，實作在 `internal/sim/sprite_effects.go`
+（`MakeAirCrash`／`MakeTornado`／`MakeMonster`），由 `disaster.go` 的
+`makeAirCrash`／`makeTornado`／`makeMonster` 轉呼叫。沒有精靈系統時
+（`World.Sprites` 是 nil）這三個走 `noSprites` 空實作，什麼都不做——
+**這會改變抽樣次數**，所以做對拍實驗一定要 `EnableSprites()`。
 
-熔毀（`DoMeltdown`）與水災（`MakeFlood`／`DoFlood`）不需要精靈，已實作。
+熔毀（`DoMeltdown`）與水災（`MakeFlood`／`DoFlood`）不需要精靈。

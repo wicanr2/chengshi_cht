@@ -35,6 +35,28 @@ import sys
 MARK = "/* chengshi:"
 
 CMDS = r'''
+#include <stdarg.h>
+
+/* chengshi: 安全地設定回傳值。
+   ⚠ **不要 `sprintf(interp->result, …)`。** Tcl 7 的 `interp->result` 只有在
+   「還沒有人動過」時才指向那個 199 位元組的固定緩衝；任何一支指令呼叫過
+   `Tcl_SetResult(…, TCL_VOLATILE)` 之後，它就指向別人配置的記憶體了。
+   繼續往那裡 sprintf 等於寫進別人的緩衝——不會當掉，但直譯器會愈跑愈慢，
+   最後整份腳本跑不完。（實測：加一支這樣寫的指令，同一份 oracle 從 2.6 秒
+   變成跑不出來。） */
+static void
+chengshi_result(Tcl_Interp *interp, char *fmt, ...)
+{
+  char buf[8192];
+  va_list ap;
+
+  va_start(ap, fmt);
+  vsprintf(buf, fmt, ap);
+  va_end(ap);
+  Tcl_SetResult(interp, buf, TCL_VOLATILE);
+}
+
+
 /* chengshi: 跑 N 個模擬 frame（預設 1），不經過事件迴圈。只加觀測手段。
    順便把抽樣拆成「SimFrame（規則）」與「MoveObjects（精靈）」兩段——
    逐 frame 對拍少抽一次時，第一件事就是問它在哪一邊。 */
@@ -46,7 +68,7 @@ int SimCmdFrameStats(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%u %u", chengshi_sf_draws, chengshi_mo_draws);
+  chengshi_result(interp, "%u %u", chengshi_sf_draws, chengshi_mo_draws);
   return (TCL_OK);
 }
 
@@ -76,9 +98,6 @@ int SimCmdSprites(ARGS)
 		 sp->turn, sp->accel, sp->speed);
   }
   buf[n] = 0;
-  /* ⚠ 不能寫進 interp->result：那是 199 位元組的固定緩衝
-     （tcl.h 的 TCL_RESULT_SIZE），精靈一多就寫爆，症狀是整個直譯器
-     開始亂跑、指令變得極慢。長字串一律走 Tcl_SetResult。 */
   Tcl_SetResult(interp, buf, TCL_VOLATILE);
   return (TCL_OK);
 }
@@ -106,7 +125,7 @@ int SimCmdMapHash(ARGS)
       h = (h ^ ((v >> 8) & 0xFF)) * 16777619u;
     }
   }
-  sprintf(interp->result, "%u", h);
+  chengshi_result(interp, "%u", h);
   return (TCL_OK);
 }
 
@@ -203,7 +222,7 @@ int SimCmdSpriteCycle(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%d %d %d %d", Cycle, absDist, CrashX, CrashY);
+  chengshi_result(interp, "%d %d %d %d", Cycle, absDist, CrashX, CrashY);
   return (TCL_OK);
 }
 
@@ -235,7 +254,7 @@ int SimCmdFrame(ARGS)
   }
   SimSpeed = saved;
 
-  sprintf(interp->result, "%d", n);
+  chengshi_result(interp, "%d", n);
   return (TCL_OK);
 }
 
@@ -252,7 +271,7 @@ int SimCmdScycle(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%d", Scycle);
+  chengshi_result(interp, "%d", Scycle);
   return (TCL_OK);
 }
 
@@ -263,7 +282,7 @@ int SimCmdFcycle(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%d", Fcycle);
+  chengshi_result(interp, "%d", Fcycle);
   return (TCL_OK);
 }
 
@@ -277,7 +296,7 @@ int SimCmdValves(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%d %d %d", RValve, CValve, IValve);
+  chengshi_result(interp, "%d %d %d", RValve, CValve, IValve);
   return (TCL_OK);
 }
 
@@ -310,13 +329,13 @@ int SimCmdMem(ARGS)
 #define MEM_BYTE(NAME, ARR, W, H)					\
   if (!strcmp(n, NAME)) {						\
     if ((x < 0) || (x >= (W)) || (y < 0) || (y >= (H))) return (TCL_ERROR); \
-    sprintf(interp->result, "%d", (int)ARR[x][y]);			\
+    chengshi_result(interp, "%d", (int)ARR[x][y]);			\
     return (TCL_OK);							\
   }
 #define MEM_SHORT(NAME, ARR, W, H)					\
   if (!strcmp(n, NAME)) {						\
     if ((x < 0) || (x >= (W)) || (y < 0) || (y >= (H))) return (TCL_ERROR); \
-    sprintf(interp->result, "%d", (int)ARR[x][y]);			\
+    chengshi_result(interp, "%d", (int)ARR[x][y]);			\
     return (TCL_OK);							\
   }
 
@@ -361,9 +380,9 @@ int SimCmdVoteStats(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%u %u %d %d",
-	  chengshi_vp1 - chengshi_vp0, chengshi_dv1 - chengshi_dv0,
-	  chengshi_vp_iters, chengshi_vp_z);
+  chengshi_result(interp, "%u %u %d %d",
+		  chengshi_vp1 - chengshi_vp0, chengshi_dv1 - chengshi_dv0,
+		  chengshi_vp_iters, chengshi_vp_z);
   return (TCL_OK);
 }
 
@@ -393,7 +412,7 @@ int SimCmdRandState(ARGS)
   if (argc != 2) {
     return (TCL_ERROR);
   }
-  sprintf(interp->result, "%u", chengshi_rand_state());
+  chengshi_result(interp, "%u", chengshi_rand_state());
   return (TCL_OK);
 }
 

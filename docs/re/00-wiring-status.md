@@ -26,7 +26,7 @@
 | [`docs/re/05-power-scan.md`](05-power-scan.md) | 電力傳導 | **已接** | `internal/sim/power.go`；受控實驗 12000 格逐格對拍 ＋ 劇本 1 端到端 |
 | [`docs/re/06-scans.md`](06-scans.md) | 四個逐格掃描 | **已接** | `internal/sim/scan.go`；收斂後三個平均值對拍 |
 | [`docs/re/07-traffic-and-zones.md`](07-traffic-and-zones.md) | 交通生成與分區成長 | **已接** | `internal/sim/traffic.go`、`zone.go`、`mapscan.go`。⚠ 驗收只到強證據，見 12 |
-| [`docs/re/08-disasters.md`](08-disasters.md) | 災難 | **已接** | `internal/sim/disaster.go`。⚠ 三種要靠精靈的災難是空實作 |
+| [`docs/re/08-disasters.md`](08-disasters.md) | 災難 | **已接** | `internal/sim/disaster.go`；空難、龍捲風、怪獸走精靈系統 |
 | [`docs/re/09-census-valves-budget.md`](09-census-valves-budget.md) | 普查、需求閥、稅收與預算 | **已接** | `internal/sim/census.go` |
 | [`docs/re/10-evaluation.md`](10-evaluation.md) | 城市評分與投票 | **已接** | `internal/sim/eval.go` |
 | [`docs/re/11-simulate-loop.md`](11-simulate-loop.md) | 十六相位主迴圈 | **已接** | `internal/sim/simulate.go` |

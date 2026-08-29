@@ -49,9 +49,13 @@ puts stdout "CHK [sim Mem LandValueMem 30 25] [sim Mem PopDensity 30 25] [sim Me
 puts stdout "INIT [sim Fcycle] [sim Scycle] [sim Funds]"
 puts stdout "R0S [sim RandState]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CP0 [llength $_m] [join $_m ,]"
-for {set i 0} {$i < 400} {incr i} { sim Frame 1 ; puts stdout "FS $i [sim Scycle] [sim Valves] [sim RandState] [sim FrameStats] [sim SpriteDraws]" ; puts stdout "S $i ; [sim Sprites]" }
-# ⚠ **這一份不比對地圖。** `sim MapHash`（在 C 裡算 FNV-1a）已經做好了，
-# 但把它加進逐 frame 的輸出之後，這台機器忙的時候整份就跑不完——怪獸開始
-# 拆房子之後爆炸會一直生，每個 frame 的 `sim Sprites` 行本來就在變長。
-# 所以精靈的欄位與抽樣次數對得上時，地圖仍可能悄悄偏掉（`Destroy` 不抽亂數）。
-# 要補的話，機器閒的時候把 `[sim MapHash]` 加回 FS 那一行就行。
+# ⚠ 逐 frame 的資料**寫檔案，不走 pty**（drive.py 收尾時把 /out/lines.txt
+# 併回結果）。同一個迴圈走 pty 會卡到一行都不吐，走檔案 3 秒跑完 400 個
+# frame——連整張地圖的雜湊一起。原因見 docs/re/12 §六之九。
+set fh [open /out/lines.txt w]
+for {set i 0} {$i < 400} {incr i} { sim Frame 1 ; puts $fh "FS $i [sim Scycle] [sim Valves] [sim RandState] [sim FrameStats] [sim SpriteDraws] [sim MapHash]" ; puts $fh "S $i ; [sim Sprites]" }
+close $fh
+puts stdout "LOOPDONE"
+# `sim MapHash` 是整張地圖的 FNV-1a（在 C 裡算）。有它才抓得到「精靈欄位
+# 與抽樣次數都對，地圖卻偏掉」的分岔——`Destroy`（怪獸拆房子）不抽亂數，
+# 任何以抽樣次數為判準的測試都看不見它。

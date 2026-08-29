@@ -22,7 +22,6 @@ import (
 	"testing"
 )
 
-
 // 工業區微實驗的**分段**診斷。
 //
 // 一次量「960 刻差 33 次抽樣」只知道有錯，不知道錯在哪。把原版跑成
@@ -123,7 +122,6 @@ func TestMicroIndSegments(t *testing.T) {
 }
 
 func ptrMap(m [WorldX][WorldY]uint16) *[WorldX][WorldY]uint16 { return &m }
-
 
 // 逐次抽樣的呼叫點追蹤：分歧的那一刻，我們比原版多抽的是哪一個？
 //
@@ -337,7 +335,6 @@ func max(a, b int) int {
 	}
 	return b
 }
-
 
 // 把 Scycle 也納入搜尋。
 //

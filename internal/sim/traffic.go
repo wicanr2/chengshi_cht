@@ -53,8 +53,7 @@ func (w *World) setTrafMem() {
 			d = 240
 			w.TrafMaxX = w.SMapX << 4
 			w.TrafMaxY = w.SMapY << 4
-			// 原版在這裡把警車的目的地設過去（s_traf.c:126）。
-			// 精靈還沒實作，見 docs/re/07-traffic-and-zones.md §5。
+			w.sprites().SetCopterDest(w.TrafMaxX, w.TrafMaxY)
 		}
 		w.TrfDensity[w.SMapX>>1][w.SMapY>>1] = uint8(d)
 	}

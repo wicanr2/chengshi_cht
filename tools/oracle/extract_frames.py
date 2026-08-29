@@ -190,6 +190,14 @@ def main():
         for ln in r["out"]:
             if ln.startswith("END "):
                 end = ln.split()
+    # `MH i 雜湊` 是逐 frame 的地圖雜湊，長版用獨立一行送（F 那一行的欄位
+    # 是靠數量分辨版面的，再加欄位會打亂）。
+    maphash = {}
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("MH "):
+                q = ln.split()
+                maphash[int(q[1])] = int(q[2])
     frames = []
     for r in res:
         for ln in r["out"]:
@@ -229,6 +237,7 @@ def main():
                 # sim FrameStats：SimFrame（規則）與 MoveObjects（精靈）各抽幾次
                 "fstat": [int(x) for x in p[-2:]] if len(p) in (13, 53) else None,
                 "sdraws": None,
+                "maphash": maphash.get(int(p[1])),
             })
     # 把四個亂數讀數換算成抽樣次數。RecoverState 回的是**讀完四次之後**
     # 的狀態，而原版讀完就直接跑下一個 frame，所以相鄰兩個檢查點的距離

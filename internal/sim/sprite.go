@@ -74,8 +74,14 @@ func (s *spriteSystem) MoveObjects() {
 		return
 	}
 	s.cycle++
-	kept := s.list[:0]
-	for _, sp := range s.list {
+	// ⚠ 走的是**這一輪開始時**的那份名單。原版是逐節點走鏈結串列，
+	// 而 `MakeNewSprite`（爆炸）把新節點插在**最前面**——游標早就走過去了，
+	// 所以新生的爆炸這一輪不動，但**留在串列裡**。
+	// 以前這裡用 `kept := s.list[:0]` 重建串列，會把迴圈中途插進來的爆炸
+	// 整個蓋掉：怪獸拆掉一棟大樓，爆炸生出來又立刻消失。
+	todo := make([]*Sprite, len(s.list))
+	copy(todo, s.list)
+	for _, sp := range todo {
 		if sp.Frame != 0 {
 			switch sp.Type {
 			case SpriteTrain:
@@ -95,20 +101,29 @@ func (s *spriteSystem) MoveObjects() {
 			case SpriteBus:
 				s.doBus(sp)
 			}
-			kept = append(kept, sp)
 			continue
 		}
 		// frame 0 且無名的精靈會被回收（w_sprite.c:643 → DestroySprite）。
-		// ⚠ 回收時**要把 GlobalSprites 指過來的那一格清掉**（w_sprite.c:403）。
-		if sp.Named {
-			kept = append(kept, sp)
-			continue
-		}
-		if s.globals[sp.Type] == sp {
-			s.globals[sp.Type] = nil
+		if !sp.Named {
+			s.destroySprite(sp)
 		}
 	}
-	s.list = kept
+}
+
+// destroySprite 把一隻精靈從串列裡摘掉。w_sprite.c:396
+//
+// ⚠ 摘的時候**要把 GlobalSprites 指過來的那一格清掉**（w_sprite.c:403），
+// 否則 `GetSprite` 還會拿到已經不在串列上的節點。
+func (s *spriteSystem) destroySprite(sp *Sprite) {
+	if s.globals[sp.Type] == sp {
+		s.globals[sp.Type] = nil
+	}
+	for i, o := range s.list {
+		if o == sp {
+			s.list = append(s.list[:i], s.list[i+1:]...)
+			return
+		}
+	}
 }
 
 // getSprite 回傳某型別在場上的精靈；不在場上回 nil。w_sprite.c:425

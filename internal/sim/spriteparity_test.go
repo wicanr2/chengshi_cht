@@ -18,13 +18,15 @@ import (
 // `sim RandState` 直接讀亂數狀態，不像長版那樣抽四次來反推——指令數少四倍，
 // 而且完全不擾動數列，所以這一份沒有那個「差 4」的簿記。
 //
-// spriteParityBudget 是目前逐 frame 完全一致（含精靈全欄位）的 frame 數。
+// spriteParityBudget 是這份資料集的長度：**400 個 frame 全部對上**，
+// 包含每一隻精靈的十八個欄位、規則與精靈各自的抽樣次數，以及
+// **整張地圖的雜湊**（`sim MapHash`）。
 //
 // ⚠ **這個數字不跨資料集比較。** 原版每次啟動會先產生一座隨機城市，
 // 載入劇本時 `InitWillStuff` 又會 `RandomlySeedRand()` 重設種子——所以
-// 重跑一次 oracle 就是一條不同的軌跡，對得上幾個 frame 也會跟著變。
-// 它只在**資料集固定**時當回歸護欄用（程式碼退步就會掉下來）。
-const spriteParityBudget = 51
+// 重跑一次 oracle 就是一條不同的軌跡。重新產生資料集之後要重跑這個測試；
+// 掉下來就是程式碼退步了。
+const spriteParityBudget = 400
 
 var spriteFieldNames = [18]string{
 	"type", "frame", "x", "y", "orig_x", "orig_y", "dest_x", "dest_y",
@@ -118,6 +120,15 @@ func TestSpriteParity(t *testing.T) {
 		w.Rand.Watch = nil
 		mo := drawsBetween(mid, w.Rand.State())
 
+		if f.HasMapHash && mapHash(w) != f.MapHash {
+			t.Logf("第 %d 個 frame 的**地圖**對不上：我們 %d、原版 %d",
+				f.I, mapHash(w), f.MapHash)
+			t.Logf("  這個 frame：規則抽 %d（原版 %d）、精靈抽 %d（原版 %d）",
+				sf, f.FStat[0], mo, f.FStat[1])
+			t.Logf("  精靈欄位的比對結果：%q（空字串代表精靈本身沒問題）",
+				spriteMismatch(w, want[i]))
+			break
+		}
 		if bad := spriteMismatch(w, want[i]); bad != "" {
 			t.Logf("第 %d 個 frame 的精靈狀態對不上：%s", f.I, bad)
 			t.Logf("  這個 frame：規則抽 %d（原版 %d）、精靈抽 %d（原版 %d）",
@@ -187,4 +198,18 @@ func spriteMismatch(w *World, want [][18]int) string {
 		}
 	}
 	return ""
+}
+
+// mapHash 與 oracle 的 `sim MapHash` 同一套 FNV-1a：x 外層、y 內層，
+// 每格先低位元組再高位元組。實作在 tools/oracle/patches/apply.py。
+func mapHash(w *World) uint32 {
+	h := uint32(2166136261)
+	for x := 0; x < WorldX; x++ {
+		for y := 0; y < WorldY; y++ {
+			v := w.Map[x][y]
+			h = (h ^ uint32(v&0xFF)) * 16777619
+			h = (h ^ uint32((v>>8)&0xFF)) * 16777619
+		}
+	}
+	return h
 }
