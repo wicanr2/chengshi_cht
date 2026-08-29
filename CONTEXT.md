@@ -178,12 +178,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     寬高。四個模式的檔案都解得開（`docs/formats/03-pgf-graphics.md` §8、
     `internal/assets/pgfbase.go`）。`-style base` 現在是預設值。
 25. 聲音：**容器格式已解**（`docs/formats/05-psf-sound.md`、`internal/assets/psf.go`）——
-    九份檔案各切成八段 4 位元 PCM。**還缺兩件事**才能接進遊戲：
-    每一段對應哪一個事件、取樣率是多少。DOSBox 實跑的設施已經做好
-    （`tools/dosbox.sh`、`docs/re/16-dos-oracle.md`），但 **DOSBox 0.74
-    放不出這八段**——PC 喇叭只出單頻方波、Covox 在它的 disney 裝置底下
-    無聲、Tandy 要缺的圖形檔。下一步是換一個支援 Covox／LPT DAC 的
-    DOSBox（DOSBox-X 或 Staging，Debian 沒有套件，要自己編）。
+    九份檔案各切成八段 4 位元 PCM。**還缺事件對應與取樣率**。
+    DOSBox-X 的 `pcspeaker=impulse` 錄得到四種可重現的長度並對得到具體動作，
+    但只有一段比對得上（`docs/re/16-dos-oracle.md` §4）。剩下的路：
+    找一份帶 `tdy\` 圖形檔的 1.10 副本走 Tandy DAC，或反組譯
+    `SIMCITY.EXE` 的發聲程式。**在對出來之前不接進遊戲**。
 26. macOS 版：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross
     （有 skill `osxcross-macos-cross-build`）。
 27. 說明書剩下的章節：p.1–2 與 p.4–8 的安裝步驟、p.59–70 的參考手冊。

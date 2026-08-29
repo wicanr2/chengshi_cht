@@ -70,11 +70,15 @@ u16  之後的位元組數（＝檔案大小 − 2）
   試過拿 X11 版有名字的音效（`micropolis-activity/res/sounds/`）比對包絡線，
   相關係數落在 0.6–0.9 之間且彼此矛盾（第 7 段是一段乾淨的正弦音，卻比到
   「粉筆聲」），**判不出來**，不採用。
-  DOSBox 實跑的設施已經做好了（[`../re/16-dos-oracle.md`](../re/16-dos-oracle.md)），
-  但**DOSBox 0.74 放不出這八段**：`Sound: I`（PC 喇叭）只錄得到單頻方波，
-  `Sound: S`（Covox）在 0.74 的 disney 裝置底下完全無聲，`Sound: T`（Tandy）
-  要 `tdy\` 目錄的圖形檔而這份副本沒有。
-  下一步是換一個支援 Covox／LPT DAC 的 DOSBox（DOSBox-X 或 Staging，要自己編）。
+  DOSBox 實跑做到一半（[`../re/16-dos-oracle.md`](../re/16-dos-oracle.md) §4）：
+  DOSBox-X 的 `pcspeaker=impulse` 錄得到**四種可重現的長度**
+  （0.030 推土、0.115 建造／訊息、0.279 查詢／失敗、1.90 災難整頁訊息），
+  但只有 0.115 秒那個對得到第 5 段（相關 0.90–0.95，取樣率要假設 8000 上下），
+  其餘三個對不上，長度也湊不出一致的取樣率。差異是系統性偏短，形狀像
+  DOSBox 把尾巴截掉。
+  剩下的路：找一份帶 `tdy\` 圖形檔的副本走 Tandy DAC（`Sound: S` 是
+  **Covox Sound Master** 音效卡，沒有模擬器支援，遊戲自己會回報找不到），
+  或反組譯 `SIMCITY.EXE` 的發聲程式。
 - **取樣率**。檔案裡沒寫，`simtool sound` 預設的 8000 只是佔位值。
   同一次 DOSBox 實跑可以一併定案：錄到的長度除以段的取樣數就是取樣率。
 - 播放硬體（PC 喇叭 PWM／Tandy DAC／Sound Blaster）各自怎麼餵這些樣本。

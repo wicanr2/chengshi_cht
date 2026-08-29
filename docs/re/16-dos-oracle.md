@@ -11,7 +11,7 @@ Micropolis 回答得了「規則怎麼算」，回答不了「DOS 版按下去�
 ## 一、怎麼跑
 
 ```bash
-docker build -f docker/dosbox.Dockerfile -t simcity-dosbox:0.74 docker/
+docker build -f docker/dosbox.Dockerfile -t simcity-dosbox:x docker/
 RUN=simcity ACTIONS="$PWD/tools/dosbox/act-disasters.txt" tools/dosbox.sh 8 dis
 ```
 
@@ -21,6 +21,11 @@ RUN=simcity ACTIONS="$PWD/tools/dosbox/act-disasters.txt" tools/dosbox.sh 8 dis
 動作腳本一行一個動作：`key`／`click`／`drag`／`press`／`move`／`release`／
 `wait`／`shot`／`mark`。**選單是按住式的**——`click` 打不開，要
 `press` 在標題上、`move` 到項目、再 `release`。
+
+座標是 **DOS 畫面座標**（640×350 的左上角是 0,0）。DOSBox 0.74 把視窗放在
+螢幕左上角，兩者剛好一樣；**DOSBox-X 會把畫面置中**，差了將近兩百個像素。
+腳本執行時用 `xdotool getwindowgeometry` 問一次視窗原點再加上去——
+不問的話每一次點擊都落在畫面外，而且完全沒有錯誤訊息，只是「按了沒反應」。
 
 三個設計上的決定：
 
@@ -56,26 +61,63 @@ Cannot open graphics file:C:\tdy\WESTCEGA.pgf
 
 這也再次確認手上這份副本缺 Tandy 與 CGA 的資料檔。
 
-## 四、音效：這條路目前走不通，原因很具體
+## 四、音效：問得出「哪個動作有聲音」，問不出「那是哪一段」
 
-`SIMCITY.CFG` 的 `Sound` 欄有四個值：`I` 內建 PC 喇叭、`S` Covox（LPT 上的
-DAC）、`T` Tandy、`N` 無聲。
+`SIMCITY.CFG` 的 `Sound` 欄有四個值：`I` 內建 PC 喇叭、`S` Covox、
+`T` Tandy、`N` 無聲。三條路各自的結果：
 
 | 設定 | 結果 |
 |---|---|
-| `I` ＋ DOSBox 0.74 | 只錄得到**單頻方波**。實測某次事件是 0.2 秒內過零 462 次（約 1155 Hz），取樣值只有 ±5000 兩種——那是 DOSBox `pcspeaker` 的固定音量常數，不是遊戲的取樣 |
-| `S` ＋ `disney=true` | **完全無聲**。DOSBox 0.74 的 disney 裝置只認 Disney Sound Source 的 FIFO 交握，Covox 是直接對 LPT 資料埠寫值，它不接 |
-| `T` ＋ `machine=tandy` | 開不起來：Tandy 模式要 `tdy\` 目錄的圖形檔，這份副本沒有 |
+| `S` Covox | **遊戲自己回報「`Sound Master not found. Using internal speaker`」**。所以 `S` 指的是 **Covox Sound Master**（一張獨立音效卡），不是 LPT 上的 Covox DAC；DOSBox 與 DOSBox-X 都不模擬它。這條路是死的，不是設定沒調好 |
+| `T` Tandy | 開不起來：Tandy 模式要 `tdy\` 目錄的圖形檔，這份副本沒有（`Cannot open graphics file:C:\tdy\WESTCEGA.pgf`）|
+| `I` PC 喇叭 ＋ DOSBox 0.74 | 只錄得到單頻方波。實測某次事件是 0.2 秒內過零 462 次（約 1155 Hz），取樣值只有 ±5000 兩種——那是 DOSBox `pcspeaker` 的固定音量常數 |
+| `I` PC 喇叭 ＋ DOSBox-X 的 `pcspeaker=impulse` | **錄得到有內容的聲音**。四種可重現的長度，對得到具體動作 |
 
-還有一個會騙人的地方：**遊戲放完聲音之後，DOSBox 0.74 的喇叭通道會停在
-一個固定電位**，音量看起來很大但完全沒有內容。用音量當門檻切事件，量出來
-每一段都剛好等於兩個動作之間的間隔——一個看起來很合理、其實是假的數字。
-判準要用**每 5 毫秒的標準差**（`tools/snd_events.py` 就是這樣做的）。
+### 四種聲音
 
-所以四位元 PCM 那八段**沒有真的被播出來過**，錄到的只有簡單的嗶聲。
-要對出「哪一段是哪個事件」，下一步是換一個**支援 Covox／LPT DAC 的
-DOSBox**（DOSBox-X 或 DOSBox Staging，Debian bookworm 的套件庫沒有，
-要自己編）。在那之前音效不接進遊戲。
+用 `tools/dosbox/act-pcm.txt` 與 `act-pcm2.txt` 跑兩輪，動作彼此隔十到
+十五秒，事後用每 5 毫秒的標準差切事件（`tools/snd_events.py`）：
+
+| 長度 | 觸發的動作 |
+|---|---|
+| 0.030 秒 | 用推土機推一格 |
+| 0.115 秒 | 鋪路成功、蓋在樹上、關掉整頁訊息 |
+| 0.279 秒 | 鋪到水裡、用查詢工具點一格 |
+| 1.90 秒 | 災難的整頁訊息（火災與怪獸兩次都是）|
+
+兩輪之間「鋪路 0.115 秒」重現，所以這些長度不是雜訊。
+
+### 為什麼還是對不出「哪一段」
+
+拿八段參考音效的包絡線去比（`tools/snd_ident.py`），只有一個對得起來：
+**0.115 秒那個聲音對到第 5 段，相關係數 0.90–0.95**，而且要假設取樣率
+在 8000 上下（第 5 段 926 個取樣 ÷ 0.115 秒 ≈ 7700）。
+
+其餘三個對不上任何一段（相關係數掉到 0.25），而且長度湊不出一個一致的
+取樣率：
+
+- 0.115 秒 ↔ 第 5 段 ⇒ 約 7700 Hz
+- 1.90 秒的最長候選是第 0 段（11 526 取樣）⇒ 約 6070 Hz
+- 0.279 秒在這兩個取樣率下都落在兩段之間
+
+⚠ 差異是系統性的**偏短**，形狀像是 DOSBox 的喇叭通道把尾巴截掉，
+不像是取樣率猜錯。要分辨這兩種可能，得有一個會完整播完的發聲路徑——
+而三條路（Covox 卡沒人模擬、Tandy 缺圖形檔、PC 喇叭被截）目前都不是。
+
+所以**音效不接進遊戲**。剩下的路有兩條：找一份帶 `tdy\` 圖形檔的
+1.10 副本走 Tandy DAC，或反組譯 `SIMCITY.EXE` 的發聲程式直接讀出
+索引與取樣率。
+
+### 兩個會騙人的地方
+
+- **SDL 的 disk 音訊驅動要節流**。`SDL_DISKAUDIODELAY` 沒對上
+  `blocksize/rate`（1024 @ 22050 ≈ 46 ms）的話，callback 會被用最快速度
+  呼叫，25 秒錄出 15 分鐘的檔案。
+- **DOSBox 放完聲音會把喇叭停在一個固定電位**，音量看起來很大但完全沒有
+  內容。用音量當門檻切事件，量出來每一段都剛好等於兩個動作之間的間隔
+  ——一個看起來很合理、其實是假的數字。判準要用每 5 毫秒的**標準差**。
+- **錄音的時間軸和動作的時間戳差一個固定偏移**（實測約 2 秒），
+  對事件時要先用幾個明確的動作把偏移量校出來，不能直接相減。
 
 ## 五、順帶確認的事
 
