@@ -17,6 +17,14 @@ import "time"
 // 演化與整數寬度無關。這裡只留低 24 位元。
 type Rand struct {
 	next uint32 // 只有低 24 位元有意義
+
+	// Watch 不是 nil 的時候，每抽一次就被呼叫一次。
+	//
+	// 只給逐次元對拍的診斷用（見 docs/re/12-tick-parity.md §5）：
+	// 「這一刻比原版多抽了一次」要知道多的是哪一個呼叫點，
+	// 而那件事沒辦法從外面觀察——狀態只看得到結果，看不到來源。
+	// 平常是 nil，一個 nil 檢查的代價換掉整輪的猜測。
+	Watch func()
 }
 
 const (
@@ -46,8 +54,14 @@ func (r *Rand) SetState(s uint32) { r.next = s & randMask }
 
 // Rand16 取一次值，回傳 0…65535。
 // rand.c:42 sim_rand() ＋ s_sim.c:1209 Rand16()
+//
+// 這是**唯一**推進內部狀態的地方，Rand／Rand16Signed／ERand 都走這裡。
+// 對拍要問「這一刻多抽了哪一次」時，掛 Watch 就能逐次記下呼叫者。
 func (r *Rand) Rand16() int {
 	r.next = (r.next*randA + randC) & randMask
+	if r.Watch != nil {
+		r.Watch()
+	}
 	return int(r.next >> 8)
 }
 

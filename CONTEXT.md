@@ -144,8 +144,9 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     七個訊息檔全部解出（中文化語料），八個 DOS 劇本能直接餵進模擬層。
 12. ~~交通、分區、災難、普查、需求閥、預算、評分、十六相位主迴圈~~
     **已實作**：`docs/re/07`–`11`，`internal/sim/{traffic,zone,mapscan,disaster,census,eval,simulate}.go`。
-    驗收：單一分區的微實驗 692.5 刻逐次元完全一致；分段對拍 23 段中
-    9 段完全一致（含含完整城市評估的段落）。見 `docs/re/12-tick-parity.md`。
+    驗收：**住宅／商業／工業三種分區的微實驗都逐次元完全一致**
+    （692.5／564.2／949.2 刻，地圖零差異）；分段對拍 23 段中 9 段完全一致。
+    見 `docs/re/12-tick-parity.md`。
 13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
     `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
     ⚠ 對拍實驗沒有觸發精靈（沒有機場、港口、鐵路，災難也關著），
@@ -178,8 +179,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 22. ~~發行包、README 更新~~ **完成**：`tools/release.sh` 打 Linux 與 Windows 兩個包，
     `tools/verify_release.sh` 驗包本身（解到乾淨目錄、從那裡執行、資料放別處）。
     README 改寫成現況並附四張畫面。
-23. 逐刻對拍收斂：23 段裡還有 14 段有差異。要靠新的微實驗一段一段歸因，
-    不是重跑同一組參數。見 `docs/re/12-tick-parity.md`。
+23. 逐刻對拍收斂。三種分區的微實驗**都逐次元一致**了（住宅 692.5 刻、
+    商業 564.2 刻、工業 949.2 刻，地圖零差異）——工業區原本對不上，
+    原因是 `Scycle` 觀察不到而實驗把它當 0，不是實作錯誤。
+    下一步是把 Scycle 用「接力」的方式套進分段對拍（只在第一段搜，
+    之後由刻數推出來）。見 `docs/re/12-tick-parity.md` §6。
 24. ~~基本風格（`CEGADAT.PGF`）的圖形庫表~~ **完成**：表是**行內**的，
     每個庫前面三個位元組是「平面數 ＋ u16 長度」，每張圖前面四個位元組是
     寬高。四個模式的檔案都解得開（`docs/formats/03-pgf-graphics.md` §8、
