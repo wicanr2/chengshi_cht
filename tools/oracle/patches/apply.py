@@ -84,6 +84,33 @@ int SimCmdSprites(ARGS)
 }
 
 
+/* chengshi: 整張地圖的 FNV-1a 雜湊。
+   逐 frame 對拍原本只在終點比地圖，中途完全沒看——而 `Destroy`（怪獸拆房子）
+   之類的動作**不抽亂數**，所以地圖可以悄悄偏掉而抽樣次數一路正常。
+   在 Tcl 裡逐格倒太慢（一次全圖就是一萬兩千次指令派送），在 C 裡算是 O(12000)
+   的原生迴圈，可以每個 frame 都問。 */
+extern short *Map[];
+
+int SimCmdMapHash(ARGS)
+{
+  unsigned int h = 2166136261u;
+  int x, y;
+
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  for (x = 0; x < WORLD_X; x++) {
+    for (y = 0; y < WORLD_Y; y++) {
+      unsigned int v = (unsigned int)(unsigned short)Map[x][y];
+      h = (h ^ (v & 0xFF)) * 16777619u;
+      h = (h ^ ((v >> 8) & 0xFF)) * 16777619u;
+    }
+  }
+  sprintf(interp->result, "%u", h);
+  return (TCL_OK);
+}
+
+
 /* chengshi: 倒出串列的**實體順序**，死掉的節點也算。
    `sim Sprites` 只列活著的，看不出「新節點加在哪裡」——而那件事有觀察得到
    的效果（`absDist` 是所有精靈共用的）。另外 `MakeSprite` 對同型別**已存在
@@ -386,7 +413,8 @@ REG = ("  /* chengshi */ SIM_CMD(Frame);\n"
        "  /* chengshi */ SIM_CMD(SpriteCycle);\n"
        "  /* chengshi */ SIM_CMD(SpriteDraws);\n"
        "  /* chengshi */ SIM_CMD(SpritesAll);\n"
-       "  /* chengshi */ SIM_CMD(SpriteGlobals);\n")
+       "  /* chengshi */ SIM_CMD(SpriteGlobals);\n"
+       "  /* chengshi */ SIM_CMD(MapHash);\n")
 
 
 EVALC_OLD = """  x = 0;

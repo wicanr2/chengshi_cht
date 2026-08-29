@@ -204,6 +204,9 @@ def main():
                     "fstat": [int(q[7]), int(q[8])],
                     # sim SpriteDraws：每一型精靈各抽幾次（索引就是型別編號）
                     "sdraws": [int(x) for x in q[9:18]] if len(q) > 17 else None,
+                    # sim MapHash：整張地圖的 FNV-1a。地圖偏掉但抽樣次數
+                    # 正常的情況（例如怪獸拆房子）只有它抓得到。
+                    "maphash": int(q[18]) if len(q) > 18 else None,
                 })
                 continue
             if not ln.startswith("F "):
@@ -255,13 +258,15 @@ def main():
             row += fr["fstat"]
         if fr.get("sdraws"):
             row += fr["sdraws"]
+        if fr.get("maphash") is not None:
+            row.append(fr["maphash"])
         rows.append(tuple(row))
         prev = cur
     with open(f"{out}/frames.csv", "w") as fh:
         fh.write("# i,scycle,rvalve,cvalve,ivalve,draws,state"
                  "[,cityscore,cityyes,cityno,問題表0..6"
                  ",投票抽樣,市民抽樣,迭代,成功][,規則抽樣,精靈抽樣"
-                 "[,逐型精靈抽樣0..8]]\n")
+                 "[,逐型精靈抽樣0..8[,地圖雜湊]]]\n")
         for r in rows:
             fh.write(",".join(str(v) for v in r) + "\n")
 

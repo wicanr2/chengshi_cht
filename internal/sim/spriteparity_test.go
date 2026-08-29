@@ -24,7 +24,7 @@ import (
 // 載入劇本時 `InitWillStuff` 又會 `RandomlySeedRand()` 重設種子——所以
 // 重跑一次 oracle 就是一條不同的軌跡，對得上幾個 frame 也會跟著變。
 // 它只在**資料集固定**時當回歸護欄用（程式碼退步就會掉下來）。
-const spriteParityBudget = 46
+const spriteParityBudget = 51
 
 var spriteFieldNames = [18]string{
 	"type", "frame", "x", "y", "orig_x", "orig_y", "dest_x", "dest_y",
