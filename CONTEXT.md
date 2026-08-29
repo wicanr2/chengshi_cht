@@ -168,6 +168,13 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     **載入城市沒做 `InitWillStuff`**（讀第二座城市會留著前一座的地價、汙染、
     犯罪、交通與精靈）與 **`MoveObjects` 重建串列把爆炸蓋掉**（怪獸拆房子
     不會爆炸）。見 `docs/re/12-tick-parity.md` §6之七、§6之十。
+13.5. ~~圖塊動畫~~ **完成**：`docs/re/17-tile-animation.md`，
+    `internal/sim/animate.go` ＋ `anitab.go`（`tools/gen_anitab.py` 產生）。
+    火在燒、煙在冒、車在跑、雷達在轉、噴泉在噴——原版靠一張 `aniTile[1024]`
+    「下一格」表，每個畫格把帶 `ANIMBIT` 的格子換成下一格。
+    ⚠ 它**會改地圖但不是模擬的一部分**：原版從畫編輯視窗的地方呼叫，
+    暫停時不動。Go 版由 `internal/ui` 每個畫格呼叫一次，`SimFrame` 不碰，
+    所以四份逐 frame 對拍不受影響。
 14. ~~訊息系統~~ **完成**：`docs/re/14-messages.md`，`internal/sim/message.go`。
     含分區上限旗標、人口里程碑與八個劇本的勝敗條件。
 15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，

@@ -198,6 +198,12 @@ func (g *Game) Update() error {
 	g.handleKeys()
 	g.handleMouse()
 	g.world.Frame()
+	// 圖塊動畫。原版的條件是 `DoAnimation && SimSpeed && !TilesAnimated`
+	// （`w_editor.c:874`）——暫停時不動，而且一個畫格只做一次。
+	// ⚠ 它會改地圖，所以只有呈現層能呼叫，`internal/sim` 自己不碰。
+	if g.world.DoAnimation && g.world.SimSpeed != 0 {
+		g.world.AnimateTiles()
+	}
 	if g.msgTimer > 0 {
 		g.msgTimer--
 	}
