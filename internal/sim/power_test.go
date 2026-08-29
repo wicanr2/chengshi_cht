@@ -21,6 +21,9 @@ func TestPowerScanMatchesOracle(t *testing.T) {
 	}
 
 	res := w.DoPowerScan()
+	// ⚠ 原版的 DoPowerScan 只填 PowerMap；PWRBIT 是下一輪 MapScan 才寫回
+	// 地圖的（見 power.go 的 ApplyPowerBits）。測試要看得到位元，就自己叫。
+	res.Powered = w.ApplyPowerBits()
 
 	diff, fx, fy := 0, -1, -1
 	for y := 0; y < WorldY; y++ {
@@ -54,6 +57,7 @@ func TestIsolatedWireHasNoPower(t *testing.T) {
 		}
 	}
 	w.DoPowerScan()
+	w.ApplyPowerBits()
 
 	// 實驗裡孤立的那一段在 y=60、x=80..94。
 	for x := 80; x < 95; x++ {
@@ -81,6 +85,9 @@ func TestPowerCapacityAbortsWholeScan(t *testing.T) {
 		}
 	}
 	res := w.DoPowerScan()
+	// ⚠ 原版的 DoPowerScan 只填 PowerMap；PWRBIT 是下一輪 MapScan 才寫回
+	// 地圖的（見 power.go 的 ApplyPowerBits）。測試要看得到位元，就自己叫。
+	res.Powered = w.ApplyPowerBits()
 	if !res.OutOfPower {
 		t.Fatalf("鋪了 %d 格電線，一座燃煤只有 %d 格容量，應該要超過", n, CoalPowerCapacity)
 	}
@@ -97,6 +104,9 @@ func TestNoPlantNoPower(t *testing.T) {
 		w.Map[x][20] = wire
 	}
 	res := w.DoPowerScan()
+	// ⚠ 原版的 DoPowerScan 只填 PowerMap；PWRBIT 是下一輪 MapScan 才寫回
+	// 地圖的（見 power.go 的 ApplyPowerBits）。測試要看得到位元，就自己叫。
+	res.Powered = w.ApplyPowerBits()
 	if res.Powered != 0 {
 		t.Errorf("沒有電廠卻有 %d 格通電", res.Powered)
 	}
@@ -107,6 +117,7 @@ func TestPlantIsAlwaysPowered(t *testing.T) {
 	w := NewWorld(1)
 	w.Map[60][60] = uint16(NUCLEAR) | BNCNBIT | ZONEBIT
 	w.DoPowerScan()
+	w.ApplyPowerBits()
 	if w.Map[60][60]&PWRBIT == 0 {
 		t.Error("核電廠本身應該永遠帶 PWRBIT")
 	}
@@ -131,6 +142,7 @@ func TestScenario1PowerMatchesOracle(t *testing.T) {
 	w := NewWorld(1)
 	w.LoadScenarioFile(cf, ScenarioDullsville)
 	scan := w.DoPowerScan()
+	scan.Powered = w.ApplyPowerBits()
 
 	var unexplained, animated int
 	fx, fy := -1, -1

@@ -35,6 +35,17 @@ type frameCP struct {
 	Scycle int
 	Valves [3]int
 	Draws  int
+	// State 是原版**讀完那四次之後**的亂數狀態。抽樣次數對上等價於
+	// 狀態對上，但直接存狀態可以在對拍失敗時分辨「數目對、值錯了」。
+	State uint32
+	// 以下只有劇本版有：城市評估的分數與問題表。
+	HasProb   bool
+	CityScore int
+	CityYes   int
+	CityNo    int
+	ProbTable [7]int
+	HasVote   bool
+	Vote      [4]int // 投票迴圈抽樣、市民投票抽樣、迭代、成功
 }
 
 type frameMeta struct {
@@ -43,6 +54,9 @@ type frameMeta struct {
 		Scycle int   `json:"scycle"`
 		Funds  int   `json:"funds"`
 		Rands  []int `json:"rands"`
+		// PreState 是**載入劇本之前**的亂數狀態。載入時 DoSimInit 自己
+		// 會抽亂數，所以要從這裡出發才重建得出同一份起始地圖。
+		PreState uint32 `json:"prestate"`
 	} `json:"init"`
 	End struct {
 		Fcycle int `json:"fcycle"`
@@ -52,9 +66,12 @@ type frameMeta struct {
 	Frames []frameCP
 }
 
-func loadFrameMeta(t *testing.T) frameMeta {
+func loadFrameMeta(t *testing.T) frameMeta { return loadFrameMetaIn(t, "testdata/frame") }
+
+// loadFrameMetaIn 讀一份逐 frame 對拍資料（meta.json ＋ frames.csv）。
+func loadFrameMetaIn(t *testing.T, dir string) frameMeta {
 	t.Helper()
-	b, err := os.ReadFile("testdata/frame/meta.json")
+	b, err := os.ReadFile(dir + "/meta.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +79,7 @@ func loadFrameMeta(t *testing.T) frameMeta {
 	if err := json.Unmarshal(b, &m); err != nil {
 		t.Fatal(err)
 	}
-	csv, err := os.ReadFile("testdata/frame/frames.csv")
+	csv, err := os.ReadFile(dir + "/frames.csv")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,10 +88,18 @@ func loadFrameMeta(t *testing.T) frameMeta {
 			continue
 		}
 		var f frameCP
-		if _, err := fmt.Sscanf(ln, "%d,%d,%d,%d,%d,%d", &f.I, &f.Scycle,
-			&f.Valves[0], &f.Valves[1], &f.Valves[2], &f.Draws); err != nil {
-			t.Fatalf("frames.csv 這行讀不了：%q", ln)
+		n, err := fmt.Sscanf(ln,
+			"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+			&f.I, &f.Scycle, &f.Valves[0], &f.Valves[1], &f.Valves[2], &f.Draws,
+			&f.State, &f.CityScore, &f.CityYes, &f.CityNo,
+			&f.ProbTable[0], &f.ProbTable[1], &f.ProbTable[2], &f.ProbTable[3],
+			&f.ProbTable[4], &f.ProbTable[5], &f.ProbTable[6],
+			&f.Vote[0], &f.Vote[1], &f.Vote[2], &f.Vote[3])
+		if n < 7 {
+			t.Fatalf("frames.csv 這行讀不了：%q（%v）", ln, err)
 		}
+		f.HasProb = n >= 17
+		f.HasVote = n == 21
 		m.Frames = append(m.Frames, f)
 	}
 	return m
@@ -93,9 +118,13 @@ func newFrameParityWorld(t *testing.T, m frameMeta) *World {
 
 // loadFrameEndMap 讀最後一個 frame 之後的地圖（存成相對 cp0 的差異）。
 func loadFrameEndMap(t *testing.T) [WorldX][WorldY]uint16 {
+	return loadFrameEndMapIn(t, "testdata/frame")
+}
+
+func loadFrameEndMapIn(t *testing.T, dir string) [WorldX][WorldY]uint16 {
 	t.Helper()
-	m := loadGoldenMap(t, "testdata/frame/cp0.csv")
-	b, err := os.ReadFile("testdata/frame/cpend.diff")
+	m := loadGoldenMap(t, dir+"/cp0.csv")
+	b, err := os.ReadFile(dir + "/cpend.diff")
 	if err != nil {
 		t.Fatal(err)
 	}

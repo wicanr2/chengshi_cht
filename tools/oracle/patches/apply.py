@@ -112,6 +112,8 @@ extern Byte *PopDensity[], *TrfDensity[], *PollutionMem[];
 extern Byte *LandValueMem[], *CrimeMem[], *TerrainMem[];
 extern short RateOGMem[][SmY];
 extern short ComRate[][SmY];
+extern short FireStMap[][SmY], PoliceMap[][SmY];
+extern short PoliceMapEffect[][SmY], FireRate[][SmY];
 
 int SimCmdMem(ARGS)
 {
@@ -148,11 +150,72 @@ int SimCmdMem(ARGS)
   MEM_BYTE("TerrainMem", TerrainMem, QWX, QWY)
   MEM_SHORT("RateOGMem", RateOGMem, SmX, SmY)
   MEM_SHORT("ComRate", ComRate, SmX, SmY)
+  MEM_SHORT("FireStMap", FireStMap, SmX, SmY)
+  MEM_SHORT("PoliceMap", PoliceMap, SmX, SmY)
+  MEM_SHORT("PoliceMapEffect", PoliceMapEffect, SmX, SmY)
+  MEM_SHORT("FireRate", FireRate, SmX, SmY)
 
 #undef MEM_BYTE
 #undef MEM_SHORT
 
   return (TCL_ERROR);
+}
+
+
+/* chengshi: 直接讀亂數產生器的內部狀態（低 24 位元）。
+   載入劇本時 DoSimInit 自己會抽亂數，所以「載入前的狀態」是重建同一份
+   起始地圖的必要條件——沒有它就只能事後把地圖蓋回去，而衍生陣列
+   （地價、汙染…）已經是在不同的地圖上算出來的了。
+   next 定義在 rand.c 且是 static，所以那邊也加了一個取值函式。 */
+extern unsigned int chengshi_rand_state(void);
+
+/* chengshi: 城市評估的問題表。逐 frame 對拍在評估那個 frame 分岔時，
+   要先分清楚是「投票迴圈跑的次數不同」還是「別的地方多抽了」。 */
+extern short ProblemTable[], ProblemVotes[], ProblemOrder[], ProblemTaken[];
+extern short CityScore, CityYes, CityNo;
+
+/* chengshi: 投票迴圈的抽樣計數（見 s_eval.c 的插入）。 */
+extern unsigned int chengshi_vp0, chengshi_vp1, chengshi_dv0, chengshi_dv1;
+extern int chengshi_vp_iters, chengshi_vp_z;
+
+int SimCmdVoteStats(ARGS)
+{
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  sprintf(interp->result, "%u %u %d %d",
+	  chengshi_vp1 - chengshi_vp0, chengshi_dv1 - chengshi_dv0,
+	  chengshi_vp_iters, chengshi_vp_z);
+  return (TCL_OK);
+}
+
+
+int SimCmdProblems(ARGS)
+{
+  char buf[512];
+  int i, n = 0;
+
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  n += sprintf(buf + n, "%d %d %d |", CityScore, CityYes, CityNo);
+  for (i = 0; i < 10; i++) n += sprintf(buf + n, " %d", ProblemTable[i]);
+  n += sprintf(buf + n, " |");
+  for (i = 0; i < 10; i++) n += sprintf(buf + n, " %d", ProblemVotes[i]);
+  n += sprintf(buf + n, " |");
+  for (i = 0; i < 10; i++) n += sprintf(buf + n, " %d", ProblemTaken[i]);
+  sprintf(interp->result, "%s", buf);
+  return (TCL_OK);
+}
+
+
+int SimCmdRandState(ARGS)
+{
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  sprintf(interp->result, "%u", chengshi_rand_state());
+  return (TCL_OK);
 }
 
 
@@ -162,11 +225,167 @@ REG = ("  /* chengshi */ SIM_CMD(Frame);\n"
        "  /* chengshi */ SIM_CMD(Scycle);\n"
        "  /* chengshi */ SIM_CMD(Fcycle);\n"
        "  /* chengshi */ SIM_CMD(Valves);\n"
-       "  /* chengshi */ SIM_CMD(Mem);\n")
+       "  /* chengshi */ SIM_CMD(Mem);\n"
+       "  /* chengshi */ SIM_CMD(RandState);\n"
+       "  /* chengshi */ SIM_CMD(Problems);\n"
+       "  /* chengshi */ SIM_CMD(VoteStats);\n")
+
+
+EVALC_OLD = """  x = 0;
+  z = 0;
+  count = 0;
+  while ((z < 100) && (count < 600)) {"""
+
+EVALC_NEW = """  x = 0;
+  z = 0;
+  count = 0;
+  chengshi_vp0 = chengshi_rand_calls;	/* chengshi */
+  while ((z < 100) && (count < 600)) {"""
+
+EVALC_OLD2 = """    count++;
+  }
+}"""
+
+EVALC_NEW2 = """    count++;
+  }
+  /* chengshi */
+  chengshi_vp1 = chengshi_rand_calls;
+  chengshi_vp_iters = count;
+  chengshi_vp_z = z;
+}"""
+
+EVALC_OLD3 = """  CityYes = 0;
+  CityNo = 0;
+  for (z = 0; z < 100; z++) {"""
+
+EVALC_NEW3 = """  CityYes = 0;
+  CityNo = 0;
+  chengshi_dv0 = chengshi_rand_calls;	/* chengshi */
+  for (z = 0; z < 100; z++) {"""
+
+EVALC_OLD4 = """      CityNo++;
+  }
+}"""
+
+EVALC_NEW4 = """      CityNo++;
+  }
+  chengshi_dv1 = chengshi_rand_calls;	/* chengshi */
+}"""
+
+EVALC_DECL = """
+/* chengshi: 投票迴圈的抽樣計數。逐 frame 對拍在評估那個 frame 分岔時，
+   要分清楚是投票迴圈跑的次數不同、拒絕取樣的次數不同，還是別處多抽了。 */
+extern unsigned int chengshi_rand_calls;
+unsigned int chengshi_vp0, chengshi_vp1, chengshi_dv0, chengshi_dv1;
+int chengshi_vp_iters, chengshi_vp_z;
+"""
+
+
+def patch_eval(root):
+    p = f"{root}/src/sim/s_eval.c"
+    s = open(p, encoding="utf-8", errors="surrogateescape").read()
+    if MARK in s:
+        return
+    for old, new in ((EVALC_OLD, EVALC_NEW), (EVALC_OLD2, EVALC_NEW2),
+                     (EVALC_OLD3, EVALC_NEW3), (EVALC_OLD4, EVALC_NEW4)):
+        if old not in s:
+            sys.exit(f"s_eval.c 找不到插入點：{old[:40]!r}")
+        s = s.replace(old, new, 1)
+    s = s.replace("#include", EVALC_DECL + "\n#include", 1)
+    open(p, "w", encoding="utf-8", errors="surrogateescape").write(s)
+    print(f"已加上投票計數器：{p}")
+
+
+RANDC = """
+
+/* chengshi: 把 next 的低 24 位元開放出來給對拍用。
+   遞迴式對 2^24 取模是封閉的，所以低 24 位元就是完整的狀態。 */
+unsigned int
+chengshi_rand_state()
+{
+	return ((unsigned int)(next & 0xFFFFFF));
+}
+"""
+
+RANDC_COUNT_OLD = """int
+sim_rand()
+{
+	next = next * 1103515245 + 12345;"""
+
+RANDC_COUNT_NEW = """unsigned int chengshi_rand_calls = 0;	/* chengshi */
+
+int
+sim_rand()
+{
+	chengshi_rand_calls++;		/* chengshi */
+	next = next * 1103515245 + 12345;"""
+
+
+def patch_rand(root):
+    p = f"{root}/src/sim/rand.c"
+    s = open(p, encoding="utf-8", errors="surrogateescape").read()
+    if MARK in s:
+        return
+    if RANDC_COUNT_OLD not in s:
+        sys.exit("rand.c 找不到 sim_rand 的插入點")
+    s = s.replace(RANDC_COUNT_OLD, RANDC_COUNT_NEW, 1) + RANDC
+    open(p, "w", encoding="utf-8", errors="surrogateescape").write(s)
+    print(f"已加上 chengshi_rand_state 與抽樣計數器：{p}")
+
+
+# X11 移植版的**呈現層**有幾處和模擬共用同一個亂數產生器。逐 frame 對拍
+# 會看到「原版莫名多抽一次」——而那一次是 UI 抽的，不是規則抽的。
+# 把它們拿掉，oracle 才只反映規則層。（我們的 remake 呈現層不共用亂數。）
+UI_RAND = [
+    ("src/sim/s_msg.c",
+     """    case  12:
+      if (Rand(5) == 1) {
+	MakeSound("city", "HonkHonk-Med");
+      } else if (Rand(5) == 1) {
+	MakeSound("city", "HonkHonk-Low");
+      } else if (Rand(5) == 1) {
+	MakeSound("city", "HonkHonk-High");
+      }
+      break;""",
+     """    case  12:
+      /* chengshi: 原版在這裡抽最多三次亂數挑喇叭聲。那是呈現層的決定，
+         卻和模擬共用同一個產生器——逐 frame 對拍會看到原版多抽。 */
+      break;"""),
+    ("src/sim/w_map.c",
+     """  for (dx = dy = i = 0; i < ShakeNow; i++) {
+    dx += Rand(16) - 8;
+    dy += Rand(16) - 8;
+  }""",
+     """  /* chengshi: 地震震動的位移原本從模擬用的亂數抽，改成固定 0。 */
+  dx = dy = 0;"""),
+    ("src/sim/w_editor.c",
+     """  for (dx = dy = i = 0; i < ShakeNow; i++) {
+    dx += Rand(16) - 8;
+    dy += Rand(16) - 8;
+  }""",
+     """  /* chengshi: 同 w_map.c，震動位移不再消耗模擬的亂數。 */
+  dx = dy = 0;"""),
+]
+
+
+def patch_ui(root):
+    for rel, old, new in UI_RAND:
+        p = f"{root}/{rel}"
+        s = open(p, encoding="utf-8", errors="surrogateescape").read()
+        if MARK in s:
+            continue
+        if old not in s:
+            sys.exit(f"{rel} 找不到插入點：{old.splitlines()[0]!r}")
+        s = s.replace(old, new, 1)
+        open(p, "w", encoding="utf-8", errors="surrogateescape").write(s)
+        print(f"已移除呈現層的亂數消耗：{rel}")
 
 
 def main():
     root = sys.argv[1]
+    patch_rand(root)
+    patch_eval(root)
+    patch_ui(root)
     p = f"{root}/src/sim/w_sim.c"
     # 原始碼是 ASCII，但保險起見用 surrogateescape，非法位元組原樣帶過去。
     s = open(p, encoding="utf-8", errors="surrogateescape").read()

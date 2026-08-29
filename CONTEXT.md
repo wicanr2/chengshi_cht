@@ -12,10 +12,11 @@
 打得開，存讀檔用的是原版 `.cty` 格式（拿去餵 Micropolis 也讀得起來）。
 Linux／Windows／macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
 
-**逐次元對拍收斂了**：8000 個 frame（500 刻、13 582 次抽樣）逐 frame
-完全一致——每個 frame 的抽樣次數、`Scycle`、三個需求閥門都相同，終點的
-12 000 格地圖與資金也相同。做法是給 oracle 加單步指令，見
-[`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
+**逐次元對拍收斂了**。兩份 8000 個 frame（各 500 刻）的對拍都完全一致：
+空城實驗 13 582 次抽樣，**Dullsville 劇本 119 821 次抽樣**——每個 frame 的
+抽樣次數、亂數狀態、`Scycle`、需求閥門、城市評估的分數與問題表都相同，
+終點的 12 000 格地圖與資金也相同。做法是給 oracle 加單步與觀測指令，
+見 [`docs/re/12-tick-parity.md`](docs/re/12-tick-parity.md)。
 
 還沒收完的一件事：
 
@@ -153,19 +154,21 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 12. ~~交通、分區、災難、普查、需求閥、預算、評分、十六相位主迴圈~~
     **已實作**：`docs/re/07`–`11`，`internal/sim/{traffic,zone,mapscan,disaster,census,eval,simulate}.go`。
     驗收：**住宅／商業／工業三種分區的微實驗都逐次元完全一致**
-    （692.5／564.2／949.2 刻，地圖零差異）；整城逐 frame 對拍 8000/8000。
-    見 `docs/re/12-tick-parity.md`。
+    （692.5／564.2／949.2 刻，地圖零差異）；整城逐 frame 對拍兩份都 8000/8000
+    （空城 13 582 次抽樣、Dullsville 劇本 119 821 次）。見 `docs/re/12-tick-parity.md`。
 13. ~~精靈系統~~ **完成**：`docs/re/13-sprites.md`，
     `internal/sim/sprite.go`、`sprite_move.go`、`sprite_effects.go`。
-    ⚠ 對拍實驗沒有觸發精靈（沒有機場、港口、鐵路，災難也關著），
-    所以精靈本身還沒有逐次元證據。
+    ⚠ **精靈本身還是沒有逐次元證據**：兩份逐 frame 對拍都沒有觸發精靈
+    （Dullsville 那份實測整段 0 個），因為沒有機場、港口與足夠的鐵路。
+    要驗精靈得另做一個會生出直昇機或火車的實驗。
 14. ~~訊息系統~~ **完成**：`docs/re/14-messages.md`，`internal/sim/message.go`。
     含分區上限旗標、人口里程碑與八個劇本的勝敗條件。
 15. ~~玩家工具~~ **完成**：`docs/re/15-tools.md`，
     `internal/sim/tool.go`、`internal/sim/connect.go`。
     自動接線用八座劇本城市驗證，15 447 格線路裡 99.83% 形狀一致。
-16. ~~逐次元對拍~~ **完成**：8000 個 frame（500 刻、13 582 次抽樣）
-    逐 frame 完全一致，終點地圖與資金零差異。見 `docs/re/12-tick-parity.md`。
+16. ~~逐次元對拍~~ **完成**：兩份 8000 個 frame 的對拍都完全一致
+    （空城 13 582 次抽樣、Dullsville 劇本 119 821 次），終點地圖與資金
+    零差異。見 `docs/re/12-tick-parity.md`。
 17. ~~`.PGF` 圖形版面~~ **完成**：`docs/formats/03-pgf-graphics.md`，
     `internal/assets/pgf.go`。24 個風格圖形檔（4 種顯示模式 × 6 種風格）
     全部解開，第 0 庫一律 **960 張地圖圖塊**——與 Micropolis 的 `TILE_COUNT`
@@ -189,9 +192,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 23. ~~逐刻對拍收斂~~ **完成**。關鍵是**給 oracle 加觀測指令**
     （`sim Frame N`／`Scycle`／`Fcycle`／`Valves`／`Mem`，
     `tools/oracle/patches/apply.py`，建在副本上、封存保持乾淨）。
-    在那之前所有對拍都在跟看不到的內部狀態搏鬥，而那些搏鬥掩蓋了兩個
-    真正的錯：`SetValves` 該用單精度與整數除法（整城對拍因此從差 8 格
-    變成 0 格），以及對拍腳手架自己多推了四步亂數。
+    在那之前所有對拍都在跟看不到的內部狀態搏鬥，而那些搏鬥掩蓋了幾個
+    真正的差異：`SetValves` 該用單精度與整數除法（整城對拍因此從差 8 格
+    變成 0 格）、`DoPowerScan` 不該直接寫 `PWRBIT`、`ProblemTaken` 要跨
+    評估保留、對拍腳手架自己多推了四步亂數，以及**原版的呈現層挑音效時
+    和模擬共用亂數**（拿掉之後劇本版從 1512 跳到 8000/8000）。
     分段對拍（`segparity_test.go`）已被逐 frame 對拍取代並移除。
 24. ~~基本風格（`CEGADAT.PGF`）的圖形庫表~~ **完成**：表是**行內**的，
     每個庫前面三個位元組是「平面數 ＋ u16 長度」，每張圖前面四個位元組是

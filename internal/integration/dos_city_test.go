@@ -91,6 +91,9 @@ func TestDOSScenarioPowerScanRuns(t *testing.T) {
 	w := sim.NewWorld(1)
 	w.LoadScenarioFile(cf, sim.ScenarioDetroit)
 	res := w.DoPowerScan()
+	// ⚠ 原版的 DoPowerScan 只填 PowerMap；PWRBIT 是下一輪 MapScan 才寫回
+	// 地圖的（見 power.go 的 ApplyPowerBits）。測試要看得到位元，就自己叫。
+	res.Powered = w.ApplyPowerBits()
 	if res.CoalPop+res.NuclearPop == 0 {
 		t.Error("底特律應該有電廠，卻一座都沒找到")
 	}

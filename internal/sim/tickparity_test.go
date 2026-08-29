@@ -134,6 +134,7 @@ func newTickParityWorld(m [WorldX][WorldY]uint16, rngState uint32, funds, scycle
 	w.ClearCensus()
 	w.MapScan(0, WorldX)
 	w.DoPowerScan()
+	w.ApplyPowerBits()
 	w.NewPower = true
 	w.PTLScan()
 	w.CrimeScan()

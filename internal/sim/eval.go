@@ -16,6 +16,12 @@ type Evaluation struct {
 	DeltaCityScore  int //
 	ProblemTable    [ProbNum]int
 	ProblemVotes    [ProbNum]int
+	// ProblemTaken 記「這一輪前四大已經選過哪幾個」。
+	//
+	// ⚠ 它**必須跨評估保留**：原版是在 `VoteProblems()` **之後**才清零的
+	// （s_eval.c:169 起），而投票迴圈的越界讀取 `ProblemTable[10]` 讀到的
+	// 正好是 `ProblemTaken[0]`——也就是**上一輪**的值。見下面 voteProblems。
+	ProblemTaken    [ProbNum]bool
 	ProblemOrder    [4]int // 前四大問題的索引；7 代表「沒問題」
 	TrafficAverage  int
 }
@@ -102,17 +108,19 @@ func (w *World) doProblems() {
 
 	w.voteProblems()
 
-	taken := [ProbNum]bool{}
+	// ⚠ 清零在投票**之後**（s_eval.c:169）。順序不能調——投票迴圈會讀到
+	// 上一輪的 ProblemTaken[0]。
+	w.Eval.ProblemTaken = [ProbNum]bool{}
 	for z := 0; z < 4; z++ {
 		max, thisProb := 0, 0
 		for x := 0; x < 7; x++ {
-			if w.Eval.ProblemVotes[x] > max && !taken[x] {
+			if w.Eval.ProblemVotes[x] > max && !w.Eval.ProblemTaken[x] {
 				thisProb = x
 				max = w.Eval.ProblemVotes[x]
 			}
 		}
 		if max != 0 {
-			taken[thisProb] = true
+			w.Eval.ProblemTaken[thisProb] = true
 			w.Eval.ProblemOrder[z] = thisProb
 		} else {
 			w.Eval.ProblemOrder[z] = ProbNone
@@ -142,12 +150,24 @@ func (w *World) voteProblems() {
 		//
 		// 抽樣次數才是關鍵：跳過這一次會讓每次評估少抽約 54 次，
 		// 亂數數列從此整條錯開。這裡照抽不誤，比較對象取 0。
+		// ⚠ x 會走到 10，而 ProblemTable 只有 0…9。原版讀到的是緊鄰的
+		// `ProblemTaken[0]`（宣告順序 ProblemTable、ProblemTaken、
+		// ProblemVotes），而且是**上一輪**的值——清零在這個迴圈之後。
 		v := 0
 		if x < len(w.Eval.ProblemTable) {
 			v = w.Eval.ProblemTable[x]
+		} else if x == ProbNum && w.Eval.ProblemTaken[0] {
+			v = 1
 		}
 		if w.Rand.Rand(300) < v {
-			w.Eval.ProblemVotes[x]++
+			// ⚠ x 為 10 時原版寫的是 `ProblemVotes[10]`，也就是緊鄰的
+			// `ProblemOrder[0]`（同一個檔案裡的宣告順序）。**推論等級：強證據**
+			// ——依據是 s_eval.c 的宣告順序，不是反組譯。
+			if x < len(w.Eval.ProblemVotes) {
+				w.Eval.ProblemVotes[x]++
+			} else {
+				w.Eval.ProblemOrder[0]++
+			}
 			z++
 		}
 		x++

@@ -8,6 +8,9 @@
     cpend.diff 最後一個 frame 之後的地圖，存成相對 cp0 的差異
     meta.json  起始與結束的 Fcycle／Scycle／資金，起始的四個亂數讀數
     frames.csv 每個 frame 一列：`i,scycle,rvalve,cvalve,ivalve,draws`
+    prestate.csv 載入之前那幾張**不會被 DoSimInit 重算**的衍生陣列
+               （每列 `名稱,值,值,…`）。只有劇本版有——原版那個行程開機時
+               已經跑過一座隨機城市，那些殘值會影響載入時第一次 MapScan。
 
 ⚠ **每個 frame 存的是抽樣次數，不是四個亂數讀數。** 兩者等價（LCG 的
 狀態由起點與步數唯一決定），但次數只要幾個位元組，而且它就是對拍的判準。
@@ -87,8 +90,36 @@ def main():
                 if m0[y][x] != mE[y][x]:
                     fh.write(f"{x},{y},{mE[y][x]}\n")
 
+    pres, posts = [], []
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("POST"):
+                tag, _, rest = ln.partition(" ")
+                _, _, vals = rest.partition(" ")
+                posts.append((tag[4:], vals))
+            if ln.startswith("PRE") and not ln.startswith("PRE "):
+                tag, _, rest = ln.partition(" ")
+                _, _, vals = rest.partition(" ")
+                pres.append((tag[3:], vals))
+    if pres:
+        with open(f"{out}/prestate.csv", "w") as fh:
+            fh.write("# 載入之前的衍生陣列殘值（名稱,值,…）\n")
+            for name, vals in pres:
+                fh.write(f"{name},{vals}\n")
+
+    if posts:
+        with open(f"{out}/poststate.csv", "w") as fh:
+            fh.write("# 載入完成（DoSimInit 跑完）當下的衍生陣列（名稱,值,…）\n")
+            for name, vals in posts:
+                fh.write(f"{name},{vals}\n")
+
     init = find_line(res, "INIT").split()
     r0 = find_line(res, "R0").split()
+    pre = None
+    for r in res:
+        for ln in r["out"]:
+            if ln.startswith("PRE "):
+                pre = int(ln.split()[1])
     end = find_line(res, "END").split()
     frames = []
     for r in res:
@@ -102,6 +133,11 @@ def main():
                 "scycle": int(p[3]),
                 "valves": [int(x) for x in p[4:7]],
                 "rands": [int(x) for x in p[7:11]],
+                # sim Problems：CityScore CityYes CityNo | 表×10 | 票×10 | taken×10
+                "prob": ([int(x) for x in p[11:14]] +
+                         [int(x) for x in p[15:22]]) if len(p) > 14 else None,
+                # sim VoteStats：投票迴圈抽樣、市民投票抽樣、迭代、成功
+                "vote": [int(x) for x in p[-4:]] if len(p) > 40 else None,
             })
     # 把四個亂數讀數換算成抽樣次數。RecoverState 回的是**讀完四次之後**
     # 的狀態，而原版讀完就直接跑下一個 frame，所以相鄰兩個檢查點的距離
@@ -113,18 +149,26 @@ def main():
         d = lcg_distance(prev, cur) - 4
         if d < 0:
             raise SystemExit(f"第 {fr['i']} 個 frame 的距離算出 {d}，不可能")
-        rows.append((fr["i"], fr["scycle"], fr["valves"][0], fr["valves"][1],
-                     fr["valves"][2], d))
+        row = [fr["i"], fr["scycle"], fr["valves"][0], fr["valves"][1],
+               fr["valves"][2], d, cur]
+        if fr["prob"]:
+            row += fr["prob"]
+        if fr["vote"]:
+            row += fr["vote"]
+        rows.append(tuple(row))
         prev = cur
     with open(f"{out}/frames.csv", "w") as fh:
-        fh.write("# i,scycle,rvalve,cvalve,ivalve,draws\n")
+        fh.write("# i,scycle,rvalve,cvalve,ivalve,draws,state"
+                 "[,cityscore,cityyes,cityno,問題表0..6"
+                 ",投票抽樣,市民抽樣,迭代,成功]\n")
         for r in rows:
             fh.write(",".join(str(v) for v in r) + "\n")
 
     meta = {
         "init": {"fcycle": int(init[1]), "scycle": int(init[2]),
                  "funds": int(init[3]),
-                 "rands": [int(x) for x in r0[1:5]]},
+                 "rands": [int(x) for x in r0[1:5]],
+                 "prestate": pre},
         "end": {"fcycle": int(end[1]), "scycle": int(end[2]),
                 "funds": int(end[3])},
     }

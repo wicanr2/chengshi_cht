@@ -4,9 +4,16 @@
 接線：`internal/sim/frameparity_test.go`、`internal/sim/tickparity_test.go`、
 `internal/sim/microzone_test.go`。
 
-> **結論先講：8000 個 frame（500 刻、13 582 次抽樣）逐 frame 完全一致**
-> ——每個 frame 的抽樣次數、`Scycle`、三個需求閥門都相同，終點的
-> 12 000 格地圖與資金也相同。整城的粗略對拍（§3.3）從差 8 格變成差 0 格。
+> **結論先講：兩份 8000 個 frame（各 500 刻）的對拍都完全一致。**
+>
+> | 實驗 | 城市 | 抽樣次數 | 結果 |
+> |---|---|---:|---|
+> | `TestFrameParity` | 空地 ＋ 三座空住宅區、一座電廠 | 13 582 | 8000/8000 |
+> | `TestFrameParityScenario` | **Dullsville 劇本**（有人口、交通、稅收、精靈）| **119 821** | 8000/8000 |
+>
+> 每個 frame 的抽樣次數、亂數狀態、`Scycle`、三個需求閥門、城市評估的
+> 分數與問題表都相同，終點的 12 000 格地圖與資金也相同。
+> 整城的粗略對拍（§3.3）從差 8 格變成差 0 格。
 >
 > 走到這一步的關鍵是**給 oracle 加單步指令**（§一）。在那之前所有的
 > 對拍都在跟「看不到的內部狀態」搏鬥，而那些搏鬥掩蓋了兩個真正的錯
@@ -33,7 +40,10 @@
 | `sim Scycle` | 五個週期性掃描的相位計數器 |
 | `sim Fcycle` | 十六相位主迴圈的計數器 |
 | `sim Valves` | 三個需求閥門 |
-| `sim Mem <陣列> <x> <y>` | 衍生陣列的某一格（地價、汙染、犯罪、人口密度…）|
+| `sim Mem <陣列> <x> <y>` | 十一張衍生陣列的某一格（地價、汙染、犯罪、人口密度、交通密度、成長率記憶、商業距離、警消覆蓋…）|
+| `sim RandState` | 亂數產生器的內部狀態（低 24 位元）|
+| `sim Problems` | 城市評估的分數、贊成／反對票、問題表、票數、已選旗標 |
+| `sim VoteStats` | 投票兩個迴圈各抽了幾次、跑了幾圈（診斷用的計數器）|
 
 建置改在**副本**上進行（`workplace/oracle-build/`），封存的原始碼保持
 乾淨——它是規則層的一手依據，不該混進我們為了觀測加的東西。
@@ -77,7 +87,7 @@ Go 從 地圖 ＋ S0 出發逐 frame 推進，找 n 使得 狀態 == S1 且 1200
 微實驗的價值在於把變因減到一個。地圖縮到只剩一個機制，抽樣次數就變成
 一個可以直接比對的數字。
 
-### 3.2 逐 frame 對拍：主判準（`frameparity_test.go`）
+### 3.2 逐 frame 對拍：主判準（`frameparity_test.go`、`framescen_test.go`）
 
 單步的 oracle 讓每一個 frame 都成為一個檢查點。資料是
 `tools/oracle/tcl/frame-parity.tcl` 跑 8000 個 frame，每一步記下
@@ -87,6 +97,21 @@ Go 從 地圖 ＋ S0 出發逐 frame 推進，找 n 使得 狀態 == S1 且 1200
 
 **結果：8000/8000 個 frame 完全一致，共 13 582 次抽樣**，
 終點地圖 12 000 格零差異、資金相同。
+
+劇本版（`framescen_test.go`）載入 Dullsville 再跑同樣的 8000 個 frame：
+**119 821 次抽樣，一樣 8000/8000**。那座城市有人口、交通、稅收與
+週期性的城市評估，掃到的規則多得多。
+
+⚠ **兩份都沒有觸發精靈**（Dullsville 那份實測整段 0 個——沒有機場、
+港口與足夠的鐵路）。精靈系統仍然缺逐次元證據。
+
+⚠ 劇本版的起始狀態要**從 oracle 倒**，不能只靠我們自己重建：原版那個
+行程開機時已經跑過一座隨機城市，載入劇本的瞬間有一堆殘留狀態
+（交通密度、成長率記憶、警消覆蓋表、`NewPower` 早就是 1…）。
+`sim RandState` 讓我們從「載入之前」的亂數狀態出發，`sim Mem` 把十一張
+衍生陣列倒出來，剩下的地圖差異（十來格，全是道路的車流顯示）直接用
+原版的起始地圖覆蓋——這個測試要問的是**八千個 frame 的動態**，
+不是載入程序（那由 `cityfile_test.go` 與 `power_test.go` 顧）。
 
 這個判準比分段對拍強得多：分段對拍每一段都要用「200 刻收斂」重建
 內部狀態，而那是虛構的——真正的閥門、成長率記憶、交通密度是從上一段
@@ -251,6 +276,54 @@ NormResPop = ResPop / 8;        /* ResPop 是 short → 整數除法！ */
 > 「狀態相同、亂數相同，結果卻不同」在邏輯上不可能——出現這句話的時候，
 > 「相同」的兩邊一定有一邊是自己算錯的。
 
+## 六之五、呈現層不該和模擬共用亂數
+
+劇本版一開始只對到第 1512 個 frame——那是第二次收稅與城市評估。症狀
+非常乾淨，也非常矛盾：
+
+- 亂數狀態一路相同（每個 frame 都比對狀態，不只比次數）
+- 問題表 `ProblemTable[0..6]` 完全相同
+- 投票迴圈自己的抽樣次數也相同（給 oracle 裝了計數器：603 對 603）
+- 市民投票的抽樣次數也相同（100 對 100）
+- **但整個 frame 原版就是多抽了一次**，而且贊成票差一票
+
+「狀態相同、輸入相同、兩個迴圈的抽樣都相同，總數卻不同」在邏輯上不可能
+——所以多出來的那一次一定在**別的地方**。搜遍原始碼的 `Rand` 呼叫點，
+找到 `s_msg.c` 的 `DoMessage()`：
+
+```c
+    case  12:                       /* 交通壅塞的訊息 */
+      if (Rand(5) == 1) MakeSound("city", "HonkHonk-Med");
+      else if (Rand(5) == 1) MakeSound("city", "HonkHonk-Low");
+      else if (Rand(5) == 1) MakeSound("city", "HonkHonk-High");
+```
+
+**挑哪一種喇叭聲，用的是模擬那顆亂數產生器。** 同樣的還有
+`w_map.c`／`w_editor.c` 的地震震動位移。這些都是 X11 移植版的呈現層決定，
+卻和規則層共用同一條數列。
+
+處理方式是把它們從 oracle 拿掉（`tools/oracle/patches/apply.py` 的
+`patch_ui`）：我們要的是「規則層算得對不對」，而我們自己的呈現層本來就
+不共用亂數。拿掉之後，劇本版直接從 1512 跳到 **8000/8000**。
+
+> 教訓寫成規則：**對拍對不上時，先確認你比的是同一層。** 移植版的
+> UI 可能會偷用模擬的資源（亂數、計時器、全域變數）；那不是規則，
+> 但它會出現在你的量測裡。原始碼裡搜一次「誰在用這個資源」比猜快得多。
+
+## 六之六、順手抓到的兩個規則層差異
+
+逐 frame 對拍逼出來的，不是靠讀程式碼看出來的：
+
+- **`DoPowerScan` 不該直接寫 `PWRBIT`。** 原版（`s_power.c`）只填
+  `PowerMap`；每一格的 `PWRBIT` 是下一輪 `MapScan` 在 `NewPower` 打開時
+  逐格呼叫 `SetZPower` 寫的。差別只在「掃描完成」到「下一輪 MapScan」
+  那幾個相位看得見——而載入城市之後正好停在那裡。
+  拆成 `DoPowerScan` ＋ `ApplyPowerBits` 兩支。
+- **`ProblemTaken` 要跨評估保留。** 原版是在 `VoteProblems()` **之後**
+  才清零的，而投票迴圈的越界讀取 `ProblemTable[10]` 讀到的正是
+  `ProblemTaken[0]`——也就是上一輪的值。（`ProblemVotes[10]` 同理會寫到
+  `ProblemOrder[0]`；那一項依宣告順序推斷，推論等級**強證據**。）
+
 ## 七、診斷工具
 
 `internal/sim/parityprobe_test.go` 有三層，資料由 `tools/oracle/` 產生後
@@ -262,6 +335,7 @@ NormResPop = ResPop / 8;        /* ResPop 是 short → 整數除法！ */
 | `TestMicroIndTrace` | 在那個區間裡逐次記下抽樣的**呼叫點**，並列出我們的 frame 邊界 |
 | `TestMicroIndScycleSearch` | 把 Scycle 也納入搜尋（有 `sim Scycle` 之後只剩歷史價值）|
 | `TestFrameParityTrace` | 逐 frame 對拍分岔在哪一個 frame、那個 frame 各是誰在抽樣（`SIMCITY_TRACE=1`）|
+| `TestFrameParityScenario` | 同上，但用 Dullsville 劇本；`SIMCITY_TRACE=1` 時會把我們的抽樣點與原版的投票計數並排印出來 |
 
 `tools/go.sh` 會把 `SIMCITY_*` 開頭的環境變數帶進容器，所以
 `SIMCITY_TRACE=1` 直接寫在指令前面就行。

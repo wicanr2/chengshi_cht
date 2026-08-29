@@ -221,7 +221,23 @@ func (w *World) DoPowerScan() PowerScanResult {
 	p.run(res.CoalPop, res.NuclearPop)
 	res.OutOfPower = p.OutOfPower
 
-	// 第 3 步：依 PowerMap 設每一格的 PWRBIT。s_zone.c:624 SetZPower
+	return res
+}
+
+// ApplyPowerBits 依 PowerMap 把 PWRBIT 寫回每一格帶 CONDBIT 的格子，
+// 回傳通電的格數。
+//
+// ⚠ **原版沒有在 DoPowerScan 裡做這件事。** `s_power.c` 的 DoPowerScan
+// 只填 PowerMap；每一格的 PWRBIT 是下一輪 MapScan 在 `NewPower` 打開時
+// 逐格呼叫 `SetZPower`（s_zone.c:624）寫進去的，分區則是 DoZone 一開頭
+// 就寫。所以「掃描完成」與「位元寫回地圖」之間隔著幾個相位。
+//
+// 那個時間差平常看不出來（一輪十六相位跑完結果一樣），但**載入城市之後
+// 正好停在那裡**：DoSimInit 的順序是 MapScan → DoPowerScan → NewPower = 1，
+// 所以載入完成的瞬間，道路與電線的 PWRBIT 還是檔案裡的舊值。
+// 逐 frame 對拍（劇本版）就是在這個點抓到 8 格差異的。
+func (w *World) ApplyPowerBits() int {
+	n := 0
 	for x := 0; x < WorldX; x++ {
 		for y := 0; y < WorldY; y++ {
 			cChr := w.Map[x][y]
@@ -233,11 +249,11 @@ func (w *World) DoPowerScan() PowerScanResult {
 			if cChr9 == NUCLEAR || cChr9 == POWERPLANT ||
 				(word < PwrMapSize && w.PowerMap[word]&mask != 0) {
 				w.Map[x][y] = cChr | PWRBIT
-				res.Powered++
+				n++
 			} else {
 				w.Map[x][y] = cChr &^ uint16(PWRBIT)
 			}
 		}
 	}
-	return res
+	return n
 }
