@@ -168,7 +168,10 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
     不是重跑同一組參數。見 `docs/re/12-tick-parity.md`。
 24. 基本風格（`CEGADAT.PGF`）的圖形庫表。沒有表，尺寸多半寫死在 `SIMCITY.EXE`，
     要反組譯。已知的部分見 `docs/formats/03-pgf-graphics.md` §7。
-25. 聲音：`.PSF` 解得開但還沒接到播放。
+25. 聲音：**容器格式已解**（`docs/formats/05-psf-sound.md`、`internal/assets/psf.go`）——
+    九份檔案各切成八段 4 位元 PCM。**還缺兩件事**才能接進遊戲：
+    每一段對應哪一個事件、取樣率是多少。兩件都要靠 DOSBox 實跑
+    （跑原版、觸發已知事件、錄音、對相關）一次解決。
 26. macOS 版：Ebiten 的 macOS 後端要 Objective-C，交叉編要 osxcross
     （有 skill `osxcross-macos-cross-build`）。
 27. 說明書剩下的章節（安裝步驟、密碼表、參考手冊的策略討論）。譯名價值低，排最後。
