@@ -317,3 +317,18 @@ X11 版有 46 個具名 `.au`（8000 Hz µ-law）。想法：DOS 八段若是其
 **教訓**：前面三次「解壓品質不夠」的診斷都指向 LZSS 實作，其實實作一直
 是對的——錯的是**輸入的切法**。訊號早就在了（載入器區是明文，而我把它
 餵進解壓器），只是被讀成「解壓有瑕疵」。
+
+### 同日續：執行檔的硬編碼字串拿到了
+
+容器解對之後順手做的：`tools/dos_exe_strings.py` 從映像抽出 **497 條**
+硬編碼字串——那是 `CLAUDE.md` §3.2 列的第三個文字來源，先前一直拿不到。
+
+含 `Continue`／`Cancel`／`Retry`／`%s: Are you sure?`、整套列印介面、
+`Save changes before loading another city?`、`Game Play Level`、
+`Now terraforming`、`HERESVILLE`、程度詞 `Sparse`／`Medium`／`High!`／
+`Little`／`Severe`／`Rapid`、製作名單，以及
+`MS Run-Time Library - Copyright (c) 1990, Microsoft Corp`
+（**這份是 Microsoft C 6.0 編的**）。
+
+也順帶確認 `tdydat.pgf` 在字串表裡——Tandy 的檔名規則與其他模式一致，
+這份副本只是沒附那個目錄。

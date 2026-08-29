@@ -288,3 +288,42 @@ X11 版（`Rare simcity.zip`）的 `res/` 底下有 **46 個具名 `.au`**
 排掉的一個誤會：那些 `_InitSounds`、`_MoveObjects` 的名字**不在遊戲的
 程式碼裡**，而在載入器帶的這份表裡——所以「檔案裡看得到符號名」
 不代表程式碼是明文的。
+
+
+## 六、執行檔裡的硬編碼字串——中文化的第三個來源
+
+`CLAUDE.md` §3.2 列了三個文字來源：`.PTF` 訊息檔、X11 版的 Tcl 腳本、
+**DOS 執行檔內硬編碼的選單／按鈕／數字格式**。第三個一直拿不到，
+因為執行檔是打包的。**現在解得開了**
+（[`18-dos-parity.md`](18-dos-parity.md) §6.5）：
+
+```bash
+python3 tools/unpack_simcity_exe.py "…/SIMCITY.EXE" workplace/ida/image.bin
+python3 tools/dos_exe_strings.py workplace/ida/image.bin
+```
+
+**497 條**。抽樣：
+
+| 類別 | 例 |
+|---|---|
+| 對話框按鈕 | `Continue`、`Cancel`、`Retry`、`%s: Are you sure?` |
+| 列印 | `Print City`、` 8-page poster`、` 1-page map`、`Printing %s`、`  0%% done`、`Press [ESC] to abort`、`Abort printing` |
+| 存讀檔 | `Save changes before loading` ／ `another city?`、`SIMCITY city name:` |
+| 開新城市 | `Game Play Level`、`Now terraforming`、`HERESVILLE`（預設城市名）|
+| 需求／評估的程度詞 | `Sparse`、`Medium`、`High!`、`Little`、`Severe`、`Rapid` |
+| 圖形／裝置 | `Tandy`、`Hercules`、`Mono EGA`、`MCGA/VGA Color`、`MCGA/VGA mono`、`Classic`、`Loading %s graphics` |
+| 錯誤 | `FATAL ERROR: PROGRAM ABORTED`、`Cannot open graphics file:%s`、`Not enough memory to load graphics`、`No parallel port found. Can't print` |
+| 檔名樣板 | `sounddat.psf`、`message.ptf`、`%sntro.ppf`、`%sscen.ppf`、`monodat.pgf`、`tdydat.pgf` |
+| 製作名單 | `SimCity the city simulator, E1.10`、`Concept & design:Will Wright`、`IBM programming: Daniel Goldman`、`IBM artwork:     Don Bayless` |
+| 編譯器 | `MS Run-Time Library - Copyright (c) 1990, Microsoft Corp` ← **這份是 Microsoft C 6.0 編的** |
+
+三件順帶確認的事：
+
+- `tdydat.pgf` 在字串表裡——**Tandy 的圖形檔名規則與其他模式一致**，
+  這份副本只是沒附那個目錄（§4.1）。
+- 那些 `%s`／`%d`／`%c` 樣板就是 §3.2 說的「模板要能重排參數順序」的實例，
+  中文語序不同，不能寫死成前綴＋數字＋後綴。
+- 製作名單裡的 `E1.10` 與檔案版本對得上。
+
+⚠ 位移是**解壓後映像**的線性位移，不是檔案位移，也不是執行時的
+segment:offset。引用時要連同位移與映像來源（SHA-256 `66457cc4…`）一起寫。
