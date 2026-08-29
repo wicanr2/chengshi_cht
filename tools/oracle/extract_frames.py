@@ -178,6 +178,8 @@ def main():
                     "rands": None, "state": int(q[6]),
                     "prob": None, "vote": None,
                     "fstat": [int(q[7]), int(q[8])],
+                    # sim SpriteDraws：每一型精靈各抽幾次（索引就是型別編號）
+                    "sdraws": [int(x) for x in q[9:18]] if len(q) > 17 else None,
                 })
                 continue
             if not ln.startswith("F "):
@@ -199,6 +201,7 @@ def main():
                 "vote": [int(x) for x in p[-6:-2]] if len(p) > 42 else None,
                 # sim FrameStats：SimFrame（規則）與 MoveObjects（精靈）各抽幾次
                 "fstat": [int(x) for x in p[-2:]] if len(p) in (13, 53) else None,
+                "sdraws": None,
             })
     # 把四個亂數讀數換算成抽樣次數。RecoverState 回的是**讀完四次之後**
     # 的狀態，而原版讀完就直接跑下一個 frame，所以相鄰兩個檢查點的距離
@@ -226,12 +229,15 @@ def main():
             row += fr["vote"]
         if fr["fstat"]:
             row += fr["fstat"]
+        if fr.get("sdraws"):
+            row += fr["sdraws"]
         rows.append(tuple(row))
         prev = cur
     with open(f"{out}/frames.csv", "w") as fh:
         fh.write("# i,scycle,rvalve,cvalve,ivalve,draws,state"
                  "[,cityscore,cityyes,cityno,問題表0..6"
-                 ",投票抽樣,市民抽樣,迭代,成功[,規則抽樣,精靈抽樣]]\n")
+                 ",投票抽樣,市民抽樣,迭代,成功][,規則抽樣,精靈抽樣"
+                 "[,逐型精靈抽樣0..8]]\n")
         for r in rows:
             fh.write(",".join(str(v) for v in r) + "\n")
 

@@ -19,7 +19,12 @@ import (
 // 而且完全不擾動數列，所以這一份沒有那個「差 4」的簿記。
 //
 // spriteParityBudget 是目前逐 frame 完全一致（含精靈全欄位）的 frame 數。
-const spriteParityBudget = 54
+//
+// ⚠ **這個數字不跨資料集比較。** 原版每次啟動會先產生一座隨機城市，
+// 載入劇本時 `InitWillStuff` 又會 `RandomlySeedRand()` 重設種子——所以
+// 重跑一次 oracle 就是一條不同的軌跡，對得上幾個 frame 也會跟著變。
+// 它只在**資料集固定**時當回歸護欄用（程式碼退步就會掉下來）。
+const spriteParityBudget = 46
 
 var spriteFieldNames = [18]string{
 	"type", "frame", "x", "y", "orig_x", "orig_y", "dest_x", "dest_y",
@@ -131,10 +136,19 @@ func TestSpriteParity(t *testing.T) {
 			for k, v := range sites {
 				t.Logf("  精靈那一側是誰抽的：%s ×%d", k, v)
 			}
+			if f.HasSprDraws {
+				t.Logf("  原版逐型的抽樣：%v（索引就是型別編號）", f.SprDraws)
+			}
 			t.Logf("  我們的 cycle = %d", w.spriteSys.cycle)
 			break
 		}
 		if sf != f.FStat[0] || mo != f.FStat[1] {
+			for k, v := range sites {
+				t.Logf("  精靈那一側是誰抽的：%s ×%d", k, v)
+			}
+			if f.HasSprDraws {
+				t.Logf("  原版逐型的抽樣：%v", f.SprDraws)
+			}
 			t.Logf("第 %d 個 frame 分岔：規則抽 %d（原版 %d）、精靈抽 %d（原版 %d）",
 				f.I, sf, f.FStat[0], mo, f.FStat[1])
 			break

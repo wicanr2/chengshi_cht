@@ -94,6 +94,24 @@ extern short Cycle;
 extern int absDist;
 extern short CrashX, CrashY;
 
+extern unsigned int chengshi_sprite_draws[];
+
+int SimCmdSpriteDraws(ARGS)
+{
+  char buf[128];
+  int i, n = 0;
+
+  if (argc != 2) {
+    return (TCL_ERROR);
+  }
+  for (i = 0; i < 9; i++) n += sprintf(buf + n, "%s%u", i ? " " : "",
+				       chengshi_sprite_draws[i]);
+  buf[n] = 0;
+  Tcl_SetResult(interp, buf, TCL_VOLATILE);
+  return (TCL_OK);
+}
+
+
 int SimCmdSpriteCycle(ARGS)
 {
   if (argc != 2) {
@@ -120,6 +138,7 @@ int SimCmdFrame(ARGS)
   saved = SimSpeed;
   SimSpeed = 3;			/* SimFrame 在 SimSpeed 為 0 時會直接返回 */
   chengshi_sf_draws = chengshi_mo_draws = 0;
+  for (i = 0; i < 16; i++) chengshi_sprite_draws[i] = 0;
   for (i = 0; i < n; i++) {
     unsigned int a = chengshi_rand_calls;
     SimFrame();
@@ -305,7 +324,8 @@ REG = ("  /* chengshi */ SIM_CMD(Frame);\n"
        "  /* chengshi */ SIM_CMD(VoteStats);\n"
        "  /* chengshi */ SIM_CMD(FrameStats);\n"
        "  /* chengshi */ SIM_CMD(Sprites);\n"
-       "  /* chengshi */ SIM_CMD(SpriteCycle);\n")
+       "  /* chengshi */ SIM_CMD(SpriteCycle);\n"
+       "  /* chengshi */ SIM_CMD(SpriteDraws);\n")
 
 
 EVALC_OLD = """  x = 0;
@@ -445,6 +465,46 @@ UI_RAND = [
 ]
 
 
+SPRITE_OLD = """    if (sprite->frame) {
+      switch (sprite->type) {"""
+
+SPRITE_NEW = """    if (sprite->frame) {
+      unsigned int chengshi_a = chengshi_rand_calls;	/* chengshi */
+      switch (sprite->type) {"""
+
+SPRITE_OLD2 = """      }
+      sprite = sprite->next;
+    } else {"""
+
+SPRITE_NEW2 = """      }
+      /* chengshi: 記下這一隻抽了幾次。逐 frame 對拍在精靈那一側分岔時，
+         要先知道是哪一隻多抽的。 */
+      if ((sprite->type >= 0) && (sprite->type < 16))
+	chengshi_sprite_draws[sprite->type] += chengshi_rand_calls - chengshi_a;
+      sprite = sprite->next;
+    } else {"""
+
+SPRITE_DECL = """
+/* chengshi: 每一型精靈在這一次 sim Frame 裡各抽了幾次。 */
+extern unsigned int chengshi_rand_calls;
+unsigned int chengshi_sprite_draws[16];
+"""
+
+
+def patch_sprite(root):
+    p = f"{root}/src/sim/w_sprite.c"
+    s = open(p, encoding="utf-8", errors="surrogateescape").read()
+    if MARK in s:
+        return
+    for old, new in ((SPRITE_OLD, SPRITE_NEW), (SPRITE_OLD2, SPRITE_NEW2)):
+        if old not in s:
+            sys.exit(f"w_sprite.c 找不到插入點：{old.splitlines()[0]!r}")
+        s = s.replace(old, new, 1)
+    s = s.replace("#include", SPRITE_DECL + "\n#include", 1)
+    open(p, "w", encoding="utf-8", errors="surrogateescape").write(s)
+    print(f"已加上逐隻精靈的抽樣計數：{p}")
+
+
 def patch_ui(root):
     for rel, old, new in UI_RAND:
         p = f"{root}/{rel}"
@@ -462,6 +522,7 @@ def main():
     root = sys.argv[1]
     patch_rand(root)
     patch_eval(root)
+    patch_sprite(root)
     patch_ui(root)
     p = f"{root}/src/sim/w_sim.c"
     # 原始碼是 ASCII，但保險起見用 surrogateescape，非法位元組原樣帶過去。

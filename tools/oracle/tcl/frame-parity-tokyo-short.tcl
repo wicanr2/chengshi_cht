@@ -48,4 +48,4 @@ puts stdout "CHK [sim Mem LandValueMem 30 25] [sim Mem PopDensity 30 25] [sim Me
 puts stdout "INIT [sim Fcycle] [sim Scycle] [sim Funds]"
 puts stdout "R0S [sim RandState]"
 set _m {} ; for {set y 0} {$y < 100} {incr y} { for {set x 0} {$x < 120} {incr x} { lappend _m [sim Tile $x $y] } } ; puts stdout "CP0 [llength $_m] [join $_m ,]"
-for {set i 0} {$i < 400} {incr i} { sim Frame 1 ; puts stdout "FS $i [sim Scycle] [sim Valves] [sim RandState] [sim FrameStats]" ; puts stdout "S $i ; [sim Sprites]" }
+for {set i 0} {$i < 400} {incr i} { sim Frame 1 ; puts stdout "FS $i [sim Scycle] [sim Valves] [sim RandState] [sim FrameStats] [sim SpriteDraws]" ; puts stdout "S $i ; [sim Sprites]" }

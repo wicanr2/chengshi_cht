@@ -51,6 +51,10 @@ type frameCP struct {
 	// 「MoveObjects（精靈）」兩段。少抽一次的時候，第一件事是問它在哪一邊。
 	HasFStat bool
 	FStat    [2]int
+	// SprDraws 是逐「型別」的抽樣次數（索引就是精靈型別編號）。
+	// 精靈那一側分岔時，這個直接指出是哪一型多抽的。
+	HasSprDraws bool
+	SprDraws    [9]int
 }
 
 type frameMeta struct {
@@ -108,8 +112,9 @@ func loadFrameMetaIn(t *testing.T, dir string) frameMeta {
 		// 三種版面，用欄數分辨：
 		//   7  基本（空城實驗）
 		//   9  基本 ＋ FrameStats（規則／精靈各抽幾次）
+		//   18 基本 ＋ FrameStats ＋ 逐型精靈的抽樣次數
 		//   21 基本 ＋ 城市評估 ＋ 投票計數
-		if len(nums) != 7 && len(nums) != 9 && len(nums) != 21 {
+		if len(nums) != 7 && len(nums) != 9 && len(nums) != 18 && len(nums) != 21 {
 			t.Fatalf("frames.csv 的欄數 %d 不認得：%q", len(nums), ln)
 		}
 		f.I, f.Scycle = nums[0], nums[1]
@@ -119,6 +124,11 @@ func loadFrameMetaIn(t *testing.T, dir string) frameMeta {
 		case 9:
 			f.HasFStat = true
 			f.FStat = [2]int{nums[7], nums[8]}
+		case 18:
+			f.HasFStat = true
+			f.FStat = [2]int{nums[7], nums[8]}
+			f.HasSprDraws = true
+			copy(f.SprDraws[:], nums[9:18])
 		case 21:
 			f.HasProb = true
 			f.CityScore, f.CityYes, f.CityNo = nums[7], nums[8], nums[9]
