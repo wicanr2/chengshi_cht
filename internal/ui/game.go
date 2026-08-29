@@ -59,28 +59,37 @@ type toolButton struct {
 	msgIdx int
 	cost   int
 	key    ebiten.Key
+	// alt 是第二個鍵。舊版用的字母保留成別名，免得既有的說明與腳本失效；
+	// 沒有別名的就填成與 key 相同。
+	alt ebiten.Key
 }
 
 // ⚠ 造價以**原版資料檔**為準（訊息第 1 段自己寫著），不是 Micropolis 的
 // CostOf[]：體育館 $3000、海港 $5000，兩者在 Micropolis 裡剛好對調。
 // 見 docs/manual-cht/p23-58-operations.md 的「與 Micropolis 不一致的數字」。
+//
+// ⚠ **數字鍵不是工具鍵，是速度鍵**（`0`–`4`）。原版的《模擬城市參考附表》
+// 與**訊息檔第 19 段自己印著「暫停 0／慢速 1／普通 2／快速 3／最快 4」**——
+// 兩份一手資料一致。先前把 1–0 拿去選工具，遊戲裡的速度副選單於是在
+// 叫玩家按一組會放住宅區的鍵。工具鍵改成字母：`B`／`R`／`P`／`T`／`Q`
+// 是原版本來就有的，其餘是本專案新增（見 docs/spec/controls.md）。
 var toolButtons = []toolButton{
-	{sim.ToolBulldozer, 0, 1, ebiten.KeyD},
-	{sim.ToolRoad, 1, 10, ebiten.KeyR},
-	{sim.ToolWire, 2, 5, ebiten.KeyW},
-	{sim.ToolRail, 3, 20, ebiten.KeyT},
-	{sim.ToolPark, 4, 10, ebiten.KeyP},
-	{sim.ToolResidential, 5, 100, ebiten.Key1},
-	{sim.ToolCommercial, 6, 100, ebiten.Key2},
-	{sim.ToolIndustrial, 7, 100, ebiten.Key3},
-	{sim.ToolPolice, 8, 500, ebiten.Key4},
-	{sim.ToolFireStation, 9, 500, ebiten.Key5},
-	{sim.ToolStadium, 10, 3000, ebiten.Key6},
-	{sim.ToolNuclear, 11, 5000, ebiten.Key8},
-	{sim.ToolSeaport, 12, 5000, ebiten.Key9},
-	{sim.ToolAirport, 13, 10000, ebiten.Key0},
-	{sim.ToolCoalPower, 14, 3000, ebiten.Key7},
-	{sim.ToolQuery, -1, 0, ebiten.KeyQ},
+	{sim.ToolBulldozer, 0, 1, ebiten.KeyB, ebiten.KeyD},
+	{sim.ToolRoad, 1, 10, ebiten.KeyR, ebiten.KeyR},
+	{sim.ToolWire, 2, 5, ebiten.KeyP, ebiten.KeyW},
+	{sim.ToolRail, 3, 20, ebiten.KeyT, ebiten.KeyT},
+	{sim.ToolPark, 4, 10, ebiten.KeyK, ebiten.KeyK},
+	{sim.ToolResidential, 5, 100, ebiten.KeyZ, ebiten.KeyZ},
+	{sim.ToolCommercial, 6, 100, ebiten.KeyX, ebiten.KeyX},
+	{sim.ToolIndustrial, 7, 100, ebiten.KeyV, ebiten.KeyV},
+	{sim.ToolPolice, 8, 500, ebiten.KeyO, ebiten.KeyO},
+	{sim.ToolFireStation, 9, 500, ebiten.KeyF, ebiten.KeyF},
+	{sim.ToolStadium, 10, 3000, ebiten.KeyS, ebiten.KeyS},
+	{sim.ToolNuclear, 11, 5000, ebiten.KeyJ, ebiten.KeyJ},
+	{sim.ToolSeaport, 12, 5000, ebiten.KeyH, ebiten.KeyH},
+	{sim.ToolAirport, 13, 10000, ebiten.KeyA, ebiten.KeyA},
+	{sim.ToolCoalPower, 14, 3000, ebiten.KeyG, ebiten.KeyG},
+	{sim.ToolQuery, -1, 0, ebiten.KeyQ, ebiten.KeyQ},
 }
 
 // Game 是 Ebiten 的遊戲物件。
@@ -234,10 +243,14 @@ func (g *Game) setMessage(s string) {
 }
 
 func (g *Game) handleKeys() {
-	for _, b := range toolButtons {
-		if inpututil.IsKeyJustPressed(b.key) {
-			g.tool = b.tool
-			g.setMessage(g.toolLabel(b))
+	// ⚠ 工具鍵要排除 Ctrl 按著的情況，否則 Ctrl-B（預算）會順便選到推土機。
+	if !ebiten.IsKeyPressed(ebiten.KeyControl) {
+		for _, b := range toolButtons {
+			if inpututil.IsKeyJustPressed(b.key) ||
+				(b.alt != b.key && inpututil.IsKeyJustPressed(b.alt)) {
+				g.tool = b.tool
+				g.setMessage(g.toolLabel(b))
+			}
 		}
 	}
 	step := 1
@@ -261,12 +274,24 @@ func (g *Game) handleKeys() {
 	}
 	g.clampCamera()
 
+	// 速度：原版是 `0`–`4`（暫停／慢速／普通／快速／最快）。
+	// ⚠ 原版有**五段**，Micropolis 的規則層只有四段（0–3），所以「快速」與
+	// 「最快」在規則層是同一段。這是已知的未解處，記在 docs/spec/controls.md。
+	// F1–F4 是本專案舊版用的鍵，保留成別名。
+	if g.win == winNone && !ebiten.IsKeyPressed(ebiten.KeyControl) {
+		for i, k := range []ebiten.Key{
+			ebiten.Key0, ebiten.Key1, ebiten.Key2, ebiten.Key3, ebiten.Key4,
+		} {
+			if inpututil.IsKeyJustPressed(k) {
+				g.setSpeed(min(i, 3))
+			}
+		}
+	}
 	for i, k := range []ebiten.Key{
 		ebiten.KeyF1, ebiten.KeyF2, ebiten.KeyF3, ebiten.KeyF4,
 	} {
 		if inpututil.IsKeyJustPressed(k) {
-			g.world.SimSpeed = i
-			g.setMessage("模擬速度：" + g.speedName(i))
+			g.setSpeed(i)
 		}
 	}
 
@@ -282,6 +307,21 @@ func (g *Game) handleKeys() {
 			g.toggleWindow(winBudget)
 		case inpututil.IsKeyJustPressed(ebiten.KeyU):
 			g.toggleWindow(winEval)
+		case inpututil.IsKeyJustPressed(ebiten.KeyC), inpututil.IsKeyJustPressed(ebiten.KeyH):
+			// 原版：Ctrl-C 關閉前視窗、Ctrl-H 隱藏前視窗。
+			// 本專案的視窗只有開／關兩態，兩個鍵做同一件事。
+			g.win = winNone
+		case inpututil.IsKeyJustPressed(ebiten.KeyE):
+			// 原版：Ctrl-E 打開編輯視窗。這裡的地圖本身就是編輯視窗，
+			// 所以等同「把蓋在上面的視窗收掉」。
+			g.win = winNone
+		case inpututil.IsKeyJustPressed(ebiten.KeyA):
+			g.world.AutoBulldoze = !g.world.AutoBulldoze
+			if g.world.AutoBulldoze {
+				g.setMessage("自動整地：開")
+			} else {
+				g.setMessage("自動整地：關")
+			}
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
@@ -567,6 +607,12 @@ func (g *Game) toolNameCost(b toolButton) (string, string) {
 func (g *Game) toolLabel(b toolButton) string {
 	n, _ := g.toolNameCost(b)
 	return "選擇工具：" + n
+}
+
+// setSpeed 設定模擬速度並回報。
+func (g *Game) setSpeed(n int) {
+	g.world.SimSpeed = n
+	g.setMessage("模擬速度：" + g.speedName(n))
 }
 
 // speedName 從功能選單的速度副選單取名稱。

@@ -124,13 +124,13 @@ key F1
 # 又暗，一整條四格只改一千個像素上下，古代亞洲的水路則明顯得多。
 # 所以門檻取「明顯大於 0、明顯小於實測值」的數量級，不追求貼合。
 # 這些門檻只有在遊戲暫停時才成立（時鐘與煙囪動畫都停著，雜訊是 0）。
-build_plant() { key 7; click $((FX+1)) $((FY+1)); }
+build_plant() { key g; click $((FX+1)) $((FY+1)); }
 build_wire()  { key w; drag $((FX+4)) $((FY+1)) $((FX+7)) $((FY+1)); }
 build_drop()  { key w; click $((FX+7)) $((FY+2)); }
-build_res()   { key 1; click $((FX+6)) $((FY+4)); }
+build_res()   { key z; click $((FX+6)) $((FY+4)); }
 build_road()  { key r; drag $((FX+4)) $((FY+6)) $((FX+11)) $((FY+6)); }
 build_elec()  { key w; drag $((FX+4)) $((FY+6)) $((FX+11)) $((FY+6)); }
-build_com()   { key 2; click $((FX+6)) $((FY+8)); }
+build_com()   { key x; click $((FX+6)) $((FY+8)); }
 
 do_until 4000 "蓋發電廠"       build_plant
 do_until  150 "拉電線到住宅區" build_wire
@@ -172,7 +172,7 @@ open_window "ctrl+u" 06-評估   "評估視窗"
 
 echo "== 第三段：查詢與捲動 =="
 key q; click $((FX+1)) $((FY+1)); sleep 0.5; shot 07-查詢
-key 1
+key z
 do_until 200000 "方向鍵捲動" xdotool key --clearmodifiers --repeat 30 --repeat-delay 30 Right
 shot 08-捲動後
 
