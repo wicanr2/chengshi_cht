@@ -48,6 +48,8 @@ func main() {
 		cmdDosParity(os.Args[2:])
 	case "scenario":
 		cmdScenario(os.Args[2:])
+	case "gfx":
+		cmdGfx(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
@@ -73,7 +75,10 @@ func usage() {
         在該種子的開場視野裡找一塊空地，印出左上角的格子座標。
 
   simtool scenario -file <劇本.PSN>
-        解開一個 DOS 劇本，印出城市名與城市資料大小。`)
+        解開一個 DOS 劇本，印出城市名與城市資料大小。
+
+  simtool gfx -file <圖形檔.PGF> [-out 目錄] [-bank N] [-max N]
+        把圖形庫倒成 PNG。圖形庫的用途只有畫出來才認得出來。`)
 }
 
 func cmdMessages(args []string) {
