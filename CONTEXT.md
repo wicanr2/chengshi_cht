@@ -59,6 +59,8 @@ MODE=run tools/dos_parity.sh        # DOS 原版 vs remake 的抽樣對拍（八
 tools/go.sh run ./cmd/simtool play all   # 自動玩家把八個劇本各玩一次
 tools/oracle/build.sh               # 建 Micropolis oracle
 tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
+python3 tools/unpack_simcity_exe.py <SIMCITY.EXE> out.bin   # 解開執行檔的自解壓外殼
+tools/ida.sh analyze SIMCITY.EXE    # IDA Pro 9.4 headless（反組譯是退路，見 CLAUDE.md §2.4）
 ```
 
 ### 已確認的事實（可引用）
@@ -68,6 +70,14 @@ tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
   `Congratulations, you passed.`（`docs/re/16-dos-oracle.md` §2）。
 - 螢幕模式決定的是**圖形檔的目錄**不是檔名：`Screen Mode: T` 會去找
   `C:\tdy\WESTCEGA.pgf`（同上 §3）。
+- **DOS 1.10 的六個汙染權重全部是 Micropolis 註解裡的舊值**：壅塞車流 25、
+  稀疏車流 10、火災 60、輻射 −40、海港／機場／電廠 60、工業 50。
+  從執行檔解開後的位元組讀出來（`docs/re/18-dos-parity.md` §6.3）。
+  Micropolis 2008 把它們調成 75／50／90／255／100。
+  **remake 照 Micropolis**——DOS 1.10 是同一份引擎的較早版本。
+- `SIMCITY.EXE` 是**打包過的**，而且進入點是**破解程式的 stub**（掛 INT 21h
+  把防拷判斷蓋掉），原版進入點在 `載入段 + 0xE0 : 0`。壓縮法是資料檔那支
+  LZSS **多一道 `ror 1`**。解法：`tools/unpack_simcity_exe.py`。
 
 - 軟體世界代理的是**英文版遊戲 ＋ 中文說明書**，一代沒有中文版遊戲。
   （來源：封面「珍藏版 29／NT 180／2 片裝」＋ 骨灰集散地規格表「中文版本：無」）
@@ -123,6 +133,11 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 
 ## 5.5 未解（有證據但還沒定案）
 
+> 2026-08-30 移出一列：**DOS 1.10 的汙染權重比 Micropolis 低**，已從執行檔
+> 讀到位元組定案（六個權重全部是 Micropolis 註解裡的舊值），見
+> [`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md) §6.3。
+> remake 照 Micropolis，不往 1991 年調。
+
 - **維修費**：《參考手冊》p.63 寫「道路 $1、橋 $4、鐵路 $4、隧道 $10」，
   Micropolis 算出來是道路 1、橋 5、鐵路 2、隧道不存在。這一項沒有 DOS
   資料檔可以裁判（維修費不寫在 `.PTF` 裡）。規則層照 Micropolis。
@@ -132,7 +147,6 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 |---|---|---|
 | `.PGF` 第 0 庫後面那塊共用資料（CEGA 11 523、MCGA 9 155、MONO 5 699 位元組）| 風格檔與基本檔之間逐位元組相同，第一張圖的表頭讀出來是 4×45，但整塊沒有逐張分界 | 反組譯繪圖常式，看它從哪個位移開始讀 |
 | 兩份 `SOUNDDAT.PSF` 哪一份被讀 | 1991 與 2012 兩個版本並存 | 反組譯檔名字串，或 DOSBox 追檔案開啟 |
-| **DOS 1.10 用的是舊的汙染權重** | **強證據**：`s_scan.c:257 GetPValue()` 每個被改過的權重都把舊值留在註解裡（`return (/* 25 */ 75)`），而 DOS 1.10 是 1991 年建置、Micropolis 是 2008 年釋出。拿十六份 DOS 存檔擬合三十二種新舊組合：全用現行值的平均絕對誤差 14.6，**車流舊（25/10）＋輻射舊（−40）＋海港電廠新（100）是 4.06**。所以 remake 沒有移植錯，差的是版本 | 要到「已確認」只有一條路：反組譯 `SIMCITY.EXE` 的 `GetPValue` 看那五個立即數。**卡在執行檔是打包過的**（IDA 只解出 3 個函式 1 個字串），下一步是用 DOSBox dump 解開後的記憶體。見 [`docs/re/18-dos-parity.md`](docs/re/18-dos-parity.md) §6 |
 | DOS 原版顯示的年份與存檔裡的 `CityTime` 對不上 | 東京存檔 `CityTime` 2739（＝1957，與手冊相符），原版狀態列同一刻顯示 Feb 1906，第一次預算視窗標題 1851 | 還沒查。不影響對拍（讀的是存檔欄位），但寫年份相關 UI 之前要解掉 |
 
 ## 6. 現行工作清單
