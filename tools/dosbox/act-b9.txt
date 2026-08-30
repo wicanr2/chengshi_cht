@@ -69,20 +69,22 @@ key ctrl+c
 wait 2
 key ctrl+e
 wait 3
-# 四個選單全部拉開
-press 200 8
+# 四個選單全部拉開。⚠ 座標是量出來的：SYSTEM≈88-138、OPTIONS≈223-280、
+# DISASTERS≈366-440、WINDOWS≈526-585（遊戲座標，不是螢幕座標）。
+# 先前寫 200/300/404/500，只有 DISASTERS 真的拉開，另外三張其實是沒開的選單列。
+press 110 8
 wait 2
 shot 11-m1
 release
-press 300 8
+press 250 8
 wait 2
 shot 12-m2
 release
-press 404 8
+press 400 8
 wait 2
 shot 13-m3
 release
-press 500 8
+press 550 8
 wait 2
 shot 14-m4
 release

@@ -59,8 +59,12 @@ const (
 	editTitleH = 14
 	editInfoY  = 38 // 資金／訊息帶
 	editInfoH  = 17
-	editViewY  = 54 // 地圖區
-	editViewH  = 257
+	// 地圖區。⚠ 圖塊從 **55** 開始，不是 54——54 那一列是地圖區的白色外框。
+	// 量法：把畫面上每個 16×16 位移拿去比對第 0 庫的 960 張圖塊，
+	// 命中最多的位移就是格網原點（螢幕 y 除以 16 餘 15，換算成遊戲座標是 55）。
+	// 先前寫 54，等於整張地圖上移一像素，而且沒有那圈框。
+	editViewY  = 55 // 地圖區（圖塊的第一列）
+	editViewH  = 256
 	editToolY  = 311 // 目前工具帶
 
 	// 帶內文字的字格位置，全部量自原版（見 drawEditWindow 的說明）。
@@ -71,7 +75,7 @@ const (
 	editToolH  = 14
 
 	editPalX, editPalY = 6, 53 // 工具盤圖（庫 2，57×182）
-	editViewX          = 64    // 地圖區左緣
+	editViewX          = 64    // 地圖區左緣（圖塊的第一欄；63 是白框）
 	editViewW          = 512   // 64–575，剛好 32 格
 	editDemandX        = 8     // 需求指標（庫 3，46×39）
 	editDemandY        = 236
@@ -248,7 +252,7 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	fill(dst, editX, editY, ew, eh, colEditFrm)
 	fill(dst, editX+1, editTitleY, ew-2, editTitleH, colTitleBar)
 	fill(dst, editX+1, editInfoY, ew-2, editInfoH, colInfoBand)
-	fill(dst, editX+1, editViewY, ew-2, toolY-editViewY, colDesktop)
+	fill(dst, editX+1, editViewY-1, ew-2, toolY-editViewY+1, colDesktop)
 
 	g.drawEditTitle(dst, ew)
 
@@ -262,6 +266,7 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	}
 
 	g.drawEditMap(dst)
+	g.drawEditViewFrame(dst, vw, vh)
 	blit(dst, g.tiles.UIImage(BankToolPalette, 0), editPalX, editPalY)
 	g.drawToolHighlight(dst)
 	blit(dst, g.tiles.UIImage(BankDemand, 0), editDemandX, editDemandY)
@@ -272,8 +277,23 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	g.font.Draw(dst, g.currentToolText(), toolTextX*UIScale, toolY*UIScale, colInkLight)
 	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型）。
 	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+6, colInkLight)
-	_ = vw
-	_ = vh
+}
+
+// drawEditViewFrame 畫地圖區四周那一圈**一像素白框**。
+//
+// 原版量出來的位置（遊戲座標，workplace/dosbox/q9ctlA-09-back.png）：
+// 上緣 y=54 從 x=63 到 576、左緣 x=63、右緣 x=576、下緣 y=311。
+// 圖塊本身是 x 64–575、y 55–310，剛好 512×256 ＝ 32×16 格。
+//
+// ⚠ remake 的工具帶比原版高三個像素（只有一種字高），所以下緣的
+// 絕對位置跟原版差三格——那是既有的已知偏差，不是這裡要修的。
+func (g *Game) drawEditViewFrame(dst *ebiten.Image, vw, vh int) {
+	l, t := editViewX-1, editViewY-1
+	r, b := editViewX+vw, editViewY+vh
+	fill(dst, l, t, r-l+1, 1, colInkLight)
+	fill(dst, l, b, r-l+1, 1, colInkLight)
+	fill(dst, l, t, 1, b-t+1, colInkLight)
+	fill(dst, r, t, 1, b-t+1, colInkLight)
 }
 
 // drawEditTitle 畫編輯視窗標題列：關閉記號、城市名、年月。
