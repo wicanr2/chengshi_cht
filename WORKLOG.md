@@ -1468,3 +1468,28 @@ tools/playtest.sh          # 種子 7，真視窗 + 真鍵盤 + 真滑鼠（dock
 重開讀檔、建造新城市對話框（艱難難度起始資金 $5 000）、劇本簡介關得掉。
 
 單元測試與 headless 對拍全綠不代表玩家打開來能玩，這一支測的是後者。
+
+### 發行包重打並驗過（三平台）
+
+```
+tools/release.sh          # dist/ 三個包
+tools/verify_release.sh   # 驗包本身，不是驗原始碼
+```
+
+| 包 | 大小 |
+|---|---|
+| `chengshi_cht-20260830-linux-amd64.tar.gz` | 3.9 MB |
+| `chengshi_cht-20260830-macos-universal.tar.gz` | 7.2 MB |
+| `chengshi_cht-20260830-windows-amd64.zip` | 3.8 MB |
+
+macOS 靜態驗收 9 項全過（universal 雙弧、arm64 有 ad-hoc 簽章、最低系統
+11.0／10.15、只相依系統庫、字串檢查、組好未簽名的 `.app`）。
+
+發行包驗證 18 項全過，其中三項是 `CLAUDE.md` §7／§8 的硬要求：
+
+- **`LICENSE` 在每一個包裡**（linux／windows／macOS 三個都驗）
+- **包裡沒有原版素材**（執行檔、資料檔、美術、音效、掃描件、字型一律不進包）
+- 從發行包所在目錄跑得起來、`Ctrl-S` 存檔落地 27 120 位元組、沒有 panic
+
+⚠ `dist/` 不入版控（`.gitignore`）。這一段記的是「這一版打得出來且驗得過」，
+不是「已經發布」——**發布是對外動作，要使用者授權**。
