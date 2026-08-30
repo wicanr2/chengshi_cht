@@ -1,0 +1,54 @@
+# 實測原版的鍵盤操作路徑，這一版每組測試前後都夾一個**已知有效**的鍵當正對照。
+# 上一版全部零差異，但沒有對照，分不出「原版沒這功能」與「鍵根本沒送到」。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+key ctrl+c
+wait 2
+move 150 180
+wait 2
+shot 00-base
+mark 正對照：方向鍵右，應該要捲動
+keyrep Right 6
+wait 3
+shot 01-ctl-right
+mark 數字鍵盤 6
+keyrep KP_6 10
+wait 3
+shot 02-kp6
+mark 數字鍵盤 Right（NumLock 關的鍵位）
+keyrep KP_Right 10
+wait 3
+shot 03-kpright
+mark ScrollLock 之後再試數字鍵盤
+key Scroll_Lock
+wait 2
+keyrep KP_6 10
+wait 3
+shot 04-slock-kp6
+mark Insert
+key Insert
+wait 3
+shot 05-ins
+mark Delete
+key Delete
+wait 3
+shot 06-del
+mark Y
+key y
+wait 3
+shot 07-y
+mark 正對照：方向鍵左，應該要捲回去
+keyrep Left 6
+wait 3
+shot 08-ctl-left

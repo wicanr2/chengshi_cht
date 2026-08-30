@@ -1,0 +1,46 @@
+# 實測原版的鍵盤操作路徑：邊緣捲動、數字鍵盤游標、Ins／Del／ScrollLock。
+# 每一步都截圖，才分得出「沒反應」與「有反應但看不出來」。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+key ctrl+c
+wait 2
+shot 00-base
+mark 把游標移到地圖區右緣
+move 570 180
+wait 4
+shot 01-edge-right
+mark 移回中央
+move 300 180
+wait 3
+shot 02-back
+mark 數字鍵盤 6（右）
+keyrep KP_6 10
+wait 3
+shot 03-kp6
+mark 數字鍵盤 2（下）
+keyrep KP_2 10
+wait 3
+shot 04-kp2
+mark 空白鍵（左鍵）
+key space
+wait 3
+shot 05-space
+mark Insert
+key Insert
+wait 3
+shot 06-ins
+mark Delete
+key Delete
+wait 3
+shot 07-del

@@ -207,6 +207,14 @@ func main() {
 	}
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	g.SetDataDir(*data, *style)
+	// 原版一啟動是招牌畫面（`CEGANTRO.PPF`），不是城市。只有在玩家沒有
+	// 指定要玩哪一座城時才走那條路——命令列點名了劇本、存檔、示範城市或
+	// 起始鏡頭，就是直接進去，試玩與截圖腳本靠這個。
+	if *load == "" && *scen == 0 && *demo == 0 && *win == "" && *cam == "" && *seed == 0 {
+		if err := g.LoadTitleScreens(*data); err != nil {
+			fmt.Fprintln(os.Stderr, "招牌畫面讀不到（直接進城市）：", err)
+		}
+	}
 	// 音效開不起來不算致命：印一行就繼續。
 	//
 	// ⚠ 但**必須先在子行程裡試開**，見 ui.ProbeAudio：Ebiten 把音效環境的

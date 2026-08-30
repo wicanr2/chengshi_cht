@@ -191,6 +191,12 @@ type Game struct {
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
 	gotoX, gotoY int
+	// 招牌與劇本選單（原版的 `.PPF` 兩幅畫面）。screen 是「現在在哪一幕」。
+	screen             screenMode
+	titlePic, scenPic  *ebiten.Image
+	// 前往災區之前的鏡頭。參考附表寫「再按一次返回原地」，所以 Tab 是
+	// 來回切換，不是單程。backX 為 −1 代表現在人在原地。
+	backX, backY int
 
 	// mini 是全市地圖的畫布快取，見 minimap.go。
 	mini *minimap
@@ -210,7 +216,8 @@ func (g *Game) SetSavePath(p string) { g.savePath = p }
 // NewGame 建一個新遊戲。
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential,
-		animate: true, fastAnimate: true, menuRow: -1, graphYears: 10}
+		animate: true, fastAnimate: true, menuRow: -1, graphYears: 10,
+		backX: -1}
 	// 一開始六條曲線都畫，跟原版一樣。
 	for i := range g.graphOn {
 		g.graphOn[i] = true
@@ -283,6 +290,46 @@ func (g *Game) SetLayer(n int) {
 	}
 }
 
+// scrollDir 讀出捲動方向，−1／0／1 各一個軸。
+//
+// 原版的捲動鍵是 **`Ctrl` ＋ 方向鍵或數字鍵盤**（英文手冊「WITH A KEYBOARD」段，
+// 2026-08-30 用 DOS 1.10 實測：`Ctrl-Right` ×20 讓編輯視窗的地圖確實往右移，
+// 而單按方向鍵、`Ins`、`Del`、數字鍵盤都沒有反應——手冊把那些寫成
+// **沒有滑鼠驅動時**才走的路徑，DOSBox 裡裝了滑鼠所以量不到）。
+//
+// remake 兩種都吃：單按方向鍵直接捲（既有行為，滑鼠一定在），
+// 加不加 `Ctrl` 都一樣。八個方向照手冊的對應：
+// `Home`／`7` 左上、`PgUp`／`9` 右上、`End`／`1` 左下、`PgDn`／`3` 右下。
+func scrollDir() (dx, dy int) {
+	down := func(ks ...ebiten.Key) bool {
+		for _, k := range ks {
+			if ebiten.IsKeyPressed(k) {
+				return true
+			}
+		}
+		return false
+	}
+	left := down(ebiten.KeyLeft, ebiten.KeyKP4, ebiten.KeyHome, ebiten.KeyKP7,
+		ebiten.KeyEnd, ebiten.KeyKP1)
+	right := down(ebiten.KeyRight, ebiten.KeyKP6, ebiten.KeyPageUp, ebiten.KeyKP9,
+		ebiten.KeyPageDown, ebiten.KeyKP3)
+	up := down(ebiten.KeyUp, ebiten.KeyKP8, ebiten.KeyHome, ebiten.KeyKP7,
+		ebiten.KeyPageUp, ebiten.KeyKP9)
+	bottom := down(ebiten.KeyDown, ebiten.KeyKP2, ebiten.KeyEnd, ebiten.KeyKP1,
+		ebiten.KeyPageDown, ebiten.KeyKP3)
+	if left && !right {
+		dx = -1
+	} else if right && !left {
+		dx = 1
+	}
+	if up && !bottom {
+		dy = -1
+	} else if bottom && !up {
+		dy = 1
+	}
+	return
+}
+
 // LookAt 把鏡頭移到某一格附近。示範模式與「前往災區」都用它。
 func (g *Game) LookAt(x, y int) {
 	g.camX = x - g.tilesAcross()/2
@@ -316,6 +363,9 @@ func (g *Game) Layout(int, int) (int, int) { return CanvasW, CanvasH }
 func (g *Game) Update() error {
 	if g.quit {
 		return ebiten.Termination
+	}
+	if g.updateTitle() {
+		return nil
 	}
 	g.handleKeys()
 	g.handleMouse()
@@ -451,18 +501,9 @@ func (g *Game) handleKeys() {
 	if g.win != winNone {
 		step = 0 // 視窗開著時方向鍵歸視窗用
 	}
-	switch {
-	case ebiten.IsKeyPressed(ebiten.KeyLeft):
-		g.camX -= step
-	case ebiten.IsKeyPressed(ebiten.KeyRight):
-		g.camX += step
-	}
-	switch {
-	case ebiten.IsKeyPressed(ebiten.KeyUp):
-		g.camY -= step
-	case ebiten.IsKeyPressed(ebiten.KeyDown):
-		g.camY += step
-	}
+	dx, dy := scrollDir()
+	g.camX += dx * step
+	g.camY += dy * step
 	g.clampCamera()
 
 	// 速度：原版是 `0`–`4`（暫停／慢速／普通／快速／最快）。
@@ -586,10 +627,17 @@ func (g *Game) handleKeys() {
 // 目標是**上一則帶座標的訊息**的位置：災難、墜毀、爆炸、交通壅塞都帶座標
 // （`SendMesAt`），純提示訊息不帶。原版用 `MesX`／`MesY`，`0,0` 代表沒有。
 func (g *Game) gotoEvent() {
+	if g.backX >= 0 {
+		g.camX, g.camY = g.backX, g.backY
+		g.backX = -1
+		g.clampCamera()
+		return
+	}
 	if g.gotoX == 0 && g.gotoY == 0 {
 		g.setMessage("沒有可以前往的事件")
 		return
 	}
+	g.backX, g.backY = g.camX, g.camY
 	g.LookAt(g.gotoX, g.gotoY)
 }
 
@@ -824,6 +872,10 @@ func (g *Game) toolMessage(n int) {
 // ＋ 下方狀態列）已經換掉——原版是視窗系統，那才是「操作介面一樣」的意思。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colBG)
+	if g.screen != scrPlay {
+		g.drawTitle(screen)
+		return
+	}
 	g.drawClassic(screen)
 	g.drawWindow(screen)
 	g.drawPicture(screen)

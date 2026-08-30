@@ -1,0 +1,6 @@
+# 招牌與劇本選單畫面的對拍基準：原版一啟動的兩幅 `.PPF`。
+wait 4
+shot 00-title
+click 316 240
+wait 5
+shot 01-scen

@@ -402,3 +402,35 @@ func TestEGAPaletteUsesDisplayLevels(t *testing.T) {
 		}
 	}
 }
+
+// `.PPF` 的位元平面是**高位在前**：第一個平面是 EGA 的 I（亮度），
+// 最後一個才是 B。把順序組反會得到版面完全正確、顏色整組錯位的畫面
+// （招牌從綠色變紅色），而長度檢查與「畫面讀得出字」都照樣過。
+//
+// 定錨像素取自與 DOS 1.10 實跑的逐像素對拍（2026-08-30，除了滑鼠游標
+// 那個 16×15 的方塊之外 224000 個像素全同）。
+func TestPPFPlaneOrderIsHighBitFirst(t *testing.T) {
+	dir := dosDir(t)
+	raw, err := os.ReadFile(filepath.Join(dir, "CEGA", "CEGANTRO.PPF"))
+	if err != nil {
+		t.Skip("缺 CEGANTRO.PPF")
+	}
+	im, err := LoadPPF(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		x, y    int
+		r, g, b uint8
+		what    string
+	}{
+		{320, 150, 0x00, 0xaa, 0x00, "招牌底色（綠）"},
+		{320, 340, 0xaa, 0xaa, 0xaa, "下緣的路面（淺灰）"},
+	} {
+		got := im.RGBAAt(c.x, c.y)
+		if got.R != c.r || got.G != c.g || got.B != c.b {
+			t.Errorf("(%d,%d) %s：得到 %02x%02x%02x，應為 %02x%02x%02x",
+				c.x, c.y, c.what, got.R, got.G, got.B, c.r, c.g, c.b)
+		}
+	}
+}

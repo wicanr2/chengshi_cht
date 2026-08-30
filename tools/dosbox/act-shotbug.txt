@@ -1,0 +1,27 @@
+# 診斷：懷疑腳本裡第一次 `shot` 之後送的按鍵不會生效。
+# 判準是工具名那一行：R＝Road、Z＝Residential，一定看得見。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+mark 第一次截圖之前先按 R
+key r
+wait 2
+shot 00-after-r
+mark 第一次截圖之後按 Z
+key z
+wait 2
+shot 01-after-z
+mark 再按一次 R
+key r
+wait 2
+shot 02-after-r2

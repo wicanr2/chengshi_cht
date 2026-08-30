@@ -1,0 +1,65 @@
+# 純鍵盤操作路徑實測。英文手冊第 862–918 行說：方向鍵與數字鍵盤移的是
+# **游標**，`Ctrl` ＋ 方向鍵才捲動城市；`Ins`／空白鍵 ＝ 左鍵，`Del` ＝ 右鍵；
+# `5` 把游標移到畫面中央，`Home`／`End`／`PgUp`／`PgDn` 移到四個邊。
+#
+# ⚠ 這支腳本**不用 `move`**。前三版都在第一次 `move` 之後所有按鍵失效
+# （連正對照都零差異），改用 `click`／`key` 就正常。
+#
+# 正對照：頭尾各一次 `Ctrl-G` 開統計圖。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+shot 00-base
+mark 正對照：Ctrl-G
+key ctrl+g
+wait 3
+shot 01-ctl-graph
+key ctrl+c
+wait 3
+shot 02-closed
+mark 方向鍵右 ×20
+keyrep Right 20
+wait 2
+shot 03-right
+mark 方向鍵下 ×20
+keyrep Down 20
+wait 2
+shot 04-down
+mark 數字鍵盤 5：游標回畫面中央
+key KP_Begin
+wait 2
+shot 05-center
+mark Home
+key Home
+wait 2
+shot 06-home
+mark End
+key End
+wait 2
+shot 07-end
+mark Ctrl ＋ 方向鍵右 ×20：應該捲動城市
+keyrep ctrl+Right 20
+wait 3
+shot 08-ctl-scroll
+mark Insert 當左鍵
+key Insert
+wait 3
+shot 09-ins
+mark Delete 當右鍵
+key Delete
+wait 3
+shot 10-del
+mark 正對照收尾：Ctrl-G
+key ctrl+g
+wait 3
+shot 11-ctl-graph2
