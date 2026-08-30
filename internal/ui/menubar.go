@@ -281,10 +281,21 @@ func onOff(b bool) string {
 	return "關"
 }
 
-// pickDisaster 是災難選單（第 20 段）。第 6 筆是分隔線、第 7 筆是取消。
+// pickDisaster 是災難選單（第 20 段）。前六筆是六種災難、第 6 筆是分隔線、
+// **第 7 筆是「停用災難」**（原文 " Disable "）。
+//
+// ⚠ 第 7 筆先前沒有接：選了完全沒反應，而選單照樣畫得出來。
+// 它對應 Micropolis 的 `NoDisasters`（`s_disast.c:87` 一開頭就 return），
+// 模擬層早就有這個旗標，只差呈現層沒接上。
 func (g *Game) pickDisaster(row int) {
-	if row < len(disasterItems) {
+	switch {
+	case row < len(disasterItems):
 		g.fireDisaster(row)
+	case row == len(disasterItems)+1: // 跳過分隔線
+		g.world.NoDisasters = !g.world.NoDisasters
+		g.setMessage(trimMenu(g.txt.S(i18n.SecDisaster, row)) + "：" +
+			onOff(g.world.NoDisasters))
+		g.win = winNone
 	}
 }
 

@@ -44,6 +44,11 @@ const (
 	// 在原版裡對編輯視窗按一下右鍵會把它拉到前面，那時才看得到全寬。
 	// 這種錯不會有任何症狀：小視窗照樣畫得出來、玩得動，只是視野少了三分之二。
 	editX, editY = 5, 21
+	// editFrameW 是編輯視窗外框的寬度，四邊都是 3 像素。
+	editFrameW = 3
+	// ditherTop 是網點區相對工具盤上緣的位移（原版量到網點從 y 235 起，
+	// 工具盤在 y 55，所以是 180）。
+	ditherTop = 180
 	// 預設大小。玩家可以用「調整編輯窗大小」（Ctrl-R）改，改過的存在
 	// Game 的 ew／eh，畫圖與命中判斷一律走 g.editSize()。
 	editW, editH = 575, 304
@@ -80,8 +85,10 @@ const (
 	editPalX, editPalY = 8, 55
 	editViewX          = 64    // 地圖區左緣（圖塊的第一欄；63 是白框）
 	editViewW          = 512   // 64–575，剛好 32 格
-	editDemandX        = 8     // 需求指標（庫 3，46×39）
-	editDemandY        = 236
+	// 需求指標（庫 3，46×39）。位置量自原版：C·R·I 的洋紅條在 x 15–53、
+	// y 253–259，據此回推圖的左上角。先前是 (8,236)，偏左 4、偏上 1。
+	editDemandX        = 12
+	editDemandY        = 237
 
 	mapX, mapY = 241, 21 // City Form 視窗外框
 	mapW, mapH = 398, 327
@@ -188,7 +195,11 @@ func (g *Game) editViewSize() (int, int) {
 	w, h := g.editSize()
 	sz := g.tiles.Size
 	vw := (w - (editViewX - editX) - 4) / sz * sz
-	vh := (h - (editViewY - editY) - 18) / sz * sz
+	// ⚠ 扣掉的是**工具帶的高度**（14），不是 18。原版的地圖區是 y 55–310
+	// ＝ 256 像素 ＝ 16 列；扣 18 只剩 240，等於**少畫一列地圖**，
+	// 而且會在地圖與工具帶之間留下 12 像素的灰色空隙。
+	// 實測：原版 y 55–310 全是地圖，311 才是工具帶的第一列。
+	vh := (h - (editViewY - editY) - editToolH) / sz * sz
 	if vw < sz {
 		vw = sz
 	}
@@ -248,14 +259,18 @@ func (g *Game) drawMenuBar(dst *ebiten.Image) {
 func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	ew, eh := g.editSize()
 	vw, vh := g.editViewSize()
-	// ⚠ 工具帶比原版**高三個像素**：原版這一條用 8×8 字型，只要 11 像素；
-	// remake 只有一種字高（14），所以把帶往上長三格。下面的地圖區跟著縮，
-	// 而地圖區本來就會取整到整格，不影響格線。
-	toolY := editY + eh - 17
+	// 工具帶：原版是視窗最底下 14 個像素（y 311–324），與地圖區緊鄰，
+	// 中間沒有空隙。
+	toolY := editY + eh - editToolH
 	fill(dst, editX, editY, ew, eh, colEditFrm)
-	fill(dst, editX+1, editTitleY, ew-2, editTitleH, colTitleBar)
-	fill(dst, editX+1, editInfoY, ew-2, editInfoH, colInfoBand)
-	fill(dst, editX+1, editViewY-1, ew-2, toolY-editViewY+1, colDesktop)
+	// ⚠ 外框是**三個像素**，四邊一樣（原版量到左 x 5–7、右 577–579、
+	// 上 y 21–23）。先前左右只畫一像素，上緣卻是三像素——自己就不一致。
+	fill(dst, editX+editFrameW, editTitleY, ew-2*editFrameW, editTitleH, colTitleBar)
+	fill(dst, editX+editFrameW, editInfoY, ew-2*editFrameW, editInfoH, colInfoBand)
+	fill(dst, editX+editFrameW, editViewY-1, ew-2*editFrameW, toolY-editViewY+1, colDesktop)
+	// 工具盤與需求指標之間、以及需求指標下方，原版填的是**黑白一像素網點**
+	// （x 8–63、y 235–310，(x+y) 偶數為黑）。先前那裡是空的桌面灰。
+	drawLeftColumnDither(dst, toolY)
 
 	g.drawEditTitle(dst, ew)
 
@@ -273,13 +288,124 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	blit(dst, g.tiles.UIImage(BankToolPalette, 0), editPalX, editPalY)
 	g.drawToolHighlight(dst)
 	blit(dst, g.tiles.UIImage(BankDemand, 0), editDemandX, editDemandY)
+	g.drawDemandBars(dst)
 
-	// 目前工具帶。原版這一條用的是 **8×8** 字型（大寫七列），
-	// 上面幾條用 8×14——所以字格上緣比帶頂只低一列。
-	fill(dst, editX+1, toolY, ew-2, editToolH, colEditFrm)
+	// 目前工具帶。**底色不是實心藍，是一像素的白藍網點**（實測原版：
+	// y 311 整列白、312–321 網點、322–324 實心藍，x 5–579 滿版寬）。
+	// 先前畫成實心藍，看起來像但整條帶的明度差很多。
+	//
+	// 原版這一條的字用 **8×8** 字型（大寫七列），上面幾條用 8×14。
+	// remake 只有一種字高（14），字會蓋掉白線與大部分網點——
+	// 這是 CJK 字高換來的已知取捨，但**帶的幾何與底色照原版**。
+	drawToolBandBG(dst, editX, toolY, ew)
 	g.font.Draw(dst, g.currentToolText(), toolTextX*UIScale, toolY*UIScale, colInkLight)
 	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型）。
 	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+6, colInkLight)
+}
+
+// 需求指標的三根長條。**順序是 C·R·I**（洋紅條上的字就是這個順序），
+// 不是 R·C·I——照 R·C·I 畫會讓三根長條全部對錯欄。
+//
+// 幾何量自原版（`workplace/dosbox/bos-00-view.png` 的字元圖）：
+//
+//	欄 x      20–24（商）／33–37（住）／46–50（工），各寬 5
+//	往上      y 240–251，最多 12 列，底邊固定在 251
+//	往下      y 261–271，最多 11 列，頂邊固定在 261
+//
+// 上下不對稱是原版就這樣（面板下半被那塊深紅記號與網點吃掉空間）。
+//
+// 高度公式：valve 夾在 ±1500 之後線性換算。兩個極值都是實測的——
+// 波士頓存檔 `CValve=-1500` 對到向下 11 列、`RValve=2000`（夾成 1500）
+// 對到向上 12 列（`MiscHis[5..7]` 就是三個 valve，`s_sim.c:428`）。
+// **中間值是假設線性**：Micropolis 自己也是線性的（`w_update.c:230
+// SetDemand` 送出 `valve/100`），但 DOS 版沒有中段的實測點。
+const (
+	demandBarW   = 5
+	demandUpMax  = 12  // 往上最多幾列
+	demandDnMax  = 11  // 往下最多幾列
+	demandUpBot  = 251 // 往上長的底邊
+	demandDnTop  = 261 // 往下長的頂邊
+	demandClamp  = 1500
+)
+
+// demandBarX 是三根長條的左緣（原版座標），順序 C、R、I。
+var demandBarX = [3]int{20, 33, 46}
+
+func (g *Game) drawDemandBars(dst *ebiten.Image) {
+	w := g.world
+	bars := [3]struct {
+		v int
+		c color.RGBA
+	}{
+		{w.CValve, colDemBarC},
+		{w.RValve, colDemBarR},
+		{w.IValve, colDemBarI},
+	}
+	for i, b := range bars {
+		v := b.v
+		if v > demandClamp {
+			v = demandClamp
+		}
+		if v < -demandClamp {
+			v = -demandClamp
+		}
+		switch {
+		case v > 0:
+			h := v * demandUpMax / demandClamp
+			if h > 0 {
+				fill(dst, demandBarX[i], demandUpBot-h+1, demandBarW, h, b.c)
+			}
+		case v < 0:
+			h := -v * demandDnMax / demandClamp
+			if h > 0 {
+				fill(dst, demandBarX[i], demandDnTop, demandBarW, h, b.c)
+			}
+		}
+	}
+}
+
+// drawLeftColumnDither 填工具盤下方那一塊黑白網點。
+//
+// 量自原版（`workplace/screen-parity/dos.png`）：x 8–63、y 235–310，
+// `(x+y)` 為偶數的像素是黑、奇數是白。需求指標的白色面板疊在它上面，
+// 所以只有面板四周看得到網點——先前那裡留成桌面灰，整條左欄的明度都不對。
+//
+// 上緣接在工具盤圖（庫 2，57×182，畫在 (8,55)）的下面，下緣接到工具帶。
+func drawLeftColumnDither(dst *ebiten.Image, toolY int) {
+	x0, x1 := editX+editFrameW, editViewX-1
+	y0, y1 := editPalY+ditherTop, toolY-1
+	for y := y0; y <= y1; y++ {
+		for x := x0; x < x1; x++ {
+			c := colInkLight
+			if (x+y)%2 == 0 {
+				c = colInk
+			}
+			fill(dst, x, y, 1, 1, c)
+		}
+	}
+}
+
+// drawToolBandBG 畫工具帶的底：一列白線、十列一像素白藍網點、三列實心藍。
+//
+// 量自原版（`workplace/screen-parity/dos.png`，x=536–543 逐列讀色）：
+//
+//	y 311      整列白
+//	y 312–321  白藍交錯，(x+y) 偶數為白
+//	y 322–324  實心藍
+//
+// 橫向是滿版：x 5–579，蓋過視窗外框那兩欄。
+func drawToolBandBG(dst *ebiten.Image, x0, y0, w int) {
+	fill(dst, x0, y0, w, 1, colInkLight)
+	for y := 1; y <= 10; y++ {
+		for x := 0; x < w; x++ {
+			c := colEditFrm
+			if (x0+x+y0+y)%2 == 0 {
+				c = colInkLight
+			}
+			fill(dst, x0+x, y0+y, 1, 1, c)
+		}
+	}
+	fill(dst, x0, y0+11, w, 3, colEditFrm)
 }
 
 // drawEditViewFrame 畫地圖區四周那一圈**一像素白框**。
@@ -371,9 +497,9 @@ func paletteCell(i int) (int, int) {
 
 // paletteOrder 是工具盤十四格的工具，順序照原版由左到右、由上到下。
 //
-// ⚠ 十五個建造工具只有十四格：**發電廠兩種共用一格**，點下去原版會開
-// 一個副選單（訊息檔第 5 段，三筆）。這裡先固定成火力發電廠，
-// 副選單還沒做——記在 docs/spec/ui-layout.md。
+// ⚠ 十五個建造工具只有十四格：**發電廠兩種共用一格**，點下去會開一個
+// 副選單（訊息檔第 5 段，兩筆）選火力或核能——`powerCell`／`winPower`／
+// `powerTools`。
 var paletteOrder = [palCols * palRows]sim.Tool{
 	sim.ToolBulldozer, sim.ToolRoad,
 	sim.ToolWire, sim.ToolRail,

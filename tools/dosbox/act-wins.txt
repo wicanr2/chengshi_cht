@@ -1,0 +1,46 @@
+# 原版的資料視窗逐一截圖，用來盤點功能。
+wait 3
+click 316 240
+wait 5
+click 402 253
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+key ctrl+c
+wait 2
+shot 00-edit
+key ctrl+g
+wait 3
+shot 01-graphs
+key ctrl+c
+wait 2
+key ctrl+b
+wait 3
+shot 02-budget
+key ctrl+c
+wait 2
+key ctrl+u
+wait 3
+shot 03-eval
+key ctrl+c
+wait 2
+key ctrl+m
+wait 3
+shot 04-maps
+key ctrl+c
+wait 2
+press 112 8
+wait 1
+move 112 28
+release
+wait 3
+shot 05-about
+key Return
+wait 2
+shot 06-after
