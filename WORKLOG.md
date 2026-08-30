@@ -1612,3 +1612,30 @@ ASIA 的 `14.32`（`Bad Smell` → 惡臭）**是改過的**，所以不是整�
   不是執行時換字。
 - 四個選單的項目數、順序、分隔線位置與 `Ctrl` 快速鍵標註，
   與 `.PTF` 第 17／18／20／21 段逐項相同。
+
+### 訂正一個假說：訊息檔裡沒有模板，模板在執行檔裡
+
+`CLAUDE.md` §3.3 原本寫「`_MSG.PTF` 裡的訊息**很可能**帶變數（城市名、年份、
+金額）」，並據此要求「模板要能重排參數順序」。那是假說，沒驗過。
+
+掃過七份訊息檔（基本 ＋ 六個風格）的全部條目：**一個格式符都沒有。**
+唯一的命中是月球那則通關訊息裡的 `buy50% ownership`，被 `% o` 誤判。
+
+帶變數的模板全在**執行檔內硬編碼**那批（`CLAUDE.md` §3.2 的第二個來源）：
+
+```
+%d City Evaluation        %d Fiscal Budget        Funds:%-9s
+ Taxes collected   $%-6d  Category:%s             Game Level:%s
+%Population      %s       Net Migration  %s       Assessed Value%s
+%s: Are you sure?         Enter %s of city        Printing %s / 0%% done
+```
+
+所以「重排參數順序」這個要求**對象搞錯了**——訊息檔不需要，選單與視窗標題需要。
+`CLAUDE.md` §3.3 已改寫成現況。
+
+⚠ `%-9s`／`%-6d` 那種**欄寬對齊**碰上兩倍寬的中文字會爆版，
+那正是 §3.3 下一條講的「數字密度極高」。兩條講的是同一批字串。
+
+接上檢查 `TestNoFormatSpecifiersInMessages`：既然訊息檔本來就沒有格式符，
+**譯文裡也不該有**。譯文多一個 `%s` 不會被任何既有測試抓到，
+但遊戲裡會原樣印出來。

@@ -127,3 +127,34 @@ func itoa(n int) string {
 	}
 	return string(b)
 }
+
+// TestNoFormatSpecifiersInMessages：譯文不准出現格式符。
+//
+// 七份 `.PTF` 訊息檔**一個格式符都沒有**（2026-08-30 掃過，唯一的命中是
+// 月球那則通關訊息裡的 `50% ownership`，被 `% o` 誤判）。帶變數的模板全在
+// 執行檔裡（`%d Fiscal Budget`、`Funds:%-9s` 之類），不走這個目錄。
+//
+// 所以這裡的不變式很簡單：**訊息的譯文裡不該有 `%`**。
+// 譯文裡多一個 `%s` 不會被任何既有測試抓到，但遊戲裡會原樣印出來。
+func TestNoFormatSpecifiersInMessages(t *testing.T) {
+	fmtRe := regexp.MustCompile(`%[-+ #0]*[0-9]*(?:\.[0-9]+)?[a-zA-Z]`)
+	for style := range styleFile {
+		check(t, style, fmtRe)
+	}
+	check(t, "", fmtRe)
+}
+
+func check(t *testing.T, style string, re *regexp.Regexp) {
+	t.Helper()
+	c, err := Load(style)
+	if err != nil {
+		t.Fatalf("%q：%v", style, err)
+	}
+	for sec := 0; sec <= 21; sec++ {
+		for idx := 0; c.Has(sec, idx); idx++ {
+			if m := re.FindString(c.S(sec, idx)); m != "" {
+				t.Errorf("%q %d.%d 譯文含格式符 %q：%s", style, sec, idx, m, c.S(sec, idx))
+			}
+		}
+	}
+}
