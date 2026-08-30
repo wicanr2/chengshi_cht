@@ -134,6 +134,10 @@ func (p *Player) year() {
 	// 供電容量是保命，不受額度限制（budget.go 的第 1 條）。
 	p.power()
 
+	// 三個需求封頂跟第一座電廠一樣是保命項，排在額度分配之前：封頂沒解，
+	// 這一年後面蓋的分區全部長不出東西（demandcap.go）。
+	p.demandCaps()
+
 	// ⚠ **留準備金。** 破產一次，自動預算就撥不出警消經費
 	// （`PoliceEffect`／`FireEffect` 掉下來，評分乘 0.9 兩次），
 	// 犯罪與火災跟著失控——實測東京存款歸零那一年評分從 654 掉到 155。
@@ -147,6 +151,12 @@ func (p *Player) year() {
 	res := p.reserve()
 	p.connectDark(20, p.purse(spare/4), res)
 	p.services(p.purse(spare / 4))
+
+	// 封頂還沒解、錢又不夠時停掉擴張，把結餘存起來（demandcap.go）。
+	// 需求被壓成 0 的時候多蓋的分區長不出東西，那些錢是丟掉的。
+	if p.savingForCap() {
+		return
+	}
 	p.parks(4, p.purse(spare/10))
 
 	// 一格分區 100 元，加上整地大約 150。用額度決定這一年蓋幾格，
