@@ -393,9 +393,11 @@ Hires EGA 640×350 與 MCGA 320×200 是兩套不同的字元格。
   （脫殼反組譯 `PlaySound(n)` 的十一個呼叫點，逐支比對 Micropolis 的對應
   函式：0 交通壅塞、1 爆炸、2 怪獸、3 警笛、4 船笛、5／6 工具成功、7 工具失敗，
   [`docs/re/16-dos-oracle.md`](docs/re/16-dos-oracle.md) §五之四），
-  遊戲也接上去了。**取樣率取 5400 Hz，那是量出來的區間 5300–5450 的中值，
-  不是從程式碼直讀的常數**——規格裡標成暫代值
-  （[`docs/spec/sound.md`](docs/spec/sound.md) §三），解出真值只要改一個常數。
+  遊戲也接上去了。**取樣率取 5400 Hz，那是量出來的，不是從程式碼直讀的常數**——
+  規格裡標成暫代值（[`docs/spec/sound.md`](docs/spec/sound.md) §三），
+  解出真值只要改一個常數。兩個對不同誤差敏感的方法都指到它：長度比給 5300–5450，
+  拿頻譜形狀去對 X11 版的 `expl-hi` 給 5320–5410
+  （[`tools/snd_rate_fit.py`](tools/snd_rate_fit.py)，附正對照）。
   誤差 ±1.4% ＝ ±0.24 個半音。
   **用耳朵和原版比這件事做不到**：那八段只走外接 DAC，而 Tandy 走的是
   DOSBox-X 沒實作的 `INT 1Ah AH=83h`，Covox Sound Master 沒有模擬器，
