@@ -463,6 +463,25 @@ func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 	vector.StrokeRect(dst, float32(gx), float32(y), float32(gw), float32(gh),
 		float32(UIScale), colLine, false)
 
+	// 格線與刻度。原版量出來的（`workplace/dosbox/uw-10-graphs.png`，
+	// 繪圖區寬 245 原版像素）：
+	//
+	//	年格線：每 24 原版像素一條，滿高，藍色
+	//	刻度  ：每  6 原版像素一格（＝每年四格），高 5，貼著底框上緣
+	//
+	// 少了它們的話曲線是浮在一片純色上的，讀不出「這個轉折是哪一年」——
+	// 原版的十年圖每一年都有一條線，那是這個視窗最主要的可讀性來源。
+	for gxp := gridPitch; gxp*UIScale < gw; gxp += gridPitch {
+		lx := float32(gx + gxp*UIScale)
+		vector.StrokeLine(dst, lx, float32(y), lx, float32(y+gh),
+			float32(UIScale), colLine, false)
+	}
+	for txp := 0; txp*UIScale < gw; txp += tickPitch {
+		tx := float32(gx + txp*UIScale)
+		vector.StrokeLine(dst, tx, float32(y+gh-tickH*UIScale), tx, float32(y+gh),
+			float32(UIScale), colLine, false)
+	}
+
 	// n 是要畫幾格。近十年是每月一格 120 格，近一百二十年是每年一格 120 格
 	// ——**兩種都是 120 格**，差在資料取自哪一半（原版的歷史陣列前 120 筆
 	// 是月、後 120 筆是年）。
@@ -496,6 +515,16 @@ func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 	g.font.Draw(dst, labels[1], gx+gw/2-g.font.Measure(labels[1])/2, ly, colText)
 	g.font.Draw(dst, labels[2], gx+gw-2*UIScale-g.font.Measure(labels[2]), ly, colText)
 }
+
+// 統計圖繪圖區的格線與刻度間距（原版像素，量自 uw-10-graphs.png）。
+//
+// ⚠ 這兩個數字**不隨十年／一百二十年改變**：原版兩種模式都畫 120 格資料，
+// 差在資料取自歷史陣列的哪一半，格線是固定的版面不是資料的函式。
+const (
+	gridPitch = 24 // 年格線間距
+	tickPitch = 6  // 刻度間距（每年四格）
+	tickH     = 5  // 刻度高
+)
 
 // 統計圖圖示盤的格線（原版像素）。
 const (
