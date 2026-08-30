@@ -444,6 +444,9 @@ func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 }
 
 // drawBudgetWindow 畫預算視窗（說明書 p.43）。
+// 版面照原版排（workplace/dosbox/uw-11-budget.png）：標題、稅率、稅收，
+// 中間一個藍底的表格框（三欄表頭 ＋ 三列），底下現金流量與資金，最後一個按鈕。
+// 原版的欄位標題是兩行的（`Amount／Requested`），中文一行就夠。
 func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	w0 := g.world
 	rows := []struct {
@@ -455,43 +458,106 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 		{trimMenu(g.txt.S(i18n.SecBudget, 1)), w0.PoliceFund, w0.PolicePercent},
 		{trimMenu(g.txt.S(i18n.SecBudget, 2)), w0.FireFund, w0.FirePercent},
 	}
-	g.font.Draw(dst, fmt.Sprintf("%s %d%%（＋／－ 調整）",
-		trimMenu(g.txt.S(i18n.SecBudget, 3)), w0.CityTax), x, y, colText)
+	// 一列的高。原版的視窗 309 原版像素高、約二十列，一列 15 原版像素；
+	// ×3 之後是 45 螢幕像素，剛好放得下 24 像素的中文字還留一點行距。
+	// ⚠ 別用「字高 ＋ 一點」去湊：那樣算出來是 26，內容會擠在視窗最上面
+	// 三分之一，看起來像資料沒填滿。
+	line := 15 * UIScale
+
+	// 標題底下一條雙線，原版就有。
+	title := fmt.Sprintf("%d 年度預算", 1900+w0.CityTime/48)
+	g.font.Draw(dst, title, x+w/2-g.font.Measure(title)/2, y, colOn)
+	vector.DrawFilledRect(dst, float32(x+w/8), float32(y+line),
+		float32(w*3/4), float32(UIScale), colLine, false)
+
+	// 稅率與稅收，兩行置中偏左。
+	tax := fmt.Sprintf("%s　＋／－　%d%%", trimMenu(g.txt.S(i18n.SecBudget, 3)), w0.CityTax)
+	g.font.Draw(dst, tax, x+w/2-g.font.Measure(tax)/2, y+line*2, colText)
 	// ⚠ 「稅收」不在訊息檔裡（第 3 段只有交通／警局／消防／稅率），
 	// 用譯名表的說法（說明書 p.43）。
-	g.font.Draw(dst, fmt.Sprintf("稅收 $%d", w0.TaxFund), x+400, y, colDim)
+	rev := fmt.Sprintf("稅收　$%s", comma(w0.TaxFund))
+	g.font.Draw(dst, rev, x+w/2-g.font.Measure(rev)/2, y+line*3, colText)
 
-	g.font.Draw(dst, "項目", x, y+56, colDim)
-	g.font.Draw(dst, "維護需求額", x+200, y+56, colDim)
-	g.font.Draw(dst, "編列百分比", x+440, y+56, colDim)
-	g.font.Draw(dst, "實際撥給", x+680, y+56, colDim)
+	// 表格框：原版是藍底、白框。
+	tx, ty := x+2*UIScale, y+line*4
+	tw, th := w-4*UIScale, line*5
+	vector.DrawFilledRect(dst, float32(tx), float32(ty), float32(tw), float32(th),
+		color.RGBA{0x55, 0x55, 0xff, 0xff}, false)
+	vector.StrokeRect(dst, float32(tx), float32(ty), float32(tw), float32(th),
+		float32(UIScale), colMenuBar, false)
+
+	col := [4]int{tx + 6*UIScale, tx + tw*36/100, tx + tw*60/100, tx + tw*82/100}
+	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
+	g.font.Draw(dst, "項目", col[0], ty+2*UIScale, white)
+	g.font.Draw(dst, "維護需求", col[1], ty+2*UIScale, white)
+	g.font.Draw(dst, "實際撥給", col[2], ty+2*UIScale, white)
+	g.font.Draw(dst, "編列比例", col[3], ty+2*UIScale, white)
 	for i, r := range rows {
-		yy := y + 96 + i*40
-		c := colText
+		yy := ty + 2*UIScale + (i+1)*line
+		c := white
 		if i == g.budgetRow {
-			c = colOn
+			c = color.RGBA{0xff, 0xff, 0x55, 0xff}
 		}
-		g.font.Draw(dst, r.label, x, yy, c)
-		g.font.Draw(dst, fmt.Sprintf("$%d", r.req), x+200, yy, colText)
-		g.font.Draw(dst, fmt.Sprintf("%d%%", int(r.pct*100+0.5)), x+440, yy, colText)
-		g.font.Draw(dst, fmt.Sprintf("$%d", int(float64(r.req)*r.pct)), x+680, yy, colText)
+		g.font.Draw(dst, r.label, col[0], yy, c)
+		g.font.Draw(dst, "$"+comma(r.req), col[1], yy, white)
+		g.font.Draw(dst, "$"+comma(int(float64(r.req)*r.pct)), col[2], yy, white)
+		g.font.Draw(dst, fmt.Sprintf("◀%d%%▶", int(r.pct*100+0.5)), col[3], yy, c)
 	}
-	g.font.Draw(dst, fmt.Sprintf("現金流量 $%d", w0.CashFlow), x, y+240, colText)
-	g.font.Draw(dst, fmt.Sprintf("目前資金 $%d", w0.TotalFunds), x, y+280, colText)
-	g.font.Draw(dst, "上下鍵選項目，左右鍵調整百分比", x, y+340, colDim)
+
+	// 底下三行摘要，原版是右對齊的數字欄。
+	by := ty + th + line/2
+	for i, s := range [][2]string{
+		{"現金流量", "$" + comma(w0.CashFlow)},
+		{"上年度結存", "$" + comma(w0.TotalFunds-w0.CashFlow)},
+		{"目前資金", "$" + comma(w0.TotalFunds)},
+	} {
+		g.font.Draw(dst, s[0], x+w/4, by+i*line, colText)
+		g.font.Draw(dst, s[1], x+w*3/4, by+i*line, colText)
+	}
+
+	// 原版底下有一個「Go with these figures」按鈕。這裡的預算是自動的，
+	// 按鈕做成關閉視窗——按下去就是「照這些數字跑」。
+	btn := "就照這些數字"
+	bw := g.font.Measure(btn) + 12*UIScale
+	bx := x + w/2 - bw/2
+	byy := by + 3*line + line/2
+	vector.StrokeRect(dst, float32(bx), float32(byy-2*UIScale),
+		float32(bw), float32(line), float32(UIScale), colLine, false)
+	g.font.Draw(dst, btn, bx+6*UIScale, byy, colOn)
+	g.font.Draw(dst, "上下鍵選項目，左右鍵調整比例", x+4*UIScale, byy+line*3/2, colDim)
 }
 
 // drawEvalWindow 畫評估視窗（說明書 p.54）。
+// 版面照原版排（workplace/dosbox/ue-20-eval.png）：左半「公眾意見」兩個
+// 白框，右半「統計數據」一個白框。原版的框是實線白底，這裡也一樣。
 func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	w0 := g.world
-	g.font.Draw(dst, "公眾意見", x, y, colOn)
+	line := 15 * UIScale
+	half := w/2 - 4*UIScale
+	// 左右兩欄的標題，原版是反白的小標。
+	g.font.Draw(dst, "公眾意見", x+half/2-g.font.Measure("公眾意見")/2, y, colOn)
+	g.font.Draw(dst, "統計數據", x+w/2+half/2-g.font.Measure("統計數據")/2, y, colOn)
+	// 三個白框。
+	boxes := [][4]int{
+		{x, y + line, half, line * 3},       // 市長評價
+		{x, y + line*5, half, line * 5},     // 嚴重問題
+		{x + w/2, y + line, half, line * 9}, // 統計數據
+	}
+	for _, b := range boxes {
+		vector.DrawFilledRect(dst, float32(b[0]), float32(b[1]),
+			float32(b[2]), float32(b[3]), colPanel, false)
+		vector.StrokeRect(dst, float32(b[0]), float32(b[1]),
+			float32(b[2]), float32(b[3]), float32(UIScale), colLine, false)
+	}
+	_ = line
 	// 兩個數字都直接讀，不要拿 100 減。空城的評估是 EvalInit 清成
 	// 0／0（沒有人投票），用減法會變成「否 100%」——一座剛開的城市
 	// 被說成全體反對，而原版是兩邊都 0（w_eval.c:101 的 goodyes／goodno）。
-	g.font.Draw(dst, fmt.Sprintf("市長做得好嗎？　是 %d%%　否 %d%%",
-		w0.Eval.CityYes, w0.Eval.CityNo), x, y+40, colText)
+	g.font.Draw(dst, "市長做得好嗎？", x+6*UIScale, y+line+4*UIScale, colText)
+	g.font.Draw(dst, fmt.Sprintf("是 %d%%　　否 %d%%", w0.Eval.CityYes, w0.Eval.CityNo),
+		x+6*UIScale, y+line*2+4*UIScale, colText)
 
-	g.font.Draw(dst, "嚴重問題", x, y+96, colOn)
+	g.font.Draw(dst, "最嚴重的問題是什麼？", x+6*UIScale, y+line*5+4*UIScale, colText)
 	for i := 0; i < 4; i++ {
 		p := w0.Eval.ProblemOrder[i]
 		if p < 0 || p >= len(w0.Eval.ProblemVotes) {
@@ -504,11 +570,10 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 			continue
 		}
 		g.font.Draw(dst, fmt.Sprintf("%d. %s　%d%%",
-			i+1, g.txt.S(i18n.SecProblem, p), w0.Eval.ProblemVotes[p]),
-			x, y+136+i*36, colText)
+			i+1, trimMenu(g.txt.S(i18n.SecProblem, p)), w0.Eval.ProblemVotes[p]),
+			x+6*UIScale, y+line*6+4*UIScale+i*line, colText)
 	}
 
-	g.font.Draw(dst, "統計數據", x+520, y+96, colOn)
 	stats := [][2]string{
 		{"人口總數", fmt.Sprintf("%d", w0.Eval.CityPop)},
 		{"遷出入數", fmt.Sprintf("%d", w0.Eval.DeltaCityPop)},
@@ -518,8 +583,9 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 		{"年度成績", fmt.Sprintf("%+d", w0.Eval.DeltaCityScore)},
 	}
 	for i, s := range stats {
-		g.font.Draw(dst, s[0], x+520, y+136+i*36, colDim)
-		g.font.Draw(dst, s[1], x+760, y+136+i*36, colText)
+		yy := y + line + 4*UIScale + i*line
+		g.font.Draw(dst, s[0], x+w/2+6*UIScale, yy, colDim)
+		g.font.Draw(dst, s[1], x+w-6*UIScale-g.font.Measure(s[1]), yy, colText)
 	}
 }
 
