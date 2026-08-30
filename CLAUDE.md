@@ -83,8 +83,8 @@
 
 | 玩家共識 | 一手證據說什麼 |
 |---|---|
-| 「7% 是黃金稅率」 | IBM 手冊寫的是 `The optimum tax rate for fast growth is between 5 and 7%`——是**區間**，7% 只是上緣；手冊也沒說預設值是 7% |
-| 「Dullsville 是最難的劇本」（SimCity Fandom）| 手冊標的是 **Easy**；Very Difficult 的是 San Francisco 1906、Hamburg 1944、Boston 2010 |
+| 「7% 是黃金稅率」 | IBM 手冊寫的是 `The optimum tax rate for fast growth is between 5 and 7%`——是**區間**，7% 只是上緣。**7% 是程式的預設值**：新城市 `CityTax: 7`（`sim.c:182`），載入劇本後也設成 7（`s_fileio.c:455`）。共識把預設值當成了推薦值 |
+| 「Dullsville 是最難的劇本」（SimCity Fandom）| 手冊標的是 **Easy**；Very Difficult 的是 San Francisco 1906、Hamburg 1944、Boston 2010。⚠ 但本專案自動玩家實測它與舊金山是唯二全掛的——**共識的結論碰巧接近，依據是錯的**（不是難度標示，是三十年複利加上起始資金只有 $5 000）|
 | 「水管沒接所以不長」 | **一代沒有自來水系統**。全份手冊的 water 只指地形水域，自來水是 SimCity 2000 以後的機制 |
 
 三個例子的共同形狀：**跨代混用**、**把建議區間講成單一數字**、**把玩家意見講成官方設定**。

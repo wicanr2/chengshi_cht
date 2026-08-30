@@ -139,6 +139,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | [`docs/spec/`](docs/spec/) | 可實作規格，只有標 READY 的能動工 |
 | [`docs/manual-cht/`](docs/manual-cht/) | 軟體世界珍藏版 29 說明書**逐頁完整轉錄**（保存用，p.1–82 ＋ 參考附表）|
 | [`docs/manual/`](docs/manual/) | 官方英文手冊（IBM PC 版）的繁中整理。**只整理機制章節並與原始碼逐節對照**，不做全書轉錄——理由（用途與授權）寫在該目錄的 README |
+| [`docs/walkthrough/`](docs/walkthrough/) | 繁中攻略。**以讀出來的原始碼為根據**，不是翻譯社群攻略（理由寫在該目錄的 README）：成長迴圈、八個劇本的真實過關條件、七條常見錯誤說法的訂正 |
 | [`translations/glossary.md`](translations/glossary.md) | 譯名表，唯一真相 |
 
 ## 4. 術語
