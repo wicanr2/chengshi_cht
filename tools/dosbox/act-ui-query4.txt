@@ -1,0 +1,24 @@
+# 質詢第三試：按住 Q ＋ **按住**左鍵不放（前一次是點一下就放，
+# 有可能資料只在按住的時候顯示）。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+click 49 121
+wait 2
+click 150 150
+wait 3
+keydown q
+wait 1
+press 150 150
+wait 2
+shot 60-query-held
+release
+wait 1
+shot 61-released
+keyup q

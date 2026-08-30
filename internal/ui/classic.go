@@ -135,6 +135,7 @@ func (g *Game) drawClassic(dst *ebiten.Image) {
 	if g.resizing {
 		g.drawResizeHint(dst)
 	}
+	g.drawQueryPanel(dst)
 }
 
 // inCityForm 判斷畫面座標在不在 City Form 視窗上。

@@ -159,6 +159,10 @@ type Game struct {
 	editFront bool
 	// mapHidden 是「隱藏前視窗」（Ctrl-H）把 City Form 收起來的狀態。
 	mapHidden bool
+	// querying 是「按住查詢」的狀態，queryTX／queryTY 是被查的那一格。
+	querying         bool
+	queryTX, queryTY int
+
 	// ew／eh 是玩家調整過的編輯視窗大小（原版像素）；0 代表用預設值。
 	ew, eh int
 	// resizing 是「調整編輯窗大小」（Ctrl-R）的模式。
@@ -674,12 +678,15 @@ func (g *Game) handleMouse() {
 	}
 	if !pressed {
 		g.dragging = false
+		g.querying = false
 		return
 	}
 	// 道路、鐵軌、電力線可以拖曳；其餘只在按下的那一刻動作，
 	// 免得手一抖就蓋出一排體育館。
+	// 查詢也算「拖曳」：按住不放時面板要跟著游標換格，那是原版的行為。
 	drag := g.tool == sim.ToolRoad || g.tool == sim.ToolRail ||
-		g.tool == sim.ToolWire || g.tool == sim.ToolBulldozer
+		g.tool == sim.ToolWire || g.tool == sim.ToolBulldozer ||
+		g.tool == sim.ToolQuery
 	if !just && !(drag && g.dragging) {
 		return
 	}
@@ -692,7 +699,9 @@ func (g *Game) handleMouse() {
 
 func (g *Game) applyTool(tx, ty int) {
 	if g.tool == sim.ToolQuery {
-		g.setMessage(g.query(tx, ty))
+		// 查詢不蓋東西：把面板打開，放開滑鼠才收（原版就是按住才顯示）。
+		g.querying = true
+		g.queryTX, g.queryTY = tx, ty
 		return
 	}
 	before := g.world.TotalFunds
@@ -830,19 +839,6 @@ func (g *Game) speedName(n int) string {
 		s = strings.TrimSpace(s[:i])
 	}
 	return s
-}
-
-// query 是查詢工具的輸出：地物名稱 ＋ 該格的統計值。
-func (g *Game) query(x, y int) string {
-	name := g.txt.S(i18n.SecTileName, tileNameIndex(g.world.TileNum(x, y)))
-	if name == "" {
-		name = "？？？"
-	}
-	return fmt.Sprintf("%s　%s%d　%s%d　%s%d",
-		name,
-		g.txt.S(i18n.SecQuery, 0), g.world.PopDensity[x>>1][y>>1],
-		g.txt.S(i18n.SecQuery, 1), g.world.LandValueMem[x>>1][y>>1],
-		g.txt.S(i18n.SecQuery, 2), g.world.CrimeMem[x>>1][y>>1])
 }
 
 // save 把城市存成原版格式的 .cty。
