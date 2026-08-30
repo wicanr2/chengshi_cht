@@ -505,6 +505,8 @@ tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 | [`docs/spec/`](docs/spec/) | 收攏成 `READY` 的規格，實作照這份寫 |
 | [`docs/formats/`](docs/formats/) | DOS 資料檔格式：LZSS、`.PGF`、`.PTF`、`.cty` |
 | [`docs/manual-cht/`](docs/manual-cht/) | 軟體世界中文說明書的逐頁轉錄 |
+| [`docs/manual/`](docs/manual/) | 官方英文手冊機制章的繁中整理，逐節與原始碼對照（手冊當 oracle 有多可信）|
+| [`docs/walkthrough/`](docs/walkthrough/) | 繁中攻略。以原始碼為根據，含八個劇本的真實過關條件與常見錯誤說法的訂正 |
 | [`translations/glossary.md`](translations/glossary.md) | 譯名表，每一條標明依據是說明書還是本專案新譯 |
 | [`licenses/`](licenses/) | 第三方授權（內建點陣字型的 OFL 1.1）|
 | [`LICENSE`](LICENSE) | 授權條款全文 ＋ 商標與規格參考揭露 |
