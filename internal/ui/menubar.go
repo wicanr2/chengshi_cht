@@ -291,20 +291,38 @@ func (g *Game) pickDisaster(row int) {
 // pickWindow 是視窗選單（第 21 段）。
 func (g *Game) pickWindow(row int) {
 	switch row {
-	case 0:
-		g.toggleWindow(winMaps)
+	case 0: // 地圖視窗：City Form 收起來的話先叫回來
+		if g.mapHidden {
+			g.mapHidden = false
+			g.editFront = false
+		} else {
+			g.toggleWindow(winMaps)
+		}
 	case 1:
 		g.toggleWindow(winGraphs)
 	case 2:
 		g.toggleWindow(winBudget)
-	case 3:
-		g.win = winNone // 編輯視窗一直開著，選它就是把別的關掉
+	case 3: // 編輯視窗：叫到最前面
+		g.win = winNone
+		g.editFront = true
 	case 4:
 		g.toggleWindow(winEval)
-	case 5, 6:
-		g.win = winNone
-	default:
-		g.setMessage(trimMenu(g.txt.S(i18n.SecWinMenu, row)) + "（視窗大小固定，還沒接）")
+	case 5: // 關閉前視窗
+		if g.win != winNone {
+			g.win = winNone
+		} else {
+			g.mapHidden = true
+		}
+	case 6: // 隱藏前視窗
+		if g.win != winNone {
+			g.win = winNone
+		} else {
+			g.mapHidden = !g.mapHidden
+		}
+	case 7: // 視窗位置：直接拖標題列就好，這裡只提示
+		g.setMessage("拖曳視窗的標題列就可以搬動")
+	case 8: // 調整編輯窗大小
+		g.resizing = true
 	}
 }
 

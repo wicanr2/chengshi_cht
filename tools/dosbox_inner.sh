@@ -118,6 +118,10 @@ while read -r cmd a b c d; do
     rclick) mark "rclick $a $b"; goto $a $b; sleep 0.3
             xdotool mousedown 3; sleep 0.6 ;;
     rrelease) mark rrelease; xdotool mouseup 3 ;;
+    # keydown／keyup：按住一個鍵不放。原版的質詢是「按住 Q ＋ 左鍵」
+    # （參考附表），一次 key 送不出這種組合。
+    keydown) mark "keydown $a"; xdotool keydown "$a" ;;
+    keyup) mark "keyup $a"; xdotool keyup "$a" ;;
     # ⚠ move **不重新歸位**：它是給按住式選單用的（按住標題 → 移到項目 →
     # 放開）。歸位會把游標拖出選單再拉回來，選單當場就關了。
     move)  mark "move $a $b";  xdotool mousemove $((a+OFFX)) $((b+OFFY)) ;;

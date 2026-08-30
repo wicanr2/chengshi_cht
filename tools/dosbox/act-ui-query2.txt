@@ -1,0 +1,18 @@
+# 質詢：參考附表寫「Q（配合左滑鼠鈕）」——按住 Q 再左鍵點一格。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+keydown q
+wait 1
+click 150 150
+wait 1
+shot 40-query
+keyup q
+wait 1
+shot 41-after

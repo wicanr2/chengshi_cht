@@ -43,7 +43,11 @@ const (
 	// 在原版裡對編輯視窗按一下右鍵會把它拉到前面，那時才看得到全寬。
 	// 這種錯不會有任何症狀：小視窗照樣畫得出來、玩得動，只是視野少了三分之二。
 	editX, editY = 5, 21
+	// 預設大小。玩家可以用「調整編輯窗大小」（Ctrl-R）改，改過的存在
+	// Game 的 ew／eh，畫圖與命中判斷一律走 g.editSize()。
 	editW, editH = 575, 304
+	// 可調整的範圍。下限留得下工具盤（57 寬）加上幾格地圖。
+	editMinW, editMinH = 200, 150
 
 	editTitleY = 24 // 標題列
 	editTitleH = 14
@@ -118,12 +122,18 @@ func (g *Game) drawClassic(dst *ebiten.Image) {
 	g.drawMenuBar(dst)
 	// 兩個視窗是重疊的，畫的順序就是疊的順序。原版一開始 City Form 在前面，
 	// 對編輯視窗按一下就換它到前面。
-	if g.editFront {
+	switch {
+	case g.mapHidden:
+		g.drawEditWindow(dst)
+	case g.editFront:
 		g.drawCityFormWindow(dst)
 		g.drawEditWindow(dst)
-	} else {
+	default:
 		g.drawEditWindow(dst)
 		g.drawCityFormWindow(dst)
+	}
+	if g.resizing {
+		g.drawResizeHint(dst)
 	}
 }
 
@@ -133,10 +143,39 @@ func inCityForm(mx, my int) bool {
 	return x >= mapX && x < mapX+mapW && y >= mapY && y < mapY+mapH
 }
 
+// editSize 回傳編輯視窗目前的大小（原版像素）。玩家沒調過就是預設值。
+func (g *Game) editSize() (int, int) {
+	w, h := g.ew, g.eh
+	if w == 0 {
+		w = editW
+	}
+	if h == 0 {
+		h = editH
+	}
+	return w, h
+}
+
 // inEditWindow 判斷畫面座標在不在編輯視窗上。
-func inEditWindow(mx, my int) bool {
+func (g *Game) inEditWindow(mx, my int) bool {
+	w, h := g.editSize()
 	x, y := mx/UIScale, my/UIScale
-	return x >= editX && x < editX+editW && y >= editY && y < editY+editH
+	return x >= editX && x < editX+w && y >= editY && y < editY+h
+}
+
+// editViewSize 回傳地圖區的大小（原版像素），跟著視窗大小走。
+// 一律取整到整格，否則邊緣會出現半格，而半格看起來很像「圖塊畫錯了」。
+func (g *Game) editViewSize() (int, int) {
+	w, h := g.editSize()
+	sz := g.tiles.Size
+	vw := (w - (editViewX - editX) - 4) / sz * sz
+	vh := (h - (editViewY - editY) - 18) / sz * sz
+	if vw < sz {
+		vw = sz
+	}
+	if vh < sz {
+		vh = sz
+	}
+	return vw, vh
 }
 
 // raiseWindowAt 依點擊位置決定哪個視窗到前面。
@@ -150,6 +189,12 @@ func inEditWindow(mx, my int) bool {
 //
 // 原版是按右鍵拉到前面；這裡用左鍵，因為 remake 的右鍵沒有別的用途。
 func (g *Game) raiseWindowAt(mx, my int) bool {
+	if g.mapHidden {
+		if g.inEditWindow(mx, my) {
+			g.editFront = true
+		}
+		return false
+	}
 	if inCityForm(mx, my) {
 		if g.editFront {
 			g.editFront = false
@@ -157,7 +202,7 @@ func (g *Game) raiseWindowAt(mx, my int) bool {
 		}
 		return false
 	}
-	if inEditWindow(mx, my) {
+	if g.inEditWindow(mx, my) {
 		g.editFront = true // 非重疊區：順手拉到前面，但這一下照樣算數
 	}
 	return false
@@ -181,10 +226,13 @@ func (g *Game) drawMenuBar(dst *ebiten.Image) {
 
 // drawEditWindow 畫編輯視窗：標題列、資金／訊息帶、工具盤、地圖、工具帶。
 func (g *Game) drawEditWindow(dst *ebiten.Image) {
-	fill(dst, editX, editY, editW, editH, colEditFrm)
-	fill(dst, editX+1, editTitleY, editW-2, editTitleH, colTitleBar)
-	fill(dst, editX+1, editInfoY, editW-2, editInfoH, colInfoBand)
-	fill(dst, editX+1, editViewY, editW-2, editViewH, colDesktop)
+	ew, eh := g.editSize()
+	vw, vh := g.editViewSize()
+	toolY := editY + eh - 13
+	fill(dst, editX, editY, ew, eh, colEditFrm)
+	fill(dst, editX+1, editTitleY, ew-2, editTitleH, colTitleBar)
+	fill(dst, editX+1, editInfoY, ew-2, editInfoH, colInfoBand)
+	fill(dst, editX+1, editViewY, ew-2, toolY-editViewY, colDesktop)
 
 	// 資金與訊息：原版是同一條帶，資金在左、訊息接在後面。
 	g.font.Draw(dst, g.fundsText(), (editX+3)*UIScale, (editInfoY+2)*UIScale, colInkLight)
@@ -198,8 +246,10 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	blit(dst, g.tiles.UIImage(BankDemand, 0), editDemandX, editDemandY)
 
 	// 目前工具帶。
-	fill(dst, editX+1, editToolY, editW-2, editToolH, colEditFrm)
-	g.font.Draw(dst, g.currentToolText(), (editX+40)*UIScale, editToolY*UIScale, colInkLight)
+	fill(dst, editX+1, toolY, ew-2, editToolH, colEditFrm)
+	g.font.Draw(dst, g.currentToolText(), (editX+40)*UIScale, toolY*UIScale, colInkLight)
+	_ = vw
+	_ = vh
 }
 
 // drawEditMap 畫編輯視窗裡的地圖。原版一格 16×16，可見 11×16 格。
@@ -393,4 +443,27 @@ func (g *Game) dateText() string {
 	year := 1900 + g.world.CityTime/48
 	month := trimMenu(g.txt.S(i18n.SecMonth, (g.world.CityTime%48)/4))
 	return fmt.Sprintf("%d %s", year, month)
+}
+
+// drawResizeHint 在調整大小時把編輯視窗的外框畫成醒目的顏色，
+// 並在資金帶上提示操作。沒有提示的話玩家不知道自己進了另一個模式，
+// 而方向鍵原本是捲地圖的——那會讓人以為畫面卡住了。
+func (g *Game) drawResizeHint(dst *ebiten.Image) {
+	ew, eh := g.editSize()
+	vector.StrokeRect(dst, s(editX), s(editY), s(ew), s(eh),
+		float32(2*UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
+	msg := "方向鍵調整大小，Enter 或 Esc 結束"
+	g.font.Draw(dst, msg, (editX+3)*UIScale, (editInfoY+2)*UIScale,
+		color.RGBA{0xff, 0xff, 0x55, 0xff})
+}
+
+// resizeEdit 依方向鍵改編輯視窗的大小。一次一格（16 原版像素），
+// 這樣地圖區永遠是整數格。
+func (g *Game) resizeEdit(dx, dy int) {
+	ew, eh := g.editSize()
+	sz := g.tiles.Size
+	ew = clampInt(ew+dx*sz, editMinW, OrigW-editX-1)
+	eh = clampInt(eh+dy*sz, editMinH, OrigH-editY-1)
+	g.ew, g.eh = ew, eh
+	g.clampCamera()
 }

@@ -29,6 +29,7 @@ const (
 
 	// 編輯視窗裡地圖區的大小（螢幕像素）。原版的編輯視窗很小——
 	// 右半邊被 City Form 視窗佔著，那是原版的預設配置。
+	// 預設的地圖區大小（螢幕像素）。玩家調整過視窗之後以 g.editViewSize() 為準。
 	viewW = editViewW * UIScale
 	viewH = editViewH * UIScale
 )
@@ -156,6 +157,12 @@ type Game struct {
 	// editFront 記錄編輯視窗有沒有被拉到 City Form 視窗前面。
 	// 原版一開始是 City Form 在前面。
 	editFront bool
+	// mapHidden 是「隱藏前視窗」（Ctrl-H）把 City Form 收起來的狀態。
+	mapHidden bool
+	// ew／eh 是玩家調整過的編輯視窗大小（原版像素）；0 代表用預設值。
+	ew, eh int
+	// resizing 是「調整編輯窗大小」（Ctrl-R）的模式。
+	resizing bool
 
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
@@ -179,9 +186,10 @@ func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 }
 
 // inEditView 判斷畫面座標在不在編輯視窗的地圖區裡。
-func inEditView(mx, my int) bool {
-	return mx >= editViewX*UIScale && mx < (editViewX+editViewW)*UIScale &&
-		my >= editViewY*UIScale && my < (editViewY+editViewH)*UIScale
+func (g *Game) inEditView(mx, my int) bool {
+	vw, vh := g.editViewSize()
+	return mx >= editViewX*UIScale && mx < (editViewX+vw)*UIScale &&
+		my >= editViewY*UIScale && my < (editViewY+vh)*UIScale
 }
 
 func (g *Game) centerCamera() {
@@ -190,8 +198,15 @@ func (g *Game) centerCamera() {
 	g.clampCamera()
 }
 
-func (g *Game) tilesAcross() int { return viewW / (g.tiles.Size * tileScale) }
-func (g *Game) tilesDown() int   { return viewH / (g.tiles.Size * tileScale) }
+func (g *Game) tilesAcross() int {
+	vw, _ := g.editViewSize()
+	return vw / g.tiles.Size
+}
+
+func (g *Game) tilesDown() int {
+	_, vh := g.editViewSize()
+	return vh / g.tiles.Size
+}
 
 // OpenWindow 依名稱開一個視窗。給 -window 旗標與截圖驗收用。
 func (g *Game) OpenWindow(name string) bool {
@@ -334,6 +349,26 @@ func (g *Game) handleKeys() {
 	if g.handleMenuKeys() {
 		return
 	}
+	// 調整編輯視窗大小（Ctrl-R）：方向鍵改大小，不捲地圖。
+	if g.resizing {
+		if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+			g.resizeEdit(1, 0)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+			g.resizeEdit(-1, 0)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+			g.resizeEdit(0, 1)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+			g.resizeEdit(0, -1)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
+			inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			g.resizing = false
+		}
+		return
+	}
 	// ⚠ 工具鍵要排除三種情況，每一種都造成過「按了甲卻順便做了乙」：
 	//
 	//   - **Ctrl 按著**：Ctrl-B（預算）會順便選到推土機。
@@ -416,25 +451,46 @@ func (g *Game) handleKeys() {
 	if ctrl {
 		switch {
 		case inpututil.IsKeyJustPressed(ebiten.KeyM):
-			g.toggleWindow(winMaps)
+			// 原版：Ctrl-M 打開地圖視窗。City Form 收起來的話先叫回來。
+			if g.mapHidden {
+				g.mapHidden = false
+				g.editFront = false
+			} else {
+				g.toggleWindow(winMaps)
+			}
 		case inpututil.IsKeyJustPressed(ebiten.KeyG):
 			g.toggleWindow(winGraphs)
 		case inpututil.IsKeyJustPressed(ebiten.KeyB):
 			g.toggleWindow(winBudget)
 		case inpututil.IsKeyJustPressed(ebiten.KeyU):
 			g.toggleWindow(winEval)
-		case inpututil.IsKeyJustPressed(ebiten.KeyC), inpututil.IsKeyJustPressed(ebiten.KeyH):
-			// 原版：Ctrl-C 關閉前視窗、Ctrl-H 隱藏前視窗。
-			// 本專案的視窗只有開／關兩態，兩個鍵做同一件事。
-			g.win = winNone
+		case inpututil.IsKeyJustPressed(ebiten.KeyC):
+			// 原版：Ctrl-C 關閉前視窗。有資料視窗開著就關它，
+			// 否則關掉 City Form（編輯視窗關不掉，關了就沒得玩）。
+			if g.win != winNone {
+				g.win = winNone
+			} else {
+				g.mapHidden = true
+			}
+		case inpututil.IsKeyJustPressed(ebiten.KeyH):
+			// 原版：Ctrl-H 隱藏前視窗。收起來的是 City Form，
+			// 收掉之後編輯視窗才看得到全寬——原版的預設配置就是被它蓋著的。
+			if g.win != winNone {
+				g.win = winNone
+			} else {
+				g.mapHidden = !g.mapHidden
+			}
+		case inpututil.IsKeyJustPressed(ebiten.KeyR):
+			// 原版：Ctrl-R 調整編輯窗大小。進模式之後方向鍵改大小。
+			g.resizing = true
 		case inpututil.IsKeyJustPressed(ebiten.KeyL):
 			g.load()
 		case inpututil.IsKeyJustPressed(ebiten.KeyX):
 			g.quit = true
 		case inpututil.IsKeyJustPressed(ebiten.KeyE):
-			// 原版：Ctrl-E 打開編輯視窗。這裡的地圖本身就是編輯視窗，
-			// 所以等同「把蓋在上面的視窗收掉」。
+			// 原版：Ctrl-E 打開編輯視窗 —— 把它叫到最前面。
 			g.win = winNone
+			g.editFront = true
 		case inpututil.IsKeyJustPressed(ebiten.KeyA):
 			g.world.AutoBulldoze = !g.world.AutoBulldoze
 			if g.world.AutoBulldoze {
@@ -612,7 +668,7 @@ func (g *Game) handleMouse() {
 	// 地圖：編輯視窗裡的那一塊。座標要先減掉視窗原點——
 	// 少減的話工具會蓋在離游標好幾格的地方，而且看起來像「格子算錯」。
 	// City Form 在前面的時候，被它蓋住的那一塊不能蓋東西。
-	if !inEditView(mx, my) || (!g.editFront && inCityForm(mx, my)) {
+	if !g.inEditView(mx, my) || (!g.editFront && !g.mapHidden && inCityForm(mx, my)) {
 		g.dragging = false
 		return
 	}
