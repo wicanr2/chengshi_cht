@@ -8,6 +8,16 @@
 // 這支自動玩家只用 `sim.ApplyTool` 與稅率欄位，也就是**玩家在畫面上做得到
 // 的事**。它不呼叫任何規則層的內部捷徑，不改參數，不給錢。
 //
+// 它有兩種用法，測的是**兩件不一樣的事**：
+//
+//   - **接手一座既有城市能不能救**：八個劇本（`TestAutoPlayerWinsScenarios`）。
+//   - **一張白紙能不能長成一座能自我維持的城市**：`bootstrap.go` ＋
+//     `TestFreshCityGrowsAndSustains`。五顆種子五十年後都是等級 2、
+//     人口兩萬到三萬、資金為正、還在長。
+//
+// ⚠ 第二種原本**一次都沒被走過**，因為驗收只跑劇本——而劇本一律有現成的
+// 路網與電網。真的開一座新城市，自動玩家五十年一格都不會蓋（見 bootstrap.go）。
+//
 // 它不是 AI，是一份寫成程式的攻略：每年動一次手，照劇本的過關條件分四種
 // 打法。種子 1–5 的實測（每個劇本各跑五顆種子）：
 //
@@ -105,6 +115,14 @@ func (p *Player) year() {
 		w.CityTax = 9
 	} else {
 		w.CityTax = 6
+	}
+
+	// 白紙一張的時候要先起頭：電廠 ＋ 一條路 ＋ 路上的電線（bootstrap.go）。
+	// 沒有這一步，`grow`／`power` 三個條件互相等待，五十年一格都不會蓋。
+	if p.zoneCount() == 0 {
+		if !p.bootstrap() {
+			return
+		}
 	}
 
 	p.clearRubble(40)
@@ -328,12 +346,21 @@ func (p *Player) services() {
 	if p.goal == goalCrime {
 		stations = 6
 	}
+	// ⚠ **警消要配著城市大小蓋，不能一年一座蓋下去。**
+	// 一座 $500，維護費更是**每年都要付**——小城市會被自己的警消拖垮：
+	// 實測從零開的新城市在第 25 年資金歸零、分區卡在 33 個不動，
+	// 錢全花在十四座警局與十四座消防隊上。
+	// 一座管得到八分之一解析度的一格（八格見方），二十個分區配一座夠了。
+	zones := p.zoneCount()
+	if p.countTile(sim.POLICESTATION)*20 >= zones {
+		stations = 0
+	}
 	for i := 0; i < stations && w.TotalFunds > 6500; i++ {
 		p.build(sim.ToolPolice, p.bestSites(func(hx, hy int) int {
 			return int(w.CrimeMem[hx][hy])*4 - int(w.PoliceMap[hx>>2][hy>>2])
 		}, 40))
 	}
-	if w.TotalFunds > 6500 {
+	if w.TotalFunds > 6500 && p.countTile(sim.FIRESTATION)*20 < zones {
 		// 有東西可燒、消防覆蓋低的地方。用人口密度當「有東西可燒」的代理。
 		p.build(sim.ToolFireStation, p.bestSites(func(hx, hy int) int {
 			return int(w.PopDensity[hx][hy])*2 - int(w.FireStMap[hx>>2][hy>>2])
@@ -528,15 +555,33 @@ func (p *Player) grow(n int) {
 				return
 			}
 		}
-		tool := sim.ToolResidential
-		switch {
-		case w.CValve >= w.RValve && w.CValve >= w.IValve:
-			tool = sim.ToolCommercial
-		case w.IValve >= w.RValve && w.IValve >= w.CValve:
-			tool = sim.ToolIndustrial
-		}
-		w.ApplyTool(tool, sites[i][0], sites[i][1])
+		w.ApplyTool(p.zoneTool(), sites[i][0], sites[i][1])
 	}
+}
+
+// zoneTool 決定這一格要蓋哪一種分區。
+//
+// 挑「最渴」的那一種，平手時偏商業。
+//
+// ⚠ 看過城市等級的公式會很想改成「先蓋商業與工業」：
+//
+//	CityPop = (ResPop + ComPop×8 + IndPop×8) × 20   （eval.go:83 doPopNum）
+//
+// 商業與工業在裡面**一格抵住宅八格**，追人口的劇本看的正是這個等級。
+// **試過，更差**（達斯維利三顆種子 20 280／17 960／20 420 →
+// 14 780／15 040／25 280）：商業與工業要有居民去上班才長得起來，
+// 沒有住宅撐著就停在第一級甚至倒退。需求閥本來就把這件事算進去了——
+// `RValve` 在達斯維利長期頂在 2000，那是城市在說「我缺房子」。
+// **會綁住的是需求，不是選擇**，所以照閥值走才對。
+func (p *Player) zoneTool() sim.Tool {
+	w := p.w
+	switch {
+	case w.CValve >= w.RValve && w.CValve >= w.IValve:
+		return sim.ToolCommercial
+	case w.IValve >= w.RValve && w.IValve >= w.CValve:
+		return sim.ToolIndustrial
+	}
+	return sim.ToolResidential
 }
 
 // growSites 列出「挨著路、又在電網覆蓋範圍內」的 3×3 空地，

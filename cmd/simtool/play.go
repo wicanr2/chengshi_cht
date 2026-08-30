@@ -25,11 +25,17 @@ func cmdPlay(args []string) {
 	verbose := fs.Bool("v", false, "每年印一行狀態")
 	dbg := fs.Bool("debug", false, "印出每次動作的結果")
 	tax := fs.Int("tax", 0, "固定稅率（0 = 用策略）")
+	fresh := fs.Bool("new", false, "不玩劇本，開一座新城市從零蓋")
+	years := fs.Int("years", 50, "-new 時要玩幾年")
 	dir := fs.String("data", os.Getenv("SIMCITY_DATA"), "SIMCITY 1.10 目錄")
 	_ = fs.Parse(args)
 	autoplay.Debug = *dbg
 	if *dir == "" {
 		*dir = "workplace/dos110/SIMCITY 1.10"
+	}
+	if *fresh {
+		playFresh(uint32(*seed), *years, *verbose)
+		return
 	}
 	list := []int{}
 	for _, a := range fs.Args() {
@@ -107,4 +113,44 @@ func cmdPlay(args []string) {
 			w.CrimeAverage, w.Eval.TrafficAverage, w.TotalFunds)
 	}
 	fmt.Printf("%d/%d 通關（種子 %d）\n", win, len(list), *seed)
+}
+
+// playFresh 從零開一座新城市，讓自動玩家玩指定的年數。
+//
+// 這是 CLAUDE.md §4 另一條驗收：「從零開始蓋到一座能自我維持的城市」。
+// 劇本測的是「接手一座既有城市能不能救」，這一支測的是「白紙一張能不能長」
+// ——兩件事的失敗模式不一樣：劇本有現成的路網與電網，新城市什麼都沒有。
+func playFresh(seed uint32, years int, verbose bool) {
+	w := sim.NewWorld(seed)
+	w.GenerateMap(seed, sim.DefaultTerrainParams())
+	w.DoSimInit()
+	w.AutoBudget = true
+	p := autoplay.New(w, 0) // 追人口
+	ticks := 0
+	for w.CityTime < years*48 {
+		w.Frame()
+		if w.CityTime > ticks && w.CityTime%48 == 0 {
+			ticks = w.CityTime
+			p.Year()
+			if verbose {
+				zones, dark := 0, 0
+				for x := 0; x < sim.WorldX; x++ {
+					for y := 0; y < sim.WorldY; y++ {
+						if w.Map[x][y]&sim.ZONEBIT != 0 {
+							zones++
+							if w.Map[x][y]&sim.PWRBIT == 0 {
+								dark++
+							}
+						}
+					}
+				}
+				fmt.Printf("  %d 年 資金 %7d 等級 %d 評分 %4d 人口 %7d 分區 %3d 沒電 %3d 犯罪 %3d\n",
+					1900+w.CityTime/48, w.TotalFunds, w.CityClass, w.CityScore,
+					w.LastCityPop, zones, dark, w.CrimeAverage)
+			}
+		}
+		w.MessagePort = 0
+	}
+	fmt.Printf("種子 %d：%d 年後 等級 %d 人口 %d 評分 %d 資金 %d\n",
+		seed, years, w.CityClass, w.LastCityPop, w.CityScore, w.TotalFunds)
 }
