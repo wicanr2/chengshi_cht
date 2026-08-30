@@ -157,8 +157,17 @@ type Game struct {
 	// editFront 記錄編輯視窗有沒有被拉到 City Form 視窗前面。
 	// 原版一開始是 City Form 在前面。
 	editFront bool
-	// mapHidden 是「隱藏前視窗」（Ctrl-H）把 City Form 收起來的狀態。
-	mapHidden bool
+	// mapClosed 是 City Form 視窗被關掉（Ctrl-C）的狀態。
+	//
+	// ⚠ 「關閉」與「隱藏」在原版是**兩件事**，實測過
+	// （workplace/dosbox/uh-71..73）：`Ctrl-C` 真的把視窗關掉，
+	// `Ctrl-H` 只是把最前面的視窗**移到最後面**，視窗還在。
+	// 一開始兩個鍵都做成「收起來」，看起來一樣，但按第二次就分得出來——
+	// 原版按第二次 `Ctrl-H` 會換成編輯視窗被壓到後面。
+	mapClosed bool
+	// speedLevel 是原版的五段速度（0 暫停 … 4 最快）。
+	speedLevel int
+
 	// graphOn 是統計圖六條曲線各自開著沒有，graphYears 是 10 或 120。
 	// 原版用左邊那八個圖示按鈕切換，狀態不進存檔。
 	graphOn    [6]bool
@@ -285,7 +294,11 @@ func (g *Game) Update() error {
 	}
 	g.handleKeys()
 	g.handleMouse()
-	g.world.Frame()
+	// 「最快」是同一個速率下一個畫格多跑幾次模擬（Micropolis 的 sim_skips），
+	// 不是第五個速率——見 speedMsgIdx 的說明。
+	for i := 0; i < simFramesPerTick[clamp(g.speedLevel, 0, 4)]; i++ {
+		g.world.Frame()
+	}
 	// 圖塊動畫。原版的條件是 `DoAnimation && SimSpeed && !TilesAnimated`
 	// （`w_editor.c:874`）——暫停時不動，而且一個畫格只做一次。
 	// ⚠ 它會改地圖，所以只有呈現層能呼叫，`internal/sim` 自己不碰。
@@ -432,12 +445,13 @@ func (g *Game) handleKeys() {
 			ebiten.Key0, ebiten.Key1, ebiten.Key2, ebiten.Key3, ebiten.Key4,
 		} {
 			if inpututil.IsKeyJustPressed(k) {
-				g.setSpeed(min(i, 3))
+				g.setSpeed(i)
 			}
 		}
 	}
+	// F1–F5 是本專案舊版用的別名，保留。原版只有 0–4。
 	for i, k := range []ebiten.Key{
-		ebiten.KeyF1, ebiten.KeyF2, ebiten.KeyF3, ebiten.KeyF4,
+		ebiten.KeyF1, ebiten.KeyF2, ebiten.KeyF3, ebiten.KeyF4, ebiten.KeyF5,
 	} {
 		if inpututil.IsKeyJustPressed(k) {
 			g.setSpeed(i)
@@ -465,8 +479,8 @@ func (g *Game) handleKeys() {
 		switch {
 		case inpututil.IsKeyJustPressed(ebiten.KeyM):
 			// 原版：Ctrl-M 打開地圖視窗。City Form 收起來的話先叫回來。
-			if g.mapHidden {
-				g.mapHidden = false
+			if g.mapClosed {
+				g.mapClosed = false
 				g.editFront = false
 			} else {
 				g.toggleWindow(winMaps)
@@ -483,15 +497,15 @@ func (g *Game) handleKeys() {
 			if g.win != winNone {
 				g.win = winNone
 			} else {
-				g.mapHidden = true
+				g.mapClosed = true
 			}
 		case inpututil.IsKeyJustPressed(ebiten.KeyH):
-			// 原版：Ctrl-H 隱藏前視窗。收起來的是 City Form，
-			// 收掉之後編輯視窗才看得到全寬——原版的預設配置就是被它蓋著的。
+			// 原版：Ctrl-H 把**最前面的視窗移到最後面**（實測，見 mapClosed
+			// 的說明）。這裡只有兩個常駐視窗，所以就是換 editFront。
 			if g.win != winNone {
 				g.win = winNone
 			} else {
-				g.mapHidden = !g.mapHidden
+				g.editFront = !g.editFront
 			}
 		case inpututil.IsKeyJustPressed(ebiten.KeyR):
 			// 原版：Ctrl-R 調整編輯窗大小。進模式之後方向鍵改大小。
@@ -693,7 +707,7 @@ func (g *Game) handleMouse() {
 	// 地圖：編輯視窗裡的那一塊。座標要先減掉視窗原點——
 	// 少減的話工具會蓋在離游標好幾格的地方，而且看起來像「格子算錯」。
 	// City Form 在前面的時候，被它蓋住的那一塊不能蓋東西。
-	if !g.inEditView(mx, my) || (!g.editFront && !g.mapHidden && inCityForm(mx, my)) {
+	if !g.inEditView(mx, my) || (!g.editFront && !g.mapClosed && inCityForm(mx, my)) {
 		g.dragging = false
 		return
 	}
@@ -834,8 +848,16 @@ func (g *Game) toolLabel(b toolButton) string {
 }
 
 // setSpeed 設定模擬速度並回報。
+// setSpeed 設定五段速度之一（0 暫停 … 4 最快）。
 func (g *Game) setSpeed(n int) {
-	g.world.SimSpeed = n
+	if n < 0 {
+		n = 0
+	}
+	if n >= len(simSpeedOf) {
+		n = len(simSpeedOf) - 1
+	}
+	g.speedLevel = n
+	g.world.SimSpeed = simSpeedOf[n]
 	g.setMessage("模擬速度：" + g.speedName(n))
 }
 
@@ -844,11 +866,29 @@ func (g *Game) setSpeed(n int) {
 // ⚠ 原版那一段是「 最快  4」這種形式：前導空白給選單縮排、後面是數字。
 // 直接顯示會多出一堆空白，所以只取中間的名稱。
 //
-// ⚠ **DOS 版有五段速度（0–4），Micropolis 只有四段（0–3）。**
-// 規則層是 Micropolis，所以 SimSpeed 3 是最快，對到副選單的第 0 筆
-// 而不是第 1 筆。用 `4-n` 去算會把最快顯示成「快速」——數字看起來很合理，
-// 但玩家在最高速時看到的是次高速的名稱。
-var speedMsgIdx = [4]int{4, 3, 2, 0} // 暫停、慢速、普通、最快
+// 五段速度。原版的副選單（訊息檔第 19 段）由快到慢是
+// 最快 4／快速 3／普通 2／慢速 1／暫停 0，所以索引要倒過來查。
+//
+// ⚠ **Micropolis 的 `SimSpeed` 只有四段**（`w_util.c:145` 把參數夾在 0–3，
+// 0 ＝ 暫停）。第五段「最快」不是第五個模擬速率，而是
+// **同一個速率下一個畫格多跑幾次模擬**——Micropolis 自己就有這個機制
+// （`setSkips`／`sim_skips`，`sim.c:71`）。所以五段是：
+//
+//	段 0 暫停    SimSpeed 0
+//	段 1 慢速    SimSpeed 1
+//	段 2 普通    SimSpeed 2
+//	段 3 快速    SimSpeed 3，一個畫格一次
+//	段 4 最快    SimSpeed 3，一個畫格三次
+//
+// ⚠ 用 `4-n` 直接算是錯的：那會把「最快」顯示成「快速」，
+// 數字看起來很合理，但玩家在最高速時看到的是次高速的名稱。
+var speedMsgIdx = [5]int{4, 3, 2, 1, 0} // 暫停、慢速、普通、快速、最快
+
+// simFramesPerTick 是每一段速度一個畫格要跑幾次模擬。
+var simFramesPerTick = [5]int{1, 1, 1, 1, 3}
+
+// simSpeedOf 是每一段速度對到的 Micropolis `SimSpeed`。
+var simSpeedOf = [5]int{0, 1, 2, 3, 3}
 
 func (g *Game) speedName(n int) string {
 	if n < 0 || n >= len(speedMsgIdx) {

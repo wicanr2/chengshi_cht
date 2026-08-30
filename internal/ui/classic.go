@@ -123,7 +123,7 @@ func (g *Game) drawClassic(dst *ebiten.Image) {
 	// 兩個視窗是重疊的，畫的順序就是疊的順序。原版一開始 City Form 在前面，
 	// 對編輯視窗按一下就換它到前面。
 	switch {
-	case g.mapHidden:
+	case g.mapClosed:
 		g.drawEditWindow(dst)
 	case g.editFront:
 		g.drawCityFormWindow(dst)
@@ -190,7 +190,7 @@ func (g *Game) editViewSize() (int, int) {
 //
 // 原版是按右鍵拉到前面；這裡用左鍵，因為 remake 的右鍵沒有別的用途。
 func (g *Game) raiseWindowAt(mx, my int) bool {
-	if g.mapHidden {
+	if g.mapClosed {
 		if g.inEditWindow(mx, my) {
 			g.editFront = true
 		}

@@ -292,8 +292,8 @@ func (g *Game) pickDisaster(row int) {
 func (g *Game) pickWindow(row int) {
 	switch row {
 	case 0: // 地圖視窗：City Form 收起來的話先叫回來
-		if g.mapHidden {
-			g.mapHidden = false
+		if g.mapClosed {
+			g.mapClosed = false
 			g.editFront = false
 		} else {
 			g.toggleWindow(winMaps)
@@ -311,13 +311,13 @@ func (g *Game) pickWindow(row int) {
 		if g.win != winNone {
 			g.win = winNone
 		} else {
-			g.mapHidden = true
+			g.mapClosed = true
 		}
-	case 6: // 隱藏前視窗
+	case 6: // 隱藏前視窗 ＝ 把最前面的移到最後面（實測，不是收起來）
 		if g.win != winNone {
 			g.win = winNone
 		} else {
-			g.mapHidden = !g.mapHidden
+			g.editFront = !g.editFront
 		}
 	case 7: // 視窗位置：直接拖標題列就好，這裡只提示
 		g.setMessage("拖曳視窗的標題列就可以搬動")

@@ -117,10 +117,9 @@ func (g *Game) sysMenuPick(i int) {
 		g.tool = powerTools[i].tool
 		g.win = winNone
 	case winSpeed:
-		// 第 19 段由快到慢：最快 4、快速 3、普通 2、慢速 1、暫停 0。
-		// 規則層只有四段（0–3），「最快」與「快速」是同一段——
-		// 已知的未解，記在 docs/spec/controls.md。
-		g.setSpeed(min(4-i, 3))
+		// 第 19 段由快到慢：最快 4、快速 3、普通 2、慢速 1、暫停 0，
+		// 所以選單的第 i 列對到速度 4−i。五段都接得起來，見 speedMsgIdx。
+		g.setSpeed(4 - i)
 		g.win = winNone
 	case winSystem:
 		switch sysItems[i].kind {

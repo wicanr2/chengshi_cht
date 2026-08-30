@@ -1,0 +1,20 @@
+# Ctrl-H 隱藏前視窗：收起來還是移到最後面？
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+shot 70-before
+key ctrl+h
+wait 2
+shot 71-after-h
+key ctrl+h
+wait 2
+shot 72-after-h2
+key ctrl+c
+wait 2
+shot 73-after-c
