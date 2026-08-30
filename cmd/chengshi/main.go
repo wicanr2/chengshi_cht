@@ -77,6 +77,7 @@ func main() {
 	data := flag.String("data", "", "解開的 SIMCITY 1.10 目錄（裡面要有 CEGA/、mcga/、DATA/）")
 	style := flag.String("style", "base", "城市風格：base 基本／asia／medi／west／fusa／feur／moon")
 	mute := flag.Bool("mute", false, "不要音效")
+	cam := flag.String("cam", "", "起始鏡頭左上角的格子座標，例如 -cam 54,42（試玩腳本用）")
 	probe := flag.Bool("audio-probe", false, "內部用：試開音效裝置後結束（0 ＝ 開得起來）")
 	sndTest := flag.Int("sound-test", -1, "內部用：一開始就播第幾段音效（0–7），給錄音驗收")
 	seed := flag.Int("seed", 0, "地形亂數種子（0 = 隨機）")
@@ -196,6 +197,14 @@ func main() {
 	}
 	g.SetSavePath(*save)
 	g.SetVersion(version)
+	if *cam != "" {
+		var cx, cy int
+		if _, err := fmt.Sscanf(*cam, "%d,%d", &cx, &cy); err != nil {
+			fmt.Fprintf(os.Stderr, "-cam 要寫成 x,y：%v\n", err)
+			os.Exit(2)
+		}
+		g.SetCamera(cx, cy)
+	}
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	g.SetDataDir(*data, *style)
 	// 音效開不起來不算致命：印一行就繼續。

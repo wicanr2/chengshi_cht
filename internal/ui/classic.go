@@ -331,3 +331,10 @@ var powerTools = []struct {
 	{1, sim.ToolCoalPower},
 	{2, sim.ToolNuclear},
 }
+
+// SetCamera 把鏡頭左上角擺到指定的格子。給試玩腳本用（`-cam`）：
+// 腳本要能算出「某一格在畫面上的哪裡」，而那需要鏡頭是已知的。
+func (g *Game) SetCamera(x, y int) {
+	g.camX, g.camY = x, y
+	g.clampCamera()
+}

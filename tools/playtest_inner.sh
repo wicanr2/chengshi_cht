@@ -23,10 +23,10 @@ mkdir -p "$OUT" /tmp/pt
 # 原點是 (64,54) 的原版座標，畫布放大三倍（internal/ui/classic.go）。
 # 少加這個位移的話，每一次點擊都落在離目標好幾格的地方，而遊戲照樣
 # 蓋得出東西——症狀是「試玩腳本蓋的城市長得不對」，不是「點不到」。
-# 相機一開始置中：camX ＝ (120 − 11) / 2、camY ＝ (100 − 16) / 2
-# （見 internal/ui 的 centerCamera，可見格數是編輯視窗算出來的）。
+# 鏡頭用 `-cam` 直接擺到空地的左上角，不靠置中也不靠捲動——
+# 捲動的步數會被地圖邊界夾住而算錯，而且錯了照樣點得下去，只是點在別格。
 UIS=3; VIEWX=64; VIEWY=54
-CAMX=54; CAMY=42; PX=$((16 * UIS))
+CAMX=$FX; CAMY=$FY; PX=$((16 * UIS))
 sx() { echo $(( VIEWX * UIS + ($1 - CAMX) * PX + PX / 2 )); }
 sy() { echo $(( VIEWY * UIS + ($1 - CAMY) * PX + PX / 2 )); }
 
@@ -120,7 +120,7 @@ start_x
 rm -f "$SAVE"
 
 echo "== 第一段：新城市，手動蓋 =="
-run_game -seed "$SEED" -save "$SAVE"
+run_game -seed "$SEED" -save "$SAVE" -cam "$FX,$FY"
 shot 01-新城市
 alive || fail "開場就崩了"
 
@@ -166,15 +166,19 @@ close_window() {
   fail "視窗關不掉"
 }
 open_window() { # 快速鍵 截圖名 說明
+  local last=0
   for i in $(seq 1 6); do
     key "$1"; shot "$2"
     local d; d=$(diffpct "$OUT/02-蓋好.png" "$OUT/$2.png")
     # 門檻 200000：換成原版版面之後視窗小多了（統計圖只有 304×125 原版像素
     # ＝ 342000 螢幕像素），舊的 400000 會讓統計圖永遠判成「沒開」，
     # 而迴圈每按一次就 toggle 一次，所以看起來像快速鍵壞了。
-    if [ "$d" -ge 200000 ]; then pass "$3 開起來了（${d} 像素）"; close_window; return 0; fi
+    if [ "$d" -ge 300000 ]; then pass "$3 開起來了（${d} 像素）"; close_window; return 0; fi
+    last=$d
   done
-  fail "$3 沒開"
+  # 失敗時要印出量到的數字。只說「沒開」的話分不出「快速鍵沒作用」與
+  # 「視窗開了但門檻訂太高」——後者在版面改小之後發生過。
+  fail "$3 沒開（最後一次量到 ${last} 像素）"
   close_window
 }
 
@@ -186,7 +190,10 @@ open_window "ctrl+u" 06-評估   "評估視窗"
 echo "== 第三段：查詢與捲動 =="
 key q; click $((FX+1)) $((FY+1)); sleep 0.5; shot 07-查詢
 key z
-do_until 200000 "方向鍵捲動" xdotool key --clearmodifiers --repeat 30 --repeat-delay 30 Right
+# 門檻 80000：編輯視窗的地圖區只有 176×257 原版像素（＝ 407000 螢幕像素），
+# 而地形大片同色，捲動之後真正變色的沒有想像中多。舊的 200000 是照
+# 舊版面（1024×768 的地圖區）訂的。
+do_until 80000 "方向鍵捲動" xdotool key --clearmodifiers --repeat 30 --repeat-delay 30 Right
 shot 08-捲動後
 
 echo "== 第四段：存檔 =="
@@ -216,7 +223,7 @@ fi
 
 echo "== 第五段：重開讀檔 =="
 if [ -s "$SAVE" ]; then
-  run_game -load "$SAVE"
+  run_game -load "$SAVE" -cam "$FX,$FY"
   sleep 1; shot 10-讀檔
   alive || fail "讀檔後崩了"
   stop_game
