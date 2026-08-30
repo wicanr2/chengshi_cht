@@ -576,6 +576,11 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	}
 	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
 	// 表頭兩行，原版也是兩行（`Amount／Requested`）。
+	//
+	// ⚠ 這四組字被 `translations/glossary.md` §八的「畫面上實際用的字」欄
+	// 釘著（`TestGlossaryScreenTermsAppearInUI`）。說明書 p.43 給的是
+	// 「維護需求額」「實際撥給金額」「編列（支付）百分比」——那是原文對照的
+	// **說明**不是螢幕標籤，而這裡一欄只放得下四個字。要改先改譯名表。
 	for i, h := range [4][2]string{
 		{"", "項目"}, {"維護", "需求"}, {"實際", "撥給"}, {"編列", "比例"},
 	} {
