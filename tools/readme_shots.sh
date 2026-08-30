@@ -27,7 +27,9 @@ shot city.png       "-scenario 6 -style base -cam 30,30" "space 0"
 # 同一座城市換中世紀資料片。
 shot style-medi.png "-scenario 6 -style medi -cam 30,30" "space 0"
 # 地圖視窗的犯罪率圖層（圖層 6，順序照訊息檔第 10 段）。
-shot maps.png       "-scenario 6 -style base -window maps -layer 6" "space 0"
+# ⚠ 這一張**不能按 `0` 暫停**：地圖視窗開著的時候 `1`–`9`／`0` 是切圖層，
+# 按下去會把 `-layer 6` 蓋掉（先前那一版拍到的其實是「消防範圍」）。
+shot maps.png       "-scenario 6 -style base -window maps -layer 6" "space"
 # 劇本簡介（中世紀的改寫）。不要按 space，簡介才留在畫面上。
 shot brief.png      "-scenario 6 -style medi" "" 6
 # 評估視窗。

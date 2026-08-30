@@ -63,12 +63,17 @@ click() {
 }
 
 # 拖曳鋪一條線（道路／電線／鐵軌才吃得到）。
+#
+# ⚠ 每一格送**兩次**同樣的座標。只送一次的話，軟體 OpenGL 掉格時 Ebiten
+# 會整格漏掉——實測過一次六格的路只鋪到三格，而畫面變化量照樣過門檻，
+# 於是失敗延到後面「存檔裡道路只有 3 格」才爆出來。
 drag() { # x1 y1 x2 y2（同一列）
   xdotool mousemove "$(sx "$1")" "$(sy "$2")"; sleep 0.05
   xdotool mousedown 1; sleep 0.15
   local x=$1
   while [ "$x" -le "$3" ]; do
-    xdotool mousemove "$(sx "$x")" "$(sy "$4")"; sleep 0.1
+    xdotool mousemove "$(sx "$x")" "$(sy "$4")"; sleep 0.08
+    xdotool mousemove "$(sx "$x")" "$(sy "$4")"; sleep 0.08
     x=$((x + 1))
   done
   xdotool mouseup 1; sleep 0.2

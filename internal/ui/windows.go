@@ -110,7 +110,10 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	winGraphs:   {240, 103, 304, 125},
 	winBudget:   {171, 27, 285, 309},
 	winEval:     {39, 70, 513, 210},
-	winMaps:     {60, 40, 520, 270},
+	// 寬度是照「圖層清單 ＋ 縮圖」量出來的：縮圖的倍率被高度夾在 7，
+	// 120 格 × 7 ＝ 840 螢幕像素，加上清單那一欄剛好 380 原版像素。
+	// 先前寫 520，右邊會空掉三分之一。
+	winMaps:     {60, 40, 380, 270},
 	winDisaster: {200, 60, 240, 160},
 	winSystem:   {90, 20, 240, 210},
 	winScenario: {150, 40, 240, 180},
@@ -228,13 +231,15 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 			title = g.txt.S(i18n.SecGraph, 7)
 		}
 	case winBudget:
-		// 原版的標題帶年份：執行檔字串是 `%d Fiscal Budget`
-		// （`workplace/ida/exe-strings.txt` 0x027d3a）。
-		title = fmt.Sprintf("%d 年度預算", 1900+g.world.CityTime/48)
+		// ⚠ 帶年份的 `%d Fiscal Budget`（執行檔 0x027d3a）是**視窗裡面**
+		// 那一行標題，不是視窗的標題列——原版這兩個視窗根本沒有標題列。
+		// 兩邊都印會變成同一行字出現兩次，見 drawBudgetWindow。
+		title = g.txt.S(i18n.SecWinMenu, 2)
 	case winEval:
-		// 同上：`%d City Evaluation`（0x0265bb）。
+		// 評估視窗沒有視窗內的標題，所以帶年份的
+		// `%d City Evaluation`（執行檔 0x0265bb）畫在標題列。
 		//
-		// ⚠ 中文語序與英文相反，所以年份在前、名稱在後——`CLAUDE.md` §3.3
+		// ⚠ 中文語序與英文相反，年份在前、名稱在後——`CLAUDE.md` §3.3
 		// 說的「模板要能重排參數順序」就是這一類。
 		title = fmt.Sprintf("%d 年城市評估", 1900+g.world.CityTime/48)
 	case winDisaster:

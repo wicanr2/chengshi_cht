@@ -29,6 +29,25 @@ MAX_X = 241
 COLS, ROWS, SIZE = 32, 16, 16
 
 
+EGA = {0x00, 0x55, 0xaa, 0xff}
+
+
+def check_palette(im, path):
+    """截圖裡的顏色必須本來就是 EGA 十六色。
+
+    ⚠ 這道檢查是必要的，不是保險。`norm()` 會把任何顏色四捨五入到 EGA 四階
+    ——包括**還在淡入、根本還沒畫完**的那一張（實測抓到過整片
+    `(25,24,34)`）。四捨五入之後它會變成純黑，然後和原版比出「全部不同」
+    或更糟的「碰巧相同」。判準不能建立在會把壞資料變成好資料的前處理上。
+    """
+    bad = sum(1 for r, g, b in im.getdata()
+              if r not in EGA or g not in EGA or b not in EGA)
+    if bad > im.size[0] * im.size[1] // 100:
+        raise SystemExit(
+            f"{path}：{bad} 個像素不是 EGA 十六色，這張截圖八成是在畫面還沒"
+            f"畫完的時候拍的。重拍，不要拿去比。")
+
+
 def norm(im):
     """把顏色正規化到 EGA 的四階，兩邊才比得了。"""
     px = im.load()
@@ -43,6 +62,7 @@ def load(path, scale, ox, oy):
     im = Image.open(path).convert("RGB")
     if scale != 1:
         im = im.resize((im.size[0] // scale, im.size[1] // scale), Image.NEAREST)
+    check_palette(im, path)
     return norm(im), ox, oy
 
 

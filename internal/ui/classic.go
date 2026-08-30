@@ -90,12 +90,29 @@ const (
 	editDemandX        = 12
 	editDemandY        = 237
 
-	mapX, mapY = 241, 21 // City Form 視窗外框
-	mapW, mapH = 398, 327
-	mapIconX   = 244 // 圖層圖示（庫 5，26×226）
-	mapIconY   = 33
-	mapViewX   = 272 // 地圖本體
-	mapViewY   = 33
+	// City Form 視窗。座標全部量自原版（`workplace/dosbox/w3-01-maps.png`，
+	// 逐列逐行讀色）：外框 x 240–639、y 21–347；標題列 y 25–41；
+	// 圖層圖示欄從 (244,44) 起，一格 25 像素高，九格；地圖本體 x 274–633、
+	// y 44–343，剛好 120×100 格 × 3 像素。
+	mapX, mapY = 240, 21 // City Form 視窗外框
+	mapW, mapH = 400, 327
+	// 圖示欄最左邊那一行黑線是視窗自己畫的，圖示美術（庫 5，26×226）
+	// 從 245 起——照 244 blit 會整條左移一像素。
+	mapIconEdgeX = 244
+	mapIconX     = 245 // 圖層圖示（庫 5，26×226）
+	mapIconY   = 44
+	mapIconH   = 25 // 一格的高，選取的黃框照這個間距走
+	// 原版的圖示欄只有**九格**，而圖層有十一個——最後兩個圖示各管兩個
+	// 圖層（警力／消防那一格印著 `F` 與 `P`）。對應關係還沒解，
+	// 記在 CONTEXT.md §5.5；黃框畫得出來的只有前九個。
+	mapIconCount = 9
+	mapTitleX    = 244 // 標題列
+	mapTitleY    = 25
+	mapTitleW    = 392
+	mapContentY  = 42 // 內容區（白底 ＋ 綠邊的圖示欄 ＋ 地圖）
+	mapContentH  = 304
+	mapViewX   = 274 // 地圖本體
+	mapViewY   = 44
 )
 
 // 選單列的四個標題，中心 x 量自原版。
@@ -119,6 +136,8 @@ var (
 	colMapFrm   = color.RGBA{0xff, 0x55, 0x55, 0xff} // 地圖視窗框亮紅
 	colInfoBand = color.RGBA{0x55, 0x55, 0x55, 0xff} // 資金帶深灰
 	colTitleBar = color.RGBA{0xaa, 0xaa, 0xaa, 0xff} // 標題列灰
+	colMapFrmD  = color.RGBA{0xaa, 0x00, 0x00, 0xff} // 地圖視窗框外圈暗紅
+	colMapGreen = color.RGBA{0x00, 0xaa, 0x00, 0xff} // 圖層圖示欄的綠邊
 	colInk      = color.RGBA{0x00, 0x00, 0x00, 0xff}
 	colInkLight = color.RGBA{0xff, 0xff, 0xff, 0xff}
 )
@@ -544,15 +563,75 @@ func paletteHit(px, py int) int {
 	return -1
 }
 
+// ditherRect 畫一塊一像素棋盤網點。原版的標題列與空白欄位都用它，
+// `(x+y)` 為偶數畫 a、奇數畫 b。
+func ditherRect(dst *ebiten.Image, x, y, w, h int, a, b color.RGBA) {
+	for j := y; j < y+h; j++ {
+		for i := x; i < x+w; i++ {
+			c := b
+			if (i+j)%2 == 0 {
+				c = a
+			}
+			fill(dst, i, j, 1, 1, c)
+		}
+	}
+}
+
+// drawMapIconState 補圖層圖示欄的兩件事：選中那一格的黃框，
+// 以及圖示下方那塊黑白網點。
+//
+// 量自原版（`workplace/dosbox/w3-01-maps.png`）：黃框是 x 247–267、
+// y 44–66 的兩像素外框，一格 25 像素往下數；網點在 x 244–272、y 272–343，
+// `(x+y)` 為偶數是黑、奇數是白，與工具盤下方那一塊同一種。
+//
+// ⚠ 網點先前留成黑色。畫面上看起來只是「下面暗一塊」，但那一塊佔了
+// City Form 左欄三分之一的高度，整個視窗的明度都不對。
+func (g *Game) drawMapIconState(dst *ebiten.Image) {
+	if int(g.layer) < mapIconCount {
+		y := mapIconY + mapIconH*int(g.layer)
+		c := color.RGBA{0xff, 0xff, 0x55, 0xff}
+		fill(dst, 247, y, 21, 2, c)
+		fill(dst, 247, y+21, 21, 2, c)
+		fill(dst, 247, y, 2, 23, c)
+		fill(dst, 266, y, 2, 23, c)
+	}
+	y0 := mapIconY + mapIconH*mapIconCount + 3
+	y1 := mapContentY + mapContentH - 3
+	for y := y0; y <= y1; y++ {
+		for x := mapIconEdgeX; x <= mapViewX-3; x++ {
+			c := colInkLight
+			if (x+y)%2 == 0 {
+				c = colInk
+			}
+			fill(dst, x, y, 1, 1, c)
+		}
+	}
+}
+
 // drawCityFormWindow 畫 City Form 視窗：標題列、圖層圖示、全市地圖。
 func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
-	fill(dst, mapX, mapY, mapW, mapH, colMapFrm)
-	fill(dst, mapX+2, mapY+13, mapW-4, mapH-15, colInk)
-	fill(dst, mapX+1, mapY+1, mapW-2, 11, colDesktop)
+	// 外框兩圈：外圈暗紅、內圈亮紅。標題列 y 25–41 整塊是藍白一像素棋盤
+	// （`(x+y)` 為偶數畫白）；標題本身是**白底藍字**（原版 y=27 與 y=39
+	// 在 x 399–487 是整段白，中間才是字）。內容區 x 242–635、y 42–345，
+	// 圖層圖示欄那一條 30 像素寬是綠邊，地圖本體 274,44 起 360×300。
+	fill(dst, mapX, mapY, mapW, mapH, colMapFrmD)
+	fill(dst, mapX+1, mapY+1, mapW-2, mapH-2, colMapFrm)
+	ditherRect(dst, mapTitleX, mapTitleY, mapTitleW, 17, colInkLight, colMenuInk)
+	fill(dst, mapX+2, mapContentY, mapW-6, mapContentH, colInkLight)
+	fill(dst, mapX+2, mapContentY, 30, mapContentH, colMapGreen)
+	fill(dst, mapViewX, mapViewY, sim.WorldX*3, sim.WorldY*3, colInk)
 	title := trimMenu(g.txt.S(i18n.SecMapTitle, 0))
+	tw := g.font.Measure(title) / UIScale
+	fill(dst, mapX+mapW/2-tw/2-8, mapTitleY+2, tw+16, 13, colInkLight)
 	g.font.Draw(dst, title,
-		(mapX+mapW/2)*UIScale-g.font.Measure(title)/2, (mapY+1)*UIScale, colInk)
+		(mapX+mapW/2)*UIScale-g.font.Measure(title)/2, (mapTitleY+2)*UIScale, colMenuInk)
+	// 圖示欄左右各有一條**一像素棋盤**的邊（x=244 與 270–271），
+	// 庫 5 的美術只有中間那 25 行。原版的規則同其他網點：`(x+y)` 偶數是黑。
+	ih := mapIconH * mapIconCount
+	ditherRect(dst, mapIconEdgeX, mapIconY, 1, ih, colInk, colInkLight)
+	ditherRect(dst, mapViewX-4, mapIconY, 2, ih, colInk, colInkLight)
 	blit(dst, g.tiles.UIImage(BankMapIcons, 0), mapIconX, mapIconY)
+	g.drawMapIconState(dst)
 
 	// 全市地圖：120×100 格，一格 3×3 原版像素 ＝ 360×300，塞得進視窗。
 	// 「都市型態」圖層畫的是圖形檔自帶的縮圖，不是純色方塊——見 minimap.go。
