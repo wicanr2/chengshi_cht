@@ -50,6 +50,8 @@ func main() {
 		cmdScenario(os.Args[2:])
 	case "gfx":
 		cmdGfx(os.Args[2:])
+	case "pgfmask":
+		cmdPgfMask(os.Args[2:])
 	case "pgfmini":
 		cmdPgfMini(os.Args[2:])
 	default:
@@ -83,7 +85,10 @@ func usage() {
         把圖形庫倒成 PNG。圖形庫的用途只有畫出來才認得出來。
 
   simtool pgfmini -file <圖形檔.PGF> [-out 目錄] [-zoom N]
-        倒出地圖視窗的 960 張縮圖與檔案自帶的介面字型。`)
+        倒出地圖視窗的 960 張縮圖與檔案自帶的介面字型。
+
+  simtool pgfmask -file <圖形檔.PGF> [-out 目錄]
+        驗遮罩庫與前一庫的配對，並倒出去背合成的 PNG。`)
 }
 
 func cmdMessages(args []string) {

@@ -150,14 +150,15 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 		pal[i] = color.RGBA{c.R, c.G, c.B, 255}
 	}
 	for i := range b0.Images {
-		ts.Tiles = append(ts.Tiles, imageFrom(&b0, i, pal))
+		ts.Tiles = append(ts.Tiles, imageFrom(&b0, i, pal, nil))
 	}
 	// 其餘圖形庫原樣收著，精靈與介面美術都在裡面。兩份，透明處理不同。
+	masks := maskBanks(g)
 	for bi := 1; bi < len(g.Banks); bi++ {
 		b := g.Banks[bi]
 		var imgs, opaque []*ebiten.Image
 		for i := range b.Images {
-			imgs = append(imgs, imageFrom(&b, i, pal))
+			imgs = append(imgs, imageFrom(&b, i, pal, masks[bi]))
 			opaque = append(opaque, imageFromOpaque(&b, i, pal))
 		}
 		ts.Sprites = append(ts.Sprites, imgs)
@@ -191,18 +192,61 @@ func (t *TileSet) MiniColors(n int) []color.RGBA {
 	return t.miniPal[n]
 }
 
+// maskBanks 找出「哪一庫是哪一庫的遮罩」。
+//
+// 判準（證據見 docs/formats/03-pgf-graphics.md §4之二）：
+// **精靈從第 10 庫起兩兩成對**，後面那一庫是單平面（旗標 0x0100）、
+// 尺寸與張數與前一庫相同。8 位元的 mcga 沒有遮罩——256 色可以逐位元組
+// 比對色號 0，用不著。
+//
+// ⚠ 起點是 10 不是 1。第 6、7 庫也是兩個同尺寸的單平面庫（20×70），
+// 但它們是**兩張色階圖例**，不是一對美術與遮罩——照尺寸配會配錯。
+func maskBanks(g *assets.PGF) map[int]*assets.PGFBank {
+	out := map[int]*assets.PGFBank{}
+	for i := 10; i+1 < len(g.Banks); {
+		a, m := &g.Banks[i], &g.Banks[i+1]
+		if m.Flags&pgfSinglePlaneFlag != 0 &&
+			a.Width == m.Width && a.Height == m.Height &&
+			len(a.Images) == len(m.Images) {
+			out[i] = m
+			i += 2
+			continue
+		}
+		i++
+	}
+	return out
+}
+
+// pgfSinglePlaneFlag 是「這一庫只有一個平面」的旗標。
+const pgfSinglePlaneFlag = 0x0100
+
 // imageFrom 把一張調色盤圖轉成 Ebiten 影像。
 //
-// ⚠ 色號 0 當透明。原版靠遮罩庫做去背，但地圖圖塊是滿版的，
-// 用 0 當透明對它沒有影響；精靈則需要，否則會拖著一塊黑底走。
-func imageFrom(b *assets.PGFBank, i int, pal []color.RGBA) *ebiten.Image {
+// ⚠ **有遮罩就用遮罩，不要拿色號 0 當透明。** 精靈裡有真正的黑色——
+// 直升機的旋翼、怪獸的輪廓線都是色號 0；把 0 當透明會在精靈身上開洞。
+// 原版正是因為這樣才另外存一份遮罩：實測七對裡「遮罩是 1 而美術不是 0」
+// 的比例是 0%–4%，而「遮罩是 0 而美術是 0」有 0%–27%——後面那一群就是
+// 精靈內部的黑色。
+//
+// 遮罩的 1 是**透明**。沒有遮罩的庫（地圖圖塊、8 位元的精靈）才退回
+// 「色號 0 當透明」。
+func imageFrom(b *assets.PGFBank, i int, pal []color.RGBA, mask *assets.PGFBank) *ebiten.Image {
 	img := image.NewRGBA(image.Rect(0, 0, b.Width, b.Height))
 	px := b.Images[i].Pixels
+	var mp []uint8
+	if mask != nil && i < len(mask.Images) {
+		mp = mask.Images[i].Pixels
+	}
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
-			v := px[y*b.Width+x]
+			j := y*b.Width + x
+			v := px[j]
 			c := pal[v]
-			if v == 0 {
+			if mp != nil {
+				if mp[j] != 0 {
+					c.A = 0
+				}
+			} else if v == 0 {
 				c.A = 0
 			}
 			img.Set(x, y, c)
