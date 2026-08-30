@@ -153,6 +153,10 @@ type Game struct {
 	dragWin        window
 	dragDX, dragDY int
 
+	// editFront 記錄編輯視窗有沒有被拉到 City Form 視窗前面。
+	// 原版一開始是 City Form 在前面。
+	editFront bool
+
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
 	gotoX, gotoY int
@@ -577,6 +581,11 @@ func (g *Game) handleMouse() {
 	pressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	just := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
+	// 疊放順序：點到哪個視窗哪個就到前面。要放在工具盤與地圖之前，
+	// 否則「把被蓋住的編輯視窗叫到前面」那一下會直接蓋出一格東西。
+	if just && g.raiseWindowAt(mx, my) {
+		return
+	}
 	// 工具盤：編輯視窗左緣，2 欄 × 7 列（classic.go）。
 	if just {
 		if i := paletteHit(mx, my); i >= 0 {
@@ -602,7 +611,8 @@ func (g *Game) handleMouse() {
 	}
 	// 地圖：編輯視窗裡的那一塊。座標要先減掉視窗原點——
 	// 少減的話工具會蓋在離游標好幾格的地方，而且看起來像「格子算錯」。
-	if !inEditView(mx, my) {
+	// City Form 在前面的時候，被它蓋住的那一塊不能蓋東西。
+	if !inEditView(mx, my) || (!g.editFront && inCityForm(mx, my)) {
 		g.dragging = false
 		return
 	}

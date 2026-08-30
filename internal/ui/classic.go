@@ -36,8 +36,14 @@ const (
 const (
 	menuBarH = 18 // 選單列高
 
-	editX, editY = 5, 21    // 編輯視窗外框左上角
-	editW, editH = 236, 304 // 外框大小（含框線）
+	// 編輯視窗外框。
+	//
+	// ⚠ 寬度是 **575 不是 236**。第一次量的時候 City Form 視窗蓋在它上面，
+	// 量到的是「露出來的那一截」——兩個視窗是**重疊**的，不是並排。
+	// 在原版裡對編輯視窗按一下右鍵會把它拉到前面，那時才看得到全寬。
+	// 這種錯不會有任何症狀：小視窗照樣畫得出來、玩得動，只是視野少了三分之二。
+	editX, editY = 5, 21
+	editW, editH = 575, 304
 
 	editTitleY = 24 // 標題列
 	editTitleH = 14
@@ -50,7 +56,7 @@ const (
 
 	editPalX, editPalY = 6, 53 // 工具盤圖（庫 2，57×182）
 	editViewX          = 64    // 地圖區左緣
-	editViewW          = 176   // 240 − 64
+	editViewW          = 512   // 64–575，剛好 32 格
 	editDemandX        = 8     // 需求指標（庫 3，46×39）
 	editDemandY        = 236
 
@@ -110,8 +116,51 @@ func blit(dst *ebiten.Image, img *ebiten.Image, x, y int) {
 func (g *Game) drawClassic(dst *ebiten.Image) {
 	fill(dst, 0, 0, OrigW, OrigH, colDesktop)
 	g.drawMenuBar(dst)
-	g.drawEditWindow(dst)
-	g.drawCityFormWindow(dst)
+	// 兩個視窗是重疊的，畫的順序就是疊的順序。原版一開始 City Form 在前面，
+	// 對編輯視窗按一下就換它到前面。
+	if g.editFront {
+		g.drawCityFormWindow(dst)
+		g.drawEditWindow(dst)
+	} else {
+		g.drawEditWindow(dst)
+		g.drawCityFormWindow(dst)
+	}
+}
+
+// inCityForm 判斷畫面座標在不在 City Form 視窗上。
+func inCityForm(mx, my int) bool {
+	x, y := mx/UIScale, my/UIScale
+	return x >= mapX && x < mapX+mapW && y >= mapY && y < mapY+mapH
+}
+
+// inEditWindow 判斷畫面座標在不在編輯視窗上。
+func inEditWindow(mx, my int) bool {
+	x, y := mx/UIScale, my/UIScale
+	return x >= editX && x < editX+editW && y >= editY && y < editY+editH
+}
+
+// raiseWindowAt 依點擊位置決定哪個視窗到前面。
+// 回傳 true 代表這一下**只**用來換疊放順序，不該再當成別的操作。
+//
+// ⚠ 只有點在**兩個視窗重疊的那一塊**時才吞掉這一下。點在編輯視窗只屬於
+// 自己的地方（City Form 蓋不到的左半邊）要照樣蓋東西——吞掉的話，
+// 玩家每次切回編輯視窗都要多點一下，而且第一下「沒反應」。
+// 試玩腳本就是這樣少蓋了一座發電廠，而畫面像素檢查照樣過（疊放順序換了，
+// 畫面確實變了），只有存檔內容檢查抓得到。
+//
+// 原版是按右鍵拉到前面；這裡用左鍵，因為 remake 的右鍵沒有別的用途。
+func (g *Game) raiseWindowAt(mx, my int) bool {
+	if inCityForm(mx, my) {
+		if g.editFront {
+			g.editFront = false
+			return true // 重疊區：這一下只用來把 City Form 叫回前面
+		}
+		return false
+	}
+	if inEditWindow(mx, my) {
+		g.editFront = true // 非重疊區：順手拉到前面，但這一下照樣算數
+	}
+	return false
 }
 
 func (g *Game) drawMenuBar(dst *ebiten.Image) {
@@ -337,4 +386,11 @@ var powerTools = []struct {
 func (g *Game) SetCamera(x, y int) {
 	g.camX, g.camY = x, y
 	g.clampCamera()
+}
+
+// dateText 是標題列右邊的年月。原版寫 `Jan 1849`。
+func (g *Game) dateText() string {
+	year := 1900 + g.world.CityTime/48
+	month := trimMenu(g.txt.S(i18n.SecMonth, (g.world.CityTime%48)/4))
+	return fmt.Sprintf("%d %s", year, month)
 }

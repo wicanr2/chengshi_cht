@@ -114,6 +114,10 @@ while read -r cmd a b c d; do
     click) mark "click $a $b"; goto $a $b; sleep 0.3
            xdotool mousedown 1; sleep 0.15; xdotool mouseup 1 ;;
     press) mark "press $a $b"; goto $a $b; sleep 0.3; xdotool mousedown 1 ;;
+    # rclick：右鍵。原版的查詢是按住右鍵看格子資料（要對拍那個彈出視窗）。
+    rclick) mark "rclick $a $b"; goto $a $b; sleep 0.3
+            xdotool mousedown 3; sleep 0.6 ;;
+    rrelease) mark rrelease; xdotool mouseup 3 ;;
     # ⚠ move **不重新歸位**：它是給按住式選單用的（按住標題 → 移到項目 →
     # 放開）。歸位會把游標拖出選單再拉回來，選單當場就關了。
     move)  mark "move $a $b";  xdotool mousemove $((a+OFFX)) $((b+OFFY)) ;;

@@ -1,0 +1,16 @@
+# 查詢視窗：原版按住右鍵看格子資料。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+rclick 150 150
+wait 1
+shot 30-query
+rrelease
+wait 1
+shot 31-after
