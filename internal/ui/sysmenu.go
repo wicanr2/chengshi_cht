@@ -222,5 +222,9 @@ func (g *Game) swapWorld(w *sim.World) {
 	g.win = winNone
 	g.sysRow = 0
 	g.picture = ""
+	// 速度是**存進城市檔的**（`MiscHis[57]`，s_fileio.c:263），所以讀檔之後
+	// 呈現層的五段要跟著回來。存檔只記 0–3，第五段「最快」是執行期的
+	// `sim_skips`——原版讀檔時也是 `setSkips(0)`，所以「最快」不會被記住。
+	g.speedLevel = clamp(w.SimSpeed, 0, 4)
 	g.centerCamera()
 }
