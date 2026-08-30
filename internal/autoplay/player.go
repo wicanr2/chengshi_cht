@@ -21,11 +21,11 @@
 // 它不是 AI，是一份寫成程式的攻略：每年動一次手，照劇本的過關條件分四種
 // 打法。種子 1–5 的實測（每個劇本各跑五顆種子）：
 //
-//	漢堡 5/5　伯恩 5/5　東京 5/5　波士頓 5/5
-//	底特律 3/5　里約 3/5
+//	漢堡 5/5　伯恩 5/5　東京 5/5　波士頓 5/5　里約 5/5
+//	底特律 2/5
 //	達斯維利 0/5　舊金山 0/5
 //
-// 合計 26/40。不出手是 5/40。
+// 合計 27/40。不出手是 5/40。
 //
 // 兩個過不了的劇本各有各的難處：
 //
@@ -33,8 +33,9 @@
 //     100 000（城市等級 4）。準備金改成按開銷算之後它終於出得了手，
 //     但三十年只長到兩萬出頭——每年能蓋的格數受限於稅收，而稅收又受限於
 //     人口，複利起不來。要贏得換一套「先鋪格狀路網再密集填分區」的打法。
-//   - **舊金山**只有五年，而地震把路網打斷了。現在的鋪路策略是
-//     「從最近的路拉一條 L 形」，接不回被震斷的主幹道。
+//   - **舊金山**只有五年。地震把電網打斷，290 個分區裡有 100 多個是暗的
+//     ——暗的分區不會成長。`connectDark`（wire.go）把暗區接回來之後，
+//     五年結束時的人口從 82 960 拉到 92 720，但過關要 100 000，還差一截。
 //
 // ⚠ **這支程式最容易寫出「合法但自殺」的操作。** 每一步都是玩家做得到的
 // 動作、每一步都回傳 `ToolOK`，而城市在十年內死光。已經踩過三種，
@@ -127,6 +128,9 @@ func (p *Player) year() {
 
 	p.clearRubble(40)
 	p.power() // 沒電就不會長，這一項排在服務前面
+	// 電網被打斷的暗區接回來（wire.go）。舊金山地震之後 291 個分區裡
+	// 103 個是暗的，蓋再多電廠也接不回來——要的是**接線**不是發電量。
+	p.connectDark(20)
 
 	// ⚠ **留準備金。** 破產一次，自動預算就撥不出警消經費
 	// （`PoliceEffect`／`FireEffect` 掉下來，評分乘 0.9 兩次），
@@ -182,13 +186,32 @@ var (
 // 為什麼要單獨處理：沒電的分區**不會成長**（`doResidential` 把 zscore
 // 直接設成 −500）。自動玩家一直放新分區卻沒發電量的話，放再多都是空的。
 func (p *Player) power() {
+	// ⚠ **一年可能要蓋不只一座。** 舊金山地震之後有 290 個分區、
+	// 2 600 多個導電格，而一座燃煤只供 700 格——差四座。一年一座的話
+	// 五年都補不齊，291 個分區裡一直有 100 個是暗的，而畫面上看起來
+	// 只是「城市長不回來」。
+	// ⚠ 第一座可以動用準備金（沒電會死人），**第二座起不行**。
+	// 不設這一條的話一年蓋四座、$12 000 一次花光，舊金山第三年就破產，
+	// 分區從 294 個掉到 259 個——暗區是變少了，城市也一起縮了。
+	for i := 0; i < 4; i++ {
+		if i > 0 && p.w.TotalFunds < p.reserve()+3300 {
+			return
+		}
+		if !p.powerOnce() {
+			return
+		}
+	}
+}
+
+// powerOnce 需要的話蓋一座電廠，回傳有沒有蓋。
+func (p *Player) powerOnce() bool {
 	w := p.w
 	// ⚠ 電廠 $3 000，門檻就抓 $3 300，**不受準備金限制**。
 	// 寫 9 000 的那一版讓達斯維利一輩子沒蓋過電廠（它的存款從沒到過九千），
 	// 八十個分區裡三十七個是暗的——而畫面上只看得到「城市長不大」。
 	// 沒電是會死人的，缺警力只是難看。
 	if w.TotalFunds < 3300 {
-		return
+		return false
 	}
 	zones, dark := 0, 0
 	var dx, dy int
@@ -206,40 +229,42 @@ func (p *Player) power() {
 		}
 	}
 	if zones == 0 || dark == 0 {
-		return
+		return false
 	}
 	// ⚠ **要在供電撞上限之前買，不是撞了才買。** 供電一超過上限，
 	// `DoPowerScan` 整個中止，後面的電線一格都不通（`internal/sim/power.go`）
 	// ——所以沒電的分區不是慢慢爬，是某一年從 2 個跳到 25 個再跳到 57 個，
 	// 城市六年內死光。實測（達斯維利，種子 1）人口從兩萬多變成 2 660。
 	//
-	// ⚠ 但也**不能只要有一格暗的就蓋**：大城市永遠有幾格剛蓋好還沒接上，
-	// 那會變成一年買一座 $3 000 的電廠。兩條判準任一成立才動手。
-	if !p.powerTight() && dark*10 < zones {
-		return
-	}
-	// 電廠是 4×4，點擊點在 (1,1)。找沒電那一區附近的空地。
+	// ⚠ **暗區多不代表發電量不夠。** 舊金山地震之後 294 個分區裡 106 個是
+	// 暗的，而導電格只有 2 879、上限 4 900——電夠得很，斷的是**線**。
+	// 按暗區比例蓋電廠的那一版一年蓋四座、$12 000 一次花光，第三年就破產，
+	// 分區從 294 個掉到 259 個：暗區是變少了，城市也一起縮了。
 	//
-	// ⚠ 試過「只找外緣碰得到導電格的空地，省掉拉線」——**更差**：
-	// 條件太嚴，很多情況下一塊都找不到，等於不蓋電廠。
-	// 五顆種子八個劇本從 26 個過掉到 11 個過。拉線雖然常常斷幾格，
-	// 但至少電廠蓋得出來，而電廠本身就會把周圍的分區點亮。
-	for r := 3; r < 20 && w.TotalFunds > 3000; r++ {
-		for _, d := range [][2]int{{r, 0}, {-r, 0}, {0, r}, {0, -r}, {r, r}, {-r, -r}} {
-			x, y := dx+d[0], dy+d[1]
-			if !sim.InBounds(x+2, y+2) || !sim.InBounds(x-1, y-1) {
-				continue
-			}
-			if !p.buildable4x4(x, y) {
-				continue
-			}
-			p.makeRoom4x4(x, y)
-			if w.ApplyTool(sim.ToolCoalPower, x, y) == sim.ToolOK {
-				p.wireTo(x, y, dx, dy)
-				return
-			}
-		}
+	// 所以蓋電廠只看一件事：**供電是不是快到上限**。接線是 `connectDark` 的事。
+	if !p.powerTight() {
+		return false
 	}
+	// 電廠 4×4，點擊點在 (1,1)。找離暗區最近的一塊**空地**。
+	//
+	// ⚠ **判準是空地，不是「推得掉」。** 用 `clearable` 找的那一版在密集
+	// 城市裡幾乎永遠找不到位置——4×4 裡只要有一格是分區的非中心格就不算，
+	// 而舊金山滿地都是。實測：地震之後 290 個分區裡 102 個是暗的，
+	// 而自動玩家五年**一座電廠都沒蓋**，錢全花在警消上。
+	//
+	// 找得遠沒關係：接線交給 `connectDark` 的 BFS 走，不是拉直線。
+	x, y, ok := p.vacant4x4Near(dx, dy)
+	if !ok {
+		return false
+	}
+	p.makeRoom4x4(x, y)
+	if w.ApplyTool(sim.ToolCoalPower, x, y) != sim.ToolOK {
+		return false
+	}
+	if Debug {
+		fmt.Printf("    電廠 (%d,%d)，暗區 %d/%d\n", x, y, dark, zones)
+	}
+	return true
 }
 
 // powerTight 判斷供電是不是快到上限（導電格數 ≥ 上限的九成）。
@@ -268,19 +293,10 @@ func (p *Player) powerTight() bool {
 	return load*10 >= capacity*9
 }
 
-// buildable4x4 判斷 (x,y) 附近的 4×4 能不能拿來蓋電廠。
-//
-// ⚠ **判準是「空地」不是「拆得掉」。** `clearable` 連分區都算拆得掉，
-// 拿去找電廠用地就會把城市自己拆掉。
-func (p *Player) buildable4x4(x, y int) bool {
-	for i := -1; i <= 2; i++ {
-		for j := -1; j <= 2; j++ {
-			if !sim.InBounds(x+i, y+j) || !clearable(p.w.Map[x+i][y+j]) {
-				return false
-			}
-		}
-	}
-	return true
+// isRoad 判斷這一格是不是路面（含上面架了電線的路）。
+func isRoad(cell uint16) bool {
+	t := int(cell & sim.LOMASK)
+	return t >= sim.ROADBASE && t <= sim.LASTROAD
 }
 
 // vacant 只認土、樹與瓦礫。水域、分區、道路、電線、鐵軌一律不算。
@@ -300,25 +316,6 @@ func (p *Player) makeRoom4x4(x, y int) {
 				}
 			}
 		}
-	}
-}
-
-// wireTo 從電廠拉一條 L 形電線到目標格。
-func (p *Player) wireTo(x0, y0, x1, y1 int) {
-	step := func(a, b int) int {
-		if a < b {
-			return 1
-		}
-		return -1
-	}
-	x, y := x0, y0
-	for x != x1 && p.w.TotalFunds > 100 {
-		x += step(x, x1)
-		p.w.ApplyTool(sim.ToolWire, x, y)
-	}
-	for y != y1 && p.w.TotalFunds > 100 {
-		y += step(y, y1)
-		p.w.ApplyTool(sim.ToolWire, x, y)
 	}
 }
 

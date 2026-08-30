@@ -51,7 +51,7 @@ func (p *Player) bootstrap() bool {
 
 // vacant4x4Near 由近而遠找一塊 4×4 的空地。
 func (p *Player) vacant4x4Near(cx, cy int) (int, int, bool) {
-	for r := 0; r < 40; r++ {
+	for r := 0; r < sim.WorldX; r++ {
 		for i := -r; i <= r; i++ {
 			for _, c := range [][2]int{{cx + i, cy - r}, {cx + i, cy + r},
 				{cx - r, cy + i}, {cx + r, cy + i}} {
