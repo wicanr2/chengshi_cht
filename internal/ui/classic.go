@@ -290,17 +290,26 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	blit(dst, g.tiles.UIImage(BankDemand, 0), editDemandX, editDemandY)
 	g.drawDemandBars(dst)
 
-	// 目前工具帶。**底色不是實心藍，是一像素的白藍網點**（實測原版：
-	// y 311 整列白、312–321 網點、322–324 實心藍，x 5–579 滿版寬）。
-	// 先前畫成實心藍，看起來像但整條帶的明度差很多。
+	// 目前工具帶。底色是一像素的白藍網點（實測原版：y 311 整列白、
+	// 312–321 網點、322–324 實心藍，x 5–579 滿版寬）。
 	//
-	// 原版這一條的字用 **8×8** 字型（大寫七列），上面幾條用 8×14。
-	// remake 只有一種字高（14），字會蓋掉白線與大部分網點——
-	// 這是 CJK 字高換來的已知取捨，但**帶的幾何與底色照原版**。
+	// ⚠ **字是藍色畫在白底上，不是白字疊在網點上。** 原版在文字寬度上鋪一塊
+	// 白底再寫藍字（實測 `y=320` 有一段連續白 x 64–200，正好是 "Residential:
+	// $100" 十七個字 × 8 像素），右端的 `+` 把手也有自己的白底。
+	// 先前照「白字疊網點」畫，中文的細筆畫整個融進網點裡，**完全讀不出來**。
+	//
+	// 唯一的取捨：原版的白底是 8 列（8×8 字型），remake 的字格是 14 列，
+	// 所以白底跟著長到整條帶高。這是 CJK 字高的必然結果。
 	drawToolBandBG(dst, editX, toolY, ew)
-	g.font.Draw(dst, g.currentToolText(), toolTextX*UIScale, toolY*UIScale, colInkLight)
-	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型）。
-	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+6, colInkLight)
+	toolText := g.currentToolText()
+	if tw := g.font.Measure(toolText) / UIScale; tw > 0 {
+		fill(dst, toolTextX, toolY, tw, editToolH, colInkLight)
+	}
+	g.font.Draw(dst, toolText, toolTextX*UIScale, toolY*UIScale, colEditFrm)
+	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型），
+	// 同樣是白底藍字（原版量到白底 x 567–576）。
+	fill(dst, editX+ew-14, toolY+2, 10, 8, colInkLight)
+	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+2, colEditFrm)
 }
 
 // 需求指標的三根長條。**順序是 C·R·I**（洋紅條上的字就是這個順序），

@@ -106,7 +106,7 @@ func rampColor(v, max int) color.RGBA {
 var winRect = map[window]struct{ x, y, w, h int }{
 	winGraphs:   {240, 103, 304, 125},
 	winBudget:   {171, 27, 285, 309},
-	winEval:     {39, 70, 513, 196},
+	winEval:     {39, 70, 513, 210},
 	winMaps:     {60, 40, 520, 270},
 	winDisaster: {200, 60, 240, 160},
 	winSystem:   {90, 20, 240, 210},
@@ -224,9 +224,15 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 			title = g.txt.S(i18n.SecGraph, 7)
 		}
 	case winBudget:
-		title = g.txt.S(i18n.SecWinMenu, 2)
+		// 原版的標題帶年份：執行檔字串是 `%d Fiscal Budget`
+		// （`workplace/ida/exe-strings.txt` 0x027d3a）。
+		title = fmt.Sprintf("%d 年度預算", 1900+g.world.CityTime/48)
 	case winEval:
-		title = g.txt.S(i18n.SecWinMenu, 4)
+		// 同上：`%d City Evaluation`（0x0265bb）。
+		//
+		// ⚠ 中文語序與英文相反，所以年份在前、名稱在後——`CLAUDE.md` §3.3
+		// 說的「模板要能重排參數順序」就是這一類。
+		title = fmt.Sprintf("%d 年城市評估", 1900+g.world.CityTime/48)
 	case winDisaster:
 		title = g.txt.S(i18n.SecMenu, 2)
 	case winSystem:
@@ -662,9 +668,12 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	g.font.Draw(dst, "公眾意見", x+half/2-g.font.Measure("公眾意見")/2, y, colOn)
 	g.font.Draw(dst, "統計數據", x+w/2+half/2-g.font.Measure("統計數據")/2, y, colOn)
 	// 三個白框。
+	// ⚠ 「嚴重問題」框要 **6 行**：一行標題 ＋ 四個名次，最後一名的字底
+	// 落在 `y+line*10+4`。先前給 5 行，第四名的下緣被框切掉——資訊還在，
+	// 但玩家讀不到，而且截圖看起來只是「排版有點擠」。
 	boxes := [][4]int{
 		{x, y + line, half, line * 3},       // 市長評價
-		{x, y + line*5, half, line * 5},     // 嚴重問題
+		{x, y + line*5, half, line * 6},     // 嚴重問題
 		{x + w/2, y + line, half, line * 9}, // 統計數據
 	}
 	for _, b := range boxes {
