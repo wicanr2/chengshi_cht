@@ -164,7 +164,7 @@ func (g *Game) PlaySoundOnce(n int) { g.snd.play(n) }
 // pumpSounds 把規則層排出來的音效播掉。Update 每個畫格呼叫一次。
 func (g *Game) pumpSounds() {
 	queued := g.world.TakeSounds()
-	if g.snd == nil {
+	if g.snd == nil || g.soundOff {
 		return
 	}
 	g.snd.frame++
@@ -179,7 +179,7 @@ func (g *Game) pumpSounds() {
 // （解壓映像 `0x0EFD6`／`0x0EFDE`，`es:2B50h` 與 4 比）。
 // 編號順序見 sim.Tool，與 `sim.h:429` 一致。
 func (g *Game) toolSound(result int, tool sim.Tool) {
-	if g.snd == nil {
+	if g.snd == nil || g.soundOff {
 		return
 	}
 	if result != sim.ToolOK {

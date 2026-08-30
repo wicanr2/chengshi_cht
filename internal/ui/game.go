@@ -141,6 +141,12 @@ type Game struct {
 	openMenu int
 	menuRow  int
 
+	// 功能選單的三個 remake 端開關。前三個在 sim.World 裡（會存進城市檔），
+	// 這三個只影響呈現層，所以放這裡。
+	soundOff    bool
+	animate     bool
+	fastAnimate bool
+
 	// winPos 是玩家搬過的視窗位置（原版座標）；沒搬過就用 winRect 的預設。
 	winPos map[window][2]int
 	// dragWin 是正在拖的視窗，dragDX／dragDY 是按下時游標與視窗左上角的差。
@@ -162,7 +168,8 @@ func (g *Game) SetSavePath(p string) { g.savePath = p }
 
 // NewGame 建一個新遊戲。
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
-	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential}
+	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential,
+		animate: true, fastAnimate: true, menuRow: -1}
 	g.centerCamera()
 	return g
 }
@@ -251,7 +258,9 @@ func (g *Game) Update() error {
 	// （`w_editor.c:874`）——暫停時不動，而且一個畫格只做一次。
 	// ⚠ 它會改地圖，所以只有呈現層能呼叫，`internal/sim` 自己不碰。
 	if g.world.DoAnimation && g.world.SimSpeed != 0 {
-		g.world.AnimateTiles()
+		if g.animate {
+			g.world.AnimateTiles()
+		}
 	}
 	if g.msgTimer > 0 {
 		g.msgTimer--
@@ -274,6 +283,10 @@ func (g *Game) pumpSimMessage() {
 	g.world.MessagePort = 0
 	if g.world.MesX != 0 || g.world.MesY != 0 {
 		g.gotoX, g.gotoY = g.world.MesX, g.world.MesY
+		// 功能選單的「自動前往災難現場」。原版的開關存在城市檔裡。
+		if g.world.AutoGo {
+			g.LookAt(g.gotoX, g.gotoY)
+		}
 	}
 	if s := n; s != 0 {
 		// 警笛在訊息**第一次顯示**的那一刻播，判準是訊息類別。
@@ -281,7 +294,7 @@ func (g *Game) pumpSimMessage() {
 		if s < 0 {
 			s = -s
 		}
-		if sim.WantsSiren(s) {
+		if sim.WantsSiren(s) && !g.soundOff {
 			g.snd.play(sim.SoundSiren)
 		}
 	}

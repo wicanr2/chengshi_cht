@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"image/color"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -97,6 +98,14 @@ func (g *Game) drawMenu(dst *ebiten.Image) {
 		if i == g.menuRow {
 			fill(dst, x+2, rows[i]-1, w-4, menuItemH, colMenuInk)
 			c = colMenuBar
+		}
+		// 功能選單的開關項在左邊畫一個小三角形表示開著，照原版。
+		//
+		// ⚠ **用畫的不要用字**：`▸`（U+25B8）在 Noto Sans CJK 裡沒有字形，
+		// 烘出來是一個空心方框，而字集檢查照樣過——因為那個字**在**字集裡，
+		// 只是字型畫不出來。看起來像版面錯了，其實是缺字形。
+		if m == 1 && g.optionOn(i) {
+			drawTriangle(dst, x+2, rows[i]+3, c)
 		}
 		g.font.Draw(dst, s, (x+menuPadX)*UIScale, rows[i]*UIScale, c)
 	}
@@ -218,19 +227,58 @@ func (g *Game) pickSystem(row int) {
 	}
 }
 
-// pickOptions 是功能選單（第 18 段）。
+// pickOptions 是功能選單（第 18 段）。前四項與最後兩項都是開關，
+// 原版在項目左邊畫一個 `▸` 表示開著（見原版截圖）。
 //
-// ⚠ 只有速度那一項接得起來：全自動整地、自動預算、自動前往、音效開關、
-// 兩個動畫選項在 remake 裡分別對應不同的東西，還沒接。
-// 沒接的項目點下去只顯示一行訊息，不要靜默無反應——玩家會以為當掉了。
+// 前三個開關的狀態**存在城市檔裡**（`MiscHis[52..54]`，見 cityfile.go），
+// 所以讀檔會帶回玩家上次的設定——這不是 remake 自己加的狀態。
 func (g *Game) pickOptions(row int) {
+	w := g.world
 	switch row {
+	case 0:
+		w.AutoBulldoze = !w.AutoBulldoze
+	case 1:
+		w.AutoBudget = !w.AutoBudget
+	case 2:
+		w.AutoGo = !w.AutoGo
+	case 3:
+		g.soundOff = !g.soundOff
 	case 4:
 		g.win = winSpeed
 		g.sysRow = 0
-	default:
-		g.setMessage(trimMenu(g.txt.S(i18n.SecOptMenu, row)) + "（還沒接）")
+		return
+	case 5:
+		g.animate = !g.animate
+	case 6:
+		g.fastAnimate = !g.fastAnimate
 	}
+	g.setMessage(trimMenu(g.txt.S(i18n.SecOptMenu, row)) + "：" + onOff(g.optionOn(row)))
+}
+
+// optionOn 回報功能選單第 row 項現在是開還是關。
+func (g *Game) optionOn(row int) bool {
+	switch row {
+	case 0:
+		return g.world.AutoBulldoze
+	case 1:
+		return g.world.AutoBudget
+	case 2:
+		return g.world.AutoGo
+	case 3:
+		return !g.soundOff
+	case 5:
+		return g.animate
+	case 6:
+		return g.fastAnimate
+	}
+	return false
+}
+
+func onOff(b bool) string {
+	if b {
+		return "開"
+	}
+	return "關"
 }
 
 // pickDisaster 是災難選單（第 20 段）。第 6 筆是分隔線、第 7 筆是取消。
@@ -307,4 +355,15 @@ func (g *Game) handleMenuKeys() bool {
 		}
 	}
 	return true
+}
+
+// drawTriangle 畫一個朝右的小三角形（原版座標，高 7 寬 4）。
+func drawTriangle(dst *ebiten.Image, x, y int, c color.RGBA) {
+	for i := 0; i < 4; i++ {
+		h := 7 - i*2
+		if h <= 0 {
+			break
+		}
+		fill(dst, x+i, y+i, 1, h, c)
+	}
 }
