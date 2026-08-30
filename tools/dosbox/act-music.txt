@@ -1,0 +1,22 @@
+# 錄一段原版的聲音，回答「這款遊戲有沒有音樂」。
+#
+# 用內建喇叭（`Sound: I`）——三條發聲路徑裡唯一在 DOSBox 放得出東西的
+# （`docs/re/16-dos-oracle.md` §四）。判準是**整段錄音的波形**：
+# 有音樂的話招牌畫面與遊戲中應該持續有訊號；只有音效的話波形是
+# 一段一段的爆點，中間全靜音。
+wait 12
+mark 招牌畫面停 12 秒
+click 316 240
+wait 8
+mark 劇本選單停 8 秒
+click 240 253
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 3
+mark 進遊戲，最快速度跑 25 秒
+key 4
+wait 25

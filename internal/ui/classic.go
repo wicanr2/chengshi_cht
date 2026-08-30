@@ -687,7 +687,7 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 
 // fundsText 是資金帶左半的字。原版寫 `Funds: $20,000`。
 func (g *Game) fundsText() string {
-	return fmt.Sprintf("資金 $%s", comma(g.world.TotalFunds))
+	return fmt.Sprintf(g.txt.UI("funds"), comma(g.world.TotalFunds))
 }
 
 // currentToolText 是工具帶的字。原版寫 `Residential: $100`——

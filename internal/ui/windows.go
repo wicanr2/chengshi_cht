@@ -43,6 +43,10 @@ const (
 	// winLoad 是「讀取舊有檔案」的檔案清單（同段第 8 筆）。原版開的是
 	// 檔名對話框；這裡列出存檔目錄裡的 `.cty`，上下鍵選、Enter 讀。
 	winLoad
+	// winLangSel／winMusic 是 remake 自己加的兩個副選單：換語言、開關音樂。
+	// 原版沒有——它只有一種語言，也沒有音樂（docs/re/19-no-music.md）。
+	winLangSel
+	winMusic
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -160,6 +164,9 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	winAbout:  {8, 20, 624, 326},
 	winSaveAs: {120, 90, 400, 150},
 	winLoad:   {120, 40, 400, 240},
+	// remake 自己加的兩個
+	winLangSel: {170, 60, 300, 140},
+	winMusic:   {120, 40, 400, 240},
 }
 
 // winFrame 回傳目前視窗的外框（螢幕像素）。玩家搬過的話用搬過的位置。
@@ -276,7 +283,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		//
 		// ⚠ 中文語序與英文相反，年份在前、名稱在後——`CLAUDE.md` §3.3
 		// 說的「模板要能重排參數順序」就是這一類。
-		title = fmt.Sprintf("%d 年城市評估", 1900+g.world.CityTime/48)
+		title = fmt.Sprintf(g.txt.UI("eval_title"), 1900+g.world.CityTime/48)
 	case winDisaster:
 		title = g.txt.S(i18n.SecMenu, 2)
 	case winSystem:
@@ -291,6 +298,10 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecSysMenu, 9)
 	case winLoad:
 		title = g.txt.S(i18n.SecSysMenu, 8)
+	case winLangSel:
+		title = g.txt.UI("lang_title")
+	case winMusic:
+		title = g.txt.UI("music_title")
 	case winSpeed:
 		title = g.txt.S(i18n.SecOptMenu, 4)
 	case winPower:
@@ -321,7 +332,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winSaveAs:
 		g.drawSaveAsWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
-	case winSystem, winScenario, winStyle, winLoad:
+	case winSystem, winScenario, winStyle, winLoad, winLangSel, winMusic:
 		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	}
 }
@@ -330,7 +341,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 func (g *Game) drawSysMenu(dst *ebiten.Image, x, y int) {
 	// ⚠ 提示要短。中文一個字佔兩格（32 原版像素），這幾個副選單最窄的
 	// 只有 220 原版像素——把「上下鍵選擇」也寫進去就會**衝出視窗右緣**。
-	g.font.Draw(dst, "Enter 確定，Esc 取消", x, y, colDim)
+	g.font.Draw(dst, g.txt.UI("menu_hint_ok"), x, y, colDim)
 	for i := 0; i < g.sysMenuLen(); i++ {
 		c, mark := colDim, "  "
 		if i == g.sysRow {
@@ -342,7 +353,7 @@ func (g *Game) drawSysMenu(dst *ebiten.Image, x, y int) {
 
 // drawDisasterWindow 畫災難選單。六個項目 ＋ 一列取消，名稱取自訊息檔。
 func (g *Game) drawDisasterWindow(dst *ebiten.Image, x, y, w, h int) {
-	g.font.Draw(dst, "Enter 發動，Esc 取消", x, y, colDim)
+	g.font.Draw(dst, g.txt.UI("menu_hint_fire"), x, y, colDim)
 	for i := range disasterItems {
 		c := colDim
 		mark := "  "
@@ -375,7 +386,7 @@ func (g *Game) drawMapWindow(dst *ebiten.Image, x, y, w, h int) {
 		}
 		g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecMapTitle, i)), x, y+i*line, c)
 	}
-	g.font.Draw(dst, "1-9 切換", x, y+int(layerCount)*line, colDim)
+	g.font.Draw(dst, g.txt.UI("map_hint"), x, y+int(layerCount)*line, colDim)
 
 	// 右側：地圖本體，等比放大到剩下的空間
 	mx, my := x+listW, y
@@ -686,7 +697,7 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	line := g.font.Line()
 
 	// 標題底下一條雙線，原版就有。
-	title := fmt.Sprintf("%d 年度預算", 1900+w0.CityTime/48)
+	title := fmt.Sprintf(g.txt.UI("budget_title"), 1900+w0.CityTime/48)
 	g.font.Draw(dst, title, x+w/2-g.font.Measure(title)/2, y, colOn)
 	vector.DrawFilledRect(dst, float32(x+w/8), float32(y+line),
 		float32(w*3/4), float32(UIScale), colLine, false)
@@ -696,7 +707,7 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	g.font.Draw(dst, tax, x+w/2-g.font.Measure(tax)/2, y+line*2, colText)
 	// ⚠ 「稅收」不在訊息檔裡（第 3 段只有交通／警局／消防／稅率），
 	// 用譯名表的說法（說明書 p.43）。
-	rev := fmt.Sprintf("稅收　$%s", comma(w0.TaxFund))
+	rev := fmt.Sprintf(g.txt.UI("tax_rev"), comma(w0.TaxFund))
 	g.font.Draw(dst, rev, x+w/2-g.font.Measure(rev)/2, y+line*3, colText)
 
 	// 表格框：原版是藍底、白框。
@@ -762,7 +773,7 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	vector.StrokeRect(dst, float32(bx), float32(byy-2*UIScale),
 		float32(bw), float32(line), float32(UIScale), colLine, false)
 	g.font.Draw(dst, btn, bx+6*UIScale, byy, colOn)
-	g.font.Draw(dst, "上下鍵選項目，左右鍵調比例", x+4*UIScale, byy+line*3/2, colDim)
+	g.font.Draw(dst, g.txt.UI("budget_hint"), x+4*UIScale, byy+line*3/2, colDim)
 }
 
 // drawEvalWindow 畫評估視窗（說明書 p.54）。
@@ -773,8 +784,8 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	line := g.font.Line()
 	half := w/2 - 4*UIScale
 	// 左右兩欄的標題，原版是反白的小標。
-	g.font.Draw(dst, "公眾意見", x+half/2-g.font.Measure("公眾意見")/2, y, colOn)
-	g.font.Draw(dst, "統計數據", x+w/2+half/2-g.font.Measure("統計數據")/2, y, colOn)
+	g.font.Draw(dst, g.txt.UI("eval_public"), x+half/2-g.font.Measure("公眾意見")/2, y, colOn)
+	g.font.Draw(dst, g.txt.UI("eval_stats"), x+w/2+half/2-g.font.Measure("統計數據")/2, y, colOn)
 	// 三個白框。
 	// ⚠ 「嚴重問題」框要 **6 行**：一行標題 ＋ 四個名次，最後一名的字底
 	// 落在 `y+line*10+4`。先前給 5 行，第四名的下緣被框切掉——資訊還在，
@@ -794,11 +805,11 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	// 兩個數字都直接讀，不要拿 100 減。空城的評估是 EvalInit 清成
 	// 0／0（沒有人投票），用減法會變成「否 100%」——一座剛開的城市
 	// 被說成全體反對，而原版是兩邊都 0（w_eval.c:101 的 goodyes／goodno）。
-	g.font.Draw(dst, "市長做得好嗎？", x+6*UIScale, y+line+4*UIScale, colText)
-	g.font.Draw(dst, fmt.Sprintf("是 %d%%　　否 %d%%", w0.Eval.CityYes, w0.Eval.CityNo),
+	g.font.Draw(dst, g.txt.UI("eval_mayor"), x+6*UIScale, y+line+4*UIScale, colText)
+	g.font.Draw(dst, fmt.Sprintf(g.txt.UI("eval_yesno"), w0.Eval.CityYes, w0.Eval.CityNo),
 		x+6*UIScale, y+line*2+4*UIScale, colText)
 
-	g.font.Draw(dst, "最嚴重的問題是什麼？", x+6*UIScale, y+line*5+4*UIScale, colText)
+	g.font.Draw(dst, g.txt.UI("eval_problems"), x+6*UIScale, y+line*5+4*UIScale, colText)
 	for i := 0; i < 4; i++ {
 		p := w0.Eval.ProblemOrder[i]
 		if p < 0 || p >= len(w0.Eval.ProblemVotes) {
@@ -832,13 +843,13 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	// （`docs/manual-cht/p23-58-operations.md`），實拍也有，而這裡沒畫。
 	// 等級的譯名沿用開新城市對話框（說明書 p.11）。
 	stats := [][2]string{
-		{"人口總數", fmt.Sprintf("%d", w0.Eval.CityPop)},
-		{"遷出入數（去年）", fmt.Sprintf("%d", w0.Eval.DeltaCityPop)},
-		{"市有財產總數", fmt.Sprintf("$%d", w0.Eval.CityAssValue)},
-		{"城市類別", g.txt.S(i18n.SecClass, clamp(w0.CityClass, 0, 5))},
-		{"遊戲等級", levelNames[clamp(w0.GameLevel, 0, 2)]},
-		{"整體成績", fmt.Sprintf("%d", w0.CityScore)},
-		{"年度成績", fmt.Sprintf("%+d", w0.Eval.DeltaCityScore)},
+		{g.txt.UI("stat_pop"), fmt.Sprintf("%d", w0.Eval.CityPop)},
+		{g.txt.UI("stat_migr"), fmt.Sprintf("%d", w0.Eval.DeltaCityPop)},
+		{g.txt.UI("stat_assess"), fmt.Sprintf("$%d", w0.Eval.CityAssValue)},
+		{g.txt.UI("stat_class"), g.txt.S(i18n.SecClass, clamp(w0.CityClass, 0, 5))},
+		{g.txt.UI("stat_level"), g.levelName(w0.GameLevel)},
+		{g.txt.UI("stat_score"), fmt.Sprintf("%d", w0.CityScore)},
+		{g.txt.UI("stat_delta"), fmt.Sprintf("%+d", w0.Eval.DeltaCityScore)},
 	}
 	for i, s := range stats {
 		yy := y + line + 4*UIScale + i*line

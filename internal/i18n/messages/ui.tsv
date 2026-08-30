@@ -1,0 +1,58 @@
+key	zh_hant	zh_hans	ja	en
+funds	資金 $%s	资金 $%s	資金 $%s	Funds: $%s
+demand	需求	需求	需要	Demand
+demand_r	住	住	住	R
+demand_c	商	商	商	C
+demand_i	工	工	工	I
+zoom	縮小 1／%d	缩小 1／%d	縮小 1／%d	Zoom 1/%d
+on	開	开	オン	On
+off	關	关	オフ	Off
+budget_title	%d 年度預算	%d 年度预算	%d年度予算	%d Fiscal Budget
+tax_rev	稅收　$%s	税收　$%s	税収　$%s	Taxes collected  $%s
+budget_hint	上下鍵選項目，左右鍵調比例	上下键选项目，左右键调比例	上下キーで項目、左右キーで割合	Up/Down to pick, Left/Right to adjust
+budget_ok	就照這些數字	就照这些数字	この数字でいく	Go with these figures
+cash_flow	現金流量	现金流量	収支	Cash Flow
+prev_fund	上年度結存	上年度结存	前年度残高	Previous Fund
+cur_funds	目前資金	目前资金	現在の資金	Current Funds
+col_req	維護\n需求	维护\n需求	維持\n必要額	Amount\nRequested
+col_alloc	實際\n撥給	实际\n拨给	実際\n配分	Amount\nAllocated
+col_pct	編列\n比例	编列\n比例	配分\n割合	Funding\nLevel
+col_item	項目	项目	項目	Item
+eval_public	公眾意見	公众意见	世論	Public Opinion
+eval_stats	統計數據	统计数据	統計	Statistics
+eval_title	%d 年城市評估	%d 年城市评估	%d年 都市評価	%d City Evaluation
+eval_mayor	市長做得好嗎？	市长做得好吗？	市長の評価は？	Is the mayor doing a good job?
+eval_yesno	是 %d%%　　否 %d%%	是 %d%%　　否 %d%%	はい %d%%　　いいえ %d%%	Yes %d%%   No %d%%
+eval_problems	最嚴重的問題是什麼？	最严重的问题是什么？	最も深刻な問題は？	What are the worst problems?
+stat_pop	人口總數	人口总数	総人口	Population
+stat_migr	遷出入數（去年）	迁出入数（去年）	転入出（前年）	Net Migration
+stat_assess	市有財產總數	市有财产总数	市有財産	Assessed Value
+stat_class	城市類別	城市类别	都市の規模	City Class
+stat_level	遊戲等級	游戏等级	難易度	Game Level
+stat_score	整體成績	整体成绩	総合評価	Overall Score
+stat_delta	年度成績	年度成绩	前年比	Annual Change
+menu_hint_ok	Enter 確定，Esc 取消	Enter 确定，Esc 取消	Enter で決定、Esc で取消	Enter to confirm, Esc to cancel
+menu_hint_fire	Enter 發動，Esc 取消	Enter 发动，Esc 取消	Enter で発生、Esc で取消	Enter to trigger, Esc to cancel
+map_hint	1-9 切換	1-9 切换	1-9 で切替	1-9 to switch
+saveas_hint	打字輸入檔名，Enter 儲存，Esc 取消	打字输入文件名，Enter 保存，Esc 取消	ファイル名を入力、Enter で保存、Esc で取消	Type a file name, Enter to save, Esc to cancel
+saveas_dir	存到：	存到：	保存先：	Save to: 
+saveas_ext	沒有副檔名的話自動補 .cty	没有扩展名的话自动补 .cty	拡張子がなければ .cty を付けます	Adds .cty if no extension
+newcity_name	市名欄	市名栏	都市名	City Name
+newcity_level	技術等級	技术等级	難易度	Game Level
+ok	確定	确定	決定	OK
+resize_hint	方向鍵調整大小，Enter 或 Esc 結束	方向键调整大小，Enter 或 Esc 结束	方向キーでサイズ変更、Enter か Esc で終了	Arrows to resize, Enter or Esc to finish
+pic_hint	按空白鍵或點一下繼續	按空格键或点一下继续	スペースキーかクリックで続行	Press space or click to continue
+lang_title	語言 / Language	语言 / Language	言語 / Language	Language
+music_title	音樂	音乐	音楽	Music
+music_toggle	開關背景音樂（%s）	开关背景音乐（%s）	BGM の切替（%s）	Background music (%s)
+music_none	沒有找到音樂目錄；把 .ogg 或 .wav 放進 music/ 就有了	没有找到音乐目录；把 .ogg 或 .wav 放进 music/ 就有了	music/ に .ogg か .wav を置くと曲が出ます	Put .ogg or .wav files in music/ and they show up here
+music_now	音樂：%s	音乐：%s	音楽：%s	Music: %s
+goto_none	沒有可以前往的事件	没有可以前往的事件	移動先の事件がありません	No event to go to
+win_move_hint	拖曳視窗的標題列就可以搬動	拖曳窗口的标题栏就可以搬动	タイトルバーをドラッグで移動	Drag the title bar to move the window
+saved	已存檔：%s	已保存：%s	保存しました：%s	Saved: %s
+loaded	已讀取：%s	已读取：%s	読み込みました：%s	Loaded: %s
+no_city_files	存檔目錄裡沒有城市檔	保存目录里没有城市文件	保存フォルダに都市ファイルがありません	No city files in the save folder
+map_saved	地圖存成 %s	地图存成 %s	地図を %s に保存しました	Map saved to %s
+level_easy	簡易	简易	かんたん	Easy
+level_medium	適中	适中	ふつう	Medium
+level_hard	艱難	艰难	むずかしい	Hard

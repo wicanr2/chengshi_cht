@@ -252,7 +252,7 @@ func (g *Game) pickOptions(row int) {
 	case 6:
 		g.fastAnimate = !g.fastAnimate
 	}
-	g.setMessage(trimMenu(g.txt.S(i18n.SecOptMenu, row)) + "：" + onOff(g.optionOn(row)))
+	g.setMessage(trimMenu(g.txt.S(i18n.SecOptMenu, row)) + "：" + g.onOff(g.optionOn(row)))
 }
 
 // optionOn 回報功能選單第 row 項現在是開還是關。
@@ -274,11 +274,11 @@ func (g *Game) optionOn(row int) bool {
 	return false
 }
 
-func onOff(b bool) string {
+func (g *Game) onOff(b bool) string {
 	if b {
-		return "開"
+		return g.txt.UI("on")
 	}
-	return "關"
+	return g.txt.UI("off")
 }
 
 // pickDisaster 是災難選單（第 20 段）。前六筆是六種災難、第 6 筆是分隔線、
@@ -294,7 +294,7 @@ func (g *Game) pickDisaster(row int) {
 	case row == len(disasterItems)+1: // 跳過分隔線
 		g.world.NoDisasters = !g.world.NoDisasters
 		g.setMessage(trimMenu(g.txt.S(i18n.SecDisaster, row)) + "：" +
-			onOff(g.world.NoDisasters))
+			g.onOff(g.world.NoDisasters))
 		g.win = winNone
 	}
 }

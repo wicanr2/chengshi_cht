@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -84,7 +85,7 @@ func (g *Game) doSaveAs() {
 		return
 	}
 	g.savePath = p
-	g.setMessage("已存檔：" + p)
+	g.setMessage(fmt.Sprintf(g.txt.UI("saved"), p))
 	g.saveAs = nil
 	g.win = winNone
 }
@@ -94,13 +95,13 @@ func (g *Game) drawSaveAsWindow(dst *ebiten.Image, x, y, w, h int) {
 		return
 	}
 	line := g.font.Line()
-	g.font.Draw(dst, "打字輸入檔名，Enter 儲存，Esc 取消", x, y, colDim)
+	g.font.Draw(dst, g.txt.UI("saveas_hint"), x, y, colDim)
 	dir := "."
 	if g.savePath != "" {
 		dir = filepath.Dir(g.savePath)
 	}
-	g.font.Draw(dst, "存到："+dir, x, y+line, colDim)
+	g.font.Draw(dst, g.txt.UI("saveas_dir")+dir, x, y+line, colDim)
 	// 游標用一個底線，跟著字尾走。
 	g.font.Draw(dst, string(g.saveAs.name)+"_", x+8, y+line*2, colOn)
-	g.font.Draw(dst, "沒有副檔名的話自動補 .cty", x, y+line*3, colDim)
+	g.font.Draw(dst, g.txt.UI("saveas_ext"), x, y+line*3, colDim)
 }

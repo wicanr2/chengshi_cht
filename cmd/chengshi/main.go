@@ -88,6 +88,8 @@ func main() {
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
 	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas／newcity／load")
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
+	langFlag := flag.String("lang", "zh-Hant", "語言：zh-Hant 繁體／zh-Hans 简体／ja 日本語／en English（英文取自玩家自備的原版 .PTF）")
+	musicDir := flag.String("music", "", "背景音樂目錄（.ogg／.wav）；不給就找存檔目錄底下的 music/")
 	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
 
@@ -147,7 +149,11 @@ func main() {
 	}
 	// 文字跟著風格走：古代亞洲的發電廠叫「水井」、鐵路叫「人力車道」，
 	// 那是原版的設計，不是翻譯自由發揮。
-	txt, err := i18n.Load(*style)
+	lang, ok := i18n.ParseLang(*langFlag)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "不認得的語言 %q，用繁體中文\n", *langFlag)
+	}
+	txt, err := i18n.LoadLang(*style, lang)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "文字載入失敗：", err)
 		os.Exit(1)
@@ -205,8 +211,15 @@ func main() {
 		}
 		g.SetCamera(cx, cy)
 	}
+	g.SetLang(lang)
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
+	// ⚠ 這一行也負責把**英文原文**從玩家那份 `.PTF` 讀進來，
+	// 所以要在 SetLang 之後——英文那一層是疊在語言表上面的。
 	g.SetDataDir(*data, *style)
+	// 背景音樂：原版沒有，這是 remake 加的。放不出來不算致命。
+	if err := g.EnableMusic(ui.FindMusicDir(*musicDir, *save)); err != nil {
+		fmt.Fprintf(os.Stderr, "音樂目錄讀不到（遊戲照跑）：%v\n", err)
+	}
 	// 原版一啟動是招牌畫面（`CEGANTRO.PPF`），不是城市。只有在玩家沒有
 	// 指定要玩哪一座城時才走那條路——命令列點名了劇本、存檔、示範城市或
 	// 起始鏡頭，就是直接進去，試玩與截圖腳本靠這個。

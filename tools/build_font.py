@@ -68,7 +68,7 @@ def collect_chars():
             continue
         for dirpath, _, files in os.walk(p):
             for fn in files:
-                if not fn.endswith((".md", ".toml", ".go")):
+                if not fn.endswith((".md", ".tsv", ".go")):
                     continue
                 with open(os.path.join(dirpath, fn), encoding="utf-8") as fh:
                     for ch in fh.read():

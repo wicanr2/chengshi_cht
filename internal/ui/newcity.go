@@ -65,8 +65,15 @@ var (
 	colDlgBG   = color.RGBA{0xff, 0xff, 0xff, 0xff}
 )
 
-// levelNames 是三個技術等級，譯名出自說明書 p.11。
-var levelNames = [3]string{"簡易", "適中", "艱難"}
+// levelName 是三個技術等級。繁中譯名出自說明書 p.11，其餘語言在 ui.tsv。
+var levelKeys = [3]string{"level_easy", "level_medium", "level_hard"}
+
+func (g *Game) levelName(i int) string {
+	if i < 0 || i >= len(levelKeys) {
+		i = 0
+	}
+	return g.txt.UI(levelKeys[i])
+}
 
 type newCityBox struct {
 	name  []rune
@@ -170,7 +177,8 @@ func (g *Game) drawNewCity(dst *ebiten.Image) {
 	g.font.DrawCentered(dst, "技術等級", ncX*UIScale, ncLevelLabelY*UIScale,
 		ncW*UIScale, colDlgLine)
 
-	for i, name := range levelNames {
+	for i := range levelKeys {
+		name := g.levelName(i)
 		ry := ncRadioY + i*ncRadioPitch
 		fill(dst, ncRadioX, ry, ncRadioW, ncRadioH, colDlgLine)
 		fill(dst, ncRadioX+1, ry+1, ncRadioW-2, ncRadioH-2, colDlgBG)

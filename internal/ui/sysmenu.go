@@ -10,10 +10,13 @@ package ui
 // 用的是 translations/glossary.md §十 登記的新譯。
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/wicanr2/chengshi_cht/internal/assets"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -58,12 +61,17 @@ var styleOrder = []struct{ key, name string }{
 // 沒設的話系統選單裡需要重讀資料的項目會停用。
 func (g *Game) SetDataDir(dir, style string) {
 	g.dataDir, g.style = dir, style
+	g.loadEnglish()
 }
 
 func (g *Game) sysMenuLen() int {
 	switch g.win {
 	case winSystem:
 		return len(sysItems)
+	case winLangSel:
+		return len(i18n.Langs)
+	case winMusic:
+		return len(g.MusicTracks()) + 1
 	case winScenario:
 		return 8
 	case winStyle:
@@ -82,7 +90,21 @@ func (g *Game) sysMenuLen() int {
 func (g *Game) sysMenuLabel(i int) string {
 	switch g.win {
 	case winSystem:
+		// 負的訊息編號是 remake 自己加的項目，訊息檔裡沒有對應的字。
+		switch sysItems[i].msg {
+		case -1:
+			return g.txt.UI("lang_title")
+		case -2:
+			return g.txt.UI("music_title")
+		}
 		return trimMenu(g.txt.S(i18n.SecSysMenu, sysItems[i].msg))
+	case winLangSel:
+		return i18n.LangName[i18n.Langs[i]]
+	case winMusic:
+		if i == 0 {
+			return fmt.Sprintf(g.txt.UI("music_toggle"), g.onOff(g.musicOn()))
+		}
+		return g.MusicTracks()[i-1]
 	case winScenario:
 		return game.ScenarioNameZH(i + 1)
 	case winStyle:
@@ -120,6 +142,16 @@ func (g *Game) sysMenuPick(i int) {
 	switch g.win {
 	case winLoad:
 		g.loadFile(g.loadFiles[i])
+	case winLangSel:
+		g.setLang(i18n.Langs[i])
+	case winMusic:
+		if i == 0 {
+			g.toggleMusic()
+		} else {
+			g.music.cur = i - 1
+			g.stepTrack(0)
+		}
+		g.win = winNone
 	case winScenario:
 		g.loadScenario(i + 1)
 	case winStyle:
@@ -152,6 +184,10 @@ func (g *Game) sysMenuPick(i int) {
 		case "save":
 			g.save()
 			g.win = winNone
+		case "lang":
+			g.openSubMenu(winLangSel)
+		case "music":
+			g.openSubMenu(winMusic)
 		case "quit":
 			g.quit = true
 		}
@@ -190,12 +226,16 @@ func (g *Game) loadStyle(key string) {
 		g.setMessage("圖形集載入失敗：" + err.Error())
 		return
 	}
-	txt, err := i18n.Load(key)
+	txt, err := i18n.LoadLang(key, g.lang)
 	if err != nil {
 		g.setMessage("文字載入失敗：" + err.Error())
 		return
 	}
 	g.tiles, g.txt, g.style = ts, txt, key
+	// 換圖形集要重載英文原文（每個資料片一份 `*_MSG.PTF`）與語言設定，
+	// 不然換完之後英文那一欄留著上一個資料片的字。
+	g.txt.SetLang(g.lang)
+	g.loadEnglish()
 	g.win = winNone
 	g.setMessage(trimMenu(g.txt.S(i18n.SecSysMenu, 3)))
 }
@@ -215,7 +255,7 @@ func (g *Game) load() {
 	g.loadFiles = g.cityFilesInSaveDir()
 	switch len(g.loadFiles) {
 	case 0:
-		g.setMessage("存檔目錄裡沒有城市檔")
+		g.setMessage(g.txt.UI("no_city_files"))
 		g.win = winNone
 	case 1:
 		g.loadFile(g.loadFiles[0])
@@ -256,7 +296,7 @@ func (g *Game) loadFile(p string) {
 	}
 	g.swapWorld(w)
 	g.savePath = p
-	g.setMessage("已讀取：" + p)
+	g.setMessage(fmt.Sprintf(g.txt.UI("loaded"), p))
 }
 
 // swapWorld 換掉整個世界。鏡頭、視窗、選單游標都要跟著重設——
@@ -272,3 +312,50 @@ func (g *Game) swapWorld(w *sim.World) {
 	g.speedLevel = clamp(w.SimSpeed, 0, 4)
 	g.resetCamera()
 }
+
+// setLang 換遊戲語言。文字表四種語言都在同一份裡，換語言不必重讀檔案，
+// 也不必重載圖形集。
+func (g *Game) setLang(l i18n.Lang) {
+	g.lang = l
+	g.txt.SetLang(l)
+	g.win = winNone
+	g.setMessage(i18n.LangName[l])
+}
+
+// loadEnglish 把玩家自己那份 `.PTF` 的**英文原文**餵進文字表。
+//
+// ⚠ 英文不在版控裡，也不會進發行包（CLAUDE.md §8）——它是原版的文字，
+// 屬於原權利人。要看英文就得自備原版，這與圖形、音效是同一條界線。
+//
+// 檔名規則同音效：基本圖形集是 `DATA/MESSAGE.PTF`，六個資料片是
+// `DATA/<風格>_MSG.PTF`（實測路徑 `C:\DATA\west_msg.ptf`，
+// docs/re/16-dos-oracle.md §八）。
+func (g *Game) loadEnglish() {
+	if g.dataDir == "" || g.txt == nil {
+		return
+	}
+	name := "MESSAGE.PTF"
+	if g.style != "" && g.style != StyleBase {
+		name = strings.ToUpper(g.style) + "_MSG.PTF"
+	}
+	p, err := findFile(filepath.Join(g.dataDir, "DATA"), name)
+	if err != nil {
+		return
+	}
+	raw, err := os.ReadFile(p)
+	if err != nil {
+		return
+	}
+	secs, err := assets.LoadPTF(raw)
+	if err != nil {
+		return
+	}
+	out := make([][]string, len(secs))
+	for i, s := range secs {
+		out[i] = s.Strings
+	}
+	g.txt.SetEnglish(out)
+}
+
+// SetLang 給命令列用：一開始就指定語言。
+func (g *Game) SetLang(l i18n.Lang) { g.setLang(l); g.win = winNone }

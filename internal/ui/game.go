@@ -198,6 +198,10 @@ type Game struct {
 	// zoom 是**縮小**倍數：1 是原版的一格 16 像素，2 是減半，4 再減半。
 	// 原版沒有這個功能，見 ZoomTile 的說明。
 	zoom int
+	// lang 是目前的語言，music 是背景音樂播放器。
+	// **兩個原版都沒有**：原版只有英文，也沒有音樂（docs/re/19-no-music.md）。
+	lang  i18n.Lang
+	music *musicPlayer
 	// mapPopup 是 City Form 裡按住共用圖示跳出來的小選單，−1 代表沒開。
 	// mapSubArmed 分辨「按住拉開」與「點一下拉開」：拉開的那一下放開時
 	// 不能把選單收掉，否則點一下永遠看不到它。
@@ -227,7 +231,7 @@ func (g *Game) SetSavePath(p string) { g.savePath = p }
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential,
 		animate: true, fastAnimate: true, menuRow: -1, graphYears: 10,
-		backX: -1, zoom: 1, mapPopup: -1}
+		backX: -1, zoom: 1, mapPopup: -1, lang: i18n.ZhHant}
 	// 一開始六條曲線都畫，跟原版一樣。
 	for i := range g.graphOn {
 		g.graphOn[i] = true
@@ -305,7 +309,7 @@ func (g *Game) setZoom(z int) {
 	cy := g.camY + g.tilesDown()/2
 	g.zoom = z
 	g.LookAt(cx, cy)
-	g.setMessage(fmt.Sprintf("縮小 1／%d", z))
+	g.setMessage(fmt.Sprintf(g.txt.UI("zoom"), z))
 }
 
 // stepZoom 往清單的下一／上一級走。
@@ -436,6 +440,7 @@ func (g *Game) Update() error {
 	g.handleMouse()
 	// 「最快」是同一個速率下一個畫格多跑幾次模擬（Micropolis 的 sim_skips），
 	// 不是第五個速率——見 speedMsgIdx 的說明。
+	g.updateMusic()
 	for i := 0; i < simFramesPerTick[clamp(g.speedLevel, 0, 4)]; i++ {
 		g.world.Frame()
 	}
@@ -580,6 +585,16 @@ func (g *Game) handleKeys() {
 			inpututil.IsKeyJustPressed(ebiten.KeyNumpadAdd) {
 			g.stepZoom(-1)
 		}
+		// 背景音樂，同樣是 remake 加的（原版沒有音樂，見 music.go）。
+		if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+			g.toggleMusic()
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyLeftBracket) {
+			g.stepTrack(-1)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyRightBracket) {
+			g.stepTrack(1)
+		}
 	}
 
 	dx, dy := scrollDir()
@@ -715,7 +730,7 @@ func (g *Game) gotoEvent() {
 		return
 	}
 	if g.gotoX == 0 && g.gotoY == 0 {
-		g.setMessage("沒有可以前往的事件")
+		g.setMessage(g.txt.UI("goto_none"))
 		return
 	}
 	g.backX, g.backY = g.camX, g.camY
@@ -755,7 +770,8 @@ func (g *Game) handleWindowKeys() {
 				g.layer = mapLayer(i)
 			}
 		}
-	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad:
+	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad,
+		winLangSel, winMusic:
 		g.handleSysMenuKeys()
 	case winSaveAs:
 		g.handleSaveAsKeys()
@@ -978,15 +994,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。
 func (g *Game) drawDemand(dst *ebiten.Image, x, y int) {
-	g.font.Draw(dst, "需求", x, y, colDim)
+	g.font.Draw(dst, g.txt.UI("demand"), x, y, colDim)
 	bars := []struct {
 		label string
 		v     int
 		c     color.RGBA
 	}{
-		{"住", g.world.RValve, colDemR},
-		{"商", g.world.CValve, colDemC},
-		{"工", g.world.IValve, colDemI},
+		{g.txt.UI("demand_r"), g.world.RValve, colDemR},
+		{g.txt.UI("demand_c"), g.world.CValve, colDemC},
+		{g.txt.UI("demand_i"), g.world.IValve, colDemI},
 	}
 	const mid = 60 // 零線相對於 y 的位移
 	for i, b := range bars {
