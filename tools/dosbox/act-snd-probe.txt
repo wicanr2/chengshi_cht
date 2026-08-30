@@ -1,0 +1,13 @@
+# 排除實驗：弄壞其中一份 SOUNDDAT.PSF，看遊戲抱不抱怨。
+# 標題畫面之後直接進遊戲，錯誤對話框會在載入音效時跳出來。
+wait 4
+shot 00-title
+click 200 197
+wait 6
+shot 01-newcity
+click 311 245
+wait 8
+shot 02-loaded
+key Return
+wait 3
+shot 03-passed

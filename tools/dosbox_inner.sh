@@ -33,6 +33,16 @@ if [ -n "${TDY_FROM:-}" ]; then
   ls /tmp/game/tdy | head -3
 fi
 
+# PREP 是在**遊戲副本上**跑的一段 shell，在 DOSBox 起來之前執行。
+# 用途是做「把某個檔案弄壞／搬走，看遊戲抱不抱怨」這種排除實驗——
+# 那是判斷「同名檔案有兩份時，遊戲讀的是哪一份」唯一不必反組譯的辦法。
+#
+# ⚠ 只動 /tmp/game 這份副本，原始素材是唯讀掛載的（tools/dosbox.sh）。
+if [ -n "${PREP:-}" ]; then
+  ( cd /tmp/game && eval "$PREP" )
+  echo "PREP 跑完：$PREP"
+fi
+
 head -5 /tmp/game/SIMCITY.CFG
 
 cp /conf/dosbox.conf /tmp/dosbox.conf

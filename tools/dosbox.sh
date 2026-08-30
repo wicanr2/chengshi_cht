@@ -31,6 +31,7 @@ exec timeout "${TIMEOUT:-600}" docker run --rm \
   -v "$ROOT/${CONF:-tools/dosbox/dosbox-x.conf}:/conf/dosbox.conf:ro" \
   -v "$ACTIONS:/conf/actions.txt:ro" \
   -v "$ROOT/tools/dosbox_inner.sh:/conf/inner.sh:ro" \
+  -e PREP="${PREP:-}" \
   -e HOME=/tmp -e SECS="$SECS" -e PREFIX="$PREFIX" -e RUN="${RUN:-}" \
   -e CFG_SOUND="${CFG_SOUND:-}" -e CFG_SCREEN="${CFG_SCREEN:-}" \
   -e MACHINE="${MACHINE:-}" -e DOSBOX_BIN="${DOSBOX_BIN:-dosbox-x}" \
