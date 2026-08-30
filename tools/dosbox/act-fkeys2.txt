@@ -1,0 +1,48 @@
+# 裁決 F 鍵開哪個選單。先關掉手冊查驗對話框（Continue 在遊戲座標 302,196）。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 3
+click 302 196
+wait 3
+shot 00-clean
+# 正對照：r 應該切到道路工具，狀態列要變
+key r
+wait 2
+shot 01-ctl-road
+key F1
+wait 2
+shot 02-F1
+key Escape
+wait 1
+key F2
+wait 2
+shot 03-F2
+key Escape
+wait 1
+key F3
+wait 2
+shot 04-F3
+key Escape
+wait 1
+key F4
+wait 2
+shot 05-F4
+key Escape
+wait 1
+key F5
+wait 2
+shot 06-F5
+key Escape
+wait 1
+key F7
+wait 2
+shot 07-F7
+key Escape
+wait 1
+key F9
+wait 2
+shot 08-F9
