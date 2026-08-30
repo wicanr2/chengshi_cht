@@ -1,0 +1,90 @@
+# 量某一個圖形庫有沒有被畫出來：跑同一支腳本、只換 .PGF，逐張比截圖。
+#
+# 三個踩過的坑，改腳本時不要再踩：
+#  1. **一定要載劇本，不能開新城市**——新城市地形隨機，三次跑的地圖不一樣。
+#  2. **一定要按 0 暫停**——不暫停的話同檔跑兩次就差兩千多個像素。
+#  3. **每張地圖區截圖前先按 Ctrl-E**——原本用 Ctrl-C 逐一關視窗，
+#     中間有一次沒開成，多關的那次把編輯視窗也關掉，後面十張全是空桌面。
+#     空桌面上把整個地圖圖塊庫塗掉也是零差異，看起來像「沒被畫」，其實是沒訊號。
+wait 3
+shot 00-title
+click 316 240
+wait 5
+shot 01-scenmenu
+click 402 253
+wait 8
+key Return
+wait 2
+shot 02-brief
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+c
+wait 2
+key 0
+wait 8
+shot 03-map-a
+wait 6
+# 同一個畫面隔六秒再截一張：兩張的差就是「暫停後畫面自己會動多少」。
+shot 04-map-b
+key ctrl+e
+wait 2
+key ctrl+g
+wait 4
+shot 05-graphs
+key ctrl+c
+wait 2
+key ctrl+e
+wait 2
+key ctrl+b
+wait 4
+shot 06-budget
+key ctrl+c
+wait 2
+key ctrl+e
+wait 2
+key ctrl+u
+wait 4
+shot 07-eval
+key ctrl+c
+wait 2
+key ctrl+e
+wait 2
+key ctrl+m
+wait 4
+shot 08-map
+key ctrl+c
+wait 2
+key ctrl+e
+wait 3
+shot 09-back
+# 質詢視窗
+key q
+wait 1
+click 350 250
+wait 4
+shot 10-query
+key ctrl+c
+wait 2
+key ctrl+e
+wait 3
+# 四個選單全部拉開
+press 200 8
+wait 2
+shot 11-m1
+release
+press 300 8
+wait 2
+shot 12-m2
+release
+press 404 8
+wait 2
+shot 13-m3
+release
+press 500 8
+wait 2
+shot 14-m4
+release
+wait 3
+shot 99-end

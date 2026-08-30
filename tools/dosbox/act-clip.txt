@@ -1,0 +1,22 @@
+# 驗證 .PGF 第 9 庫是不是「圖塊被視窗邊界裁切」的遮罩組。
+# 用底特律（密集城市，邊緣一定落在建築上），把編輯視窗拖成不是 16 倍數的寬度。
+wait 3
+click 316 240
+wait 5
+click 402 253
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+c
+wait 2
+shot 00-default
+drag 578 321 429 321
+wait 3
+shot 01-w429
+drag 429 321 421 321
+wait 3
+shot 02-w421
