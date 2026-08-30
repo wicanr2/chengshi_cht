@@ -50,6 +50,8 @@ func main() {
 		cmdScenario(os.Args[2:])
 	case "gfx":
 		cmdGfx(os.Args[2:])
+	case "pgfmini":
+		cmdPgfMini(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
@@ -78,7 +80,10 @@ func usage() {
         解開一個 DOS 劇本，印出城市名與城市資料大小。
 
   simtool gfx -file <圖形檔.PGF> [-out 目錄] [-bank N] [-max N]
-        把圖形庫倒成 PNG。圖形庫的用途只有畫出來才認得出來。`)
+        把圖形庫倒成 PNG。圖形庫的用途只有畫出來才認得出來。
+
+  simtool pgfmini -file <圖形檔.PGF> [-out 目錄] [-zoom N]
+        倒出地圖視窗的 960 張縮圖與檔案自帶的介面字型。`)
 }
 
 func cmdMessages(args []string) {

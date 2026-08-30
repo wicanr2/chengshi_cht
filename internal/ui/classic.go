@@ -353,8 +353,8 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 		(mapX+mapW/2)*UIScale-g.font.Measure(title)/2, (mapY+1)*UIScale, colInk)
 	blit(dst, g.tiles.UIImage(BankMapIcons, 0), mapIconX, mapIconY)
 
-	// 全市地圖：120×100 格，一格畫 3×3 原版像素剛好 360×300——放不下，
-	// 所以取能塞進視窗的最大整數倍。
+	// 全市地圖：120×100 格，一格 3×3 原版像素 ＝ 360×300，塞得進視窗。
+	// 「都市型態」圖層畫的是圖形檔自帶的縮圖，不是純色方塊——見 minimap.go。
 	sc := (mapX + mapW - 2 - mapViewX) / sim.WorldX
 	if s2 := (mapY + mapH - 2 - mapViewY) / sim.WorldY; s2 < sc {
 		sc = s2
@@ -362,11 +362,7 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 	if sc < 1 {
 		sc = 1
 	}
-	for ty := 0; ty < sim.WorldY; ty++ {
-		for tx := 0; tx < sim.WorldX; tx++ {
-			fill(dst, mapViewX+tx*sc, mapViewY+ty*sc, sc, sc, g.layerColor(tx, ty))
-		}
-	}
+	g.drawMinimap(dst, mapViewX*UIScale, mapViewY*UIScale, sc*UIScale)
 	// 目前視野的框。
 	vector.StrokeRect(dst,
 		s(mapViewX+g.camX*sc), s(mapViewY+g.camY*sc),

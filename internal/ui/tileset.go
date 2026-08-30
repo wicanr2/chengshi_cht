@@ -24,6 +24,11 @@ type TileSet struct {
 	Tiles []*ebiten.Image
 	// Sprites 是精靈圖形庫，索引 i 對應 .PGF 的第 i+1 庫。
 	Sprites [][]*ebiten.Image
+	// Mini 是地圖視窗（City Form）用的 960 張縮圖，一張 3×3（CEGA／MONO）、
+	// 3×1（sega）或 1×1（mcga）。原版的地圖不是純色方塊，見 minimap.go。
+	Mini *assets.MiniTiles
+	// miniPal 是縮圖已經換好顏色的版本，避免每一格重查調色盤。
+	miniPal [][]color.RGBA
 	// UI 是介面美術，索引同 Sprites，但**色號 0 不透明**。
 	//
 	// ⚠ 兩份不能共用。精靈要拿色號 0 當透明（否則拖著一塊黑底走），
@@ -158,7 +163,32 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 		ts.Sprites = append(ts.Sprites, imgs)
 		ts.UI = append(ts.UI, opaque)
 	}
+	if g.Mini != nil {
+		ts.Mini = g.Mini
+		per := g.Mini.Width * g.Mini.Height
+		ts.miniPal = make([][]color.RGBA, sim.TILE_COUNT)
+		for i := range ts.miniPal {
+			src := g.Mini.Tile(i)
+			if len(src) != per {
+				continue
+			}
+			row := make([]color.RGBA, per)
+			for j, v := range src {
+				row[j] = pal[v]
+			}
+			ts.miniPal[i] = row
+		}
+	}
 	return ts, nil
+}
+
+// MiniColors 回傳一個圖塊編號對應的縮圖顏色，長度 Mini.Width*Mini.Height。
+// 沒有縮圖（或編號超出範圍）回 nil，呼叫端要退回純色。
+func (t *TileSet) MiniColors(n int) []color.RGBA {
+	if n < 0 || n >= len(t.miniPal) {
+		return nil
+	}
+	return t.miniPal[n]
 }
 
 // imageFrom 把一張調色盤圖轉成 Ebiten 影像。

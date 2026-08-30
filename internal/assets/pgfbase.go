@@ -105,6 +105,11 @@ func LoadPGFBase(raw []byte, tile, bpp int) (*PGF, error) {
 	}
 	banks, _ := walkBaseBanks(data, start, bpp, true)
 	g.Banks = append(g.Banks, banks...)
+	// 第 0 庫與行內庫表之間那一塊就是地圖縮圖（＋單色／256 色的介面字型）。
+	if mini, next := parseMiniTiles(data[end:start], bpp); mini != nil {
+		g.Mini = mini
+		g.Fonts = parsePGFFonts(data[end+next:start], bpp)
+	}
 	return g, nil
 }
 
@@ -171,4 +176,13 @@ func walkBaseBanks(data []byte, off, bpp int, collect bool) ([]PGFBank, bool) {
 	}
 	// 走到檔尾、而且庫數合理才算數
 	return out, off == len(data) && n >= 10
+}
+
+// EGAPalette 回傳實測的 EGA 十六色。給工具用（cmd/pgfblk）。
+func EGAPalette() []PGFColor {
+	out := make([]PGFColor, 0, 16)
+	for _, c := range egaPalette {
+		out = append(out, PGFColor{R: c[0], G: c[1], B: c[2]})
+	}
+	return out
 }

@@ -51,6 +51,10 @@ type PGF struct {
 	StyleID      int
 	Palette      []PGFColor
 	Banks        []PGFBank
+	// Mini 是地圖視窗用的 960 張縮圖，Fonts 是檔案自帶的介面字型。
+	// 兩者都在宣告的圖形庫之後，見 pgfmini.go。
+	Mini  *MiniTiles
+	Fonts []PGFFont
 }
 
 // 旗標位元。
@@ -171,6 +175,11 @@ func ParsePGF(raw []byte) (*PGF, error) {
 		p += size
 		g.Banks = append(g.Banks, b)
 	}
+	// 宣告的圖形庫之後是地圖縮圖，再之後（單色與 256 色）是介面字型。
+	if mini, next := parseMiniTiles(data[p:], g.BitsPerPixel); mini != nil {
+		g.Mini = mini
+		g.Fonts = parsePGFFonts(data[p+next:], g.BitsPerPixel)
+	}
 	return g, nil
 }
 
@@ -225,4 +234,15 @@ func pgfPixels(data []byte, q, w, h, bpp int, fl uint16) ([]uint8, int, error) {
 		return out, q + need, nil
 	}
 	return nil, 0, fmt.Errorf("位元深度 %d 不支援", bpp)
+}
+
+// DecompressPGFBody 解開風格檔的壓縮本體（跳過橫幅與檔頭）。
+// 給工具用：盤點宣告的圖形庫之後還剩多少位元組。
+func DecompressPGFBody(raw []byte) []byte {
+	start, _, _, _ := pgfHeader(raw)
+	d, err := DecompressLZSS(raw[start:])
+	if err != nil {
+		return nil
+	}
+	return d
 }

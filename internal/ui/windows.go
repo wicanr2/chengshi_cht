@@ -329,13 +329,7 @@ func (g *Game) drawMapWindow(dst *ebiten.Image, x, y, w, h int) {
 	if scale < 1 {
 		scale = 1
 	}
-	for ty := 0; ty < sim.WorldY; ty++ {
-		for tx := 0; tx < sim.WorldX; tx++ {
-			c := g.layerColor(tx, ty)
-			vector.DrawFilledRect(dst, float32(mx+tx*scale), float32(my+ty*scale),
-				float32(scale), float32(scale), c, false)
-		}
-	}
+	g.drawMinimap(dst, mx, my, scale)
 	// 目前視野的框
 	vector.StrokeRect(dst,
 		float32(mx+g.camX*scale), float32(my+g.camY*scale),
