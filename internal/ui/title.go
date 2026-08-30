@@ -80,7 +80,7 @@ func loadPPF(dir, suffix string) (image.Image, error) {
 			if err != nil {
 				return nil, err
 			}
-			return assets.LoadPPF(raw)
+			return assets.LoadPPF(raw, nil)
 		}
 	}
 	return nil, os.ErrNotExist

@@ -1,0 +1,37 @@
+# 假說：共用圖示的彈出選單是**按住式**的，跟選單列一樣——按住圖示不放
+# 會跳出兩列，拖到哪一列放開就選哪一列。快速點一下等於選中游標所在的
+# 第一列，所以看起來像「直接選了警力範圍」。
+#
+# 彈出框量到的位置：x 279–347、y 239–271，兩列各約 16 像素高。
+wait 3
+click 316 240
+wait 5
+click 240 253
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+shot 00-base
+mark 按住第 9 格不放
+press 257 255
+wait 2
+shot 01-held
+mark 拖到第二列（Fire）再放開
+drag 257 255 300 264
+wait 3
+shot 02-fire
+mark 按住第 4 格不放
+press 257 130
+wait 2
+shot 03-held-people
+release
+wait 2
+mark 拖到第二列
+drag 257 130 300 139
+wait 3
+shot 04-growth

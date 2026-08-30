@@ -76,28 +76,63 @@ const (
 
 // 分佈密度表的配色：由低到高。原版用的是十六色調色盤裡的一組漸層，
 // 這裡自己配一組在深色底上讀得出來的。
-var densityRamp = []color.RGBA{
-	{0x20, 0x28, 0x38, 0xff},
-	{0x28, 0x50, 0x60, 0xff},
-	{0x30, 0x80, 0x70, 0xff},
-	{0x60, 0xa0, 0x50, 0xff},
-	{0xc0, 0xb0, 0x40, 0xff},
-	{0xd0, 0x70, 0x30, 0xff},
-	{0xd0, 0x40, 0x40, 0xff},
+// 數值圖層的色階。**三個 EGA 色 ＋ 兩段一像素網點，共五級**，
+// 這是量原版得到的（`workplace/dosbox/mi-04-icon3.png` 的人口分佈圖，
+// 3000 個 6×6 密度格逐格分類）：
+//
+//	青 523 格／青＋洋紅網點 925／洋紅 97／洋紅＋紅網點 159／紅 7，
+//	另外 1285 格完全沒有色階色——那是**值太低，直接畫地形**。
+//
+// 三個色就是色階圖例（庫 6，`Max`／`Min`）自己用的顏色。
+var rampLow = color.RGBA{0x55, 0xff, 0xff, 0xff}  // 青
+var rampMid = color.RGBA{0xaa, 0x00, 0xaa, 0xff}  // 洋紅
+var rampHigh = color.RGBA{0xff, 0x55, 0x55, 0xff} // 紅
+
+// rampSteps 是五級的門檻。
+//
+// ⚠ **前四個是已確認的**（Micropolis `g_map.c:105 GetCI`：50／100／150／200
+// 分成 none／low／medium／high／veryhigh），**第五個是暫代值**——
+// X11 版只有四級，DOS 版實測是五級，多出來的那一級門檻沒有量到，
+// 先照等距外推 250。記在 CONTEXT.md §5.5，不要當成已確認。
+var rampSteps = [5]int{50, 100, 150, 200, 250}
+
+// rampColorAt 回傳一格的色階色；回 false 代表值太低，該畫地形。
+//
+// 網點在原版是**逐像素**的，remake 的縮圖一格 3×3 像素，所以改成
+// **逐格**交錯——同一塊區域裡兩色相間，遠看的明度一樣，近看格子大一點。
+func rampColorAt(v, max, x, y int) (color.RGBA, bool) {
+	// 兩種來源的量程不同（密度類 0–255、警消覆蓋 0–1000），先正規化到
+	// Micropolis 的 0–255 再比門檻。
+	if max <= 0 {
+		return rampLow, false
+	}
+	n := v * 255 / max
+	switch {
+	case n < rampSteps[0]:
+		return rampLow, false
+	case n < rampSteps[1]:
+		return rampLow, true
+	case n < rampSteps[2]:
+		return dither2(rampLow, rampMid, x, y), true
+	case n < rampSteps[3]:
+		return rampMid, true
+	case n < rampSteps[4]:
+		return dither2(rampMid, rampHigh, x, y), true
+	}
+	return rampHigh, true
 }
 
+func dither2(a, b color.RGBA, x, y int) color.RGBA {
+	if (x+y)%2 == 0 {
+		return a
+	}
+	return b
+}
+
+// rampColor 保留給還沒改成「值太低就畫地形」的呼叫端。
 func rampColor(v, max int) color.RGBA {
-	if max <= 0 {
-		return densityRamp[0]
-	}
-	i := v * (len(densityRamp) - 1) / max
-	if i < 0 {
-		i = 0
-	}
-	if i >= len(densityRamp) {
-		i = len(densityRamp) - 1
-	}
-	return densityRamp[i]
+	c, _ := rampColorAt(v, max, 0, 0)
+	return c
 }
 
 // winRect 是每個視窗的預設位置與大小，單位是**原版像素**。
@@ -386,27 +421,89 @@ func (g *Game) layerColor(x, y int) color.RGBA {
 		}
 		return color.RGBA{0x20, 0x24, 0x2c, 0xff}
 	case layerPopDensity:
-		return rampColor(int(w.PopDensity[x>>1][y>>1]), 255)
+		return g.overlay(int(w.PopDensity[x>>1][y>>1]), 255, x, y, t)
 	case layerTraffic:
-		return rampColor(int(w.TrfDensity[x>>1][y>>1]), 255)
+		return g.overlay(int(w.TrfDensity[x>>1][y>>1]), 255, x, y, t)
 	case layerPollution:
-		return rampColor(int(w.PollutionMem[x>>1][y>>1]), 255)
+		return g.overlay(int(w.PollutionMem[x>>1][y>>1]), 255, x, y, t)
 	case layerCrime:
-		return rampColor(int(w.CrimeMem[x>>1][y>>1]), 255)
+		return g.overlay(int(w.CrimeMem[x>>1][y>>1]), 255, x, y, t)
 	case layerLandValue:
-		return rampColor(int(w.LandValueMem[x>>1][y>>1]), 255)
+		return g.overlay(int(w.LandValueMem[x>>1][y>>1]), 255, x, y, t)
 	case layerPolice:
-		return rampColor(int(w.PoliceMapEffect[x>>3][y>>3]), 1000)
+		return g.overlay(int(w.PoliceMapEffect[x>>3][y>>3]), 1000, x, y, t)
 	case layerFire:
-		return rampColor(int(w.FireStMap[x>>3][y>>3]), 1000)
+		return g.overlay(int(w.FireStMap[x>>3][y>>3]), 1000, x, y, t)
+	case layerGrowth:
+		// 人口成長有正負，原版另給一張 `Pos`／`Neg` 的色階（庫 7）。
+		// Micropolis 的門檻是 ±20／±100（`g_map.c:140`），已確認。
+		v := int(w.RateOGMem[x>>3][y>>3])
+		switch {
+		case v > 100:
+			return rampHigh
+		case v > 20:
+			return rampMid
+		case v < -100:
+			return color.RGBA{0x55, 0x55, 0xff, 0xff}
+		case v < -20:
+			return color.RGBA{0xff, 0xff, 0x55, 0xff}
+		}
+		return cityFormColor(t)
+	}
+	return cityFormColor(t)
+}
+
+// overlayColor 回傳一格要不要蓋色階。回 false 代表這一格畫底下的縮圖。
+//
+// 「都市型態」「電力網路」「運輸網路」三個圖層畫的是地物不是數值，
+// 一律走 layerColor，不在這裡處理。
+func (g *Game) overlayColor(x, y int) (color.RGBA, bool) {
+	w := g.world
+	switch g.layer {
+	case layerCityForm:
+		return color.RGBA{}, false
+	case layerPower, layerTransport:
+		return g.layerColor(x, y), true
+	case layerPopDensity:
+		return rampColorAt(int(w.PopDensity[x>>1][y>>1]), 255, x, y)
+	case layerTraffic:
+		return rampColorAt(int(w.TrfDensity[x>>1][y>>1]), 255, x, y)
+	case layerPollution:
+		return rampColorAt(int(w.PollutionMem[x>>1][y>>1]), 255, x, y)
+	case layerCrime:
+		return rampColorAt(int(w.CrimeMem[x>>1][y>>1]), 255, x, y)
+	case layerLandValue:
+		return rampColorAt(int(w.LandValueMem[x>>1][y>>1]), 255, x, y)
+	case layerPolice:
+		return rampColorAt(int(w.PoliceMapEffect[x>>3][y>>3]), 1000, x, y)
+	case layerFire:
+		return rampColorAt(int(w.FireStMap[x>>3][y>>3]), 1000, x, y)
 	case layerGrowth:
 		v := int(w.RateOGMem[x>>3][y>>3])
-		if v > 0 {
-			return rampColor(v, 200)
+		switch {
+		case v > 100:
+			return rampHigh, true
+		case v > 20:
+			return rampMid, true
+		case v < -100:
+			return color.RGBA{0x55, 0x55, 0xff, 0xff}, true
+		case v < -20:
+			return color.RGBA{0xff, 0xff, 0x55, 0xff}, true
 		}
-		return color.RGBA{uint8(clamp(-v, 0, 200) + 40), 0x20, 0x20, 0xff}
+		return color.RGBA{}, false
 	}
-	return densityRamp[0]
+	return color.RGBA{}, false
+}
+
+// overlay 是數值圖層的一格：值夠高就畫色階，不夠就畫地形。
+// **「值太低畫地形」是原版行為**（Micropolis `maybeDrawRect`：
+// `VAL_NONE` 直接 return，底下那張 `drawAll` 就露出來），
+// 先前 remake 一律畫色階，整張圖沒有地形。
+func (g *Game) overlay(v, max, x, y, t int) color.RGBA {
+	if c, ok := rampColorAt(v, max, x, y); ok {
+		return c
+	}
+	return cityFormColor(t)
 }
 
 // cityFormColor 是都市型態圖：水、地、三種分區、道路各一色。

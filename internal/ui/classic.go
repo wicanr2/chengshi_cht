@@ -111,6 +111,8 @@ const (
 	mapTitleW    = 392
 	mapContentY  = 42 // 內容區（白底 ＋ 綠邊的圖示欄 ＋ 地圖）
 	mapContentH  = 304
+	mapRampX     = 248 // 色階圖例（庫 6／7，20×70）
+	mapRampY     = 273
 	mapViewX   = 274 // 地圖本體
 	mapViewY   = 44
 )
@@ -212,7 +214,7 @@ func (g *Game) inEditWindow(mx, my int) bool {
 // 一律取整到整格，否則邊緣會出現半格，而半格看起來很像「圖塊畫錯了」。
 func (g *Game) editViewSize() (int, int) {
 	w, h := g.editSize()
-	sz := g.tiles.Size
+	sz := g.tileSize()
 	vw := (w - (editViewX - editX) - 4) / sz * sz
 	// ⚠ 扣掉的是**工具帶的高度**（14），不是 18。原版的地圖區是 y 55–310
 	// ＝ 256 像素 ＝ 16 列；扣 18 只剩 240，等於**少畫一列地圖**，
@@ -476,14 +478,14 @@ func (g *Game) drawEditTitle(dst *ebiten.Image, ew int) {
 // drawEditMap 畫編輯視窗裡的地圖。原版一格 16×16，可見 11×16 格。
 func (g *Game) drawEditMap(dst *ebiten.Image) {
 	across, down := g.tilesAcross(), g.tilesDown()
-	sz := g.tiles.Size
+	sz, z := g.tileSize(), g.zoom
 	for ty := 0; ty < down; ty++ {
 		for tx := 0; tx < across; tx++ {
 			mx, my := g.camX+tx, g.camY+ty
 			if mx < 0 || my < 0 || mx >= sim.WorldX || my >= sim.WorldY {
 				continue
 			}
-			img := g.tiles.TileImage(g.world.TileNum(mx, my))
+			img := g.tiles.ZoomTile(g.world.TileNum(mx, my), z)
 			var op ebiten.DrawImageOptions
 			op.GeoM.Scale(UIScale, UIScale)
 			op.GeoM.Translate(
@@ -595,7 +597,9 @@ func (g *Game) drawMapIconState(dst *ebiten.Image) {
 		fill(dst, 247, y, 2, 23, c)
 		fill(dst, 266, y, 2, 23, c)
 	}
-	y0 := mapIconY + mapIconH*mapIconCount + 3
+	// 網點從綠邊底下第二列就開始（量自原版：圖示到 268、綠邊 269–270、
+	// 271 起是網點）。
+	y0 := mapIconY + mapIconH*mapIconCount + 2
 	y1 := mapContentY + mapContentH - 3
 	for y := y0; y <= y1; y++ {
 		for x := mapIconEdgeX; x <= mapViewX-3; x++ {
@@ -606,6 +610,30 @@ func (g *Game) drawMapIconState(dst *ebiten.Image) {
 			fill(dst, x, y, 1, 1, c)
 		}
 	}
+	g.drawMapRamp(dst)
+}
+
+// drawMapRamp 畫網點上面那張色階圖例。
+//
+// 原版有兩張（庫 6 與庫 7，都是 20×70）：**`Max`／`Min`** 那張給密度類的
+// 圖層，**`Pos`／`Neg`** 那張給有正負的人口成長。前三個圖層（都市型態、
+// 電力網路、運輸網路）畫的是地物不是數值，**不放圖例**——原版實測：
+// 圖層 0／1／2 那一塊逐位元組相同（就是網點），圖層 3–8 換成另一張，
+// 也逐位元組相同。
+//
+// 位置 (248,273) 是拿庫 6 的圖去原版截圖上比對出來的，1400 個像素全中。
+func (g *Game) drawMapRamp(dst *ebiten.Image) {
+	bank := 0
+	switch {
+	case g.layer == layerGrowth:
+		bank = BankRampB
+	case g.layer >= layerPopDensity:
+		bank = BankRampA
+	}
+	if bank == 0 {
+		return
+	}
+	blit(dst, g.tiles.UIImage(bank, 0), mapRampX, mapRampY)
 }
 
 // drawCityFormWindow 畫 City Form 視窗：標題列、圖層圖示、全市地圖。
@@ -620,7 +648,9 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 	fill(dst, mapX+2, mapContentY, mapW-6, mapContentH, colInkLight)
 	fill(dst, mapX+2, mapContentY, 30, mapContentH, colMapGreen)
 	fill(dst, mapViewX, mapViewY, sim.WorldX*3, sim.WorldY*3, colInk)
-	title := trimMenu(g.txt.S(i18n.SecMapTitle, 0))
+	// 標題跟著目前的圖層走，不是固定「都市型態」——原版實測：點圖示之後
+	// 標題會換成 `Population Density`、`Crime Rate`、`Sheriff Protection`…
+	title := trimMenu(g.txt.S(i18n.SecMapTitle, int(g.layer)))
 	tw := g.font.Measure(title) / UIScale
 	fill(dst, mapX+mapW/2-tw/2-8, mapTitleY+2, tw+16, 13, colInkLight)
 	g.font.Draw(dst, title,
@@ -629,8 +659,11 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 	// 庫 5 的美術只有中間那 25 行。原版的規則同其他網點：`(x+y)` 偶數是黑。
 	ih := mapIconH * mapIconCount
 	ditherRect(dst, mapIconEdgeX, mapIconY, 1, ih, colInk, colInkLight)
-	ditherRect(dst, mapViewX-4, mapIconY, 2, ih, colInk, colInkLight)
 	blit(dst, g.tiles.UIImage(BankMapIcons, 0), mapIconX, mapIconY)
+	// ⚠ 右邊那兩行要畫在圖示**後面**：庫 5 的圖是 26 行寬（245–270），
+	// 會蓋掉 270 那一行。先畫的話每一列都差兩個像素，而且看起來只是
+	// 「邊緣有點髒」。
+	ditherRect(dst, mapViewX-4, mapIconY, 2, ih, colInk, colInkLight)
 	g.drawMapIconState(dst)
 
 	// 全市地圖：120×100 格，一格 3×3 原版像素 ＝ 360×300，塞得進視窗。
@@ -648,6 +681,8 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 		s(mapViewX+g.camX*sc), s(mapViewY+g.camY*sc),
 		s(g.tilesAcross()*sc), s(g.tilesDown()*sc),
 		float32(UIScale), colMenuInk, false)
+	// 小選單畫在最後：它蓋在地圖上面。
+	g.drawMapSubMenu(dst)
 }
 
 // fundsText 是資金帶左半的字。原版寫 `Funds: $20,000`。
@@ -796,4 +831,91 @@ func (g *Game) setEditCorner(mx, my int) {
 	g.ew = clampInt(mx/UIScale-editX+1, editMinW, OrigW-editX-1)
 	g.eh = clampInt(my/UIScale-editY+1, editMinH, OrigH-editY-1)
 	g.clampCamera()
+}
+
+// ── City Form 的圖層圖示 ────────────────────────────────────────────
+
+// mapIconLayers 是九個圖層圖示各自管的圖層編號（訊息檔第 10 段的索引）。
+//
+// **九個圖示對十一個圖層**：第 4 格（兩個人）管人口分佈與人口成長、
+// 第 9 格（紅 `F` 藍 `P`）管警力範圍與消防範圍。2026-08-30 用 DOS 原版
+// 逐格點過，九個圖示依序給出 City Form／Power Grid／Transportation／
+// Population Density／Traffic Density／Pollution／Crime Rate／Land Value／
+// Sheriff Protection。
+var mapIconLayers = [mapIconCount][]int{
+	{0}, {1}, {2}, {3, 10}, {4}, {5}, {6}, {7}, {8, 9},
+}
+
+// mapSubMsg 把共用圖示的圖層對到訊息檔**第 11 段**的索引。
+// 那一段只有四筆——人口分佈、警力範圍、消防範圍、人口成長——
+// 正好就是兩個共用圖示的四個子圖層，這是它存在的理由。
+var mapSubMsg = map[int]int{3: 0, 8: 1, 9: 2, 10: 3}
+
+// 小選單的版面。量自原版（`workplace/dosbox/mi6-01-held.png`）：
+// 按住第 9 格時跳出來的框是 x 279–344、y 240–269，兩列。
+const (
+	mapSubX    = mapViewX + 5 // 279
+	mapSubRowH = 15
+	mapSubPadX = 4
+)
+
+// mapIconAt 回傳畫面座標落在第幾個圖層圖示上；不在的話回 −1。
+func mapIconAt(mx, my int) int {
+	x, y := mx/UIScale, my/UIScale
+	if x < mapIconEdgeX || x > mapViewX-3 {
+		return -1
+	}
+	i := (y - mapIconY) / mapIconH
+	if y < mapIconY || i < 0 || i >= mapIconCount {
+		return -1
+	}
+	return i
+}
+
+// mapSubRect 回傳第 icon 個圖示的小選單外框（原版座標）。
+func (g *Game) mapSubRect(icon int) (x, y, w, h int) {
+	rows := mapIconLayers[icon]
+	w = 0
+	for _, l := range rows {
+		if tw := g.font.Measure(g.mapSubLabel(l))/UIScale + mapSubPadX*2 + 8; tw > w {
+			w = tw
+		}
+	}
+	return mapSubX, mapIconY + mapIconH*icon - 4, w, mapSubRowH*len(rows)
+}
+
+func (g *Game) mapSubLabel(layer int) string {
+	if i, ok := mapSubMsg[layer]; ok {
+		return trimMenu(g.txt.S(i18n.SecMapSub, i))
+	}
+	return trimMenu(g.txt.S(i18n.SecMapTitle, layer))
+}
+
+// mapSubRowAt 回傳游標落在小選單的第幾列；不在的話回 −1。
+func (g *Game) mapSubRowAt(icon, mx, my int) int {
+	x, y, w, h := g.mapSubRect(icon)
+	px, py := mx/UIScale, my/UIScale
+	if px < x || px >= x+w || py < y || py >= y+h {
+		return -1
+	}
+	return (py - y) / mapSubRowH
+}
+
+// drawMapSubMenu 畫共用圖示的小選單：亮青底、深藍框，選中那一列前面
+// 一個小三角形。照原版（`Sheriff`／`Fire`、`Population Density`／
+// `Population Growth`）。
+func (g *Game) drawMapSubMenu(dst *ebiten.Image) {
+	if g.mapPopup < 0 || g.mapPopup >= mapIconCount {
+		return
+	}
+	x, y, w, h := g.mapSubRect(g.mapPopup)
+	fill(dst, x-2, y-2, w+4, h+4, colMenuInk)
+	fill(dst, x, y, w, h, colMenuBar)
+	for i, l := range mapIconLayers[g.mapPopup] {
+		ry := y + mapSubRowH*i
+		if mapLayer(l) == g.layer {
+			drawTriangle(dst, x+2, ry+4, colMenuInk)
+		}
+		g.font.Draw(dst, g.mapSubLabel(l), (x+mapSubPadX+6)*UIScale, ry*UIScale, colMenuInk)
+	}
 }

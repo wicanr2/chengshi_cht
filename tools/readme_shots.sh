@@ -34,5 +34,7 @@ shot maps.png       "-scenario 6 -style base -window maps -layer 6" "space"
 shot brief.png      "-scenario 6 -style medi" "" 6
 # 評估視窗。
 shot eval.png       "-scenario 6 -style base -window eval" "space 0"
+# 縮小到 1/4（remake 加的功能，原版沒有）。按兩次 `-`。
+shot zoom.png       "-scenario 6 -style base -cam 0,0" "space 0 minus minus"
 rm -f workplace/shots/_rm.png
 echo "完成，圖在 $OUT"

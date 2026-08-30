@@ -415,7 +415,7 @@ func TestPPFPlaneOrderIsHighBitFirst(t *testing.T) {
 	if err != nil {
 		t.Skip("缺 CEGANTRO.PPF")
 	}
-	im, err := LoadPPF(raw)
+	im, err := LoadPPF(raw, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -433,4 +433,59 @@ func TestPPFPlaneOrderIsHighBitFirst(t *testing.T) {
 				c.x, c.y, c.what, got.R, got.G, got.B, c.r, c.g, c.b)
 		}
 	}
+}
+
+// 三種顯示模式的 `.PPF` 都要解得開，而且尺寸要對。
+//
+// 版面是拿 DOSBox 分別跑 `Hires EGA Color`／`Lores EGA Color`／
+// `256 Color VGA` 三種設定截圖對出來的（2026-08-30）：
+// sega 是 320×200 四平面（招牌逐像素只差滑鼠游標那 128 點），
+// mcga 是 320×199 每像素一位元組，調色盤取自**同一個圖形集的 `.PGF`**。
+func TestPPFAllDisplayModes(t *testing.T) {
+	dir := dosDir(t)
+	pal := mcgaPalette(t, dir)
+	for _, c := range []struct {
+		path    string
+		w, h    int
+		needPal bool
+	}{
+		{filepath.Join("CEGA", "CEGANTRO.PPF"), 640, 350, false},
+		{filepath.Join("sega", "segantro.ppf"), 320, 200, false},
+		{filepath.Join("mcga", "mcgantro.ppf"), 320, 199, true},
+	} {
+		raw, err := os.ReadFile(filepath.Join(dir, c.path))
+		if err != nil {
+			continue
+		}
+		var p []PGFColor
+		if c.needPal {
+			if pal == nil {
+				continue
+			}
+			p = pal
+		}
+		im, err := LoadPPF(raw, p)
+		if err != nil {
+			t.Errorf("%s：%v", c.path, err)
+			continue
+		}
+		if im.Bounds().Dx() != c.w || im.Bounds().Dy() != c.h {
+			t.Errorf("%s：解出 %v，應為 %d×%d", c.path, im.Bounds().Size(), c.w, c.h)
+		}
+	}
+}
+
+// mcgaPalette 讀 mcga 圖形集的調色盤，256 色的 `.PPF` 要用。
+func mcgaPalette(t *testing.T, dir string) []PGFColor {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(dir, "mcga", "westmcga.pgf"))
+	if err != nil {
+		return nil
+	}
+	g, err := ParsePGF(raw)
+	if err != nil {
+		t.Errorf("westmcga.pgf：%v", err)
+		return nil
+	}
+	return g.Palette
 }

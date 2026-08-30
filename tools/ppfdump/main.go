@@ -20,12 +20,17 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/assets"
 )
 
-const (
-	scrW      = 640
-	scrH      = 350
-	bytesPerRow = scrW / 8 // 80
-	planeLen  = bytesPerRow * scrH // 28000
-)
+// 三種顯示模式的畫面尺寸。長度 ＝ 寬 × 高 ÷ 8 × 平面數（256 色是每像素
+// 一個位元組），拿解壓後的長度就認得出來。
+var modes = []struct {
+	name   string
+	w, h   int
+	planes int // 0 ＝ 每像素一個位元組（256 色）
+}{
+	{"CEGA 640×350×4", 640, 350, 4},
+	{"sega 320×200×4", 320, 200, 4},
+	{"mcga 320×199×8bpp", 320, 199, 0},
+}
 
 // 標準 EGA 16 色。PPF 自己不帶調色盤，先用預設的，對拍之後再定。
 var ega = [16]color.RGBA{
@@ -39,30 +44,34 @@ var ega = [16]color.RGBA{
 	{0xff, 0xff, 0x55, 0xff}, {0xff, 0xff, 0xff, 0xff},
 }
 
-// at 回傳第 p 個平面、第 y 列、第 b 個位元組在解壓資料裡的位置。
-func at(mode string, p, y, b int) int {
-	if mode == "planar" {
-		return p*planeLen + y*bytesPerRow + b
-	}
-	return (y*4+p)*bytesPerRow + b
-}
-
-func render(d []byte, mode string) *image.RGBA {
-	im := image.NewRGBA(image.Rect(0, 0, scrW, scrH))
-	for y := 0; y < scrH; y++ {
-		for b := 0; b < bytesPerRow; b++ {
-			var pl [4]byte
-			for p := 0; p < 4; p++ {
-				pl[p] = d[at(mode, p, y, b)]
-			}
+// renderPlanar 畫逐列交錯、高位在前的位元平面。
+func renderPlanar(d []byte, w, h, planes int) *image.RGBA {
+	bpr := w / 8
+	im := image.NewRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		row := y * planes * bpr
+		for b := 0; b < bpr; b++ {
 			for bit := 0; bit < 8; bit++ {
 				sh := uint(7 - bit)
 				idx := 0
-				for p := 0; p < 4; p++ {
-					idx |= int((pl[p]>>sh)&1) << uint(3-p)
+				for p := 0; p < planes; p++ {
+					idx |= int((d[row+p*bpr+b]>>sh)&1) << uint(planes-1-p)
 				}
 				im.Set(b*8+bit, y, ega[idx])
 			}
+		}
+	}
+	return im
+}
+
+// renderLinear 畫每像素一個位元組的 256 色畫面。調色盤還沒解，
+// 先用灰階把版面畫出來——判斷版面對不對只需要看得出形狀。
+func renderLinear(d []byte, w, h int) *image.RGBA {
+	im := image.NewRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			v := d[y*w+x]
+			im.Set(x, y, color.RGBA{v, v, v, 0xff})
 		}
 	}
 	return im
@@ -93,12 +102,24 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("解出 %d 位元組\n", len(d))
-	if len(d) != planeLen*4 {
-		fmt.Fprintf(os.Stderr, "長度不是 %d，版面假設不成立\n", planeLen*4)
-		os.Exit(1)
+	for _, m := range modes {
+		want := m.w * m.h
+		if m.planes > 0 {
+			want = want / 8 * m.planes
+		}
+		if want != len(d) {
+			continue
+		}
+		var im *image.RGBA
+		if m.planes > 0 {
+			im = renderPlanar(d, m.w, m.h, m.planes)
+		} else {
+			im = renderLinear(d, m.w, m.h)
+		}
+		save(im, os.Args[2]+".png")
+		fmt.Printf("%s → %s\n", m.name, os.Args[2]+".png")
+		return
 	}
-	for _, m := range []string{"planar", "rowint"} {
-		save(render(d, m), os.Args[2]+"-"+m+".png")
-		fmt.Println("寫出", os.Args[2]+"-"+m+".png")
-	}
+	fmt.Fprintf(os.Stderr, "長度 %d 對不上任何已知的版面\n", len(d))
+	os.Exit(1)
 }

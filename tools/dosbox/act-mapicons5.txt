@@ -1,0 +1,38 @@
+# 彈出選單的觸發條件：同一格連點三次，每次都截圖，中間不做別的事。
+#
+# 已知彈出選單長什麼樣（`Sheriff`／`Fire` 兩列，圖示右邊，遊戲座標
+# 約 x 279–347、y 239–271），但兩次實測的觸發條件對不起來——
+# 一次從乾淨狀態點第 9 格就跳出來，另一次同樣的點法沒有。
+wait 3
+click 316 240
+wait 5
+click 240 253
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+shot 00-base
+click 257 255
+wait 3
+shot 01-fp1
+click 257 255
+wait 3
+shot 02-fp2
+click 257 255
+wait 3
+shot 03-fp3
+mark 換人口那一格，同樣連點三次
+click 257 130
+wait 3
+shot 04-pop1
+click 257 130
+wait 3
+shot 05-pop2
+click 257 130
+wait 3
+shot 06-pop3

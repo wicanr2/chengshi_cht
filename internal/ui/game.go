@@ -195,6 +195,14 @@ type Game struct {
 	screen             screenMode
 	// loadFiles 是「讀取舊有檔案」列出來的城市檔。
 	loadFiles          []string
+	// zoom 是**縮小**倍數：1 是原版的一格 16 像素，2 是減半，4 再減半。
+	// 原版沒有這個功能，見 ZoomTile 的說明。
+	zoom int
+	// mapPopup 是 City Form 裡按住共用圖示跳出來的小選單，−1 代表沒開。
+	// mapSubArmed 分辨「按住拉開」與「點一下拉開」：拉開的那一下放開時
+	// 不能把選單收掉，否則點一下永遠看不到它。
+	mapPopup   int
+	mapSubArmed bool
 	titlePic, scenPic  *ebiten.Image
 	// 前往災區之前的鏡頭。參考附表寫「再按一次返回原地」，所以 Tab 是
 	// 來回切換，不是單程。backX 為 −1 代表現在人在原地。
@@ -219,7 +227,7 @@ func (g *Game) SetSavePath(p string) { g.savePath = p }
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential,
 		animate: true, fastAnimate: true, menuRow: -1, graphYears: 10,
-		backX: -1}
+		backX: -1, zoom: 1, mapPopup: -1}
 	// 一開始六條曲線都畫，跟原版一樣。
 	for i := range g.graphOn {
 		g.graphOn[i] = true
@@ -254,12 +262,65 @@ func (g *Game) resetCamera() {
 
 func (g *Game) tilesAcross() int {
 	vw, _ := g.editViewSize()
-	return vw / g.tiles.Size
+	return vw / g.tileSize()
 }
 
 func (g *Game) tilesDown() int {
 	_, vh := g.editViewSize()
-	return vh / g.tiles.Size
+	return vh / g.tileSize()
+}
+
+// tileSize 是目前一格佔幾個原版像素。縮小之後變小，其餘的版面不動——
+// 地圖區的邊界是原版量出來的，不跟著縮。
+func (g *Game) tileSize() int {
+	z := g.zoom
+	if z < 1 {
+		z = 1
+	}
+	sz := g.tiles.Size / z
+	if sz < 1 {
+		sz = 1
+	}
+	return sz
+}
+
+// zoomLevels 是可選的縮小倍數。上限 4 的理由：一格 4 像素時整張 120×100
+// 的地圖是 480×400 原版像素，已經超過畫面本身，再縮沒有意義。
+var zoomLevels = []int{1, 2, 4}
+
+// setZoom 換縮小倍數，並把鏡頭中心留在原地——否則縮小之後畫面會跳到
+// 左上角，玩家得重新找自己剛才在看哪裡。
+func (g *Game) setZoom(z int) {
+	old := g.zoom
+	if old < 1 {
+		old = 1
+	}
+	if z < 1 {
+		z = 1
+	}
+	if z == old {
+		return
+	}
+	cx := g.camX + g.tilesAcross()/2
+	cy := g.camY + g.tilesDown()/2
+	g.zoom = z
+	g.LookAt(cx, cy)
+	g.setMessage(fmt.Sprintf("縮小 1／%d", z))
+}
+
+// stepZoom 往清單的下一／上一級走。
+func (g *Game) stepZoom(d int) {
+	cur := 0
+	for i, z := range zoomLevels {
+		if z == g.zoom {
+			cur = i
+		}
+	}
+	i := cur + d
+	if i < 0 || i >= len(zoomLevels) {
+		return
+	}
+	g.setZoom(zoomLevels[i])
 }
 
 // OpenWindow 依名稱開一個視窗。給 -window 旗標與截圖驗收用。
@@ -505,6 +566,22 @@ func (g *Game) handleKeys() {
 	if g.win != winNone {
 		step = 0 // 視窗開著時方向鍵歸視窗用
 	}
+	// 縮小／放大。**這是 remake 加的功能，原版沒有**（原版的編輯視窗永遠
+	// 一格 16 像素）。鍵位選 `-`／`=` 而不是原版參考附表上的 `+`／`-`：
+	// 那兩個鍵在原版是「在視窗的可點處之間循環」，留給它。
+	if g.win == winNone && g.newCityDlg == nil && g.picture == "" &&
+		!ebiten.IsKeyPressed(ebiten.KeyControl) &&
+		!ebiten.IsKeyPressed(ebiten.KeyAlt) {
+		if inpututil.IsKeyJustPressed(ebiten.KeyMinus) ||
+			inpututil.IsKeyJustPressed(ebiten.KeyNumpadSubtract) {
+			g.stepZoom(1)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEqual) ||
+			inpututil.IsKeyJustPressed(ebiten.KeyNumpadAdd) {
+			g.stepZoom(-1)
+		}
+	}
+
 	dx, dy := scrollDir()
 	g.camX += dx * step
 	g.camY += dy * step
@@ -741,6 +818,14 @@ func (g *Game) adjustFunding(d float64) {
 
 func (g *Game) handleMouse() {
 	mx, my := ebiten.CursorPosition()
+	// 滾輪縮放：只在編輯視窗的地圖區上有效，其他地方滾輪留給視窗自己用。
+	if _, wy := ebiten.Wheel(); wy != 0 && g.win == winNone && g.inEditView(mx, my) {
+		if wy < 0 {
+			g.stepZoom(1)
+		} else {
+			g.stepZoom(-1)
+		}
+	}
 	if g.handleNewCityMouse(mx, my) {
 		return
 	}
@@ -759,6 +844,10 @@ func (g *Game) handleMouse() {
 	// 疊放順序：點到哪個視窗哪個就到前面。要放在工具盤與地圖之前，
 	// 否則「把被蓋住的編輯視窗叫到前面」那一下會直接蓋出一格東西。
 	if just && g.raiseWindowAt(mx, my) {
+		return
+	}
+	// City Form 的圖層圖示（含兩個共用圖示的小選單）。
+	if g.handleMapIconMouse(mx, my, just, pressed) {
 		return
 	}
 	// 工具盤：編輯視窗左緣，2 欄 × 7 列（classic.go）。
@@ -818,7 +907,7 @@ func (g *Game) handleMouse() {
 		return
 	}
 	g.dragging = true
-	px := g.tiles.Size * tileScale
+	px := g.tileSize() * tileScale
 	tx := g.camX + (mx-editViewX*UIScale)/px
 	ty := g.camY + (my-editViewY*UIScale)/px
 	g.applyTool(tx, ty)
@@ -1010,4 +1099,50 @@ func (g *Game) save() {
 		return
 	}
 	g.setMessage("已存檔：" + p)
+}
+
+// handleMapIconMouse 處理 City Form 左緣那九個圖層圖示。
+//
+// 原版的兩個共用圖示是**按住式**的：按住不放跳出兩列的小選單，
+// 拖到哪一列放開就選哪一列（2026-08-30 實測，`workplace/dosbox/mi6-*.png`）。
+// 快速點一下等於選中游標所在的第一列，所以看起來像「直接選了警力範圍」——
+// 這也是為什麼「再點一次會不會換」量到零像素：它根本不是切換式的。
+//
+// remake 兩種都吃：按住拖曳（原版），或點一下拉開、再點一下選中。
+func (g *Game) handleMapIconMouse(mx, my int, just, pressed bool) bool {
+	if g.mapClosed || g.win != winNone {
+		return false
+	}
+	if g.mapPopup >= 0 {
+		row := g.mapSubRowAt(g.mapPopup, mx, my)
+		// 放開時停在某一列上 → 選它；停在別處 → 收起來。
+		if !pressed {
+			if row >= 0 {
+				g.SetLayer(mapIconLayers[g.mapPopup][row])
+				g.mapPopup = -1
+			} else if g.mapSubArmed {
+				g.mapPopup = -1
+			}
+			g.mapSubArmed = true
+			return true
+		}
+		if just && row < 0 && mapIconAt(mx, my) != g.mapPopup {
+			g.mapPopup = -1
+		}
+		return true
+	}
+	if !just {
+		return false
+	}
+	i := mapIconAt(mx, my)
+	if i < 0 {
+		return false
+	}
+	if len(mapIconLayers[i]) > 1 {
+		g.mapPopup = i
+		g.mapSubArmed = false
+		return true
+	}
+	g.SetLayer(mapIconLayers[i][0])
+	return true
 }

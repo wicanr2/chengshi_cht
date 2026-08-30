@@ -35,6 +35,9 @@ type TileSet struct {
 	// 而介面圖的黑色是圖本身的一部分——工具盤的格線、按鈕的陰影都是黑的，
 	// 當成透明的話畫出來會缺一塊，而且缺得很像「圖解錯了」。
 	UI [][]*ebiten.Image
+	// zoomed 是縮小過的圖塊，鍵是縮小倍數（2 ＝ 邊長減半）。
+	// 這是 remake 自己加的「縮小」功能用的，原版沒有——見 ZoomTile。
+	zoomed map[int][]*ebiten.Image
 }
 
 // 介面美術在哪一庫。證據：docs/formats/03-pgf-graphics.md §5之二。
@@ -282,6 +285,57 @@ func (t *TileSet) TileImage(n int) *ebiten.Image {
 		return t.Tiles[0]
 	}
 	return t.Tiles[n]
+}
+
+// ZoomTile 回傳縮小 z 倍的圖塊（z ＝ 1 就是原尺寸）。
+//
+// **這是 remake 加的功能，原版沒有**：原版的編輯視窗永遠是一格 16 像素，
+// 當年的 EGA 畫面塞不下更多。這裡讓玩家把整座城市一次看完。
+//
+// ⚠ 縮小要**先把圖塊縮成小圖再放大到畫布倍率**，不能直接用非整數倍
+// 縮放畫上去。畫布是 3 倍，16 像素的圖塊縮一半是 24 螢幕像素——
+// 直接縮的話每個來源像素會變成 1.5 個螢幕像素，同一條線有的兩點寬、
+// 有的一點寬，整張圖看起來像壞掉。先縮成 8×8 再整數放大就不會。
+//
+// 取樣用最近鄰（取每 z×z 塊的左上角）。平均會把點陣圖糊掉——
+// 原版的圖塊本來就是硬邊的，糊掉之後道路與電線幾乎看不見。
+func (t *TileSet) ZoomTile(n, z int) *ebiten.Image {
+	if z <= 1 {
+		return t.TileImage(n)
+	}
+	if t.zoomed == nil {
+		t.zoomed = map[int][]*ebiten.Image{}
+	}
+	set, ok := t.zoomed[z]
+	if !ok {
+		set = t.buildZoom(z)
+		t.zoomed[z] = set
+	}
+	if n < 0 || n >= len(set) {
+		return set[0]
+	}
+	return set[n]
+}
+
+// buildZoom 把整套圖塊縮小 z 倍，一次做完存起來。
+func (t *TileSet) buildZoom(z int) []*ebiten.Image {
+	sz := t.Size / z
+	if sz < 1 {
+		sz = 1
+	}
+	out := make([]*ebiten.Image, len(t.Tiles))
+	for i, src := range t.Tiles {
+		dst := ebiten.NewImage(sz, sz)
+		b := src.Bounds()
+		for y := 0; y < sz; y++ {
+			for x := 0; x < sz; x++ {
+				sx, sy := b.Min.X+x*z, b.Min.Y+y*z
+				dst.Set(x, y, src.At(sx, sy))
+			}
+		}
+		out[i] = dst
+	}
+	return out
 }
 
 // styleNameZH 是六種城市風格的中文名。

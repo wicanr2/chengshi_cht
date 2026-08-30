@@ -15,8 +15,9 @@ import (
 // 樹林是網點、道路是一條線。那 960 張縮圖躺在 .PGF 宣告的圖形庫之後，
 // 見 internal/assets/pgfmini.go 與 docs/formats/03-pgf-graphics.md §7。
 //
-// ⚠ 只有「都市型態」圖層用縮圖。其餘九個資料圖層畫的是密度色階，
-// 原版也一樣是純色方塊。
+// ⚠ **資料圖層也是畫在縮圖上面的**：原版先畫整張 City Form（`drawAll`），
+// 再把值夠高的格子蓋上色階（`maybeDrawRect`，值太低就 return）。
+// 所以人口分佈圖上看得到底下的泥土、樹林與水，不是一片純色。
 
 // minimap 是畫好的全市地圖，重畫一次上傳一次。
 //
@@ -45,15 +46,19 @@ func (g *Game) minimapImage() (*ebiten.Image, int, int) {
 	m := g.mini
 	stride := m.buf.Stride
 	px := m.buf.Pix
-	useMini := g.layer == layerCityForm && g.tiles != nil && g.tiles.Mini != nil
+	hasMini := g.tiles != nil && g.tiles.Mini != nil
 	for ty := 0; ty < sim.WorldY; ty++ {
 		for tx := 0; tx < sim.WorldX; tx++ {
 			var src []color.RGBA
 			var flat color.RGBA
-			if useMini {
+			// 色階蓋不到的格子畫縮圖，蓋得到的畫純色——與原版
+			// 「先 drawAll 再 maybeDrawRect」同一個結果。
+			if c, ok := g.overlayColor(tx, ty); ok {
+				flat = c
+			} else if hasMini {
 				src = g.tiles.MiniColors(g.world.TileNum(tx, ty))
 			}
-			if src == nil {
+			if src == nil && flat == (color.RGBA{}) {
 				flat = g.layerColor(tx, ty)
 			}
 			for y := 0; y < mh; y++ {

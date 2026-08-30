@@ -1,0 +1,6 @@
+# 其他顯示模式的招牌畫面基準：只要開機那一幕。
+wait 5
+shot 00-title
+click 316 240
+wait 5
+shot 01-scen
