@@ -1,0 +1,30 @@
+# 裁決年份：載入達斯維利 → 關掉 City Form 視窗讓編輯視窗標題列露出來
+# → 截圖（標題列右邊是月＋年）→ 存檔帶出來對 CityTime。
+wait 3
+click 316 240
+wait 5
+click 402 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+c
+wait 2
+shot 00-titlebar
+key ctrl+u
+wait 2
+shot 01-eval
+key ctrl+c
+wait 2
+key ctrl+s
+wait 3
+click 328 80
+wait 3
+click 292 191
+wait 5
+snap D0
+wait 2
+shot 02-after

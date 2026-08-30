@@ -1,0 +1,43 @@
+# 裁決：原版顯示的年份與存檔的 CityTime 的關係。
+# 開新城市 → 打開 Auto-Budget 與關災難 → 催到最快跑一段 →
+# 同一刻截評估視窗（標題含年份）與編輯視窗標題列（月＋年）→ 存檔帶出來。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 2
+press 252 10
+wait 1
+move 233 45
+wait 1
+release
+wait 2
+press 404 10
+wait 1
+move 388 128
+wait 1
+release
+wait 2
+key 4
+wait 40
+key 0
+wait 2
+shot 01-paused
+key ctrl+u
+wait 3
+shot 02-eval
+key ctrl+c
+wait 2
+key ctrl+s
+wait 3
+click 328 80
+wait 3
+click 292 191
+wait 5
+snap Y
+wait 2
+shot 03-after-save
