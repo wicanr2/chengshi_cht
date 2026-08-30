@@ -664,11 +664,28 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 			x+6*UIScale, y+line*6+4*UIScale+i*line, colText)
 	}
 
+	// 七列，順序照原版。實拍：`workplace/dosbox/ue-20-eval.png`
+	//
+	//	Population        0
+	//	Net Migration     0
+	//	(last year)
+	//	Assessed Value  $0
+	//	Category:VILLAGE
+	//	Game Level:Easy
+	//	   Overall CityScore (0 - 1000)
+	//	current score:annual change
+	//
+	// ⚠ **`(last year)` 是「Net Migration」標籤的第二行**，不是另一個數字
+	// ——原版把它折成兩行是因為欄寬不夠。中文一行放得下，所以併回去。
+	// ⚠ **`Game Level` 先前漏了**。說明書 p.54 的統計數據表列了它
+	// （`docs/manual-cht/p23-58-operations.md`），實拍也有，而這裡沒畫。
+	// 等級的譯名沿用開新城市對話框（說明書 p.11）。
 	stats := [][2]string{
 		{"人口總數", fmt.Sprintf("%d", w0.Eval.CityPop)},
-		{"遷出入數", fmt.Sprintf("%d", w0.Eval.DeltaCityPop)},
+		{"遷出入數（去年）", fmt.Sprintf("%d", w0.Eval.DeltaCityPop)},
 		{"市有財產總數", fmt.Sprintf("$%d", w0.Eval.CityAssValue)},
 		{"城市類別", g.txt.S(i18n.SecClass, clamp(w0.CityClass, 0, 5))},
+		{"遊戲等級", levelNames[clamp(w0.GameLevel, 0, 2)]},
 		{"整體成績", fmt.Sprintf("%d", w0.CityScore)},
 		{"年度成績", fmt.Sprintf("%+d", w0.Eval.DeltaCityScore)},
 	}

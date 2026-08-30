@@ -1639,3 +1639,37 @@ ASIA 的 `14.32`（`Bad Smell` → 惡臭）**是改過的**，所以不是整�
 接上檢查 `TestNoFormatSpecifiersInMessages`：既然訊息檔本來就沒有格式符，
 **譯文裡也不該有**。譯文多一個 `%s` 不會被任何既有測試抓到，
 但遊戲裡會原樣印出來。
+
+### 評估視窗漏了一列：遊戲等級
+
+順著「執行檔內硬編碼是第三個翻譯來源」往下查，把玩家看得到的那批字串
+逐條對 remake。二十個程度詞（`Sparse`／`Severe`／`Rapid`…）早就做好而且
+對過原版截圖（`internal/ui/query.go`），但**評估視窗少一列**。
+
+原版實拍（`workplace/dosbox/ue-20-eval.png`）的 STATISTICS 面板：
+
+```
+Population        0
+Net Migration     0
+(last year)
+Assessed Value  $0
+Category:VILLAGE
+Game Level:Easy
+   Overall CityScore (0 - 1000)
+current score:annual change
+     716            216
+```
+
+軟體世界說明書 p.54 的表也列了 `Game Level 遊戲等級`
+（`docs/manual-cht/p23-58-operations.md`）。**兩份一手資料都有，而 remake 沒畫。**
+
+一併釐清：**`(last year)` 是「Net Migration」標籤的第二行，不是另一個數字**
+——原版折成兩行是因為欄寬不夠。中文一行放得下，所以併成「遷出入數（去年）」。
+
+改完七列，等級的譯名沿用開新城市對話框（說明書 p.11 的簡易／適中／艱難）。
+截圖驗收：`workplace/shots/eval-new.png`，七列齊、欄位對齊沒爆版。
+
+> 這一列是怎麼漏的：評估視窗的其他六列都有對應的 `Eval` 欄位，
+> **而遊戲等級不在 `Eval` 裡，它在 `World.GameLevel`**。照著結構體欄位
+> 一個一個畫下來的話，剛好就會漏掉它——**漏的不是資料，是「這個欄位不在
+> 我正在讀的那個結構體裡」**。
