@@ -40,6 +40,9 @@ const (
 	winSpeed
 	// winPower 是工具盤發電廠那一格的副選單（訊息檔第 5 段）。
 	winPower
+	// winLoad 是「讀取舊有檔案」的檔案清單（同段第 8 筆）。原版開的是
+	// 檔名對話框；這裡列出存檔目錄裡的 `.cty`，上下鍵選、Enter 讀。
+	winLoad
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -118,6 +121,7 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	// 它要放得下十八行 15 原版像素的字 ＋ 條款要求的 Required Notice。
 	winAbout:  {8, 20, 624, 326},
 	winSaveAs: {120, 90, 400, 150},
+	winLoad:   {120, 40, 400, 240},
 }
 
 // winFrame 回傳目前視窗的外框（螢幕像素）。玩家搬過的話用搬過的位置。
@@ -245,6 +249,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecSysMenu, 0)
 	case winSaveAs:
 		title = g.txt.S(i18n.SecSysMenu, 9)
+	case winLoad:
+		title = g.txt.S(i18n.SecSysMenu, 8)
 	case winSpeed:
 		title = g.txt.S(i18n.SecOptMenu, 4)
 	case winPower:
@@ -275,7 +281,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winSaveAs:
 		g.drawSaveAsWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
-	case winSystem, winScenario, winStyle:
+	case winSystem, winScenario, winStyle, winLoad:
 		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	}
 }

@@ -193,6 +193,8 @@ type Game struct {
 	gotoX, gotoY int
 	// 招牌與劇本選單（原版的 `.PPF` 兩幅畫面）。screen 是「現在在哪一幕」。
 	screen             screenMode
+	// loadFiles 是「讀取舊有檔案」列出來的城市檔。
+	loadFiles          []string
 	titlePic, scenPic  *ebiten.Image
 	// 前往災區之前的鏡頭。參考附表寫「再按一次返回原地」，所以 Tab 是
 	// 來回切換，不是單程。backX 為 −1 代表現在人在原地。
@@ -277,6 +279,8 @@ func (g *Game) OpenWindow(name string) bool {
 		g.openSaveAs()
 	case "newcity":
 		g.openNewCity()
+	case "load":
+		g.load()
 	default:
 		return false
 	}
@@ -674,7 +678,7 @@ func (g *Game) handleWindowKeys() {
 				g.layer = mapLayer(i)
 			}
 		}
-	case winSystem, winScenario, winStyle, winSpeed, winPower:
+	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad:
 		g.handleSysMenuKeys()
 	case winSaveAs:
 		g.handleSaveAsKeys()

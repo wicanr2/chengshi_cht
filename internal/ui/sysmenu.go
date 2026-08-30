@@ -10,6 +10,11 @@ package ui
 // 用的是 translations/glossary.md §十 登記的新譯。
 
 import (
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
@@ -67,6 +72,8 @@ func (g *Game) sysMenuLen() int {
 		return 5
 	case winPower:
 		return len(powerTools)
+	case winLoad:
+		return len(g.loadFiles)
 	}
 	return 0
 }
@@ -84,6 +91,8 @@ func (g *Game) sysMenuLabel(i int) string {
 		return trimMenu(g.txt.S(i18n.SecSpeed, i))
 	case winPower:
 		return trimMenu(g.txt.S(i18n.SecPowerSub, powerTools[i].msg))
+	case winLoad:
+		return filepath.Base(g.loadFiles[i])
 	}
 	return ""
 }
@@ -109,6 +118,8 @@ func (g *Game) handleSysMenuKeys() {
 // sysMenuPick 執行目前選單的第 i 列。
 func (g *Game) sysMenuPick(i int) {
 	switch g.win {
+	case winLoad:
+		g.loadFile(g.loadFiles[i])
 	case winScenario:
 		g.loadScenario(i + 1)
 	case winStyle:
@@ -195,19 +206,56 @@ func (g *Game) newCity() {
 	g.openNewCity()
 }
 
-// load 讀存檔。原版的 Ctrl-L 會開檔名對話框，remake 讀的是 -save 指的
-// 那一個檔——對「存了檔想接著玩」這件事夠用，而且不必做檔案瀏覽器。
+// load 是「讀取舊有檔案」（`Ctrl-L`）。原版開的是檔名對話框，這裡列出
+// 存檔目錄裡的城市檔讓玩家挑——DOS 版的存檔與 `.cty` 都吃得下
+// （`internal/game/save.go` 的 normalizeCityBytes 認三種長度）。
+//
+// 目錄裡只有一個檔的時候不必挑，直接讀；一個都沒有就說一聲。
 func (g *Game) load() {
-	p := g.savePath
-	if p == "" {
-		p = "city.cty"
+	g.loadFiles = g.cityFilesInSaveDir()
+	switch len(g.loadFiles) {
+	case 0:
+		g.setMessage("存檔目錄裡沒有城市檔")
+		g.win = winNone
+	case 1:
+		g.loadFile(g.loadFiles[0])
+	default:
+		g.openSubMenu(winLoad)
 	}
+}
+
+// cityFilesInSaveDir 列出存檔目錄裡的城市檔，照檔名排序。
+func (g *Game) cityFilesInSaveDir() []string {
+	dir := "."
+	if g.savePath != "" {
+		dir = filepath.Dir(g.savePath)
+	}
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, e := range ents {
+		if e.IsDir() {
+			continue
+		}
+		if strings.EqualFold(filepath.Ext(e.Name()), ".cty") {
+			out = append(out, filepath.Join(dir, e.Name()))
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// loadFile 讀一個城市檔並換掉整個世界。
+func (g *Game) loadFile(p string) {
 	w, err := game.LoadCity(p)
 	if err != nil {
 		g.setMessage("讀檔失敗：" + err.Error())
 		return
 	}
 	g.swapWorld(w)
+	g.savePath = p
 	g.setMessage("已讀取：" + p)
 }
 

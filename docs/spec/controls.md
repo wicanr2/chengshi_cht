@@ -62,7 +62,7 @@
 | 項目 | 現況 | 為什麼 |
 |---|---|---|
 | 原版有**五段**速度，`SimSpeed` 只有四段 | 五段都接得起來 | **已解。** Micropolis 的 `setSpeed` 把參數夾在 0–3（`w_util.c:145`），但它另外有 `setSkips`／`sim_skips`（`sim.c:71`）——**一個畫格多跑幾次模擬**。第五段「最快」就是 `SimSpeed 3` ＋ 一個畫格跑三次，不是第五個速率。接在 `internal/ui/game.go` 的 `simSpeedOf`／`simFramesPerTick` |
-| `Ctrl-L` 讀取城市 | **已接**（讀 `-save` 指的那個檔）| 原版會開檔名對話框；remake 讀固定路徑，對「存了檔想接著玩」夠用，不必做檔案瀏覽器 |
+| `Ctrl-L` 讀取城市 | **已接**（2026-08-30 改成清單）| 原版開的是檔名對話框；remake 列出存檔目錄裡的 `.cty`，上下鍵選、Enter 讀。只有一個就直接讀，一個都沒有會說一聲 |
 | `Ctrl-X` 離開 | **已接** | |
 | `Tab` 前往災區 | **已接** | 目標是上一則帶座標的訊息（`MesX`／`MesY`）。參考附表寫「再按一次返回原地」，所以做成來回切換 |
 | 數字鍵盤九向**移游標**、`ScrollLock`、`Ins`／`Del` 當滑鼠鍵 | 不做 | 原版那條路是**給沒有滑鼠的機器**的，而且 2026-08-30 實測：DOSBox 裡裝了滑鼠驅動時這些鍵**在原版自己身上就沒有作用**（見 §六）。remake 一定有滑鼠 |
@@ -97,7 +97,7 @@
 | 讀取圖形集 | 副選單，七個（`base` ＋ 六個資料片）。**圖塊與文字一起換**——古代亞洲的發電廠叫「水井」，只換圖不換字是半套 |
 | 讀取悲情城市 | 副選單，八個劇本 |
 | 重新建造一新城市 | 開「市名欄 ＋ 技術等級」對話框（照原版版面），按確定才產生新地圖。資金隨等級：簡易 $20,000、適中 $10,000、艱難 $5,000 |
-| 讀取舊有檔案 `Ctrl-L` | 讀 `-save` 指的那個檔 |
+| 讀取舊有檔案 `Ctrl-L` | 列出存檔目錄裡的城市檔，上下鍵選 |
 | 儲存現有城市 `Ctrl-S` | 有 |
 | 跳出遊戲 `Ctrl-X` | 有 |
 
@@ -147,8 +147,13 @@
 |---|---|
 | SYSTEM | `About SIM CITY`／`Print`／`Load Graphics`／`Load Scenario`／`Start New City`／`Load City Ctrl-L`／`Save City as ...`／`Save City Ctrl-S`／`Exit Ctrl-X` |
 | OPTIONS | **`Auto-Plow Ctrl-A`**／`Auto-Budget`／`Auto-Goto`／`Sound On`／`Speed`／`Animate all`／`Frequent animation` |
-| DISASTERS | `Fire`／`Flood`／`Balloon Crash`／`Twister`／`Earthquake`／`Tumbleweed` |
-| WINDOWS | `Maps Ctrl-M`／`Graphs Ctrl-G`／`Budget Ctrl-B`／`Edit Ctrl-E`／`Evaluation Ctrl-U`／`Close Ctrl-C`／`Hide Ctrl-H` |
+| DISASTERS | `Fire`／`Flood`／`Balloon Crash`／`Twister`／`Earthquake`／`Tumbleweed`／分隔線／**`Disable`** |
+| WINDOWS | `Maps Ctrl-M`／`Graphs Ctrl-G`／`Budget Ctrl-B`／`Edit Ctrl-E`／`Evaluation Ctrl-U`／`Close Ctrl-C`／`Hide Ctrl-H`／**`Position Ctrl-P`**／**`Resize (Edit) Ctrl-R`** |
+
+⚠ 加粗的三筆是**後來才補上的**：上面那一輪的截圖把選單底部切掉了，
+於是 `DISASTERS` 少了「取消災難」、`WINDOWS` 少了兩列。訊息檔第 20／21 段
+一直都有它們——**選單內容要以訊息檔為準，截圖只作佐證**。
+完整的選單畫面在 `workplace/dosbox/wm-00-winmenu.png`（按住標題不放才拉得開）。
 
 ⚠ 選單上寫的是 **`Auto-Plow`**，不是手冊正文說的 `Auto-Bulldoze`。
 畫面上的字才是玩家看到的字。
