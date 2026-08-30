@@ -1,0 +1,15 @@
+# 單鍵裁決：F3 開哪個選單。按下**立刻**截圖，不等、不用 Escape 復位。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 3
+click 302 196
+wait 4
+shot 00-clean
+key F3
+shot 01-F3-now
+wait 1
+shot 02-F3-1s

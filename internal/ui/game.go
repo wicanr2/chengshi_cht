@@ -463,27 +463,32 @@ func (g *Game) handleKeys() {
 			}
 		}
 	}
-	// F1–F5 是本專案舊版用的別名，保留。原版只有 0–4。
-	for i, k := range []ebiten.Key{
-		ebiten.KeyF1, ebiten.KeyF2, ebiten.KeyF3, ebiten.KeyF4, ebiten.KeyF5,
-	} {
-		if inpututil.IsKeyJustPressed(k) {
-			g.setSpeed(i)
+	// 選單：原版有兩組鍵。`Alt` ＋ 首字母（說明書 p.29–35），
+	// 以及 **`F2`–`F5`**（手冊寫「沿用 Tandy Deskmate」）。
+	//
+	// ⚠ `F2`–`F5` **先前被拿去當速度的別名**，那和原版衝突。
+	// 兩份一手資料對「哪個 F 鍵開哪個選單」說法不同，2026-08-30 用 DOS 原版
+	// 逐鍵實測裁決（`tools/dosbox/act-m-F*.txt`，畫面存在
+	// `workplace/dosbox/mF*-menu.png`）：
+	//
+	//	F1 不開選單／F2 SYSTEM／F3 OPTIONS／F4 DISASTERS／F5 WINDOWS
+	//
+	// 與官方英文手冊一致；軟體世界《參考附表》的 `F1F2` 系統／`F3F4` 災難／
+	// `F5F6` 功能對這個版本**不成立**（註記在 `docs/manual-cht/ref-card.md`）。
+	// 速度鍵是 `0`–`4`，那才是原版的（訊息檔第 19 段自己印著）。
+	menuKeys := []ebiten.Key{ebiten.KeyS, ebiten.KeyO, ebiten.KeyD, ebiten.KeyW}
+	fKeys := []ebiten.Key{ebiten.KeyF2, ebiten.KeyF3, ebiten.KeyF4, ebiten.KeyF5}
+	alt := ebiten.IsKeyPressed(ebiten.KeyAlt)
+	for i := range menuKeys {
+		hit := inpututil.IsKeyJustPressed(fKeys[i]) ||
+			(alt && inpututil.IsKeyJustPressed(menuKeys[i]))
+		if !hit {
+			continue
 		}
-	}
-
-	// 選單：原版用 Alt 拉下來（說明書 p.29–35）。四個標題各一個鍵。
-	if ebiten.IsKeyPressed(ebiten.KeyAlt) {
-		for i, k := range []ebiten.Key{
-			ebiten.KeyS, ebiten.KeyO, ebiten.KeyD, ebiten.KeyW,
-		} {
-			if inpututil.IsKeyJustPressed(k) {
-				if g.openMenu == i+1 {
-					g.openMenu = 0
-				} else {
-					g.openMenu, g.menuRow = i+1, g.firstMenuRow(i)
-				}
-			}
+		if g.openMenu == i+1 {
+			g.openMenu = 0
+		} else {
+			g.openMenu, g.menuRow = i+1, g.firstMenuRow(i)
 		}
 	}
 

@@ -1,0 +1,18 @@
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 4
+click 311 189
+wait 3
+shot 00-clean
+key r
+shot 01-ctl-r
+wait 1
+shot 02-ctl-r-1s
+key F3
+shot 03-F3-now
+wait 1
+shot 04-F3-1s

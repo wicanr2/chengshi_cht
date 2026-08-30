@@ -1,0 +1,16 @@
+# 開場抄 act-ingame.txt（已知能進到遊戲中）
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 4
+shot 00-clean
+key r
+shot 01-ctl-r
+wait 1
+key F2
+shot 02-F2-now
+wait 1
+shot 03-F2-1s
