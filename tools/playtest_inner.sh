@@ -230,7 +230,35 @@ if [ -s "$SAVE" ]; then
   grep -q "讀取城市檔" /tmp/game.log && pass "讀檔路徑走通" || fail "讀檔沒有回報"
 fi
 
-echo "== 第六段：劇本（另一種風格）=="
+echo "== 第六段：建造新城市對話框 =="
+# 原版的「建造新城市」要先選市名與技術等級才進得了遊戲（說明書 p.11）。
+# 判準不是畫面，是**存檔裡的資金**：艱難的起始資金是 $5,000
+# （Micropolis w_util.c:177），簡易是 $20,000——選錯等級一眼就看得出來。
+NCSAVE=/tmp/pt/hard.cty
+rm -f "$NCSAVE"
+run_game -window newcity -save "$NCSAVE"
+sleep 1; shot 13-新城市對話框
+# 「艱難」那一列與「確定」鈕的原版座標見 internal/ui/newcity.go。
+xdotool mousemove $((284 * 3)) $((216 * 3)); sleep 0.05
+xdotool mousedown 1; sleep 0.15; xdotool mouseup 1; sleep 0.3
+shot 14-選艱難
+xdotool mousemove $((312 * 3)) $((245 * 3)); sleep 0.05
+xdotool mousedown 1; sleep 0.15; xdotool mouseup 1; sleep 0.5
+shot 15-新城市
+for i in $(seq 1 8); do key "ctrl+s"; [ -s "$NCSAVE" ] && break; sleep 0.5; done
+alive || fail "新城市對話框之後崩了"
+stop_game
+if [ -s "$NCSAVE" ]; then
+  NCSUM=$(go run ./cmd/simtool inspect "$NCSAVE")
+  echo "      $NCSUM"
+  ncfunds=$(echo "$NCSUM" | tr ' ' '\n' | grep '^funds=' | cut -d= -f2)
+  [ "$ncfunds" = 5000 ] && pass "艱難的起始資金 \$5,000" \
+    || fail "艱難的起始資金是 $ncfunds，應為 5000"
+else
+  fail "新城市沒存出檔"
+fi
+
+echo "== 第七段：劇本（另一種風格）=="
 run_game -scenario 5 -style asia
 sleep 1; shot 11-劇本簡介
 do_until 100000 "劇本簡介關得掉" key space

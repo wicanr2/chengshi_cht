@@ -189,14 +189,10 @@ func (g *Game) loadStyle(key string) {
 	g.setMessage(trimMenu(g.txt.S(i18n.SecSysMenu, 3)))
 }
 
-// newCity 產生一張新地圖。原版的「重新建造一新城市」還會問資金等級與
-// 難度，remake 目前用預設值（$20,000、簡單）——差異記在 controls.md。
+// newCity 開「建造新城市」對話框（市名欄 ＋ 技術等級），實作在 newcity.go。
+// 原版是從標題畫面進這個對話框；remake 沒有標題畫面，掛在系統選單同一項。
 func (g *Game) newCity() {
-	s := sim.RandomSeed()
-	w := sim.NewWorld(s)
-	w.GenerateMap(s, sim.DefaultTerrainParams())
-	w.DoSimInit()
-	g.swapWorld(w)
+	g.openNewCity()
 }
 
 // load 讀存檔。原版的 Ctrl-L 會開檔名對話框，remake 讀的是 -save 指的

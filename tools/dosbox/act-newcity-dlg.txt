@@ -1,0 +1,15 @@
+# 新城市的難度／城市名對話框長什麼樣子。
+wait 3
+shot 00-title
+click 200 197
+wait 5
+shot 01-after-new
+click 311 245
+wait 5
+shot 02-after-generate
+key Return
+wait 3
+shot 03-after-return
+click 311 190
+wait 3
+shot 04-ingame

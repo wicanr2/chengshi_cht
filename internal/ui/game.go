@@ -191,6 +191,9 @@ type Game struct {
 	// mini 是全市地圖的畫布快取，見 minimap.go。
 	mini *minimap
 
+	// newCityBox 是「建造新城市」對話框，nil 代表沒開。見 newcity.go。
+	newCityDlg *newCityBox
+
 	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
 	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
 	// 那是刻意的：那些訊息（爐心熔毀、彈劾、劇本簡介）必須被看到。
@@ -250,6 +253,8 @@ func (g *Game) OpenWindow(name string) bool {
 		g.win = winAbout
 	case "saveas":
 		g.openSaveAs()
+	case "newcity":
+		g.openNewCity()
 	default:
 		return false
 	}
@@ -376,6 +381,10 @@ func (g *Game) setMessage(s string) {
 }
 
 func (g *Game) handleKeys() {
+	// 新城市對話框是**強制回應**的：原版要選完等級與市名才進得了遊戲。
+	if g.handleNewCityKeys() {
+		return
+	}
 	// 下拉選單拉開時，鍵盤全部歸它——否則方向鍵會同時捲地圖。
 	if g.handleMenuKeys() {
 		return
@@ -660,6 +669,9 @@ func (g *Game) adjustFunding(d float64) {
 
 func (g *Game) handleMouse() {
 	mx, my := ebiten.CursorPosition()
+	if g.handleNewCityMouse(mx, my) {
+		return
+	}
 	if g.handleResizeMouse(mx, my) {
 		return
 	}
@@ -796,6 +808,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawWindow(screen)
 	g.drawPicture(screen)
 	g.drawMenu(screen)
+	g.drawNewCity(screen)
 }
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。

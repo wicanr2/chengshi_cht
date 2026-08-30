@@ -295,3 +295,19 @@ func (w *World) TestPowerBit(x, y int) bool {
 	i, m := PowerWord(x, y)
 	return w.PowerMap[i]&m != 0
 }
+
+// SetGameLevelFunds 設技術等級並給對應的起始資金。
+//
+// Micropolis — src/sim/w_util.c:177 SetGameLevelFunds()：
+// 簡易 $20,000、適中 $10,000、艱難 $5,000。等級本身還會影響災難機率、
+// 稅率推力、外部市場係數與道路維護費（見 disaster.go、census.go）。
+func (w *World) SetGameLevelFunds(level int) {
+	switch level {
+	case 1:
+		w.TotalFunds, w.GameLevel = 10000, 1
+	case 2:
+		w.TotalFunds, w.GameLevel = 5000, 2
+	default:
+		w.TotalFunds, w.GameLevel = 20000, 0
+	}
+}
