@@ -133,3 +133,47 @@ func TestWiringStatus(t *testing.T) {
 		}
 	}
 }
+
+// 試玩腳本自己算「格子座標 → 螢幕座標」，用的是寫死的地圖區原點與放大倍率。
+// 那三個數字跟 `internal/ui/classic.go` 的常數是**兩份**，改一邊不會有人提醒
+// 另一邊。這個測試比對兩邊的字面值。
+//
+// 2026-08-30 就這樣壞過一次：`editViewY` 從 54 訂正成 55（54 那一列是地圖區
+// 的白色外框，圖塊從 55 開始），腳本沒跟著改，於是每一次點擊都往下偏一像素。
+// **只有落在格線附近的那幾下會跨格**，所以症狀是「六格的道路只蓋出三格」，
+// 不是「點不到」——而其他二十幾項檢查照樣通過。
+//
+// ⚠ 這裡用文字比對而不是直接引用常數，因為 `internal/ui` 匯入 Ebiten，
+// 而 Ebiten 在沒有顯示裝置的環境會在 init 就 panic，那個套件放不了測試。
+func TestPlaytestOriginMatchesLayout(t *testing.T) {
+	root := repoRoot(t)
+	read := func(p string) string {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			t.Fatalf("讀不到 %s：%v", p, err)
+		}
+		return string(b)
+	}
+	src := read(filepath.Join(root, "internal", "ui", "classic.go"))
+	sh := read(filepath.Join(root, "tools", "playtest_inner.sh"))
+
+	pick := func(text, pat, what string) string {
+		m := regexp.MustCompile(pat).FindStringSubmatch(text)
+		if m == nil {
+			t.Fatalf("在 %s 裡找不到 %s（樣式 %s）", what, pat, what)
+		}
+		return m[1]
+	}
+	for _, c := range []struct{ name, goPat, shPat string }{
+		{"UIScale／UIS", `UIScale\s*=\s*(\d+)`, `UIS=(\d+)`},
+		{"editViewX／VIEWX", `editViewX\s+=\s+(\d+)`, `VIEWX=(\d+)`},
+		{"editViewY／VIEWY", `editViewY\s+=\s+(\d+)`, `VIEWY=(\d+)`},
+	} {
+		g := pick(src, c.goPat, "internal/ui/classic.go")
+		s := pick(sh, c.shPat, "tools/playtest_inner.sh")
+		if g != s {
+			t.Errorf("%s：Go 是 %s、試玩腳本是 %s —— 兩邊要一致，"+
+				"否則試玩的每一次點擊都會偏掉", c.name, g, s)
+		}
+	}
+}

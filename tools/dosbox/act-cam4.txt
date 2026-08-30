@@ -1,0 +1,30 @@
+# 量原版載入劇本之後的初始鏡頭：立刻暫停、存檔、截圖。
+# 存出來的 .cty 就是「畫面上這一刻的地圖」，拿它當基準定位鏡頭，
+# 中間沒有任何模擬分歧。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+key ctrl+c
+wait 2
+# 用方向鍵把鏡頭頂到左上角——會被地圖邊界夾住，所以鏡頭一定是 (0,0)。
+# 這樣就不必猜原版載入後的初始鏡頭是多少。
+keyrep Up 40
+keyrep Left 60
+wait 2
+shot 00-view
+key ctrl+s
+wait 3
+shot 01-savedlg
+key Return
+wait 3
+shot 02-saved

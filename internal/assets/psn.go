@@ -16,9 +16,14 @@ const (
 	// PSNTotalLen 是解壓後的總長度。
 	PSNTotalLen = 27264
 	// PSNHeaderLen 是城市資料前面的檔頭長度。
-	PSNHeaderLen = 144
+	PSNHeaderLen = 128
 	// PSNBodyLen 是城市資料的長度，與 Micropolis 的 `.cty` 相同。
-	PSNBodyLen = PSNTotalLen - PSNHeaderLen // 27120
+	//
+	// ⚠ **不是 `PSNTotalLen - PSNHeaderLen`**：128 ＋ 27120 ＝ 27248，
+	// 而解出來是 27264，尾端還多 16 個位元組。先前把檔頭當成 144 就是
+	// 為了讓兩者相減剛好——那讓整張地圖晚了 16 位元組 ＝ 平移 8 格。
+	// 正確的檔頭長度是 128，量法見 `internal/game/save.go` 的 normalizeCityBytes。
+	PSNBodyLen = 27120
 )
 
 // PSNMagic 出現在檔頭裡，是「這是一個城市檔」的標記。
@@ -51,6 +56,8 @@ func LoadPSN(raw []byte) (*Scenario, error) {
 	return &Scenario{
 		Name:   string(d[2 : 2+n]),
 		Header: append([]byte(nil), d[:PSNHeaderLen]...),
-		Body:   append([]byte(nil), d[PSNHeaderLen:]...),
+		// ⚠ 檔身取**固定 27120**，不是「檔頭之後全部」：`.PSN` 解出來是
+		// 27264，128 ＋ 27120 ＝ 27248，尾端還多 16 個位元組。
+		Body: append([]byte(nil), d[PSNHeaderLen:PSNHeaderLen+PSNBodyLen]...),
 	}, nil
 }

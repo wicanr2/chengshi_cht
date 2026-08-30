@@ -121,6 +121,10 @@ while read -r cmd a b c d; do
   case "$cmd" in
     "" | "#"*) ;;
     key)   mark "key $a";   xdotool key --clearmodifiers "$a" ;;
+    # keyrep <鍵> <次數>：連按同一個鍵。捲動到地圖邊界用得上——
+    # 頂到邊界之後鏡頭一定被夾在 (0,0)，就不必猜初始鏡頭是多少。
+    keyrep) mark "keyrep $a x$b"
+            xdotool key --clearmodifiers --repeat "$b" --repeat-delay 30 "$a" ;;
     click) mark "click $a $b"; goto $a $b; sleep 0.3
            xdotool mousedown 1; sleep 0.15; xdotool mouseup 1 ;;
     press) mark "press $a $b"; goto $a $b; sleep 0.3; xdotool mousedown 1 ;;

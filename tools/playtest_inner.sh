@@ -20,12 +20,19 @@ mkdir -p "$OUT" /tmp/pt
 # 格子座標 → 畫面座標。
 #
 # ⚠ 版面換成原版的之後，地圖不再從畫面左上角開始：它在編輯視窗裡，
-# 原點是 (64,54) 的原版座標，畫布放大三倍（internal/ui/classic.go）。
+# 原點是 **(64,55)** 的原版座標，畫布放大三倍（internal/ui/classic.go）。
+#
+# ⚠⚠ 這兩個數字**必須跟 `internal/ui/classic.go` 的 `editViewX`／`editViewY`
+# 一致**，改一邊就要改另一邊。2026-08-30 把 `editViewY` 從 54 訂正成 55
+# （54 那一列是地圖區的白色外框，圖塊從 55 開始），這裡忘了跟著改，
+# 結果每一次點擊都往下偏一像素——**只有落在格線附近的那幾下會跨格**，
+# 所以症狀是「六格的道路只蓋出三格」，不是「點不到」。
+# 底下的 `check_view_origin` 會在開跑前用截圖驗這兩個數字。
 # 少加這個位移的話，每一次點擊都落在離目標好幾格的地方，而遊戲照樣
 # 蓋得出東西——症狀是「試玩腳本蓋的城市長得不對」，不是「點不到」。
 # 鏡頭用 `-cam` 直接擺到空地的左上角，不靠置中也不靠捲動——
 # 捲動的步數會被地圖邊界夾住而算錯，而且錯了照樣點得下去，只是點在別格。
-UIS=3; VIEWX=64; VIEWY=54
+UIS=3; VIEWX=64; VIEWY=55
 CAMX=$FX; CAMY=$FY; PX=$((16 * UIS))
 sx() { echo $(( VIEWX * UIS + ($1 - CAMX) * PX + PX / 2 )); }
 sy() { echo $(( VIEWY * UIS + ($1 - CAMY) * PX + PX / 2 )); }
@@ -265,6 +272,57 @@ do_until 100000 "劇本簡介關得掉" key space
 shot 12-劇本城市
 alive || fail "劇本崩了"
 stop_game
+
+echo "== 第八段：與原版對拍 =="
+# 判準不是「看起來像」，是**逐位元等於原版**。兩層：
+#
+#   ① 美術對拍（一定跑）：地圖區每一格拿去比對 `.PGF` 第 0 庫的 960 張圖塊。
+#      只需要玩家自備的原版資料檔，不需要 DOSBox。
+#   ② 畫面對拍（有基準才跑）：直接跟**跑起來的原版**逐格比。
+#      基準要先跑 `tools/screen_parity.sh` 產生（那一支要 DOSBox），
+#      產物在 workplace/screen-parity/dos.png，不進版控（CLAUDE.md §8）。
+#
+# 為什麼要有這一段：2026-08-30 一天抓到四個 remake 的錯，四個都**沒有症狀**
+# （編得過、測得過、玩得動、目視也看不出來）：
+#   ① EGA 調色盤照抄檔案原值 0/80/160/240（螢幕上是 0/85/170/255）；
+#   ② 工具盤畫在 (6,53) 而不是 (8,55)；
+#   ③ 地圖圖塊把色號 0 當透明（那是真正的黑：道路標線、建築輪廓）；
+#   ④ **城市檔的檔頭讀成 144／地圖起點讀成 3264**，正確是 128／3248——
+#      整張地圖往下平移 8 列。前三個美術對拍就擋得下來，第四個只有
+#      畫面對拍看得出來（存檔對拍兩邊同樣偏移，互相抵銷）。
+#
+# 門檻 150：露出來的是 176 格（City Form 視窗蓋住 x≥241），
+# 扣掉底列被工具帶蓋到的 11 格與工具游標框的 2 格，上限是 163。
+run_game -scenario 1 -style west -cam 0,0
+key space          # 關掉劇本簡介
+key 0              # 暫停，畫面才是靜態的
+sleep 1
+shot 13-對拍
+stop_game
+
+ATLAS=/tmp/tiles-west.png
+if go run ./tools/tileatlas "$DATA/CEGA/WESTCEGA.PGF" "$ATLAS" >/dev/null 2>&1 ||
+   go run ./tools/tileatlas "$DATA/cega/westcega.pgf" "$ATLAS" >/dev/null 2>&1; then
+  if python3 tools/shot_tilescan.py --atlas "$ATLAS" --scale 3 --origin 64,55 \
+       --max-x 241 --max-y 311 --min-hit 150 "$OUT/13-對拍.png"; then
+    pass "地圖區逐格等於原版美術"
+  else
+    fail "地圖區與原版美術對不上——顏色、位置或透明處理有一個錯了"
+  fi
+else
+  fail "產不出圖塊圖集（找不到 WESTCEGA.PGF？）"
+fi
+
+DOSREF=workplace/screen-parity/dos.png
+if [ -f "$DOSREF" ]; then
+  if python3 tools/shot_diff_cells.py "$DOSREF" "$OUT/13-對拍.png" --min-hit 150; then
+    pass "畫面逐格等於跑起來的原版"
+  else
+    fail "畫面與原版對不上"
+  fi
+else
+  echo "      （沒有原版基準，跳過畫面對拍——跑 tools/screen_parity.sh 產生）"
+fi
 
 if grep -qi "panic\|runtime error" /tmp/game.log; then
   fail "log 裡有 panic"; tail -30 /tmp/game.log

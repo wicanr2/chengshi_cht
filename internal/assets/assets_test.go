@@ -365,3 +365,40 @@ func TestMessageClassAnchors(t *testing.T) {
 		}
 	}
 }
+
+// EGA 檔（4 平面與單平面）的調色盤要是**螢幕上顯示的**四階 0/85/170/255，
+// 不是檔案裡存的 0/80/160/240。
+//
+// 這條是回歸哨兵。差一階沒有症狀：畫面照樣看得懂，只是每一個從原版美術來的
+// 像素都偏暗一階，而且**目視分不出來**。抓到它的是「把 remake 截圖的地圖格
+// 拿去比對第 0 庫的 960 張圖塊」——原版 512 格裡有 504 格逐位元命中，
+// remake 一格都沒有。理由與量法見 `pgf.go` 的 `egaLevels`。
+func TestEGAPaletteUsesDisplayLevels(t *testing.T) {
+	dir := dosDir(t)
+	for _, c := range []struct{ sub, name string }{
+		{"CEGA", "WESTCEGA.PGF"},
+		{"sega", "westsega.pgf"},
+		{"MONO", "WESTMONO.PGF"},
+	} {
+		path := findCase(dir, c.sub, c.name)
+		if path == "" {
+			t.Logf("%s/%s 不在，跳過", c.sub, c.name)
+			continue
+		}
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		g, err := ParsePGF(raw)
+		if err != nil {
+			t.Fatalf("%s：%v", c.name, err)
+		}
+		ok := map[uint8]bool{0x00: true, 0x55: true, 0xaa: true, 0xff: true}
+		for i := 0; i < 1<<uint(g.BitsPerPixel); i++ {
+			p := g.Palette[i]
+			if !ok[p.R] || !ok[p.G] || !ok[p.B] {
+				t.Errorf("%s 第 %d 色 = %v，分量不在 {0,85,170,255} 裡", c.name, i, p)
+			}
+		}
+	}
+}

@@ -211,7 +211,7 @@ func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 	for i := range g.graphOn {
 		g.graphOn[i] = true
 	}
-	g.centerCamera()
+	g.resetCamera()
 	return g
 }
 
@@ -222,9 +222,20 @@ func (g *Game) inEditView(mx, my int) bool {
 		my >= editViewY*UIScale && my < (editViewY+vh)*UIScale
 }
 
-func (g *Game) centerCamera() {
-	g.camX = (sim.WorldX - viewW/(g.tiles.Size*tileScale)) / 2
-	g.camY = (sim.WorldY - viewH/(g.tiles.Size*tileScale)) / 2
+// resetCamera 把鏡頭擺到**地圖原點 (0,0)**——原版就是這樣。
+//
+// ⚠ 先前是置中（`(WorldX - 可見格數)/2`），那是憑直覺訂的，不是量出來的。
+// 量法：讓原版載入劇本後立刻暫停並存檔，再從截圖把每一格解回圖塊編號、
+// 在存出來的地圖上滑動找最吻合的位置（`tools/shot_locate.py`）。
+// 兩個劇本都指到 (0,0) 而且尖峰很銳利：
+//
+//	波士頓    128 個有辨識力的格中 118 格對上，次佳 15
+//	達斯維利  149 格全中，次佳 19
+//
+// 拿存出來的城市檔當基準是關鍵：直接拿劇本檔比會被 `DoSimInit` 觸發的
+// 劇本災難（波士頓是核災）弄髒，那時候怎麼比都對不上。
+func (g *Game) resetCamera() {
+	g.camX, g.camY = 0, 0
 	g.clampCamera()
 }
 

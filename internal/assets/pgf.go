@@ -99,6 +99,21 @@ func pgfHeader(raw []byte) (int, string, byte, []string) {
 	return p, name, mode, files
 }
 
+// egaLevels 把 EGA 檔存的調色盤值換成**螢幕上實際顯示的**顏色。
+//
+// ⚠ 這不是美化，是訂正。4 平面與單平面的 `.PGF` 存的分量只有
+// `0／80／160／240`——那是六位元 VGA 值 `0／20／40／60` 乘 4 的近似值。
+// 原版在 EGA 模式下顯示的是標準的兩位元色階 `0／85／170／255`
+// （DOSBox 截圖逐點量過：泥土 `(170,85,0)`、水 `(0,0,170)`、灰 `(170,170,170)`）。
+// 照檔案原值畫出來，**每一個從原版美術來的像素都偏暗一階**。
+//
+// 256 色的 `.PGF` 不走這條路：它存的已經是八位元展開值
+// （前十六色是 `0x00／0x57／0xab／0xff`，見 `TestPaletteIsStandardEGA`）。
+func egaLevels(c PGFColor) PGFColor {
+	lv := func(v uint8) uint8 { return uint8((int(v)+40)/80) * 85 }
+	return PGFColor{lv(c.R), lv(c.G), lv(c.B)}
+}
+
 // ParsePGF 解開一個 .PGF。
 func ParsePGF(raw []byte) (*PGF, error) {
 	start, name, mode, files := pgfHeader(raw)
@@ -136,7 +151,11 @@ func ParsePGF(raw []byte) (*PGF, error) {
 	}
 	g.Palette = make([]PGFColor, 256)
 	for i := 0; i < nColors; i++ {
-		g.Palette[i] = PGFColor{data[p+i*3], data[p+i*3+1], data[p+i*3+2]}
+		c := PGFColor{data[p+i*3], data[p+i*3+1], data[p+i*3+2]}
+		if g.BitsPerPixel != 8 {
+			c = egaLevels(c)
+		}
+		g.Palette[i] = c
 	}
 	p += nColors * 3
 

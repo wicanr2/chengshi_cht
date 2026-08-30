@@ -149,8 +149,16 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 	for i, c := range g.Palette {
 		pal[i] = color.RGBA{c.R, c.G, c.B, 255}
 	}
+	// ⚠ 地圖圖塊要**不透明**：色號 0 是真正的黑（道路標線、建築輪廓），
+	// 不是透明。當成透明會讓桌面灰透出來——畫面照樣看得懂，只是每一塊
+	// 有黑色的圖塊都被打了洞。
+	//
+	// 量法：原版截圖的地圖格網上 512 格裡有 504 格**逐位元**等於第 0 庫的
+	// 某一張圖塊（`tools/shot_tilescan.py`），所以原版是原樣貼上去的。
+	// 改成透明版之後 remake 只剩一半的格子對得上，差的點全部是
+	// 「原版 (0,0,0)、remake (170,170,170)」。
 	for i := range b0.Images {
-		ts.Tiles = append(ts.Tiles, imageFrom(&b0, i, pal, nil))
+		ts.Tiles = append(ts.Tiles, imageFromOpaque(&b0, i, pal))
 	}
 	// 其餘圖形庫原樣收著，精靈與介面美術都在裡面。兩份，透明處理不同。
 	masks := maskBanks(g)
