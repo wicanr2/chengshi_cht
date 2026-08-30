@@ -93,14 +93,14 @@ func (g *Game) drawSaveAsWindow(dst *ebiten.Image, x, y, w, h int) {
 	if g.saveAs == nil {
 		return
 	}
+	line := g.font.Line()
 	g.font.Draw(dst, "打字輸入檔名，Enter 儲存，Esc 取消", x, y, colDim)
 	dir := "."
 	if g.savePath != "" {
 		dir = filepath.Dir(g.savePath)
 	}
-	g.font.Draw(dst, "存到："+dir, x, y+40, colDim)
+	g.font.Draw(dst, "存到："+dir, x, y+line, colDim)
 	// 游標用一個底線，跟著字尾走。
-	line := string(g.saveAs.name) + "_"
-	g.font.Draw(dst, line, x+8, y+84, colOn)
-	g.font.Draw(dst, "沒有副檔名的話自動補 .cty", x, y+128, colDim)
+	g.font.Draw(dst, string(g.saveAs.name)+"_", x+8, y+line*2, colOn)
+	g.font.Draw(dst, "沒有副檔名的話自動補 .cty", x, y+line*3, colDim)
 }

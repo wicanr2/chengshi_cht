@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""把 Noto Sans CJK TC 烘成 24×24 的點陣字型圖集。
+"""把 Noto Sans CJK TC 烘成點陣字型圖集，格子照原版的字元格算。
+
+原版 DOS 的一個字元格是 8×14 原版像素；remake 的畫布放大三倍，
+所以一格是 24×42 螢幕像素（docs/spec/ui-layout.md §四）。
+**英數佔一格、中文佔兩格**，與原版的欄位算法相同——這樣
+`Funds: $20,000` 這種純英數的欄位起點與結尾都對得上原版。
 
 為什麼要烘成點陣而不是執行期讀 TTF：
 
@@ -21,8 +26,10 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-SIZE = 24          # 方塊字的格子邊長
-ASCII_W = SIZE // 2  # 半形字寬
+CELL_W = 48        # 全形字寬 ＝ 原版兩格 ＝ 16 原版像素
+CELL_H = 42        # 字格高 ＝ 原版一格 ＝ 14 原版像素
+ASCII_W = 24       # 半形字寬 ＝ 原版一格 ＝ 8 原版像素
+PT = 38            # 字面點數。要讓中文的墨水塞得進 42 高又不貼邊
 TTC = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 COLS = 64          # 圖集每列幾個字
 
@@ -39,7 +46,7 @@ def pick_tc_face():
     """
     for i in range(16):
         try:
-            f = ImageFont.truetype(TTC, SIZE, index=i)
+            f = ImageFont.truetype(TTC, PT, index=i)
         except OSError:
             break
         name = " ".join(str(x) for x in f.getname())
@@ -77,7 +84,7 @@ def collect_chars():
 
 
 def is_wide(ch):
-    """全形判定。CJK、全形標點、注音都算一格 24 寬。"""
+    """全形判定。CJK、全形標點、注音都佔兩格。"""
     o = ord(ch)
     return (0x1100 <= o <= 0x115F or 0x2E80 <= o <= 0xA4CF or
             0xAC00 <= o <= 0xD7A3 or 0xF900 <= o <= 0xFAFF or
@@ -88,18 +95,19 @@ def is_wide(ch):
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "internal/textfont/assets")
     idx, name = pick_tc_face()
-    font = ImageFont.truetype(TTC, SIZE - 4, index=idx)
+    font = ImageFont.truetype(TTC, PT, index=idx)
     chars = collect_chars()
     rows = (len(chars) + COLS - 1) // COLS
-    img = Image.new("L", (COLS * SIZE, rows * SIZE), 0)
+    img = Image.new("L", (COLS * CELL_W, rows * CELL_H), 0)
     d = ImageDraw.Draw(img)
-    meta = {"size": SIZE, "cols": COLS, "face": name, "glyphs": {}}
+    meta = {"size": CELL_W, "height": CELL_H, "cols": COLS,
+            "face": name, "glyphs": {}}
     for i, ch in enumerate(chars):
-        x, y = (i % COLS) * SIZE, (i // COLS) * SIZE
-        w = SIZE if is_wide(ch) else ASCII_W
+        x, y = (i % COLS) * CELL_W, (i // COLS) * CELL_H
+        w = CELL_W if is_wide(ch) else ASCII_W
         bbox = d.textbbox((0, 0), ch, font=font)
         gx = x + (w - (bbox[2] - bbox[0])) // 2 - bbox[0]
-        gy = y + (SIZE - (bbox[3] - bbox[1])) // 2 - bbox[1]
+        gy = y + (CELL_H - (bbox[3] - bbox[1])) // 2 - bbox[1]
         d.text((gx, gy), ch, font=font, fill=255)
         meta["glyphs"][ch] = [i, w]
     img.save(os.path.join(out, "font24.png"))

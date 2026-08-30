@@ -39,14 +39,12 @@ func (g *Game) aboutLines() []string {
 		"授權：PolyForm Noncommercial License 1.0.0",
 		"非商業免費，含修改後散布；商業使用請洽 wicanr2@gmail.com。",
 		"全文在發行包的 LICENSE 檔，或上面那個網址。",
-		"",
 		"原版《SimCity》(1989) 由 Will Wright 設計、Maxis 發行。",
 		"SimCity 與 Maxis 是 Electronic Arts 的商標，",
 		"本專案與 EA 無隸屬關係，商標僅作指示性使用。",
 		"",
 		"規則層參考 Micropolis（EA 2008 以 GPL-3.0 釋出的原始碼），",
 		"讀完寫成規格後以 Go 重寫，未複製其程式碼。",
-		"",
 		"原版執行檔、資料檔、美術、音樂與說明書不隨本專案散布，",
 		"玩家需自備一份合法的原版。",
 		"中文點陣字取自 Noto Sans CJK TC（SIL Open Font License 1.1）。",
@@ -67,7 +65,7 @@ func (g *Game) drawAboutWindow(dst *ebiten.Image, x, y, w, h int) {
 		case i == 1:
 			c = colDim
 		}
-		g.font.Draw(dst, s, x, y+i*30, c)
+		g.font.Draw(dst, s, x, y+i*g.font.Line(), c)
 	}
 }
 

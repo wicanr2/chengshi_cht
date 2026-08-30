@@ -112,10 +112,12 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	winSystem:   {90, 20, 240, 210},
 	winScenario: {150, 40, 240, 180},
 	winStyle:    {150, 40, 240, 180},
-	winSpeed:    {200, 30, 200, 140},
-	winPower:    {70, 190, 170, 80},
-	winAbout:    {40, 30, 560, 290},
-	winSaveAs:   {120, 90, 400, 150},
+	winSpeed:    {180, 30, 240, 140},
+	winPower:    {70, 180, 220, 110},
+	// 「關於」是 remake 自己的頁（原版沒有），所以尺寸不是量原版來的：
+	// 它要放得下十八行 15 原版像素的字 ＋ 條款要求的 Required Notice。
+	winAbout:  {8, 20, 624, 326},
+	winSaveAs: {120, 90, 400, 150},
 }
 
 // winFrame 回傳目前視窗的外框（螢幕像素）。玩家搬過的話用搬過的位置。
@@ -240,7 +242,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 	case winSpeed:
 		title = g.txt.S(i18n.SecOptMenu, 4)
 	case winPower:
-		title = g.txt.S(i18n.SecPowerSub, 0)
+		// 原版沒有這個視窗（見 classic.go 的說明），所以標題是 remake 自己的。
+		title = "發電廠"
 	}
 	t := trimMenu(title)
 	g.font.Draw(dst, t, x+w/2-g.font.Measure(t)/2, y+UIScale, colMenuInk)
@@ -273,19 +276,21 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 
 // drawSysMenu 畫系統選單與它的兩個副選單。三個共用同一套排版與游標。
 func (g *Game) drawSysMenu(dst *ebiten.Image, x, y int) {
-	g.font.Draw(dst, "上下鍵選擇，Enter 確定，Esc 取消", x, y, colDim)
+	// ⚠ 提示要短。中文一個字佔兩格（32 原版像素），這幾個副選單最窄的
+	// 只有 220 原版像素——把「上下鍵選擇」也寫進去就會**衝出視窗右緣**。
+	g.font.Draw(dst, "Enter 確定，Esc 取消", x, y, colDim)
 	for i := 0; i < g.sysMenuLen(); i++ {
 		c, mark := colDim, "  "
 		if i == g.sysRow {
 			c, mark = colOn, "> "
 		}
-		g.font.Draw(dst, mark+g.sysMenuLabel(i), x+8, y+40+i*28, c)
+		g.font.Draw(dst, mark+g.sysMenuLabel(i), x+8, y+g.font.Line()*(i+1), c)
 	}
 }
 
 // drawDisasterWindow 畫災難選單。六個項目 ＋ 一列取消，名稱取自訊息檔。
 func (g *Game) drawDisasterWindow(dst *ebiten.Image, x, y, w, h int) {
-	g.font.Draw(dst, "上下鍵選擇，Enter 發動，Esc 取消", x, y, colDim)
+	g.font.Draw(dst, "Enter 發動，Esc 取消", x, y, colDim)
 	for i := range disasterItems {
 		c := colDim
 		mark := "  "
@@ -294,11 +299,11 @@ func (g *Game) drawDisasterWindow(dst *ebiten.Image, x, y, w, h int) {
 		}
 		label := fmt.Sprintf("%s%d. %s", mark, i+1,
 			trimMenu(g.txt.S(i18n.SecDisaster, i)))
-		g.font.Draw(dst, label, x+8, y+40+i*28, c)
+		g.font.Draw(dst, label, x+8, y+g.font.Line()*(i+1), c)
 	}
 	// 訊息檔第 20 段第 7 筆就是「取消」。
 	g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecDisaster, 7)),
-		x+8, y+40+len(disasterItems)*28+16, colDim)
+		x+8, y+g.font.Line()*(len(disasterItems)+2), colDim)
 }
 
 // drawMapWindow 畫全市小地圖與十個圖層。
@@ -310,14 +315,15 @@ func (g *Game) drawDisasterWindow(dst *ebiten.Image, x, y, w, h int) {
 func (g *Game) drawMapWindow(dst *ebiten.Image, x, y, w, h int) {
 	// 左側：圖層清單
 	const listW = 260
+	line := g.font.Line()
 	for i := 0; i < int(layerCount); i++ {
 		c := colText
 		if mapLayer(i) == g.layer {
 			c = colOn
 		}
-		g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecMapTitle, i)), x, y+i*32, c)
+		g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecMapTitle, i)), x, y+i*line, c)
 	}
-	g.font.Draw(dst, "1–9 0 - 切圖層", x, y+int(layerCount)*32+12, colDim)
+	g.font.Draw(dst, "1-9 切換", x, y+int(layerCount)*line, colDim)
 
 	// 右側：地圖本體，等比放大到剩下的空間
 	mx, my := x+listW, y
@@ -521,7 +527,7 @@ func (g *Game) graphHit(mx, my int) int {
 // drawBudgetWindow 畫預算視窗（說明書 p.43）。
 // 版面照原版排（workplace/dosbox/uw-11-budget.png）：標題、稅率、稅收，
 // 中間一個藍底的表格框（三欄表頭 ＋ 三列），底下現金流量與資金，最後一個按鈕。
-// 原版的欄位標題是兩行的（`Amount／Requested`），中文一行就夠。
+// 欄位標題與原版一樣是兩行的（`Amount／Requested`）。
 func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	w0 := g.world
 	rows := []struct {
@@ -533,11 +539,8 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 		{trimMenu(g.txt.S(i18n.SecBudget, 1)), w0.PoliceFund, w0.PolicePercent},
 		{trimMenu(g.txt.S(i18n.SecBudget, 2)), w0.FireFund, w0.FirePercent},
 	}
-	// 一列的高。原版的視窗 309 原版像素高、約二十列，一列 15 原版像素；
-	// ×3 之後是 45 螢幕像素，剛好放得下 24 像素的中文字還留一點行距。
-	// ⚠ 別用「字高 ＋ 一點」去湊：那樣算出來是 26，內容會擠在視窗最上面
-	// 三分之一，看起來像資料沒填滿。
-	line := 15 * UIScale
+	// 一列的高 ＝ 原版量到的 15 原版像素（字格 14 加一列的行距）。
+	line := g.font.Line()
 
 	// 標題底下一條雙線，原版就有。
 	title := fmt.Sprintf("%d 年度預算", 1900+w0.CityTime/48)
@@ -555,20 +558,32 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 
 	// 表格框：原版是藍底、白框。
 	tx, ty := x+2*UIScale, y+line*4
-	tw, th := w-4*UIScale, line*5
+	tw, th := w-4*UIScale, line*6
 	vector.DrawFilledRect(dst, float32(tx), float32(ty), float32(tw), float32(th),
 		color.RGBA{0x55, 0x55, 0xff, 0xff}, false)
 	vector.StrokeRect(dst, float32(tx), float32(ty), float32(tw), float32(th),
 		float32(UIScale), colMenuBar, false)
 
-	col := [4]int{tx + 6*UIScale, tx + tw*36/100, tx + tw*60/100, tx + tw*82/100}
+	// 四欄的位置是量原版的（`workplace/dosbox/uw-11-budget.png`，內容座標）：
+	// 項目 192、維護需求 240、實際撥給 304、撥款比例 368——視窗左緣在 171，
+	// 客戶區從 177 起算，所以相對位移是 15／63／127／191。
+	//
+	// ⚠ 不要改回百分比切欄。中文一格 16 原版像素，四個字就是 64——
+	// 用比例算出來的欄距在窄視窗裡會**互相疊在一起**，而且疊得很像
+	// 「字型太大」，不像「欄位算錯」。
+	col := [4]int{
+		x + 15*UIScale, x + 63*UIScale, x + 127*UIScale, x + 191*UIScale,
+	}
 	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	g.font.Draw(dst, "項目", col[0], ty+2*UIScale, white)
-	g.font.Draw(dst, "維護需求", col[1], ty+2*UIScale, white)
-	g.font.Draw(dst, "實際撥給", col[2], ty+2*UIScale, white)
-	g.font.Draw(dst, "編列比例", col[3], ty+2*UIScale, white)
+	// 表頭兩行，原版也是兩行（`Amount／Requested`）。
+	for i, h := range [4][2]string{
+		{"", "項目"}, {"維護", "需求"}, {"實際", "撥給"}, {"編列", "比例"},
+	} {
+		g.font.Draw(dst, h[0], col[i], ty+2*UIScale, white)
+		g.font.Draw(dst, h[1], col[i], ty+2*UIScale+line, white)
+	}
 	for i, r := range rows {
-		yy := ty + 2*UIScale + (i+1)*line
+		yy := ty + 2*UIScale + (i+2)*line
 		c := white
 		if i == g.budgetRow {
 			c = color.RGBA{0xff, 0xff, 0x55, 0xff}
@@ -599,7 +614,7 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	vector.StrokeRect(dst, float32(bx), float32(byy-2*UIScale),
 		float32(bw), float32(line), float32(UIScale), colLine, false)
 	g.font.Draw(dst, btn, bx+6*UIScale, byy, colOn)
-	g.font.Draw(dst, "上下鍵選項目，左右鍵調整比例", x+4*UIScale, byy+line*3/2, colDim)
+	g.font.Draw(dst, "上下鍵選項目，左右鍵調比例", x+4*UIScale, byy+line*3/2, colDim)
 }
 
 // drawEvalWindow 畫評估視窗（說明書 p.54）。
@@ -607,7 +622,7 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 // 白框，右半「統計數據」一個白框。原版的框是實線白底，這裡也一樣。
 func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	w0 := g.world
-	line := 15 * UIScale
+	line := g.font.Line()
 	half := w/2 - 4*UIScale
 	// 左右兩欄的標題，原版是反白的小標。
 	g.font.Draw(dst, "公眾意見", x+half/2-g.font.Measure("公眾意見")/2, y, colOn)
@@ -660,7 +675,7 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	for i, s := range stats {
 		yy := y + line + 4*UIScale + i*line
 		g.font.Draw(dst, s[0], x+w/2+6*UIScale, yy, colDim)
-		g.font.Draw(dst, s[1], x+w-6*UIScale-g.font.Measure(s[1]), yy, colText)
+		g.font.Draw(dst, s[1], x+w-10*UIScale-g.font.Measure(s[1]), yy, colText)
 	}
 }
 

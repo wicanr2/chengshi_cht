@@ -19,13 +19,18 @@ var FS embed.FS
 // Glyph 記一個字在圖集裡的位置與顯示寬度。
 type Glyph struct {
 	Index int // 在圖集裡的序號
-	Width int // 顯示寬度：全形 24、半形 12
+	Width int // 顯示寬度：全形 48（原版兩格）、半形 24（原版一格）
 }
 
 // Atlas 是解析好的字型圖集。
+//
+// 格子照原版的字元格算：原版一格是 8×14 原版像素，畫布放大三倍
+// ＝ 24×42 螢幕像素。**英數一格、中文兩格**，所以純英數的欄位
+// 寬度與原版相同（docs/spec/ui-layout.md §四）。
 type Atlas struct {
 	Image  image.Image
-	Size   int // 一個全形字的邊長
+	Size   int // 一個全形字的寬（＝兩格）
+	Height int // 一個字格的高
 	Cols   int // 圖集每列幾個字
 	Face   string
 	Glyphs map[rune]Glyph
@@ -33,6 +38,7 @@ type Atlas struct {
 
 type meta struct {
 	Size   int              `json:"size"`
+	Height int              `json:"height"`
 	Cols   int              `json:"cols"`
 	Face   string           `json:"face"`
 	Glyphs map[string][]int `json:"glyphs"`
@@ -59,6 +65,7 @@ func Load() (*Atlas, error) {
 	a := &Atlas{
 		Image:  img,
 		Size:   m.Size,
+		Height: m.Height,
 		Cols:   m.Cols,
 		Face:   m.Face,
 		Glyphs: make(map[rune]Glyph, len(m.Glyphs)),

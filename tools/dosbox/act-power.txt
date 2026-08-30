@@ -1,0 +1,17 @@
+# 工具盤發電廠那一格的副選單：兩個還是三個選項？標題是什麼？
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+shot 00-clean
+press 48 189
+wait 2
+shot 01-power-sub
+release
+wait 2
+shot 02-after

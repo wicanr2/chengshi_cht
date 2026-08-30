@@ -51,14 +51,14 @@ const (
 	editMinW, editMinH = 200, 150
 
 	// menuTextY 是選單列文字的**字格上緣**。原版量到的筆畫在 y 4–12
-	// （大寫九列，8×14 的字格從 2 起算），remake 的字格是 24 螢幕像素
-	// ＝ 8 原版像素，對齊筆畫中心就是 4。
-	menuTextY = 4
+	// ——8×14 的字格從 2 起算，而 remake 的字格也是 14 原版像素高，
+	// 所以直接用原版的字格上緣。
+	menuTextY = 2
 
 	editTitleY = 24 // 標題列
 	editTitleH = 14
 	editInfoY  = 38 // 資金／訊息帶
-	editInfoH  = 16
+	editInfoH  = 17
 	editViewY  = 54 // 地圖區
 	editViewH  = 257
 	editToolY  = 311 // 目前工具帶
@@ -66,9 +66,9 @@ const (
 	// 帶內文字的字格位置，全部量自原版（見 drawEditWindow 的說明）。
 	fundsTextX = 8   // `Funds:`
 	msgTextX   = 136 // 訊息
-	infoTextY  = 41  // 資金帶的字格上緣
+	infoTextY  = 39  // 資金帶的字格上緣（筆畫 41–49）
 	toolTextX  = 64  // 目前工具的名稱與造價
-	editToolH  = 10
+	editToolH  = 14
 
 	editPalX, editPalY = 6, 53 // 工具盤圖（庫 2，57×182）
 	editViewX          = 64    // 地圖區左緣
@@ -241,7 +241,10 @@ func (g *Game) drawMenuBar(dst *ebiten.Image) {
 func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	ew, eh := g.editSize()
 	vw, vh := g.editViewSize()
-	toolY := editY + eh - 13
+	// ⚠ 工具帶比原版**高三個像素**：原版這一條用 8×8 字型，只要 11 像素；
+	// remake 只有一種字高（14），所以把帶往上長三格。下面的地圖區跟著縮，
+	// 而地圖區本來就會取整到整格，不影響格線。
+	toolY := editY + eh - 17
 	fill(dst, editX, editY, ew, eh, colEditFrm)
 	fill(dst, editX+1, editTitleY, ew-2, editTitleH, colTitleBar)
 	fill(dst, editX+1, editInfoY, ew-2, editInfoH, colInfoBand)
@@ -266,9 +269,9 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	// 目前工具帶。原版這一條用的是 **8×8** 字型（大寫七列），
 	// 上面幾條用 8×14——所以字格上緣比帶頂只低一列。
 	fill(dst, editX+1, toolY, ew-2, editToolH, colEditFrm)
-	g.font.Draw(dst, g.currentToolText(), toolTextX*UIScale, (toolY+1)*UIScale, colInkLight)
+	g.font.Draw(dst, g.currentToolText(), toolTextX*UIScale, toolY*UIScale, colInkLight)
 	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型）。
-	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+2, colInkLight)
+	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+6, colInkLight)
 	_ = vw
 	_ = vh
 }
@@ -284,12 +287,13 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 func (g *Game) drawEditTitle(dst *ebiten.Image, ew int) {
 	right := editX + ew - 1
 	drawGlyph8(dst, glyphSun, editX+3, editTitleY+2, colInk)
+
 	name := g.world.CityName
 	if name != "" {
-		g.font.DrawCentered(dst, name, editX*UIScale, (editTitleY+2)*UIScale,
+		g.font.DrawCentered(dst, name, editX*UIScale, editTitleY*UIScale,
 			(right-72-editX)*UIScale, colInk)
 	}
-	g.font.Draw(dst, g.dateText(), (right-99)*UIScale, (editTitleY+2)*UIScale, colInk)
+	g.font.Draw(dst, g.dateText(), (right-99)*UIScale, editTitleY*UIScale, colInk)
 }
 
 // drawEditMap 畫編輯視窗裡的地圖。原版一格 16×16，可見 11×16 格。
@@ -446,9 +450,17 @@ func comma(n int) string {
 }
 
 // 發電廠副選單。原版的工具盤只有十四格，但建造工具有十五個——
-// **火力與核能共用一格**，點下去開一個三筆的副選單（訊息檔第 5 段）。
+// 火力與核能共用第 11 格。
 //
-// 這解釋了訊息檔第 5 段為什麼存在，也解釋了工具盤為什麼是 2×7 不是 2×8。
+// ⚠ **副選單是 remake 加的，不是原版行為。** 原版點那一格會直接選中
+// 三千元那一種，工具帶當場顯示它的名字；試過按住不放、連點三次、
+// 以及把時間拉到 1957 年的東京（核能在 1950 年後才解鎖），
+// 三種都沒有出現任何選單（`workplace/dosbox/pw-*.png`、`pw2-*`、`pw3-*`）。
+// 原版怎麼蓋核能廠**還沒解**。
+//
+// 訊息檔第 5 段是**兩個發電廠的名字**，不是選單的三行字：
+// ASIA 是 `Well`／`Water Wheel`、WEST 是 `Water Wheel`／`Steam Pump`，
+// 第 0 筆對三千元那一種（火力）、第 1 筆對五千元那一種（核能）。
 const powerCell = 11 // 工具盤第 11 格（0 起算）＝ 發電廠
 
 // powerSubOpen 記錄副選單開著沒有；開著時畫在工具盤右邊。
@@ -458,13 +470,12 @@ func (g *Game) openPowerSub() {
 }
 
 // powerTools 是副選單的兩個選項，順序照訊息檔第 5 段。
-// 第 5 段三筆：第 0 筆是標題，第 1、2 筆是兩種發電廠。
 var powerTools = []struct {
 	msg  int
 	tool sim.Tool
 }{
-	{1, sim.ToolCoalPower},
-	{2, sim.ToolNuclear},
+	{0, sim.ToolCoalPower},
+	{1, sim.ToolNuclear},
 }
 
 // SetCamera 把鏡頭左上角擺到指定的格子。給試玩腳本用（`-cam`）：
@@ -489,7 +500,7 @@ func (g *Game) drawResizeHint(dst *ebiten.Image) {
 	vector.StrokeRect(dst, s(editX), s(editY), s(ew), s(eh),
 		float32(2*UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
 	msg := "方向鍵調整大小，Enter 或 Esc 結束"
-	g.font.Draw(dst, msg, (editX+3)*UIScale, (editInfoY+2)*UIScale,
+	g.font.Draw(dst, msg, (editX+3)*UIScale, infoTextY*UIScale,
 		color.RGBA{0xff, 0xff, 0x55, 0xff})
 }
 

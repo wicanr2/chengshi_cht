@@ -12,7 +12,7 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/textfont"
 )
 
-// Font 是 24×24 的中文點陣字型。
+// Font 是照原版字元格烘出來的中文點陣字型。
 //
 // 為什麼是點陣不是 TTF：老遊戲的底圖要用最近鄰整數倍放大才銳利，
 // 字如果走向量渲染，同一個畫面會出現兩種質感。而且發行包不必帶字型檔。
@@ -21,9 +21,10 @@ import (
 // ⚠ **不要為了塞進原版的小字位而縮小中文。** 中文筆畫多，縮到八像素
 // 會糊成一團。正解是把畫布拉高、底圖放大，讓 24×24 有地方站。
 type Font struct {
-	img  *ebiten.Image
-	size int
-	cols int
+	img    *ebiten.Image
+	size   int
+	height int
+	cols   int
 	// glyph 記每個字在圖集裡的序號與**顯示寬度**（全形 24、半形 12）。
 	glyph map[rune]glyphInfo
 }
@@ -54,10 +55,11 @@ func LoadFont() (*Font, error) {
 		}
 	}
 	f := &Font{
-		img:   ebiten.NewImageFromImage(rgba),
-		size:  a.Size,
-		cols:  a.Cols,
-		glyph: make(map[rune]glyphInfo, len(a.Glyphs)),
+		img:    ebiten.NewImageFromImage(rgba),
+		size:   a.Size,
+		height: a.Height,
+		cols:   a.Cols,
+		glyph:  make(map[rune]glyphInfo, len(a.Glyphs)),
 	}
 	for r, g := range a.Glyphs {
 		f.glyph[r] = glyphInfo{index: g.Index, width: g.Width}
@@ -65,8 +67,15 @@ func LoadFont() (*Font, error) {
 	return f, nil
 }
 
-// Size 回傳一個全形字的邊長。
+// Size 回傳一個全形字的寬（原版兩格）。
 func (f *Font) Size() int { return f.size }
+
+// Height 回傳一個字格的高（原版一格 ＝ 14 原版像素 × UIScale）。
+func (f *Font) Height() int { return f.height }
+
+// Line 是列與列的間距。原版的資料視窗量到的是 **15 原版像素**
+// （字格 14 加一列），×UIScale 就是這個值。
+func (f *Font) Line() int { return 15 * UIScale }
 
 // Measure 算一段文字的像素寬度。半形佔一半。
 func (f *Font) Measure(s string) int {
@@ -94,8 +103,8 @@ func (f *Font) Draw(dst *ebiten.Image, s string, x, y int, c color.Color) {
 			continue
 		}
 		sx := (g.index % f.cols) * f.size
-		sy := (g.index / f.cols) * f.size
-		sub := f.img.SubImage(image.Rect(sx, sy, sx+g.width, sy+f.size)).(*ebiten.Image)
+		sy := (g.index / f.cols) * f.height
+		sub := f.img.SubImage(image.Rect(sx, sy, sx+g.width, sy+f.height)).(*ebiten.Image)
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(x), float64(y))
 		// 圖集是灰階遮罩（白＝有筆畫），用 ColorScale 染成想要的顏色。

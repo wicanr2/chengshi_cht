@@ -1,0 +1,24 @@
+# 1957 年的東京：發電廠那一格會不會給核能的選項？
+wait 3
+click 316 240
+wait 5
+click 80 253
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+c
+wait 2
+shot 00-clean
+click 48 189
+wait 2
+shot 01-click1
+click 48 189
+wait 2
+shot 02-click2
+click 48 189
+wait 2
+shot 03-click3

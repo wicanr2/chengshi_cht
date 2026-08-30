@@ -70,6 +70,19 @@ func TestGlyphWidths(t *testing.T) {
 	if got := a.Measure("城市"); got != a.Size*2 {
 		t.Errorf("兩個全形字寬 %d，應為 %d", got, a.Size*2)
 	}
+	// 格子是照原版的字元格訂的：原版一格 8×14 原版像素，畫布放大三倍。
+	// 英數一格、中文兩格——所以 `Funds: $20,000` 這種純英數的欄位
+	// 寬度與原版相同。改這三個數字等於改掉與原版的對齊，要先量原版。
+	const scale = 3
+	if a.Size != 16*scale {
+		t.Errorf("全形寬 %d，應為 %d（原版兩格）", a.Size, 16*scale)
+	}
+	if a.Height != 14*scale {
+		t.Errorf("字格高 %d，應為 %d（原版一格）", a.Height, 14*scale)
+	}
+	if got := a.Measure("A"); got != 8*scale {
+		t.Errorf("半形寬 %d，應為 %d（原版一格）", got, 8*scale)
+	}
 }
 
 // 字面必須是繁體。ttc 裡五個地區字面共用大部分字形，挑錯不會壞掉，

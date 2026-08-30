@@ -3,6 +3,8 @@
 # 用法：tools/screenshot.sh [等待秒數] [輸出檔名]
 #   GAME_ARGS="…"  傳給遊戲的參數
 #   GAME_KEYS="…"  截圖前先送這幾個鍵（空白分隔的 xdotool 鍵名）
+#   GAME_HOLD="x,y" 截圖前把滑鼠按在這個螢幕座標上不放（下拉選單是按住式的）
+#   GAME_KEYDOWN="q" 截圖前按住這個鍵不放（查詢是「按住 Q ＋ 按住左鍵」）
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WAIT="${1:-6}"
@@ -28,6 +30,13 @@ docker run --rm \
     GAME=\$!
     sleep $WAIT
     for k in ${GAME_KEYS:-}; do xdotool key --clearmodifiers \$k; sleep 1; done
+    KD='${GAME_KEYDOWN:-}'
+    if [ -n \"\$KD\" ]; then xdotool keydown \$KD; sleep 0.3; fi
+    HOLD='${GAME_HOLD:-}'
+    if [ -n \"\$HOLD\" ]; then
+      xdotool mousemove \${HOLD%,*} \${HOLD#*,}
+      sleep 0.3; xdotool mousedown 1; sleep 1
+    fi
     if kill -0 \$GAME 2>/dev/null; then
       xwd -root -silent | convert xwd:- workplace/shots/$SHOT
       kill \$GAME 2>/dev/null || true

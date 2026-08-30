@@ -31,7 +31,9 @@ const (
 	ncFieldW     = 150
 	ncFieldH     = 14
 	ncFieldTextX = 248
-	ncFieldTextY = 98
+	// 欄內文字的字格上緣。原版的欄位字型比介面字型寬（筆畫兩像素），
+	// remake 只有一種字型，把 14 列的字格對齊欄位框就好。
+	ncFieldTextY = 95
 
 	ncLevelLabelY = 126 // 「技術等級」
 	ncRadioX      = 277
@@ -42,9 +44,11 @@ const (
 	ncOptTextX    = 296
 	ncOptTextY    = 154
 
-	ncOKX, ncOKY = 301, 235
-	ncOKW, ncOKH = 22, 20
-	ncOKTextX    = 304
+	// ⚠ 確定鈕比原版寬：原版寫 `OK` 兩格就夠，中文「確定」要四格。
+	// 中心對齊原版的 312，寬度改成放得下四格再加左右各三像素。
+	ncOKX, ncOKY = 293, 235
+	ncOKW, ncOKH = 38, 20
+	ncOKTextX    = 296
 	ncOKTextY    = 238
 
 	// maxCityNameRunes 是市名欄的長度上限。說明書 p.11：「市名可以鍵入
