@@ -215,7 +215,12 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 	case winMaps:
 		title = g.txt.S(i18n.SecWinMenu, 0)
 	case winGraphs:
-		title = g.txt.S(i18n.SecWinMenu, 1)
+		// 原版的標題就是目前的區間（`Last 10 years`），不是視窗名。
+		if g.graphYears == 10 {
+			title = g.txt.S(i18n.SecGraph, 6)
+		} else {
+			title = g.txt.S(i18n.SecGraph, 7)
+		}
 	case winBudget:
 		title = g.txt.S(i18n.SecWinMenu, 2)
 	case winEval:
@@ -413,34 +418,110 @@ func cityFormColor(t int) color.RGBA {
 // ⚠ 歷史陣列是**環狀**的嗎？不是——原版是把整個陣列往後推一格再寫入
 // 索引 0（`s_sim.c` 的 `GraphDoer`），所以索引 0 是最新的、索引 119 最舊。
 // 當成環狀去畫會得到一條時間軸亂跳的曲線，而且**看起來只是「資料有雜訊」**。
+// 版面照原版排（workplace/dosbox/uw-10-graphs.png）：左邊一塊 2×4 的圖示
+// 按鈕（`.PGF` 庫 4），右邊是曲線圖，底下標年份。
+//
+// 圖示的順序**就是訊息檔第 7 段的順序**：人口、犯罪、商業、現金流量、
+// 工業、污染、近十年、近一百二十年——照著讀就對，不必另外對照。
 func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 	series := []struct {
-		label string
-		data  *[240]int16
-		c     color.RGBA
+		msg  int
+		data *[240]int16
+		c    color.RGBA
 	}{
-		{g.txt.S(i18n.SecGraph, 0), &g.world.ResHis, colDemR},
-		{g.txt.S(i18n.SecGraph, 2), &g.world.ComHis, colDemC},
-		{g.txt.S(i18n.SecGraph, 4), &g.world.IndHis, colDemI},
-		{g.txt.S(i18n.SecGraph, 1), &g.world.CrimeHis, color.RGBA{0xd0, 0x50, 0x50, 0xff}},
-		{g.txt.S(i18n.SecGraph, 5), &g.world.PollutionHis, color.RGBA{0x90, 0xd0, 0x50, 0xff}},
-		{g.txt.S(i18n.SecGraph, 3), &g.world.MoneyHis, color.RGBA{0xe0, 0xd0, 0x90, 0xff}},
+		{0, &g.world.ResHis, colDemR},
+		{1, &g.world.CrimeHis, color.RGBA{0xd0, 0x50, 0x50, 0xff}},
+		{2, &g.world.ComHis, colDemC},
+		{3, &g.world.MoneyHis, color.RGBA{0xb0, 0x90, 0x30, 0xff}},
+		{4, &g.world.IndHis, colDemI},
+		{5, &g.world.PollutionHis, color.RGBA{0x50, 0xa0, 0x30, 0xff}},
 	}
-	const n = 120 // 近十年（每格一個月）
-	gw, gh := w-200, h-40
-	vector.StrokeRect(dst, float32(x), float32(y), float32(gw), float32(gh), 1, colLine, false)
-	for si, s := range series {
-		g.font.Draw(dst, s.label, x+gw+20, y+si*32, s.c)
+
+	// 左側圖示盤。庫 4 是一整張 51×102，格線量自 workplace/gfx/bank04-00.png：
+	// 兩欄間距 25、四列間距 25、格子 24×23。
+	blit(dst, g.tiles.UIImage(BankGraphBtns, 0), x/UIScale, y/UIScale)
+	for i := 0; i < 8; i++ {
+		on := false
+		if i < 6 {
+			on = g.graphOn[i]
+		} else {
+			on = (i == 6) == (g.graphYears == 10)
+		}
+		if !on {
+			continue
+		}
+		cx, cy := graphCell(x/UIScale, y/UIScale, i)
+		vector.StrokeRect(dst, s(cx), s(cy), s(graphCellW), s(graphCellH),
+			float32(UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
+	}
+
+	// 右側曲線圖。
+	gx := x + (graphPanelW+6)*UIScale
+	gw, gh := x+w-gx, h-16*UIScale
+	vector.DrawFilledRect(dst, float32(gx), float32(y), float32(gw), float32(gh),
+		colMenuBar, false)
+	vector.StrokeRect(dst, float32(gx), float32(y), float32(gw), float32(gh),
+		float32(UIScale), colLine, false)
+
+	// n 是要畫幾格。近十年是每月一格 120 格，近一百二十年是每年一格 120 格
+	// ——**兩種都是 120 格**，差在資料取自哪一半（原版的歷史陣列前 120 筆
+	// 是月、後 120 筆是年）。
+	n, base := 120, 0
+	if g.graphYears != 10 {
+		base = 120
+	}
+	for _, sr := range series {
+		if !g.graphOn[sr.msg] {
+			continue
+		}
 		for i := 0; i < n-1; i++ {
 			// 索引 0 是最新，畫的時候要反過來讓時間由左往右。
-			x0 := float32(x+gw) - float32(i)*float32(gw)/float32(n)
-			x1 := float32(x+gw) - float32(i+1)*float32(gw)/float32(n)
-			y0 := float32(y+gh) - float32(clamp(int(s.data[i]), 0, 255))*float32(gh)/255
-			y1 := float32(y+gh) - float32(clamp(int(s.data[i+1]), 0, 255))*float32(gh)/255
-			vector.StrokeLine(dst, x0, y0, x1, y1, 2, s.c, false)
+			x0 := float32(gx+gw) - float32(i)*float32(gw)/float32(n)
+			x1 := float32(gx+gw) - float32(i+1)*float32(gw)/float32(n)
+			y0 := float32(y+gh) - float32(clamp(int(sr.data[base+i]), 0, 255))*float32(gh)/255
+			y1 := float32(y+gh) - float32(clamp(int(sr.data[base+i+1]), 0, 255))*float32(gh)/255
+			vector.StrokeLine(dst, x0, y0, x1, y1, float32(UIScale), sr.c, false)
 		}
 	}
-	g.font.Draw(dst, g.txt.S(i18n.SecGraph, 6), x, y+gh+8, colDim)
+	// 底下的年份，原版是左中右三個。
+	year := 1900 + g.world.CityTime/48
+	span := g.graphYears
+	labels := [3]string{
+		fmt.Sprintf("%d", year-span),
+		fmt.Sprintf("%d", year-span/2),
+		fmt.Sprintf("%d", year),
+	}
+	ly := y + gh + 2*UIScale
+	g.font.Draw(dst, labels[0], gx+2*UIScale, ly, colText)
+	g.font.Draw(dst, labels[1], gx+gw/2-g.font.Measure(labels[1])/2, ly, colText)
+	g.font.Draw(dst, labels[2], gx+gw-2*UIScale-g.font.Measure(labels[2]), ly, colText)
+}
+
+// 統計圖圖示盤的格線（原版像素）。
+const (
+	graphCellW, graphCellH = 24, 23
+	graphPitch             = 25
+	graphPanelW            = 51
+)
+
+// graphCell 回傳第 i 個圖示格的左上角（原版座標）。
+func graphCell(px, py, i int) (int, int) {
+	return px + (i%2)*graphPitch, py + 2 + (i/2)*graphPitch
+}
+
+// graphHit 把畫面座標換成圖示格號；不在盤上回 −1。
+func (g *Game) graphHit(mx, my int) int {
+	x0, y0, _, _ := g.winFrame()
+	px := x0/UIScale + 6
+	py := y0/UIScale + 16
+	x, y := mx/UIScale, my/UIScale
+	for i := 0; i < 8; i++ {
+		cx, cy := graphCell(px, py, i)
+		if x >= cx && x < cx+graphCellW && y >= cy && y < cy+graphCellH {
+			return i
+		}
+	}
+	return -1
 }
 
 // drawBudgetWindow 畫預算視窗（說明書 p.43）。

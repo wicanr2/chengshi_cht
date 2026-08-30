@@ -159,6 +159,11 @@ type Game struct {
 	editFront bool
 	// mapHidden 是「隱藏前視窗」（Ctrl-H）把 City Form 收起來的狀態。
 	mapHidden bool
+	// graphOn 是統計圖六條曲線各自開著沒有，graphYears 是 10 或 120。
+	// 原版用左邊那八個圖示按鈕切換，狀態不進存檔。
+	graphOn    [6]bool
+	graphYears int
+
 	// querying 是「按住查詢」的狀態，queryTX／queryTY 是被查的那一格。
 	querying         bool
 	queryTX, queryTY int
@@ -184,7 +189,11 @@ func (g *Game) SetSavePath(p string) { g.savePath = p }
 // NewGame 建一個新遊戲。
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
 	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential,
-		animate: true, fastAnimate: true, menuRow: -1}
+		animate: true, fastAnimate: true, menuRow: -1, graphYears: 10}
+	// 一開始六條曲線都畫，跟原版一樣。
+	for i := range g.graphOn {
+		g.graphOn[i] = true
+	}
 	g.centerCamera()
 	return g
 }
@@ -665,8 +674,20 @@ func (g *Game) handleMouse() {
 		}
 		return
 	}
-	// 視窗開著時，點擊歸視窗，不要蓋東西
+	// 視窗開著時，點擊歸視窗，不要蓋東西。統計圖的圖示按鈕例外。
 	if g.win != winNone {
+		if just && g.win == winGraphs {
+			if i := g.graphHit(mx, my); i >= 0 {
+				switch {
+				case i < 6:
+					g.graphOn[i] = !g.graphOn[i]
+				case i == 6:
+					g.graphYears = 10
+				default:
+					g.graphYears = 120
+				}
+			}
+		}
 		return
 	}
 	// 地圖：編輯視窗裡的那一塊。座標要先減掉視窗原點——
