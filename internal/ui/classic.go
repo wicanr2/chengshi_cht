@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
@@ -49,6 +50,11 @@ const (
 	// 可調整的範圍。下限留得下工具盤（57 寬）加上幾格地圖。
 	editMinW, editMinH = 200, 150
 
+	// menuTextY 是選單列文字的**字格上緣**。原版量到的筆畫在 y 4–12
+	// （大寫九列，8×14 的字格從 2 起算），remake 的字格是 24 螢幕像素
+	// ＝ 8 原版像素，對齊筆畫中心就是 4。
+	menuTextY = 4
+
 	editTitleY = 24 // 標題列
 	editTitleH = 14
 	editInfoY  = 38 // 資金／訊息帶
@@ -56,6 +62,12 @@ const (
 	editViewY  = 54 // 地圖區
 	editViewH  = 257
 	editToolY  = 311 // 目前工具帶
+
+	// 帶內文字的字格位置，全部量自原版（見 drawEditWindow 的說明）。
+	fundsTextX = 8   // `Funds:`
+	msgTextX   = 136 // 訊息
+	infoTextY  = 41  // 資金帶的字格上緣
+	toolTextX  = 64  // 目前工具的名稱與造價
 	editToolH  = 10
 
 	editPalX, editPalY = 6, 53 // 工具盤圖（庫 2，57×182）
@@ -221,7 +233,7 @@ func (g *Game) drawMenuBar(dst *ebiten.Image) {
 			fill(dst, m.centerX-w/(2*UIScale)-2, 1, w/UIScale+4, menuBarH-2, colMenuInk)
 			c = colMenuBar
 		}
-		g.font.Draw(dst, label, x, 2*UIScale, c)
+		g.font.Draw(dst, label, x, menuTextY*UIScale, c)
 	}
 }
 
@@ -235,10 +247,15 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	fill(dst, editX+1, editInfoY, ew-2, editInfoH, colInfoBand)
 	fill(dst, editX+1, editViewY, ew-2, toolY-editViewY, colDesktop)
 
+	g.drawEditTitle(dst, ew)
+
 	// 資金與訊息：原版是同一條帶，資金在左、訊息接在後面。
-	g.font.Draw(dst, g.fundsText(), (editX+3)*UIScale, (editInfoY+2)*UIScale, colInkLight)
+	//
+	// ⚠ 欄位是**量出來的字格**，不是估的：`Funds:` 在 x 8、金額在 64、
+	// 訊息在 136（原版 8 像素一格，量自 workplace/dosbox/ui-04-windows.png）。
+	g.font.Draw(dst, g.fundsText(), fundsTextX*UIScale, infoTextY*UIScale, colInkLight)
 	if g.message != "" {
-		g.font.Draw(dst, g.message, (editX+70)*UIScale, (editInfoY+2)*UIScale, colInkLight)
+		g.font.Draw(dst, g.message, msgTextX*UIScale, infoTextY*UIScale, colInkLight)
 	}
 
 	g.drawEditMap(dst)
@@ -246,11 +263,33 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	g.drawToolHighlight(dst)
 	blit(dst, g.tiles.UIImage(BankDemand, 0), editDemandX, editDemandY)
 
-	// 目前工具帶。
+	// 目前工具帶。原版這一條用的是 **8×8** 字型（大寫七列），
+	// 上面幾條用 8×14——所以字格上緣比帶頂只低一列。
 	fill(dst, editX+1, toolY, ew-2, editToolH, colEditFrm)
-	g.font.Draw(dst, g.currentToolText(), (editX+40)*UIScale, toolY*UIScale, colInkLight)
+	g.font.Draw(dst, g.currentToolText(), toolTextX*UIScale, (toolY+1)*UIScale, colInkLight)
+	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型）。
+	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+2, colInkLight)
 	_ = vw
 	_ = vh
+}
+
+// drawEditTitle 畫編輯視窗標題列：關閉記號、城市名、年月。
+//
+// 位置是拖著原版的視窗改大小量出來的（workplace/dosbox/t2-*.png，
+// 右緣從 579 移到 435）：
+//
+//   - 城市名**置中**於 [editX, 右緣−72]：兩張圖的中心都比視窗中心左 36.5。
+//   - 年月**靠右**：左緣 ＝ 右緣−99，位移量與右緣完全同步。
+//   - 關閉記號固定在左端 editX+3。
+func (g *Game) drawEditTitle(dst *ebiten.Image, ew int) {
+	right := editX + ew - 1
+	drawGlyph8(dst, glyphSun, editX+3, editTitleY+2, colInk)
+	name := g.world.CityName
+	if name != "" {
+		g.font.DrawCentered(dst, name, editX*UIScale, (editTitleY+2)*UIScale,
+			(right-72-editX)*UIScale, colInk)
+	}
+	g.font.Draw(dst, g.dateText(), (right-99)*UIScale, (editTitleY+2)*UIScale, colInk)
 }
 
 // drawEditMap 畫編輯視窗裡的地圖。原版一格 16×16，可見 11×16 格。
@@ -462,5 +501,51 @@ func (g *Game) resizeEdit(dx, dy int) {
 	ew = clampInt(ew+dx*sz, editMinW, OrigW-editX-1)
 	eh = clampInt(eh+dy*sz, editMinH, OrigH-editY-1)
 	g.ew, g.eh = ew, eh
+	g.clampCamera()
+}
+
+// handleResizeMouse 處理「改變編輯視窗大小」的拖曳。
+//
+// 原版的流程是 **Ctrl-R 讓外框變黃 → 拖右下角 → 放開就套用並離開模式**，
+// 三件事都實測過（`workplace/dosbox/t2-*.png`、`t3-*.png`）：
+//
+//   - 只按 Ctrl-R 不拖，送方向鍵沒有反應——所以方向鍵不是原版的操作方式。
+//   - 不按 Ctrl-R 直接拖右下角，視窗一動也不動。
+//   - 拖完之後外框已經變回藍色，不必再按 Enter。
+//
+// ⚠ 原版**從哪裡開始拖**沒有量到唯一答案：實測那一次是從外框右下角
+// (578,321) 起手，而右下角另有一個 `+` 記號。這裡兩個都接受。
+// 方向鍵也留著（`resizeEdit`），那是 remake 多給的，不是原版行為。
+func (g *Game) handleResizeMouse(mx, my int) bool {
+	if !g.resizing {
+		return false
+	}
+	if g.dragResize {
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+			g.setEditCorner(mx, my)
+		} else {
+			g.dragResize = false
+			g.resizing = false
+		}
+		return true
+	}
+	if !inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		return false
+	}
+	ew, eh := g.editSize()
+	// 右下角的把手區：`+` 記號那一格加上外框的轉角，一起算。
+	hx, hy := editX+ew-14, editY+eh-14
+	if mx < hx*UIScale || my < hy*UIScale {
+		return false
+	}
+	g.dragResize = true
+	g.setEditCorner(mx, my)
+	return true
+}
+
+// setEditCorner 把編輯視窗的右下角拉到游標處，取整到整數格。
+func (g *Game) setEditCorner(mx, my int) {
+	g.ew = clampInt(mx/UIScale-editX+1, editMinW, OrigW-editX-1)
+	g.eh = clampInt(my/UIScale-editY+1, editMinH, OrigH-editY-1)
 	g.clampCamera()
 }

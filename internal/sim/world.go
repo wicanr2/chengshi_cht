@@ -229,6 +229,13 @@ func NewWorld(seed uint32) *World {
 		FireEffect:   1000,  // s_sim.c:403
 		EMarket:      6.0,   // s_sim.c:318 InitSimMemory
 
+		// 新城市的預設名稱。Micropolis 的 X11 版是問玩家，DOS 版不問：
+		// 執行檔的新城市對話框把 `HERESVILLE` 當預設值
+		// （`SIMCITY.EXE` 0x0255c2，緊接在 `SIMCITY city name:` 前面），
+		// 實跑也是這個名字出現在標題列
+		// （workplace/dosbox/t2-00-default.png）。
+		CityName: "HERESVILLE",
+
 		// 三項撥款比例的初值是 1.0（w_budget.c:82 InitFundingLevel）。
 		// 檔案層宣告的 0.0 只是 C 的靜態初值，開新城市時會被覆蓋掉；
 		// 漏掉這一步的話 roadValue 恆為 0 —— 錢只進不出，而且

@@ -1,0 +1,21 @@
+# 第二次：Ctrl-R 之後用滑鼠拖右下角那個記號改大小，看標題會不會跟著動。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+c
+wait 2
+shot 00-default
+key ctrl+r
+wait 2
+drag 578 321 420 240
+wait 3
+shot 01-dragged
+key Return
+wait 2
+shot 02-after

@@ -179,8 +179,10 @@ type Game struct {
 
 	// ew／eh 是玩家調整過的編輯視窗大小（原版像素）；0 代表用預設值。
 	ew, eh int
-	// resizing 是「調整編輯窗大小」（Ctrl-R）的模式。
-	resizing bool
+	// resizing 是「調整編輯窗大小」（Ctrl-R）的模式，
+	// dragResize 是模式裡正在拖右下角。
+	resizing   bool
+	dragResize bool
 
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
@@ -658,6 +660,9 @@ func (g *Game) adjustFunding(d float64) {
 
 func (g *Game) handleMouse() {
 	mx, my := ebiten.CursorPosition()
+	if g.handleResizeMouse(mx, my) {
+		return
+	}
 	if g.handleMenuMouse(mx, my) {
 		return
 	}

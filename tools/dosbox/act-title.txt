@@ -1,0 +1,42 @@
+# 編輯視窗標題列：城市名與日期的位置，以及縮小視窗之後它們會不會跟著動。
+#
+# 先 Ctrl-C 關掉 City Form（不然它蓋住標題列右半），拍一張預設大小的，
+# 再 Ctrl-R 進調整模式、左方向鍵縮窄、Enter 結束，拍第二張。
+# 兩張的城市名中心相減就知道標題是釘在視窗上還是釘在固定座標。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+key ctrl+c
+wait 2
+shot 00-default
+key ctrl+r
+wait 2
+shot 01-resize-mode
+key Left
+wait 1
+key Left
+wait 1
+key Left
+wait 1
+key Left
+wait 1
+key Left
+wait 1
+key Return
+wait 3
+shot 02-narrow
+key ctrl+r
+wait 2
+key Up
+wait 1
+key Up
+wait 1
+key Return
+wait 3
+shot 03-shorter
