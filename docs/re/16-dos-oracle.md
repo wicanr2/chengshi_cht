@@ -775,7 +775,7 @@ DOS 1.10 顯示的年份 = 1849 + CityTime / 48
 ## 八、「兩份 `SOUNDDAT.PSF` 讀哪一份」——DOSBox 這條路走不通（已確認）
 
 `CONTEXT.md` §5.5 給這一項的下一步是「反組譯檔名字串，**或 DOSBox 追檔案開啟**」。
-第二條路試過了，**結構上不可能成立**。
+第二條路試過了，**結構上不可能成立**：八段 PCM 在模擬器裡從頭到尾不會被讀。
 
 ### 兩份差在哪
 
@@ -789,44 +789,81 @@ DOS 1.10 顯示的年份 = 1849 + CityTime / 48
 
 所以 `DATA/` 那一份與 1991 年的 `.V4` 一致，根目錄那一份是後來換過的。
 
-### 實驗與它為什麼失敗
+### 為什麼在模擬器裡讀不到
 
-給 [`../../tools/dosbox.sh`](../../tools/dosbox.sh) 加了 `PREP`：一段在**遊戲副本**上
-跑的 shell，在 DOSBox 起來之前執行。用它把其中一份填成垃圾，看遊戲抱不抱怨。
+`SIMCITY.CFG` 的 `Sound:` 有四個值，**四個都到不了 PCM**：
+
+| 設定 | 結果 |
+|---|---|
+| `I` Internal IBM Sound（**這份副本的預設值**）| 內建喇叭，程式自己合成嗶聲，不載 PCM。⚠ 所以「讀不到」的第一層原因是**設定檔選的就是內建喇叭**，不是模擬器缺硬體 |
+| `S` Covox Sound Board | 沒有模擬器實作。畫面明寫 `Sound Master not found. \n Using internal speaker` |
+| `T` Tandy Sound | 要 `machine=tandy`，而那台機器**沒有 EGA**；改用 Tandy 螢幕模式又缺資料檔（`CLAUDE.md` §2.1：這份副本沒有 CGA 與 Tandy 的圖形檔）。實測 `MACHINE=tandy` ＋ `Screen Mode: E`：**遊戲根本沒啟動**，DOSBox-X 停在自己的歡迎畫面 |
+| `N` No Sound | 顯然不載 |
+
+### 實驗與正對照
+
+給 [`../../tools/dosbox.sh`](../../tools/dosbox.sh) 加了 `PREP`（DOSBox 起來之前）
+與 `POST`（收工之後）兩個掛勾，都在**遊戲副本**上跑。
+
+**判準從「弄壞內容」換成「把檔案改名拿掉」**——開檔失敗會被回報，內容損壞不一定。
 
 | 情況 | 與基準的畫面差異 |
 |---|---:|
-| 弄壞根目錄的 `SOUNDDAT.PSF` | **0 像素** |
-| 弄壞 `DATA/SOUNDDAT.PSF` | **0 像素** |
-| **正對照**：弄壞 `DATA/MESSAGE.PTF` | **20 300 像素**（第一張截圖就看得出來）|
+| 拿掉 `DATA/WEST_SND.PSF` | **0 像素** |
+| 拿掉根目錄的 `SOUNDDAT.PSF` | **0 像素** |
+| 拿掉 `DATA/SOUNDDAT.PSF` | **0 像素** |
+| 拿掉 `DATA/MESSAGE.PTF` | **0 像素**（見下，這一列是前提錯誤）|
+| **正對照**：拿掉 `DATA/WEST_MSG.PTF` | **222 253 像素**，第一張截圖就是致命錯誤 |
+| **正對照**：拿掉 `CEGA/WESTCEGA.PGF` | **222 273 像素** |
 
-正對照證明這個方法**測得出壞掉的資料檔**，所以兩個零不是方法失靈。
+⚠ **`DATA/MESSAGE.PTF` 不是有效的正對照。** 用 Wild West 圖形集時遊戲根本不讀它——
+圖形檔頭指名的是 `west_msg.ptf`（見下一節）。`MESSAGE.PTF` 只在基本圖形集下才被讀。
 
-原因在畫面上寫著（`workplace/dosbox/s-base-00-title.png`）：
+### 順帶釘死的三件事
+
+1. **遊戲會驗證音效檔內容。** 執行檔裡有 `Sound file corrupt/SAMPLE TOO LONG`
+   與 `Counldn't allocation enough memory to read sounds`（原版自己的錯字）。
+   所以先前「弄壞音效檔零差異」的原因是**沒走到那段程式碼**，不是「遊戲不驗證」。
+2. `Sound Master not found` 之後是**退回內建喇叭**（`Using internal speaker` 是同一個
+   對話框的第二行），不是靜音。
+3. `monodat.pgf` 是**列印用的圖形檔**：錯誤訊息 `Sorry, printer graphics file\nnot found.
+   Graphics set not correctly installed`，前面緊鄰目錄名 `mono`。
+
+### 路徑是怎麼組出來的（已確認）
+
+拿掉 `DATA/WEST_MSG.PTF` 之後，遊戲印出**它自己組出來的完整路徑**：
 
 ```
-Sound Master not found.
- Using internal speaker
+FATAL ERROR: PROGRAM ABORTED
+Cannot find message file:C:\DATA\west_msg.ptf
 ```
 
-**DOSBox 沒有 Covox Sound Master，遊戲退回內建喇叭**，而內建喇叭放的是程式自己
-合成的嗶聲、不是那八段 PCM（§4 已經用「換掉音效檔再錄一次、聲音逐取樣相同」
-證過）。**所以 `SOUNDDAT.PSF` 從頭到尾沒有被開啟過**，弄壞它當然沒有影響。
+（截圖 `workplace/dosbox/p1msg-00-title.png`。）
 
-Tandy 那條路也一樣：`INT 1Ah AH=83h` 的 Tandy 音效 BIOS 在 DOSBox-X 裡沒有實作。
-**兩條發聲路徑在模擬器裡都活不起來，所以「追檔案開啟」這個方法對這一題是死的。**
+這一句解掉了路徑規則：**圖形檔頭給的是裸檔名，程式把 `DATA\` 補在前面。**
+`.PGF` 檔頭帶三個檔名（`internal/assets/pgf.go` 的 `MsgFile`／`SoundFile`／`MonoFile`），
+風格檔填的是 `west_msg.ptf`／`west_snd.psf`／`westmono.pgf`；執行檔的字串表裡則有
+同樣三個欄位的**預設值**，順序一致，後面緊接著兩個 `DATA`：
 
-### 順帶確認的一件事
+```
+message.ptf  sounddat.psf  monodat.pgf  Classic  "Loading %s graphics"  DATA  DATA  ""
+```
 
-`Sound Master not found` 之後的行為是**退回內建喇叭**，不是靜音——
-`Using internal speaker` 是同一個對話框的第二行。先前只知道有那個字串。
+組路徑的格式字串是 `%s%s`（0x25e3b），旁邊還有 `%sdat.pgf`（基本檔名是
+`<模式目錄>dat.pgf`）與一批追蹤字串（`\nReading strings from %s`、`\nFound file %s`、
+`\nSetmode=%c`）。追蹤字串預設不輸出——把遊戲的標準輸出導向檔案得到 0 位元組，
+所以它們在某個除錯開關後面。
 
 ### 剩下的路
 
-只剩**反組譯開檔那一段**。目前 remake 取 `DATA/` 那一份
-（`internal/ui/sound.go` 的 `soundFile`），依據是執行檔字串表裡 `sounddat.psf`
-與 `message.ptf`、`monodat.pgf`、`DATA` 相鄰——**那是相鄰性推論，不是實證**，
-等級只到強證據。
+`sounddat.psf` **只在用基本圖形集時才會被讀**（風格檔的檔頭都指名自己的
+`*_SND.PSF`，而那些檔案只存在於 `DATA/`）。把三件事合起來——檔頭存裸檔名、
+同一個三欄位的預設值配著兩個 `DATA`、姊妹欄位的實測路徑是 `C:\DATA\`——
+remake 取 `DATA/` 那一份（`internal/ui/sound.go` 的 `soundFile`）的依據已經
+從「字串相鄰」升級成**同一條程式路徑的實測**，但音效那一欄本身沒有被直接觀測到，
+等級仍是強證據。
+
+要定案只剩反組譯開檔那一段，或找出那個除錯開關讓 `\nFound file %s` 印出來。
 
 ## 九、「弄壞資料檔再比截圖」的正確做法（2026-08-30 補）
 
@@ -859,7 +896,15 @@ DOS 版所有資料檔共用一種 LZSS（[`../formats/02-dos-lzss.md`](../forma
 **推論**：一個 16×16 格子最多 256 個像素 < 噪音底線。
 **逐點比對判不了「某個 16×16 圖形有沒有被畫出來」**，只能判整片的改變。
 
-### 坑四：截到空桌面而不自知
+### 坑四：判準要用「把檔案改名拿掉」，不是「弄壞內容」
+
+弄壞內容只有在程式**會驗證**時才看得出來，而且驗證失敗不一定顯示在畫面上。
+把檔案改名拿掉會讓 `open()` 失敗，那幾乎一定被回報——原版這支甚至會把
+**它自己組出來的完整路徑**印在畫面上（§八），那比「有沒有差異」多了一整層資訊。
+
+掛勾：`PREP`（DOSBox 起來之前）與 `POST`（收工之後），都在遊戲副本上跑。
+
+### 坑五：截到空桌面而不自知
 
 原本的腳本用 `Ctrl-C` 逐一關視窗，中間有一次沒開成，多關的那次把編輯視窗
 也關掉了，後面十張全是**只有選單列的空桌面**。在空桌面上把整個地圖圖塊庫
@@ -867,6 +912,12 @@ DOS 版所有資料檔共用一種 LZSS（[`../formats/02-dos-lzss.md`](../forma
 
 **每張地圖區截圖前先按 `Ctrl-E`**（開啟編輯視窗），而且**正對照要逐張看**，
 不是看總結：正對照在某一張上是 0，那一張就不能用。
+
+**同一個形狀還有第二種**：改了模擬器設定之後遊戲根本沒啟動。實測把
+`MACHINE=tandy` 打開想試 Tandy 音效，四組跑出來**全部逐位元相同**——
+看起來像乾淨的「音效檔沒被讀」，其實是 DOSBox-X 停在自己的歡迎畫面，
+遊戲一次都沒跑起來（`machine=tandy` 沒有 EGA）。
+**每換一次環境設定，先看對照組的第一張截圖確認遊戲真的在跑。**
 
 ### 判單格繪製要換判準：對城市狀態免疫的「不明格」
 

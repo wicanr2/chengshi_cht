@@ -169,5 +169,13 @@ kill $D 2>/dev/null || true
 for _ in 1 2 3 4; do kill -0 $D 2>/dev/null || break; sleep 0.5; done
 kill -9 $D 2>/dev/null || true
 wait $D 2>/dev/null || true
+# POST 是在 DOSBox 收工之後、還在容器裡時跑的一段 shell，工作目錄同樣是
+# 遊戲副本。對稱於 PREP，用來把遊戲寫出來的東西帶回 /out
+# （例如把標準輸出導向檔案之後要取回那份檔案）。
+if [ -n "${POST:-}" ]; then
+  ( cd /tmp/game && eval "$POST" ) || true
+  echo "POST 跑完：$POST"
+fi
+
 echo "== 時間表 =="; cat "/out/$PREFIX.marks"
 ls -l /out/"$PREFIX"*

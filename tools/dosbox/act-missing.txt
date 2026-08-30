@@ -1,0 +1,15 @@
+# 把某個資料檔改名拿掉，看遊戲在哪一步噴錯。
+# 「弄壞內容」測不出來（遊戲不驗證），「開檔失敗」才會被回報。
+wait 4
+shot 00-title
+click 316 240
+wait 5
+shot 01-scenmenu
+click 402 253
+wait 8
+shot 02-load
+key Return
+wait 3
+key Return
+wait 4
+shot 03-ingame
