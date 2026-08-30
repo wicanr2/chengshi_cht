@@ -17,9 +17,18 @@ FAIL=0
 mkdir -p "$OUT" /tmp/pt
 
 # 相機開場置中：120×100 的地圖、32×24 格的視野 → 左上角在 (44,38)。
-CAMX=44; CAMY=38; PX=32
-sx() { echo $(( ($1 - CAMX) * PX + PX / 2 )); }
-sy() { echo $(( ($1 - CAMY) * PX + PX / 2 )); }
+# 格子座標 → 畫面座標。
+#
+# ⚠ 版面換成原版的之後，地圖不再從畫面左上角開始：它在編輯視窗裡，
+# 原點是 (64,54) 的原版座標，畫布放大三倍（internal/ui/classic.go）。
+# 少加這個位移的話，每一次點擊都落在離目標好幾格的地方，而遊戲照樣
+# 蓋得出東西——症狀是「試玩腳本蓋的城市長得不對」，不是「點不到」。
+# 相機一開始置中：camX ＝ (120 − 11) / 2、camY ＝ (100 − 16) / 2
+# （見 internal/ui 的 centerCamera，可見格數是編輯視窗算出來的）。
+UIS=3; VIEWX=64; VIEWY=54
+CAMX=54; CAMY=42; PX=$((16 * UIS))
+sx() { echo $(( VIEWX * UIS + ($1 - CAMX) * PX + PX / 2 )); }
+sy() { echo $(( VIEWY * UIS + ($1 - CAMY) * PX + PX / 2 )); }
 
 fail() { echo "FAIL  $*"; FAIL=1; }
 pass() { echo "pass  $*"; }
@@ -27,7 +36,7 @@ pass() { echo "pass  $*"; }
 diffpct() { python3 tools/diffpct.py "$1" "$2"; }
 
 start_x() {
-  Xvfb :99 -screen 0 1280x960x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
+  Xvfb :99 -screen 0 1920x1050x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
   export DISPLAY=:99
   for i in $(seq 1 40); do xdpyinfo >/dev/null 2>&1 && return; sleep 0.25; done
   echo "Xvfb 起不來"; exit 1
@@ -84,7 +93,8 @@ BIN=/tmp/pt/chengshi
 go build -o "$BIN" ./cmd/chengshi
 
 run_game() { # 背景啟動遊戲，等到畫面出來
-  "$BIN" -data "$DATA" "$@" >/tmp/game.log 2>&1 &
+  # -mute：容器裡沒有音效裝置，開了只是多印一行警告。
+  "$BIN" -data "$DATA" -mute "$@" >/tmp/game.log 2>&1 &
   GAME=$!
   for i in $(seq 1 120); do
     xdotool search --name "城市" >/dev/null 2>&1 && { sleep 3; return; }
@@ -128,8 +138,8 @@ build_plant() { key g; click $((FX+1)) $((FY+1)); }
 build_wire()  { key w; drag $((FX+4)) $((FY+1)) $((FX+7)) $((FY+1)); }
 build_drop()  { key w; click $((FX+7)) $((FY+2)); }
 build_res()   { key z; click $((FX+6)) $((FY+4)); }
-build_road()  { key r; drag $((FX+4)) $((FY+6)) $((FX+11)) $((FY+6)); }
-build_elec()  { key w; drag $((FX+4)) $((FY+6)) $((FX+11)) $((FY+6)); }
+build_road()  { key r; drag $((FX+4)) $((FY+6)) $((FX+9)) $((FY+6)); }
+build_elec()  { key w; drag $((FX+4)) $((FY+6)) $((FX+9)) $((FY+6)); }
 build_com()   { key x; click $((FX+6)) $((FY+8)); }
 
 do_until 4000 "蓋發電廠"       build_plant
@@ -159,7 +169,10 @@ open_window() { # 快速鍵 截圖名 說明
   for i in $(seq 1 6); do
     key "$1"; shot "$2"
     local d; d=$(diffpct "$OUT/02-蓋好.png" "$OUT/$2.png")
-    if [ "$d" -ge 400000 ]; then pass "$3 開起來了（${d} 像素）"; close_window; return 0; fi
+    # 門檻 200000：換成原版版面之後視窗小多了（統計圖只有 304×125 原版像素
+    # ＝ 342000 螢幕像素），舊的 400000 會讓統計圖永遠判成「沒開」，
+    # 而迴圈每按一次就 toggle 一次，所以看起來像快速鍵壞了。
+    if [ "$d" -ge 200000 ]; then pass "$3 開起來了（${d} 像素）"; close_window; return 0; fi
   done
   fail "$3 沒開"
   close_window
@@ -213,7 +226,7 @@ fi
 echo "== 第六段：劇本（另一種風格）=="
 run_game -scenario 5 -style asia
 sleep 1; shot 11-劇本簡介
-do_until 150000 "劇本簡介關得掉" key space
+do_until 100000 "劇本簡介關得掉" key space
 shot 12-劇本城市
 alive || fail "劇本崩了"
 stop_game
