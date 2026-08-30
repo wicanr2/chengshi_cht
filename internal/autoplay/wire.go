@@ -137,8 +137,9 @@ func (p *Player) layWirePath(path [][2]int) bool {
 
 // connectDark 把還沒接上的暗區接回電網。
 //
-// 每年最多接 maxLinks 條——一條線可能要拉幾十格，全部一次接完會把錢花光。
-func (p *Player) connectDark(maxLinks int) {
+// 每年最多接 maxLinks 條，而且吃 budget 的額度——一條線可能要拉幾十格，
+// 全部一次接完會把錢花光（budget.go）。
+func (p *Player) connectDark(maxLinks int, budget *purse, reserve int) {
 	w := p.w
 	done := 0
 	for x := 0; x < sim.WorldX && done < maxLinks; x++ {
@@ -147,7 +148,7 @@ func (p *Player) connectDark(maxLinks int) {
 			if c&sim.ZONEBIT == 0 || c&sim.PWRBIT != 0 {
 				continue
 			}
-			if w.TotalFunds < p.reserve()+300 {
+			if !budget.ok(reserve) {
 				return
 			}
 			sx, sy, ok := p.nearestPowered(x, y)

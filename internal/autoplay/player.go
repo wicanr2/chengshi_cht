@@ -21,18 +21,21 @@
 // 它不是 AI，是一份寫成程式的攻略：每年動一次手，照劇本的過關條件分四種
 // 打法。種子 1–5 的實測（每個劇本各跑五顆種子）：
 //
-//	漢堡 5/5　伯恩 5/5　東京 5/5　波士頓 5/5　里約 5/5
-//	底特律 2/5
+//	漢堡 5/5　伯恩 5/5　東京 5/5　底特律 5/5　波士頓 5/5　里約 5/5
 //	達斯維利 0/5　舊金山 0/5
 //
-// 合計 27/40。不出手是 5/40。
+// 合計 30/40 —— **八個裡有六個五顆種子全過**。不出手是 5/40。
+//
+// 每一年的錢先分配好再花（`budget.go`），不是一串各自貪心的步驟。
+// 那個重構本身把通關數從 27 拉到 30：底特律從 3/5 變成 5/5，
+// 而且五顆種子的結果從 6/5/6/5/6 變成整齊的 6/6/6/6/6。
 //
 // 兩個過不了的劇本各有各的難處：
 //
-//   - **達斯維利**是 bootstrap 問題。開局 $5 000、三十年、要加權人口
-//     100 000（城市等級 4）。準備金改成按開銷算之後它終於出得了手，
-//     但三十年只長到兩萬出頭——每年能蓋的格數受限於稅收，而稅收又受限於
-//     人口，複利起不來。要贏得換一套「先鋪格狀路網再密集填分區」的打法。
+//   - **達斯維利**是複利問題。開局 $5 000、三十年、要加權人口 100 000
+//     （城市等級 4），而三十年只長到兩萬出頭——每年能蓋的格數受限於稅收，
+//     稅收又受限於人口。要贏得換一套「先鋪格狀路網再密集填分區」的打法
+//     （試過三輪都更差，記在 WORKLOG 2026-08-30 續十六）。
 //   - **舊金山**只有五年。地震把電網打斷，290 個分區裡有 100 多個是暗的
 //     ——暗的分區不會成長。`connectDark`（wire.go）把暗區接回來之後，
 //     五年結束時的人口從 82 960 拉到 92 720，但過關要 100 000，還差一截。
@@ -127,10 +130,9 @@ func (p *Player) year() {
 	}
 
 	p.clearRubble(40)
-	p.power() // 沒電就不會長，這一項排在服務前面
-	// 電網被打斷的暗區接回來（wire.go）。舊金山地震之後 291 個分區裡
-	// 103 個是暗的，蓋再多電廠也接不回來——要的是**接線**不是發電量。
-	p.connectDark(20)
+
+	// 供電容量是保命，不受額度限制（budget.go 的第 1 條）。
+	p.power()
 
 	// ⚠ **留準備金。** 破產一次，自動預算就撥不出警消經費
 	// （`PoliceEffect`／`FireEffect` 掉下來，評分乘 0.9 兩次），
@@ -140,9 +142,14 @@ func (p *Player) year() {
 	if spare <= 0 {
 		return
 	}
-	p.services()
-	p.parks(4)
-	// 一格分區 100 元，加上整地大約 150。用可動用的錢決定這一年蓋幾格，
+
+	// 一年的錢先分配好再花，各項不再互相搶（理由見 budget.go）。
+	res := p.reserve()
+	p.connectDark(20, p.purse(spare/4), res)
+	p.services(p.purse(spare / 4))
+	p.parks(4, p.purse(spare/10))
+
+	// 一格分區 100 元，加上整地大約 150。用額度決定這一年蓋幾格，
 	// 而不是固定值——小城蓋不動大城蓋不夠。
 	n := spare / 300
 	if p.goal != goalPop && n > 6 {
@@ -335,7 +342,7 @@ func (p *Player) clearRubble(budget int) {
 }
 
 // services 在犯罪最高、又沒有警局覆蓋的地方蓋警局；火災風險最高的地方蓋消防隊。
-func (p *Player) services() {
+func (p *Player) services(budget *purse) {
 	w := p.w
 	// 追犯罪的劇本一年蓋三座警局；其餘一座就好。底特律的犯罪均值要從
 	// 120 壓到 60 以下，一年一座十年也追不上。
@@ -357,7 +364,7 @@ func (p *Player) services() {
 			return int(w.CrimeMem[hx][hy])*4 - int(w.PoliceMap[hx>>2][hy>>2])
 		}, 40))
 	}
-	if w.TotalFunds > 6500 && p.countTile(sim.FIRESTATION)*20 < zones {
+	if budget.ok(p.reserve()+2000) && p.countTile(sim.FIRESTATION)*20 < zones {
 		// 有東西可燒、消防覆蓋低的地方。用人口密度當「有東西可燒」的代理。
 		p.build(sim.ToolFireStation, p.bestSites(func(hx, hy int) int {
 			return int(w.PopDensity[hx][hy])*2 - int(w.FireStMap[hx>>2][hy>>2])
@@ -521,11 +528,11 @@ func (p *Player) makeRoom(x, y int) {
 }
 
 // parks 在已開發區旁邊的空地種公園：拉地價、壓犯罪，一格 10 塊很便宜。
-func (p *Player) parks(n int) {
+func (p *Player) parks(n int, budget *purse) {
 	w := p.w
 	for i := 0; i < n; i++ {
 		x, y, ok := p.emptyNearDevelopment()
-		if !ok || w.TotalFunds < 6000 {
+		if !ok || !budget.ok(p.reserve()+2000) {
 			return
 		}
 		w.ApplyTool(sim.ToolPark, x, y)
