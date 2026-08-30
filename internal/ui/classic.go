@@ -219,6 +219,10 @@ var paletteOrder = [palCols * palRows]sim.Tool{
 }
 
 func paletteIndexOf(t sim.Tool) int {
+	// 核能發電廠與火力共用一格，highlight 要一起亮。
+	if t == sim.ToolNuclear {
+		return powerCell
+	}
 	for i, v := range paletteOrder {
 		if v == t {
 			return i
@@ -304,4 +308,26 @@ func comma(n int) string {
 		return "-" + b.String()
 	}
 	return b.String()
+}
+
+// 發電廠副選單。原版的工具盤只有十四格，但建造工具有十五個——
+// **火力與核能共用一格**，點下去開一個三筆的副選單（訊息檔第 5 段）。
+//
+// 這解釋了訊息檔第 5 段為什麼存在，也解釋了工具盤為什麼是 2×7 不是 2×8。
+const powerCell = 11 // 工具盤第 11 格（0 起算）＝ 發電廠
+
+// powerSubOpen 記錄副選單開著沒有；開著時畫在工具盤右邊。
+func (g *Game) openPowerSub() {
+	g.win = winPower
+	g.sysRow = 0
+}
+
+// powerTools 是副選單的兩個選項，順序照訊息檔第 5 段。
+// 第 5 段三筆：第 0 筆是標題，第 1、2 筆是兩種發電廠。
+var powerTools = []struct {
+	msg  int
+	tool sim.Tool
+}{
+	{1, sim.ToolCoalPower},
+	{2, sim.ToolNuclear},
 }

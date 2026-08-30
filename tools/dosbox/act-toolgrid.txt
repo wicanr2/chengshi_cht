@@ -1,0 +1,80 @@
+# 工具盤逐格辨識：每格點兩次（第一次常常沒登記到），再截狀態列。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 8
+key Return
+wait 3
+click 311 190
+wait 3
+click 22 70
+wait 1
+click 22 70
+wait 1
+shot g01
+click 49 70
+wait 1
+click 49 70
+wait 1
+shot g02
+click 22 96
+wait 1
+click 22 96
+wait 1
+shot g03
+click 49 96
+wait 1
+click 49 96
+wait 1
+shot g04
+click 22 121
+wait 1
+click 22 121
+wait 1
+shot g05
+click 49 121
+wait 1
+click 49 121
+wait 1
+shot g06
+click 22 146
+wait 1
+click 22 146
+wait 1
+shot g07
+click 49 146
+wait 1
+click 49 146
+wait 1
+shot g08
+click 22 170
+wait 1
+click 22 170
+wait 1
+shot g09
+click 49 170
+wait 1
+click 49 170
+wait 1
+shot g10
+click 22 196
+wait 1
+click 22 196
+wait 1
+shot g11
+click 49 196
+wait 1
+click 49 196
+wait 1
+shot g12
+click 22 221
+wait 1
+click 22 221
+wait 1
+shot g13
+click 49 221
+wait 1
+click 49 221
+wait 1
+shot g14

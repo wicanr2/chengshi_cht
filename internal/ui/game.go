@@ -141,6 +141,12 @@ type Game struct {
 	openMenu int
 	menuRow  int
 
+	// winPos 是玩家搬過的視窗位置（原版座標）；沒搬過就用 winRect 的預設。
+	winPos map[window][2]int
+	// dragWin 是正在拖的視窗，dragDX／dragDY 是按下時游標與視窗左上角的差。
+	dragWin        window
+	dragDX, dragDY int
+
 	// gotoX／gotoY 是 Tab「前往災區」的目標，取自上一則帶座標的訊息。
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
 	gotoX, gotoY int
@@ -486,7 +492,7 @@ func (g *Game) handleWindowKeys() {
 				g.layer = mapLayer(i)
 			}
 		}
-	case winSystem, winScenario, winStyle, winSpeed:
+	case winSystem, winScenario, winStyle, winSpeed, winPower:
 		g.handleSysMenuKeys()
 	case winSaveAs:
 		g.handleSaveAsKeys()
@@ -552,13 +558,21 @@ func (g *Game) handleMouse() {
 	if g.handleMenuMouse(mx, my) {
 		return
 	}
+	if g.handleWindowMouse(mx, my) {
+		return
+	}
 	pressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	just := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
 	// 工具盤：編輯視窗左緣，2 欄 × 7 列（classic.go）。
 	if just {
 		if i := paletteHit(mx, my); i >= 0 {
-			g.tool = paletteOrder[i]
+			if i == powerCell {
+				// 發電廠那一格是副選單，不是直接選工具。
+				g.openPowerSub()
+			} else {
+				g.tool = paletteOrder[i]
+			}
 			return
 		}
 	}

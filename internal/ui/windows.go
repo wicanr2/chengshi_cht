@@ -6,6 +6,7 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
@@ -37,6 +38,8 @@ const (
 	winSaveAs
 	// winSpeed 是功能選單的速度副選單（訊息檔第 19 段，五段速度）。
 	winSpeed
+	// winPower 是工具盤發電廠那一格的副選單（訊息檔第 5 段）。
+	winPower
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -110,17 +113,85 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	winScenario: {150, 40, 240, 180},
 	winStyle:    {150, 40, 240, 180},
 	winSpeed:    {200, 30, 200, 140},
+	winPower:    {70, 190, 170, 80},
 	winAbout:    {40, 30, 560, 290},
 	winSaveAs:   {120, 90, 400, 150},
 }
 
-// winFrame 回傳目前視窗的外框（螢幕像素）。
+// winFrame 回傳目前視窗的外框（螢幕像素）。玩家搬過的話用搬過的位置。
 func (g *Game) winFrame() (x, y, w, h int) {
 	r, ok := winRect[g.win]
 	if !ok {
 		r = struct{ x, y, w, h int }{60, 40, 520, 270}
 	}
-	return r.x * UIScale, r.y * UIScale, r.w * UIScale, r.h * UIScale
+	px, py := r.x, r.y
+	if p, ok := g.winPos[g.win]; ok {
+		px, py = p[0], p[1]
+	}
+	return px * UIScale, py * UIScale, r.w * UIScale, r.h * UIScale
+}
+
+// titleBarHit 判斷畫面座標在不在目前視窗的標題列上。
+func (g *Game) titleBarHit(mx, my int) bool {
+	if g.win == winNone {
+		return false
+	}
+	x, y, w, _ := g.winFrame()
+	return mx >= x && mx < x+w && my >= y && my < y+13*UIScale
+}
+
+// closeBoxHit 判斷畫面座標在不在關閉鈕上。原版的關閉鈕在標題列左端。
+func (g *Game) closeBoxHit(mx, my int) bool {
+	if g.win == winNone {
+		return false
+	}
+	x, y, _, _ := g.winFrame()
+	return mx >= x+2*UIScale && mx < x+10*UIScale &&
+		my >= y+2*UIScale && my < y+10*UIScale
+}
+
+// handleWindowMouse 處理視窗的關閉鈕與標題列拖曳。
+//
+// 原版的視窗可以搬（選單裡的「視窗位置 Ctrl-P」），這裡做成直接拖標題列——
+// 原版是先選選單再用方向鍵搬，兩種都到得了同一個結果，而拖曳是玩家會先試的。
+func (g *Game) handleWindowMouse(mx, my int) bool {
+	if g.dragWin != winNone {
+		if !ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+			g.dragWin = winNone
+			return true
+		}
+		if g.winPos == nil {
+			g.winPos = map[window][2]int{}
+		}
+		g.winPos[g.dragWin] = [2]int{
+			clampInt((mx-g.dragDX)/UIScale, 0, OrigW-40),
+			clampInt((my-g.dragDY)/UIScale, menuBarH, OrigH-20),
+		}
+		return true
+	}
+	if g.win == winNone || !inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		return false
+	}
+	if g.closeBoxHit(mx, my) {
+		g.win = winNone
+		return true
+	}
+	if g.titleBarHit(mx, my) {
+		x, y, _, _ := g.winFrame()
+		g.dragWin, g.dragDX, g.dragDY = g.win, mx-x, my-y
+		return true
+	}
+	return false
+}
+
+func clampInt(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
 }
 
 // drawWindow 畫目前開著的視窗。
@@ -163,6 +234,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecSysMenu, 9)
 	case winSpeed:
 		title = g.txt.S(i18n.SecOptMenu, 4)
+	case winPower:
+		title = g.txt.S(i18n.SecPowerSub, 0)
 	}
 	t := trimMenu(title)
 	g.font.Draw(dst, t, x+w/2-g.font.Measure(t)/2, y+UIScale, colMenuInk)
@@ -182,7 +255,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawEvalWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winDisaster:
 		g.drawDisasterWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
-	case winSpeed:
+	case winSpeed, winPower:
 		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	case winAbout:
 		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
