@@ -1,0 +1,38 @@
+# 用**滑鼠**拉 WINDOWS 選單開四個資料視窗，各截一張。
+#
+# 為什麼不用 `Ctrl-M`／`Ctrl-G`…：先前那一輪 ctrl 組合有時候整個掉在兩次
+# 輪詢之間，截圖標錯了視窗。選單列的座標是量 wm-00-winmenu.png 得到的：
+# WINDOWS 標題在遊戲座標 (554,8)，項目從 y=28 起每列 14 像素。
+#
+# ⚠ 原版的選單是**按住式**的：放開就收起來，所以要用 `drag`
+# （按下標題 → 拖到項目 → 放開），`click` 兩下選不到東西。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+key Return
+wait 2
+key Return
+wait 3
+click 311 190
+wait 2
+key 0
+wait 2
+shot 00-base
+mark 地圖視窗
+drag 554 8 508 28
+wait 3
+shot 01-maps
+mark 統計圖視窗
+drag 554 8 508 42
+wait 3
+shot 02-graphs
+mark 預算視窗
+drag 554 8 508 56
+wait 3
+shot 03-budget
+mark 評估視窗
+drag 554 8 508 84
+wait 3
+shot 04-eval
