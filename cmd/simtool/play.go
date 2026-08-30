@@ -66,9 +66,29 @@ func cmdPlay(args []string) {
 					p.Year()
 				}
 				if *verbose {
-					fmt.Printf("  %d 年 資金 %6d 稅 %2d 等級 %d 評分 %4d 犯罪 %3d 汙染 %3d 交通 %3d\n",
+					// ⚠ 逐年要印**分區數與沒電數**。只印資金與評分的話，
+					// 「城市為什麼長不大」看不出來——實測達斯維利卡住的原因是
+					// 84 個分區裡 29 個沒電，而那在資金與評分上完全看不出來。
+					//
+					// ⚠ 不要印 `ResPop`／`PwrdZCnt`：那些是 `ClearCensus` 每一輪
+					// 歸零、`MapScan` 十六個相位累加的中間值，在年界取樣**永遠是 0**。
+					zones, dark := 0, 0
+					for x := 0; x < sim.WorldX; x++ {
+						for y := 0; y < sim.WorldY; y++ {
+							if w.Map[x][y]&sim.ZONEBIT != 0 {
+								zones++
+								if w.Map[x][y]&sim.PWRBIT == 0 {
+									dark++
+								}
+							}
+						}
+					}
+					fmt.Printf("  %d 年 資金 %6d 稅 %2d 等級 %d 評分 %4d 犯罪 %3d 汙染 %3d 交通 %3d "+
+						"人口 %6d 地價 %3d 閥 %5d/%5d/%5d 分區 %3d 沒電 %3d\n",
 						1900+w.CityTime/48, w.TotalFunds, w.CityTax, w.CityClass,
-						w.CityScore, w.CrimeAverage, w.PolluteAverage, w.Eval.TrafficAverage)
+						w.CityScore, w.CrimeAverage, w.PolluteAverage, w.Eval.TrafficAverage,
+						w.LastCityPop, w.LVAverage, w.RValve, w.CValve, w.IValve,
+						zones, dark)
 				}
 			}
 			switch w.MessagePort {

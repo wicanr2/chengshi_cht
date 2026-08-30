@@ -12,18 +12,30 @@
 // 打法。種子 1–5 的實測（每個劇本各跑五顆種子）：
 //
 //	漢堡 5/5　伯恩 5/5　東京 5/5　波士頓 5/5
-//	底特律 3/5　里約 2/5
+//	底特律 3/5　里約 3/5
 //	達斯維利 0/5　舊金山 0/5
 //
-// 每顆種子平均過五個，不出手是一個。
+// 合計 26/40。不出手是 5/40。
 //
 // 兩個過不了的劇本各有各的難處：
 //
-//   - **達斯維利**是 bootstrap 問題。開局 $5 000，存款三十年都在
-//     3 000–6 000 之間打轉，累積不出資本；三十年只長到 26 740，
-//     而過關要加權人口 100 000。
+//   - **達斯維利**是 bootstrap 問題。開局 $5 000、三十年、要加權人口
+//     100 000（城市等級 4）。準備金改成按開銷算之後它終於出得了手，
+//     但三十年只長到兩萬出頭——每年能蓋的格數受限於稅收，而稅收又受限於
+//     人口，複利起不來。要贏得換一套「先鋪格狀路網再密集填分區」的打法。
 //   - **舊金山**只有五年，而地震把路網打斷了。現在的鋪路策略是
 //     「從最近的路拉一條 L 形」，接不回被震斷的主幹道。
+//
+// ⚠ **這支程式最容易寫出「合法但自殺」的操作。** 每一步都是玩家做得到的
+// 動作、每一步都回傳 `ToolOK`，而城市在十年內死光。已經踩過三種，
+// 三種的共同症狀都是「看起來像城市自然萎縮」：
+//
+//  1. **推掉自己的電線**（`clearable`）。蓋警局清 3×3 的那一下清掉電廠到
+//     市區的那一條線，沒電的分區從 6 個跳到 25 個。
+//  2. **撞上供電上限**（`powerTight`）。超過上限 `DoPowerScan` 整個中止，
+//     後面的電線一格都不通——2 → 25 → 57，城市六年內死光。
+//  3. **鋪路穿過市區**。`AutoBulldoze` 打開時鋪路會把擋路的房子推平，
+//     一條 L 形路可以把城市攔腰切掉，人口從兩萬多變成 0。
 package autoplay
 
 import (
@@ -102,8 +114,7 @@ func (p *Player) year() {
 	// （`PoliceEffect`／`FireEffect` 掉下來，評分乘 0.9 兩次），
 	// 犯罪與火災跟著失控——實測東京存款歸零那一年評分從 654 掉到 155。
 	// 蓋東西是投資，但投到見底就不是投資了。
-	const reserve = 6000
-	spare := w.TotalFunds - reserve
+	spare := w.TotalFunds - p.reserve()
 	if spare <= 0 {
 		return
 	}
@@ -120,6 +131,33 @@ func (p *Player) year() {
 	}
 	p.grow(n)
 }
+
+// reserve 是這一年不能動用的準備金。
+//
+// ⚠ **不能寫死。** 寫死 6 000 的那一版讓達斯維利**一手都不出**：
+// 它開局只有 $5 000，`spare` 永遠是負的，三十年只坐著收稅。
+// 那不是「劇本難」，是策略自己把自己鎖死了。
+//
+// 按**年度開銷**算：撐得過兩年的維護費就夠了。小城開銷近乎零，準備金落到
+// 下限，錢就投得出去；大城開銷高，準備金自然跟著長回六千。
+func (p *Player) reserve() int {
+	w := p.w
+	need := 2 * (w.RoadFund + w.PoliceFund + w.FireFund)
+	if need < minReserve {
+		need = minReserve
+	}
+	if need > maxReserve {
+		need = maxReserve
+	}
+	return need
+}
+
+// 準備金的上下限。下限要低於任何一個劇本的開局資金（最少的是達斯維利的
+// $5 000），否則那個劇本會一手都出不了。
+var (
+	minReserve = 1500
+	maxReserve = 6000
+)
 
 // power 檢查有沒有分區沒電；超過一成就補一座燃煤電廠並拉線接上。
 //
@@ -145,10 +183,25 @@ func (p *Player) power() {
 			}
 		}
 	}
-	if zones == 0 || dark*10 < zones {
+	if zones == 0 || dark == 0 {
+		return
+	}
+	// ⚠ **要在供電撞上限之前買，不是撞了才買。** 供電一超過上限，
+	// `DoPowerScan` 整個中止，後面的電線一格都不通（`internal/sim/power.go`）
+	// ——所以沒電的分區不是慢慢爬，是某一年從 2 個跳到 25 個再跳到 57 個，
+	// 城市六年內死光。實測（達斯維利，種子 1）人口從兩萬多變成 2 660。
+	//
+	// ⚠ 但也**不能只要有一格暗的就蓋**：大城市永遠有幾格剛蓋好還沒接上，
+	// 那會變成一年買一座 $3 000 的電廠。兩條判準任一成立才動手。
+	if !p.powerTight() && dark*10 < zones {
 		return
 	}
 	// 電廠是 4×4，點擊點在 (1,1)。找沒電那一區附近的空地。
+	//
+	// ⚠ 試過「只找外緣碰得到導電格的空地，省掉拉線」——**更差**：
+	// 條件太嚴，很多情況下一塊都找不到，等於不蓋電廠。
+	// 五顆種子八個劇本從 26 個過掉到 11 個過。拉線雖然常常斷幾格，
+	// 但至少電廠蓋得出來，而電廠本身就會把周圍的分區點亮。
 	for r := 3; r < 20 && w.TotalFunds > 3000; r++ {
 		for _, d := range [][2]int{{r, 0}, {-r, 0}, {0, r}, {0, -r}, {r, r}, {-r, -r}} {
 			x, y := dx+d[0], dy+d[1]
@@ -167,6 +220,36 @@ func (p *Player) power() {
 	}
 }
 
+// powerTight 判斷供電是不是快到上限（導電格數 ≥ 上限的九成）。
+// 上限是 `coalPop*700 + nuclearPop*2000`（`internal/sim/power.go`），
+// 負載是導電格的總數——分區、電線、架了電線的路都算。
+func (p *Player) powerTight() bool {
+	load, coal, nuke := 0, 0, 0
+	for x := 0; x < sim.WorldX; x++ {
+		for y := 0; y < sim.WorldY; y++ {
+			c := p.w.Map[x][y]
+			if c&sim.CONDBIT != 0 {
+				load++
+			}
+			if c&sim.ZONEBIT == 0 {
+				continue
+			}
+			switch int(c & sim.LOMASK) {
+			case sim.POWERPLANT:
+				coal++
+			case sim.NUCLEAR:
+				nuke++
+			}
+		}
+	}
+	capacity := coal*sim.CoalPowerCapacity + nuke*sim.NuclearPowerCapacity
+	return load*10 >= capacity*9
+}
+
+// buildable4x4 判斷 (x,y) 附近的 4×4 能不能拿來蓋電廠。
+//
+// ⚠ **判準是「空地」不是「拆得掉」。** `clearable` 連分區都算拆得掉，
+// 拿去找電廠用地就會把城市自己拆掉。
 func (p *Player) buildable4x4(x, y int) bool {
 	for i := -1; i <= 2; i++ {
 		for j := -1; j <= 2; j++ {
@@ -176,6 +259,14 @@ func (p *Player) buildable4x4(x, y int) bool {
 		}
 	}
 	return true
+}
+
+// vacant 只認土、樹與瓦礫。水域、分區、道路、電線、鐵軌一律不算。
+func vacant(cell uint16) bool {
+	t := int(cell & sim.LOMASK)
+	return t == sim.DIRT ||
+		(t >= sim.TREEBASE && t <= sim.WOODS) ||
+		(t >= sim.RUBBLE && t <= sim.LASTRUBBLE)
 }
 
 func (p *Player) makeRoom4x4(x, y int) {
@@ -361,6 +452,18 @@ func clearable(cell uint16) bool {
 	if t >= sim.RIVER && t <= sim.LASTRIVEDGE {
 		return false // 水域
 	}
+	// ⚠ **電線不能推。** 它推得掉，但推掉會把電網切斷——症狀完全不像
+	// 「自己拆的」：某一年沒電的分區從 6 個跳到 25 個，人口一路跌到剩幾百，
+	// 看起來像「城市自然萎縮」。實測（達斯維利，種子 1，1911 年）：
+	// 蓋警局清出 3×3 的那一下，剛好清掉電廠到市區的那一條線。
+	//
+	// ⚠ 但**路可以推**。連路一起保護的話，密集城市裡幾乎每一塊 3×3 都碰得到
+	// 路，`buildable3x3` 一個候選點都給不出來——警局蓋不成，追犯罪與追評分的
+	// 劇本全部掉出通關名單（實測 15 個過變成 10 個）。
+	if t >= sim.POWERBASE && t <= sim.LASTPOWER ||
+		t == sim.HROADPOWER || t == sim.VROADPOWER {
+		return false
+	}
 	if t >= sim.RESBASE && t <= sim.LASTZONE {
 		return cell&sim.ZONEBIT != 0 // 只有中心格拆得掉
 	}
@@ -409,7 +512,9 @@ func (p *Player) grow(n int) {
 	w := p.w
 	sites := p.growSites()
 	for i := 0; i < n; i++ {
-		if w.TotalFunds < 5500 {
+		// ⚠ 這一格的下限也要跟著準備金走。寫死 5 500 的那一版讓達斯維利
+		// 幾乎放不下任何分區——它的存款一輩子沒穩定超過 5 500。
+		if w.TotalFunds < p.reserve()+300 {
 			return
 		}
 		if i >= len(sites) {
