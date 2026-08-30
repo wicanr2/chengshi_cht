@@ -94,17 +94,50 @@ func rampColor(v, max int) color.RGBA {
 	return densityRamp[i]
 }
 
-// drawWindow 畫目前開著的視窗。視窗蓋在地圖上，不佔工具列與狀態列。
+// winRect 是每個視窗的預設位置與大小，單位是**原版像素**。
+//
+// 統計圖、預算、評估三個是量原版截圖來的（docs/spec/ui-layout.md）：
+// 統計圖 240,103 304×125；預算 171,27 285×309；評估 39,70 513×196。
+// 其餘視窗是 remake 自己加的（系統選單的副選單、關於、存檔輸入），
+// 原版沒有對應物，位置自己定。
+var winRect = map[window]struct{ x, y, w, h int }{
+	winGraphs:   {240, 103, 304, 125},
+	winBudget:   {171, 27, 285, 309},
+	winEval:     {39, 70, 513, 196},
+	winMaps:     {60, 40, 520, 270},
+	winDisaster: {200, 60, 240, 160},
+	winSystem:   {90, 20, 240, 210},
+	winScenario: {150, 40, 240, 180},
+	winStyle:    {150, 40, 240, 180},
+	winSpeed:    {200, 30, 200, 140},
+	winAbout:    {40, 30, 560, 290},
+	winSaveAs:   {120, 90, 400, 150},
+}
+
+// winFrame 回傳目前視窗的外框（螢幕像素）。
+func (g *Game) winFrame() (x, y, w, h int) {
+	r, ok := winRect[g.win]
+	if !ok {
+		r = struct{ x, y, w, h int }{60, 40, 520, 270}
+	}
+	return r.x * UIScale, r.y * UIScale, r.w * UIScale, r.h * UIScale
+}
+
+// drawWindow 畫目前開著的視窗。
+//
+// 原版是**可重疊的浮動視窗**，各有標題列與左上角的關閉鈕，不是全畫面
+// 覆蓋層。位置與大小照原版量出來的預設值。
 func (g *Game) drawWindow(dst *ebiten.Image) {
 	if g.win == winNone {
 		return
 	}
-	const pad = 48
-	x, y := pad, pad
-	w, h := viewW-pad*2, viewH-pad*2
+	x, y, w, h := g.winFrame()
+	// 外框 ＋ 標題列 ＋ 客戶區，配色照原版：外框亮青、內容白底。
 	vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h),
-		color.RGBA{0x1a, 0x1e, 0x26, 0xf2}, false)
-	vector.StrokeRect(dst, float32(x), float32(y), float32(w), float32(h), 2, colLine, false)
+		colMenuBar, false)
+	vector.DrawFilledRect(dst, float32(x+2*UIScale), float32(y+13*UIScale),
+		float32(w-4*UIScale), float32(h-15*UIScale),
+		color.RGBA{0xff, 0xff, 0xff, 0xff}, false)
 
 	title := ""
 	switch g.win {
@@ -131,10 +164,13 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 	case winSpeed:
 		title = g.txt.S(i18n.SecOptMenu, 4)
 	}
-	g.font.Draw(dst, trimMenu(title), x+20, y+14, colOn)
-	g.font.Draw(dst, "Esc 關閉", x+w-20-g.font.Measure("Esc 關閉"), y+14, colDim)
+	t := trimMenu(title)
+	g.font.Draw(dst, t, x+w/2-g.font.Measure(t)/2, y+UIScale, colMenuInk)
+	// 左上角的關閉鈕。原版是一個小方塊，點下去關掉這個視窗。
+	vector.StrokeRect(dst, float32(x+2*UIScale), float32(y+2*UIScale),
+		float32(8*UIScale), float32(8*UIScale), float32(UIScale), colMenuInk, false)
 
-	inner := image.Rect(x+16, y+52, x+w-16, y+h-16)
+	inner := image.Rect(x+6*UIScale, y+16*UIScale, x+w-6*UIScale, y+h-4*UIScale)
 	switch g.win {
 	case winMaps:
 		g.drawMapWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
