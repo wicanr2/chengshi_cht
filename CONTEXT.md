@@ -132,12 +132,14 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | [`CLAUDE.md`](CLAUDE.md) | 方法論、四道閘門、證據優先序、授權立場 |
 | [`README.md`](README.md) | 專案首頁：這是什麼、為何保存、現況 |
 | [`LICENSE`](LICENSE) | PolyForm Noncommercial 1.0.0 全文（逐字未改）＋ 附註：原版素材排除、商標、規格參考揭露 |
-| `WORKLOG.md` | 逐輪工作紀錄（尚未建立）|
+| [`WORKLOG.md`](WORKLOG.md) | 逐輪工作紀錄：日期、命令、失敗、negative result |
 | [`docs/research/`](docs/research/) | 查證筆記：玩家與評論對一代的說法（二手彙整，每條標來源）|
-| `docs/re/` | 機制筆記（尚未建立）|
-| `docs/spec/` | 可實作規格，只有 READY 的能動工（尚未建立）|
-| `docs/manual-cht/` | 軟體世界說明書逐頁轉錄（尚未建立）|
-| `translations/glossary.md` | 譯名表，唯一真相（尚未建立）|
+| [`docs/re/`](docs/re/) | 機制筆記（讀 Micropolis 與反組譯的產物）。入口是 `00-master-index.md`、`00-function-index.md`、`00-wiring-status.md` |
+| [`docs/formats/`](docs/formats/) | 資料格式規格：`.PGF`／`.PPF`／`.PSN`／`.PTF`／`.PSF`／`.cty`／DOS 存檔 |
+| [`docs/spec/`](docs/spec/) | 可實作規格，只有標 READY 的能動工 |
+| [`docs/manual-cht/`](docs/manual-cht/) | 軟體世界珍藏版 29 說明書**逐頁完整轉錄**（保存用，p.1–82 ＋ 參考附表）|
+| [`docs/manual/`](docs/manual/) | 官方英文手冊（IBM PC 版）的繁中整理。**只整理機制章節並與原始碼逐節對照**，不做全書轉錄——理由（用途與授權）寫在該目錄的 README |
+| [`translations/glossary.md`](translations/glossary.md) | 譯名表，唯一真相 |
 
 ## 4. 術語
 
