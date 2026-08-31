@@ -1,4 +1,7 @@
 key	zh_hant	zh_hans	ja	en
+title_new_city	建立新城市	建立新城市	新しい都市	START NEW CITY
+title_load_city	載入城市	载入城市	都市をロード	LOAD A CITY
+title_scenario	選擇劇本	选择剧本	シナリオ選択	SELECT SCENARIO
 funds	資金 $%s	资金 $%s	資金 $%s	Funds: $%s
 demand	需求	需求	需要	Demand
 demand_r	住	住	住	R

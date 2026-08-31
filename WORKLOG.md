@@ -2187,3 +2187,18 @@ Cannot find message file:C:\DATA\west_msg.ptf
 - `dist-all/20260901/{full,release,promo}` 已重建並通過 checksum、manifest、公開包
   拒絕清單、AppImage 解包／啟動、27120-byte 存檔與完整版非零 OGG 音訊驗收；macOS
   universal 維持靜態驗收，沒有冒稱 Linux 主機已做 macOS 真機試玩。
+
+### 同日續：開場選項四語在地化
+
+- 使用者明確指定開場選項也要中文化；保留 SIM CITY 識別標誌與三個原始按鈕／點擊
+  矩形，只替換固定在 `NTRO.PPF` 裡的英文操作文字。新增繁中「建立新城市／載入城市／
+  選擇劇本」及簡中、日文、英文四語鍵，切換語言時沿用同一翻譯目錄。
+- 原版按鈕內側實際量得 RGB `(0,170,0)`。第一版清除區內縮 5 原版像素，正常入口截圖
+  發現第三個長英文左右仍留白色短筆畫；修成符合框線厚度的 3 像素後重拍，已無英文
+  殘留、裁切或越框。點擊區不依文字寬度改變。
+- 新增四語非空、繁中字面與實際點陣字寬度測試；完整 `go test ./...` 通過，修正內縮後
+  再抽跑 `internal/ui`、`internal/i18n`、`internal/textfont` 全數通過。正常入口收據為
+  `workplace/title-localized-20260901.png`，執行日誌沒有 panic。
+- 工具鏈重建第一次採 `--network none`，因已依前輪要求移除專案 image 而缺 apt cache，
+  分類為環境失敗；只在重建鎖版 image 時開網路。一次測試誤用登入 shell 找不到 Go，
+  另一次 `xvfb-run` 缺 `xauth`，最後改回有 trap 的直接 Xvfb 並以同一 image 通過。

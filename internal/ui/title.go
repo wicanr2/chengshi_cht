@@ -15,12 +15,14 @@ package ui
 
 import (
 	"image"
+	"image/color"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/wicanr2/chengshi_cht/internal/assets"
 )
@@ -39,6 +41,31 @@ var titleButtons = [3]image.Rectangle{
 	image.Rect(95, 183, 309, 213),  // START NEW CITY
 	image.Rect(319, 183, 533, 213), // LOAD A CITY
 	image.Rect(209, 223, 423, 253), // SELECT SCENARIO
+}
+
+// titleButtonFill 是招牌按鈕內側的原版色盤綠（目前 NTRO.PPF 實際解碼為
+// RGB 0,170,0）。框線與陰影仍保留原圖，只覆蓋固定在圖裡的英文操作文字。
+var titleButtonFill = color.RGBA{0x00, 0xaa, 0x00, 0xff}
+
+func (g *Game) titleButtonLabels() [3]string {
+	return [3]string{
+		g.txt.UI("title_new_city"),
+		g.txt.UI("title_load_city"),
+		g.txt.UI("title_scenario"),
+	}
+}
+
+func (g *Game) drawTitleButtonLabels(dst *ebiten.Image) {
+	const inset = 3
+	labels := g.titleButtonLabels()
+	for i, r := range titleButtons {
+		x := (r.Min.X + inset) * UIScale
+		y := (r.Min.Y + inset) * UIScale
+		w := (r.Dx() - inset*2) * UIScale
+		h := (r.Dy() - inset*2) * UIScale
+		vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h), titleButtonFill, false)
+		g.font.DrawCentered(dst, labels[i], x, y+(h-g.font.Height())/2, w, color.White)
+	}
 }
 
 // 劇本選單八格的框：四欄兩列，欄距 160、列距 152（量灰色面板得到）。
@@ -99,6 +126,9 @@ func (g *Game) drawTitle(dst *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(UIScale, UIScale)
 	dst.DrawImage(pic, op)
+	if g.screen == scrTitle {
+		g.drawTitleButtonLabels(dst)
+	}
 }
 
 // updateTitle 收招牌與劇本選單的輸入。回 true 代表這一幕吃掉了輸入，
