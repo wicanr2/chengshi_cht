@@ -2,13 +2,20 @@
 # 在容器裡跑的 macOS 交叉編。不要直接執行，用 tools/build-mac.sh。
 set -euo pipefail
 
+OUT="${MAC_OUT:-dist/mac}"
+case "$OUT" in
+  dist/mac|/src/workplace/package-mac-*) ;;
+  *) echo "拒絕不受控的 macOS 輸出路徑：$OUT" >&2; exit 2 ;;
+esac
+
 # 前綴帶 SDK 次版號（SDK 15.5 → darwin24.5）。讀 osxcross-conf，不要寫死。
 eval "$(osxcross-conf)"
 T="$OSXCROSS_TARGET"
 MIN=10.15   # Ebiten 支援的最低 macOS
 echo "== osxcross target $T，最低系統 $MIN =="
 
-mkdir -p dist/mac
+rm -rf "$OUT"
+mkdir -p "$OUT"
 for pair in "arm64 arm64" "amd64 x86_64"; do
   set -- $pair
   goarch=$1; carch=$2
@@ -18,11 +25,11 @@ for pair in "arm64 arm64" "amd64 x86_64"; do
   CGO_CFLAGS="-mmacosx-version-min=$MIN" \
   CGO_LDFLAGS="-mmacosx-version-min=$MIN" \
     go build -ldflags "-s -w -X main.version=$VER" \
-      -o "dist/mac/chengshi-$goarch" ./cmd/chengshi
+      -o "$OUT/chengshi-$goarch" ./cmd/chengshi
 done
 
-lipo -create dist/mac/chengshi-arm64 dist/mac/chengshi-amd64 -output dist/mac/chengshi
-rm -f dist/mac/chengshi-arm64 dist/mac/chengshi-amd64
+lipo -create "$OUT/chengshi-arm64" "$OUT/chengshi-amd64" -output "$OUT/chengshi"
+rm -f "$OUT/chengshi-arm64" "$OUT/chengshi-amd64"
 
 echo
 echo "== 靜態驗收 =="
@@ -31,7 +38,7 @@ fail() { echo "FAIL  $*"; FAIL=1; }
 pass() { echo "pass  $*"; }
 
 # lipo 印出來的架構順序不固定，逐個找而不是比整串。
-INFO=$(lipo -info dist/mac/chengshi)
+INFO=$(lipo -info "$OUT/chengshi")
 if echo "$INFO" | grep -q arm64 && echo "$INFO" | grep -q x86_64; then
   pass "universal（arm64 ＋ x86_64）"
 else
@@ -40,7 +47,7 @@ fi
 
 OTOOL="x86_64-apple-$T-otool"   # cctools 只裝了帶前綴的版本
 for a in arm64 x86_64; do
-  lipo -thin $a dist/mac/chengshi -output "/tmp/thin-$a"
+  lipo -thin $a "$OUT/chengshi" -output "/tmp/thin-$a"
   # arm64 沒有 LC_CODE_SIGNATURE 的話，Apple Silicon 上會直接 Killed: 9。
   if [ "$a" = arm64 ]; then
     $OTOOL -l "/tmp/thin-$a" | grep -q LC_CODE_SIGNATURE \
@@ -59,7 +66,7 @@ done
 # ⚠ 不能用 `strings`：GNU strings 只認 0x20–0x7E，中文的 UTF-8 位元組
 # 全部 >0x7F，會被當成分隔字元把字串切碎。直接 grep -a 二進位檔。
 for want in "城市 — 模擬城市繁體中文 remake" "請用 -data 指向解開的 SimCity 1.10 目錄"; do
-  grep -aq "$want" dist/mac/chengshi \
+  grep -aq "$want" "$OUT/chengshi" \
     && pass "含「${want:0:16}…」" || fail "找不到「$want」"
 done
 
@@ -67,10 +74,10 @@ done
 # 從 Finder 點開時沒有命令列參數，所以執行檔要自己找得到原版目錄
 # （cmd/chengshi 的 findDataDir，會看 .app 旁邊與
 # ~/Library/Application Support/chengshi/）。
-APP="dist/mac/城市.app"
+APP="$OUT/城市.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp dist/mac/chengshi "$APP/Contents/MacOS/chengshi"
+cp "$OUT/chengshi" "$APP/Contents/MacOS/chengshi"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

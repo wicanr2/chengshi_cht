@@ -29,9 +29,9 @@ import (
 type screenMode int
 
 const (
-	scrPlay screenMode = iota // 城市
-	scrTitle                  // 招牌
-	scrScen                   // 劇本選單
+	scrPlay  screenMode = iota // 城市
+	scrTitle                   // 招牌
+	scrScen                    // 劇本選單
 )
 
 // 招牌上三個按鈕的框（原版 640×350 座標，量白色框線得到）。
@@ -131,7 +131,7 @@ func (g *Game) updateTitle() bool {
 	switch {
 	case p.In(titleButtons[0]): // 重新建造一新城市
 		g.screen = scrPlay
-		g.newCity()
+		g.openNewCityFromTitle()
 	case p.In(titleButtons[1]): // 讀取舊有檔案
 		g.screen = scrPlay
 		g.load()

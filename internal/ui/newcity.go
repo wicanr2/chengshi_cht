@@ -83,7 +83,13 @@ type newCityBox struct {
 // openNewCity 打開對話框。原版是從標題畫面的「建造新城市」進來，
 // remake 沒有標題畫面，所以掛在系統選單同一項底下。
 func (g *Game) openNewCity() {
+	g.newCityTitleBackdrop = false
 	g.newCityDlg = &newCityBox{name: []rune("HERESVILLE")}
+}
+
+func (g *Game) openNewCityFromTitle() {
+	g.openNewCity()
+	g.newCityTitleBackdrop = true
 }
 
 // handleNewCityKeys 處理對話框的按鍵；回傳 true 代表這一格的鍵盤歸它。
@@ -109,6 +115,7 @@ func (g *Game) handleNewCityKeys() bool {
 		g.startNewCity()
 	case inpututil.IsKeyJustPressed(ebiten.KeyEscape):
 		g.newCityDlg = nil
+		g.newCityTitleBackdrop = false
 	}
 	return true
 }
@@ -153,6 +160,7 @@ func (g *Game) startNewCity() {
 	w.GenerateMap(s, sim.DefaultTerrainParams())
 	w.DoSimInit()
 	g.newCityDlg = nil
+	g.newCityTitleBackdrop = false
 	g.swapWorld(w)
 }
 

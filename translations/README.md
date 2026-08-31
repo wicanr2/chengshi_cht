@@ -3,7 +3,7 @@
 | 檔案 | 內容 |
 |---|---|
 | [`glossary.md`](glossary.md) | 譯名表，唯一真相 |
-| `../internal/i18n/messages/*.toml` | 遊戲文字的翻譯，**以「段落.索引」為鍵** |
+| `../internal/i18n/messages/*.tsv` | 遊戲文字的翻譯，**以「段落.索引」為鍵** |
 
 ⚠ **訊息翻譯檔放在 `internal/i18n/messages/`，不在這裡。**
 `go:embed` 不能跨上層目錄，而遊戲要把文字編進執行檔（發行包不必帶
@@ -21,11 +21,8 @@
 
 ## 譯文寫在哪
 
-譯文的來源是 `tools/i18n/base_zh.py`（基本檔）與 `tools/i18n/styles_zh.py`
-（六個風格包**與基本檔不同**的鍵）。`tools/i18n.sh` 把它們合併進 TOML。
-
-為什麼不直接編輯 TOML：風格包只換掉一部分文字，其餘沿用基本檔。
-直接編 TOML 的話同一句話要維護七份，改一個詞就會漏掉六處。
+譯文正本就是 `internal/i18n/messages/*.tsv`。舊的 Python→TOML 產生流程已移除；
+`tools/i18n.sh` 現在只檢查原版鍵，使用 `--write` 才會補空列，不覆寫既有譯文。
 
 骨架由 `simtool` 產生：
 

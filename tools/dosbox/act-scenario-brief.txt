@@ -1,0 +1,14 @@
+# 確認 DOS 1.10 選擇劇本後的畫面生命週期。
+# 三張分開命名，避免再把防拷人口問答框誤標成劇本簡介。
+wait 3
+click 316 240
+wait 5
+click 80 103
+wait 8
+shot 00-after-select
+key Return
+wait 3
+shot 01-after-first-enter
+key Return
+wait 3
+shot 02-after-second-enter

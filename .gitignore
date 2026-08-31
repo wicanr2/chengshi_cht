@@ -27,6 +27,9 @@ Rare simcity.zip
 # 解壓後的工作區：原版資料、Micropolis 參考原始碼、IDA 資料庫、產生的中間檔
 workplace/
 
+# 玩家自備或由其合法副本轉出的本機音樂；不得進 Git／公開 release。
+/music/
+
 # 軟體世界說明書掃描（骨灰集散地補完計劃素材，不散布）
 docs/manual-cht/scans/
 

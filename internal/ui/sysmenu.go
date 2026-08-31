@@ -148,8 +148,11 @@ func (g *Game) sysMenuPick(i int) {
 		if i == 0 {
 			g.toggleMusic()
 		} else {
-			g.music.cur = i - 1
-			g.stepTrack(0)
+			// 選單點歌與 `[`／`]` 同樣進手動模式；一般情境不搶歌，災難仍可插播。
+			if g.music != nil {
+				g.music.cur = i - 1
+				g.stepTrack(0)
+			}
 		}
 		g.win = winNone
 	case winScenario:
@@ -197,6 +200,18 @@ func (g *Game) sysMenuPick(i int) {
 func (g *Game) openSubMenu(w window) {
 	g.win = w
 	g.sysRow = 0
+}
+
+func (g *Game) openLangSettings() {
+	g.win = winLangSel
+	g.waitEnterRelease = true
+	g.sysRow = 0
+	for i, lang := range i18n.Langs {
+		if lang == g.lang {
+			g.sysRow = i
+			break
+		}
+	}
 }
 
 // loadScenario 換一個悲情城市。鏡頭重新置中，並顯示劇本簡介。
@@ -299,13 +314,14 @@ func (g *Game) loadFile(p string) {
 	g.setMessage(fmt.Sprintf(g.txt.UI("loaded"), p))
 }
 
-// swapWorld 換掉整個世界。鏡頭、視窗、選單游標都要跟著重設——
-// 不重設的話會停在上一座城市的座標上，看起來像「讀檔讀到空地」。
+// swapWorld 換掉整個世界。鏡頭、視窗、選單游標都要跟著重設。
+// 鏡頭回到原版可重播證據確認的 (0,0)，不沿用上一座城市的位置。
 func (g *Game) swapWorld(w *sim.World) {
 	g.world = w
 	g.win = winNone
 	g.sysRow = 0
 	g.picture = ""
+	g.pictureScenario = false
 	// 速度是**存進城市檔的**（`MiscHis[57]`，s_fileio.c:263），所以讀檔之後
 	// 呈現層的五段要跟著回來。存檔只記 0–3，第五段「最快」是執行期的
 	// `sim_skips`——原版讀檔時也是 `setSkips(0)`，所以「最快」不會被記住。
@@ -319,6 +335,12 @@ func (g *Game) setLang(l i18n.Lang) {
 	g.lang = l
 	g.txt.SetLang(l)
 	g.win = winNone
+	if g.saveLang != nil {
+		if err := g.saveLang(l); err != nil {
+			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
+			return
+		}
+	}
 	g.setMessage(i18n.LangName[l])
 }
 
@@ -359,3 +381,7 @@ func (g *Game) loadEnglish() {
 
 // SetLang 給命令列用：一開始就指定語言。
 func (g *Game) SetLang(l i18n.Lang) { g.setLang(l); g.win = winNone }
+
+// SetLangSaver 設定玩家從語言視窗選取後的持久化函式。
+// 啟動時套用語言應先呼叫 SetLang，再注入 saver，避免 `-lang` 覆寫玩家偏好。
+func (g *Game) SetLangSaver(save func(i18n.Lang) error) { g.saveLang = save }

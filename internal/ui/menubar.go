@@ -43,6 +43,11 @@ func (g *Game) menuEntries(m int) []string {
 	for i := 0; g.txt.Has(sec, i); i++ {
 		out = append(out, trimMenu(g.txt.S(sec, i)))
 	}
+	// SYSTEM 的原版列完整保留在 0..12；最下方 13 是 remake 擴充分隔線，
+	// 14 是使用者確認加入的設定入口。其餘三個選單不變，避免污染原版對拍。
+	if m == 0 {
+		out = append(out, "-", g.txt.UI("settings_title"))
+	}
 	return out
 }
 
@@ -172,7 +177,13 @@ func (g *Game) handleMenuMouse(mx, my int) bool {
 	if g.openMenu == 0 {
 		return false
 	}
-	g.menuRow = g.menuHit(mx, my)
+	// 滑鼠停在選單外時不能每次畫面都把鍵盤選到的列重設成 -1；否則 F2 後用
+	// 方向鍵看似移動了，下一次畫面又消失，Enter 只會關掉選單。按住拖曳或放開
+	// 時仍採滑鼠 hit（含 -1），保留原版「拖出去就不選」的行為。
+	hit := g.menuHit(mx, my)
+	if hit >= 0 || ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) || released {
+		g.menuRow = hit
+	}
 	// 放開時若停在項目上就選中；停在標題上則讓選單留著（點一下拉開）。
 	if (released || just) && g.menuRow >= 0 {
 		m, row := g.openMenu-1, g.menuRow
@@ -224,6 +235,8 @@ func (g *Game) pickSystem(row int) {
 		g.save()
 	case 12:
 		g.quit = true
+	case 14:
+		g.openLangNext = true
 	}
 }
 
@@ -302,13 +315,8 @@ func (g *Game) pickDisaster(row int) {
 // pickWindow 是視窗選單（第 21 段）。
 func (g *Game) pickWindow(row int) {
 	switch row {
-	case 0: // 地圖視窗：City Form 收起來的話先叫回來
-		if g.mapClosed {
-			g.mapClosed = false
-			g.editFront = false
-		} else {
-			g.toggleWindow(winMaps)
-		}
+	case 0: // 地圖視窗：把既有的 City Form 叫到最前面
+		g.showCityForm()
 	case 1:
 		g.toggleWindow(winGraphs)
 	case 2:

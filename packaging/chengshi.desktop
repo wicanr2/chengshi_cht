@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=城市
+Comment=SimCity 1989 繁體中文重製
+Exec=chengshi
+Icon=chengshi
+Categories=Game;Simulation;
+Terminal=false

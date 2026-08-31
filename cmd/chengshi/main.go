@@ -19,6 +19,7 @@ import (
 
 	"github.com/wicanr2/chengshi_cht/internal/game"
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
+	"github.com/wicanr2/chengshi_cht/internal/settings"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 	"github.com/wicanr2/chengshi_cht/internal/ui"
 )
@@ -86,9 +87,9 @@ func main() {
 	save := flag.String("save", defaultSavePath(), "Ctrl-S 的存檔位置")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
-	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas／newcity／load")
+	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas／newcity／load／language")
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
-	langFlag := flag.String("lang", "zh-Hant", "語言：zh-Hant 繁體／zh-Hans 简体／ja 日本語／en English（英文取自玩家自備的原版 .PTF）")
+	langFlag := flag.String("lang", "", "本次啟動語言：zh-Hant 繁體／zh-Hans 简体／ja 日本語／en English（空白時讀取玩家設定）")
 	musicDir := flag.String("music", "", "背景音樂目錄（.ogg／.wav）；不給就找存檔目錄底下的 music/")
 	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
@@ -149,9 +150,10 @@ func main() {
 	}
 	// 文字跟著風格走：古代亞洲的發電廠叫「水井」、鐵路叫「人力車道」，
 	// 那是原版的設計，不是翻譯自由發揮。
-	lang, ok := i18n.ParseLang(*langFlag)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "不認得的語言 %q，用繁體中文\n", *langFlag)
+	settingsPath, settingsPathErr := settings.DefaultPath()
+	lang, langErr := resolveLanguage(*langFlag, settingsPath)
+	if langErr != nil {
+		fmt.Fprintf(os.Stderr, "%v（使用繁體中文）\n", langErr)
 	}
 	txt, err := i18n.LoadLang(*style, lang)
 	if err != nil {
@@ -212,14 +214,13 @@ func main() {
 		g.SetCamera(cx, cy)
 	}
 	g.SetLang(lang)
+	if settingsPathErr == nil {
+		g.SetLangSaver(func(l i18n.Lang) error { return settings.Save(settingsPath, l) })
+	}
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	// ⚠ 這一行也負責把**英文原文**從玩家那份 `.PTF` 讀進來，
 	// 所以要在 SetLang 之後——英文那一層是疊在語言表上面的。
 	g.SetDataDir(*data, *style)
-	// 背景音樂：原版沒有，這是 remake 加的。放不出來不算致命。
-	if err := g.EnableMusic(ui.FindMusicDir(*musicDir, *save)); err != nil {
-		fmt.Fprintf(os.Stderr, "音樂目錄讀不到（遊戲照跑）：%v\n", err)
-	}
 	// 原版一啟動是招牌畫面（`CEGANTRO.PPF`），不是城市。只有在玩家沒有
 	// 指定要玩哪一座城時才走那條路——命令列點名了劇本、存檔、示範城市或
 	// 起始鏡頭，就是直接進去，試玩與截圖腳本靠這個。
@@ -235,11 +236,18 @@ func main() {
 	// 就結束。沒有音效裝置的機器（伺服器、容器、有些 WSL）比想像中多。
 	if !*mute {
 		if err := audioUsable(); err != nil {
-			fmt.Fprintf(os.Stderr, "音效沒開起來（遊戲照跑）：%v\n", err)
-		} else if err := g.EnableSound(*data, *style); err != nil {
-			fmt.Fprintf(os.Stderr, "音效沒開起來（遊戲照跑）：%v\n", err)
-		} else if *sndTest >= 0 {
-			g.PlaySoundOnce(*sndTest)
+			fmt.Fprintf(os.Stderr, "音訊沒開起來（遊戲照跑）：%v\n", err)
+		} else {
+			if err := g.EnableSound(*data, *style); err != nil {
+				fmt.Fprintf(os.Stderr, "音效沒開起來（遊戲照跑）：%v\n", err)
+			} else if *sndTest >= 0 {
+				g.PlaySoundOnce(*sndTest)
+			}
+			// 背景音樂：原版沒有，這是 remake 加的。目錄裡有曲目就自動播放；
+			// 沒有音訊裝置或用了 -mute 時完全不建立播放器。
+			if err := g.EnableMusic(ui.FindMusicDir(*musicDir, *save)); err != nil {
+				fmt.Fprintf(os.Stderr, "音樂沒開起來（遊戲照跑）：%v\n", err)
+			}
 		}
 	}
 	g.ShowScenarioBrief()
@@ -258,6 +266,28 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// resolveLanguage 的優先序是命令列 → 玩家設定 → 繁體預設。
+// 命令列只影響本次啟動；持久化只由遊戲內設定選單觸發。
+func resolveLanguage(flagValue, settingsPath string) (i18n.Lang, error) {
+	if flagValue != "" {
+		if lang, ok := i18n.ParseLang(flagValue); ok {
+			return lang, nil
+		}
+		return i18n.ZhHant, fmt.Errorf("不認得的語言 %q", flagValue)
+	}
+	if settingsPath == "" {
+		return i18n.ZhHant, nil
+	}
+	saved, err := settings.Load(settingsPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return i18n.ZhHant, nil
+	}
+	if err != nil {
+		return i18n.ZhHant, fmt.Errorf("設定檔無法讀取：%w", err)
+	}
+	return saved.Language, nil
 }
 
 // defaultSavePath 回傳 Ctrl-S 的預設存檔位置。

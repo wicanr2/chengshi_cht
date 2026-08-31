@@ -6,6 +6,8 @@
 | 檔案 | 內容 | 性質 |
 |---|---|---|
 | [`player-voices.md`](player-voices.md) | 1989–2023 年玩家與評論對一代的說法，含 CGW #59（1989）與 ACE #24（1989）的一手短引、IBM 官方手冊的規則原文、華人圈回憶的查證結果 | 二手彙整，每條標來源 URL 與「事實／意見」 |
+| [`simcity-chinese-world-history.md`](simcity-chinese-world-history.md) | 台灣一代中文手冊、2000／3000 中文版、在地遊戲與後續繁中版本的時間線；另列港澳與中國大陸證據缺口 | 手冊＋同期新聞＋保存資料，逐項標示證據等級 |
+| [`sc2000-music-import.md`](sc2000-music-import.md) | 玩家自備《SimCity 2000 Special Edition》音樂的來源、轉檔與權利邊界 | 本機資產處理紀錄；原曲不公開散布 |
 
 ## 不在版控裡的研究素材
 

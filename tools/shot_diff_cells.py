@@ -24,8 +24,8 @@ from PIL import Image
 # y=54 那一列是地圖區的白色外框。DOSBox 的截圖要再加上遊戲區位移 (192,184)。
 VIEW_X, VIEW_Y = 64, 55
 DOS_OFF_X, DOS_OFF_Y = 192, 184
-# City Form 視窗從 x=241 起蓋住編輯視窗，只比完全露出來的格子。
-MAX_X = 241
+# 兩邊都先關閉 City Form，所以完整 32×16 編輯區都能比較。
+MAX_X = 576
 COLS, ROWS, SIZE = 32, 16, 16
 
 
@@ -92,7 +92,7 @@ def main():
             else:
                 diff += 1
                 bad.append((i, j))
-    print(f"編輯視窗露出來的格：逐位元相同 {same}，不同 {diff}")
+    print(f"完整編輯視窗格：逐位元相同 {same}，不同 {diff}")
     if bad:
         print(f"  不同的格 {bad[:16]}{' …' if len(bad) > 16 else ''}")
     if a.min_hit and same < a.min_hit:

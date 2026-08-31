@@ -53,8 +53,15 @@ var (
 	colDemBarC = color.RGBA{0x55, 0x55, 0xff, 0xff}
 	colDemBarR = color.RGBA{0x55, 0xff, 0x55, 0xff}
 	colDemBarI = color.RGBA{0xff, 0xff, 0x55, 0xff}
-	colDemC   = color.RGBA{0x00, 0x00, 0xaa, 0xff}
-	colDemI   = color.RGBA{0xaa, 0x55, 0x00, 0xff}
+	colDemC    = color.RGBA{0x00, 0x00, 0xaa, 0xff}
+	colDemI    = color.RGBA{0xaa, 0x55, 0x00, 0xff}
+
+	// 圖片訊息目前以深色遮罩顯示文字，不能沿用一般資料視窗的黑字配色。
+	// 採 EGA 亮色，讓劇本簡介與災難通知在任何底圖上都清楚可讀。
+	pictureBG     = color.RGBA{0x14, 0x18, 0x22, 0xf8}
+	pictureText   = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	pictureHint   = color.RGBA{0xaa, 0xaa, 0xaa, 0xff}
+	pictureBorder = color.RGBA{0x55, 0xff, 0xff, 0xff}
 )
 
 // toolButton 是工具列上的一個按鈕。
@@ -145,6 +152,12 @@ type Game struct {
 	// menuRow 是游標停在哪一列（−1 ＝ 沒有）。
 	openMenu int
 	menuRow  int
+	// waitEnterRelease 防止用 Enter 從下拉選單開啟子視窗時，同一次按鍵又被
+	// 子視窗當成「選定第一列」；必須等實體鍵放開才接受下一次 Enter。
+	waitEnterRelease bool
+	// openLangNext 把「SYSTEM→設定」延後到本次畫面所有輸入處理完成後提交，
+	// 避免開窗用的滑鼠／Enter 又被新視窗消費。
+	openLangNext bool
 
 	// 功能選單的三個 remake 端開關。前三個在 sim.World 裡（會存進城市檔），
 	// 這三個只影響呈現層，所以放這裡。
@@ -192,9 +205,9 @@ type Game struct {
 	// 0,0 代表沒有目標——原版的 MesX／MesY 也是用 0,0 當「沒有」。
 	gotoX, gotoY int
 	// 招牌與劇本選單（原版的 `.PPF` 兩幅畫面）。screen 是「現在在哪一幕」。
-	screen             screenMode
+	screen screenMode
 	// loadFiles 是「讀取舊有檔案」列出來的城市檔。
-	loadFiles          []string
+	loadFiles []string
 	// zoom 是**縮小**倍數：1 是原版的一格 16 像素，2 是減半，4 再減半。
 	// 原版沒有這個功能，見 ZoomTile 的說明。
 	zoom int
@@ -202,12 +215,15 @@ type Game struct {
 	// **兩個原版都沒有**：原版只有英文，也沒有音樂（docs/re/19-no-music.md）。
 	lang  i18n.Lang
 	music *musicPlayer
+	// saveLang 由啟動層注入，避免 UI 套件決定各平台設定檔位置。
+	// nil 代表本次工作階段不持久化（例如測試或無法取得設定目錄）。
+	saveLang func(i18n.Lang) error
 	// mapPopup 是 City Form 裡按住共用圖示跳出來的小選單，−1 代表沒開。
 	// mapSubArmed 分辨「按住拉開」與「點一下拉開」：拉開的那一下放開時
 	// 不能把選單收掉，否則點一下永遠看不到它。
-	mapPopup   int
-	mapSubArmed bool
-	titlePic, scenPic  *ebiten.Image
+	mapPopup          int
+	mapSubArmed       bool
+	titlePic, scenPic *ebiten.Image
 	// 前往災區之前的鏡頭。參考附表寫「再按一次返回原地」，所以 Tab 是
 	// 來回切換，不是單程。backX 為 −1 代表現在人在原地。
 	backX, backY int
@@ -216,12 +232,14 @@ type Game struct {
 	mini *minimap
 
 	// newCityBox 是「建造新城市」對話框，nil 代表沒開。見 newcity.go。
-	newCityDlg *newCityBox
+	newCityDlg           *newCityBox
+	newCityTitleBackdrop bool // 從招牌進入時，原版只畫選單列與灰色桌面
 
 	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
 	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
 	// 那是刻意的：那些訊息（爐心熔毀、彈劾、劇本簡介）必須被看到。
-	picture string
+	picture         string
+	pictureScenario bool
 }
 
 // SetSavePath 設定存檔位置。
@@ -331,7 +349,7 @@ func (g *Game) stepZoom(d int) {
 func (g *Game) OpenWindow(name string) bool {
 	switch name {
 	case "maps":
-		g.win = winMaps
+		g.showCityForm()
 	case "graphs":
 		g.win = winGraphs
 	case "budget":
@@ -344,12 +362,22 @@ func (g *Game) OpenWindow(name string) bool {
 		g.openSaveAs()
 	case "newcity":
 		g.openNewCity()
+	case "language", "settings":
+		g.openLangSettings()
 	case "load":
 		g.load()
 	default:
 		return false
 	}
 	return true
+}
+
+// showCityForm 對應原版 WINDOWS → Maps／Ctrl-M：City Form 本來就是常駐的
+// 地圖視窗，這兩個入口只把它叫回來並移到最前面，不另開第二個地圖覆蓋層。
+func (g *Game) showCityForm() {
+	g.win = winNone
+	g.mapClosed = false
+	g.editFront = false
 }
 
 // SetLayer 設定地圖視窗的圖層。
@@ -438,6 +466,10 @@ func (g *Game) Update() error {
 	}
 	g.handleKeys()
 	g.handleMouse()
+	if g.openLangNext {
+		g.openLangNext = false
+		g.openLangSettings()
+	}
 	// 「最快」是同一個速率下一個畫格多跑幾次模擬（Micropolis 的 sim_skips），
 	// 不是第五個速率——見 speedMsgIdx 的說明。
 	g.updateMusic()
@@ -471,6 +503,9 @@ func (g *Game) pumpSimMessage() {
 		return
 	}
 	g.world.MessagePort = 0
+	// 情境配樂是 remake 新增功能：沿用同一個已證實的訊息入口，避免音樂
+	// 另猜一套災難狀態。固定映射見 docs/spec/adaptive-music.md。
+	g.cueDisasterMusic(n)
 	if g.world.MesX != 0 || g.world.MesY != 0 {
 		g.gotoX, g.gotoY = g.world.MesX, g.world.MesY
 		// 功能選單的「自動前往災難現場」。原版的開關存在城市檔裡。
@@ -491,6 +526,7 @@ func (g *Game) pumpSimMessage() {
 	if n < 0 {
 		if p := g.txt.Picture(-n); p != "" {
 			g.picture = p
+			g.pictureScenario = false
 			return
 		}
 		n = -n
@@ -505,6 +541,7 @@ func (g *Game) ShowScenarioBrief() {
 		return
 	}
 	g.picture = g.txt.ScenarioBrief(int(g.world.Scenario))
+	g.pictureScenario = true
 }
 
 func (g *Game) setMessage(s string) {
@@ -516,6 +553,12 @@ func (g *Game) setMessage(s string) {
 }
 
 func (g *Game) handleKeys() {
+	if g.waitEnterRelease {
+		if ebiten.IsKeyPressed(ebiten.KeyEnter) || ebiten.IsKeyPressed(ebiten.KeyKPEnter) {
+			return
+		}
+		g.waitEnterRelease = false
+	}
 	// 新城市對話框是**強制回應**的：原版要選完等級與市名才進得了遊戲。
 	if g.handleNewCityKeys() {
 		return
@@ -649,13 +692,8 @@ func (g *Game) handleKeys() {
 	if ctrl {
 		switch {
 		case inpututil.IsKeyJustPressed(ebiten.KeyM):
-			// 原版：Ctrl-M 打開地圖視窗。City Form 收起來的話先叫回來。
-			if g.mapClosed {
-				g.mapClosed = false
-				g.editFront = false
-			} else {
-				g.toggleWindow(winMaps)
-			}
+			// 原版：Ctrl-M 把既有的 City Form 叫到最前面。
+			g.showCityForm()
 		case inpututil.IsKeyJustPressed(ebiten.KeyG):
 			g.toggleWindow(winGraphs)
 		case inpututil.IsKeyJustPressed(ebiten.KeyB):
@@ -701,6 +739,7 @@ func (g *Game) handleKeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		if g.picture != "" {
 			g.picture = ""
+			g.pictureScenario = false
 		} else {
 			g.win = winNone
 		}
@@ -708,6 +747,7 @@ func (g *Game) handleKeys() {
 	if g.picture != "" && (inpututil.IsKeyJustPressed(ebiten.KeySpace) ||
 		inpututil.IsKeyJustPressed(ebiten.KeyEnter)) {
 		g.picture = ""
+		g.pictureScenario = false
 	}
 	if ctrl && inpututil.IsKeyJustPressed(ebiten.KeyS) {
 		g.save()
@@ -882,6 +922,7 @@ func (g *Game) handleMouse() {
 	if g.picture != "" {
 		if just {
 			g.picture = ""
+			g.pictureScenario = false
 		}
 		return
 	}
@@ -983,6 +1024,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colBG)
 	if g.screen != scrPlay {
 		g.drawTitle(screen)
+		return
+	}
+	if g.newCityDlg != nil && g.newCityTitleBackdrop {
+		fill(screen, 0, 0, OrigW, OrigH, colDesktop)
+		g.drawMenuBar(screen)
+		g.drawNewCity(screen)
 		return
 	}
 	g.drawClassic(screen)

@@ -43,6 +43,8 @@ ok	確定	确定	決定	OK
 resize_hint	方向鍵調整大小，Enter 或 Esc 結束	方向键调整大小，Enter 或 Esc 结束	方向キーでサイズ変更、Enter か Esc で終了	Arrows to resize, Enter or Esc to finish
 pic_hint	按空白鍵或點一下繼續	按空格键或点一下继续	スペースキーかクリックで続行	Press space or click to continue
 lang_title	語言 / Language	语言 / Language	言語 / Language	Language
+settings_title	設定	设置	設定	Settings
+settings_save_failed	設定無法儲存：%s	设置无法保存：%s	設定を保存できません：%s	Could not save settings: %s
 music_title	音樂	音乐	音楽	Music
 music_toggle	開關背景音樂（%s）	开关背景音乐（%s）	BGM の切替（%s）	Background music (%s)
 music_none	沒有找到音樂目錄；把 .ogg 或 .wav 放進 music/ 就有了	没有找到音乐目录；把 .ogg 或 .wav 放进 music/ 就有了	music/ に .ogg か .wav を置くと曲が出ます	Put .ogg or .wav files in music/ and they show up here

@@ -146,9 +146,9 @@ func rampColor(v, max int) color.RGBA {
 // 其餘視窗是 remake 自己加的（系統選單的副選單、關於、存檔輸入），
 // 原版沒有對應物，位置自己定。
 var winRect = map[window]struct{ x, y, w, h int }{
-	winGraphs:   {240, 103, 304, 125},
-	winBudget:   {171, 27, 285, 309},
-	winEval:     {39, 70, 513, 210},
+	winGraphs: {240, 103, 304, 125},
+	winBudget: {171, 27, 285, 309},
+	winEval:   {39, 70, 513, 196},
 	// 寬度是照「圖層清單 ＋ 縮圖」量出來的：縮圖的倍率被高度夾在 7，
 	// 120 格 × 7 ＝ 840 螢幕像素，加上清單那一欄剛好 380 原版像素。
 	// 先前寫 520，右邊會空掉三分之一。
@@ -201,6 +201,35 @@ func (g *Game) closeBoxHit(mx, my int) bool {
 		my >= y+2*UIScale && my < y+10*UIScale
 }
 
+// sysMenuHit 把滑鼠座標換成目前列表型浮動視窗的列號。
+// drawSysMenu 的第一行是操作提示，真正項目從下一個字行開始；命中矩形必須
+// 與同一組 inner inset／font.Line 幾何共用，不能另猜一套座標。
+func (g *Game) sysMenuHit(mx, my int) int {
+	switch g.win {
+	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad,
+		winLangSel, winMusic:
+	default:
+		return -1
+	}
+	x, y, w, h := g.winFrame()
+	innerX := x + 6*UIScale
+	innerY := y + 16*UIScale
+	innerRight := x + w - 6*UIScale
+	innerBottom := y + h - 4*UIScale
+	if mx < innerX || mx >= innerRight || my < innerY || my >= innerBottom {
+		return -1
+	}
+	line := g.font.Line()
+	if line <= 0 {
+		return -1
+	}
+	row := (my-innerY)/line - 1 // 第 0 行是提示；第 1 行才是項目 0。
+	if row < 0 || row >= g.sysMenuLen() {
+		return -1
+	}
+	return row
+}
+
 // handleWindowMouse 處理視窗的關閉鈕與標題列拖曳。
 //
 // 原版的視窗可以搬（選單裡的「視窗位置 Ctrl-P」），這裡做成直接拖標題列——
@@ -225,6 +254,13 @@ func (g *Game) handleWindowMouse(mx, my int) bool {
 	}
 	if g.closeBoxHit(mx, my) {
 		g.win = winNone
+		return true
+	}
+	// 列表型浮動視窗先吃客戶區點擊。先前只處理關閉鈕與標題列，導致
+	// OPTIONS→調整速度等副選單「畫得出來、鍵盤可用、滑鼠完全無效」。
+	if row := g.sysMenuHit(mx, my); row >= 0 {
+		g.sysRow = row
+		g.sysMenuPick(row)
 		return true
 	}
 	if g.titleBarHit(mx, my) {
@@ -344,6 +380,9 @@ func (g *Game) drawSysMenu(dst *ebiten.Image, x, y int) {
 	g.font.Draw(dst, g.txt.UI("menu_hint_ok"), x, y, colDim)
 	for i := 0; i < g.sysMenuLen(); i++ {
 		c, mark := colDim, "  "
+		if g.win == winMusic && i > 0 && g.music != nil && i-1 == g.music.cur {
+			mark = "* " // 目前正在播放／暫停的曲目；游標移上去時仍以 > 優先。
+		}
 		if i == g.sysRow {
 			c, mark = colOn, "> "
 		}
@@ -897,6 +936,10 @@ func (g *Game) drawPicture(dst *ebiten.Image) {
 	if g.picture == "" {
 		return
 	}
+	if g.pictureScenario {
+		g.drawScenarioBrief(dst)
+		return
+	}
 	lines := splitLines(g.picture)
 	lh := g.font.Size() + 10
 	w := 0
@@ -913,13 +956,40 @@ func (g *Game) drawPicture(dst *ebiten.Image) {
 	x := (viewW - w) / 2
 	y := (viewH - h) / 2
 	vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h),
-		color.RGBA{0x14, 0x18, 0x22, 0xf8}, false)
-	vector.StrokeRect(dst, float32(x), float32(y), float32(w), float32(h), 3, colOn, false)
+		pictureBG, false)
+	vector.StrokeRect(dst, float32(x), float32(y), float32(w), float32(h), 3, pictureBorder, false)
 	for i, l := range lines {
-		g.font.Draw(dst, l, x+40, y+40+i*lh, colText)
+		g.font.Draw(dst, l, x+40, y+40+i*lh, pictureText)
 	}
 	hint := "按空白鍵或點一下繼續"
-	g.font.Draw(dst, hint, x+(w-g.font.Measure(hint))/2, y+h-38, colDim)
+	g.font.Draw(dst, hint, x+(w-g.font.Measure(hint))/2, y+h-38, pictureHint)
+}
+
+const (
+	briefX, briefY = 168, 85
+	briefW, briefH = 304, 166
+	briefBorder    = 4
+	briefButtonY   = 222
+	briefButtonW   = 38
+	briefButtonH   = 20
+)
+
+// drawScenarioBrief 依 DOS 1.10 的劇本簡介對話框繪製。矩形量測與生命週期
+// 收據在 docs/spec/ui-layout.md §五之三；繁中只改文字與按鈕寬度，不改外框。
+func (g *Game) drawScenarioBrief(dst *ebiten.Image) {
+	fill(dst, briefX, briefY, briefW, briefH, colDlgLine)
+	fill(dst, briefX+briefBorder, briefY+briefBorder,
+		briefW-2*briefBorder, briefH-2*briefBorder, colDlgBG)
+
+	for i, line := range splitLines(g.picture) {
+		g.font.DrawCentered(dst, line, briefX*UIScale,
+			(92+i*15)*UIScale, briefW*UIScale, rampHigh)
+	}
+
+	buttonX := 312 - briefButtonW/2
+	fill(dst, buttonX, briefButtonY, briefButtonW, briefButtonH, colDlgLine)
+	fill(dst, buttonX+1, briefButtonY+1, briefButtonW-2, briefButtonH-2, colDlgFill)
+	g.font.Draw(dst, "繼續", (buttonX+3)*UIScale, (briefButtonY+3)*UIScale, colDlgLine)
 }
 
 func splitLines(s string) []string {
