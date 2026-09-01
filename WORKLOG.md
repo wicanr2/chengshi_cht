@@ -2202,3 +2202,19 @@ Cannot find message file:C:\DATA\west_msg.ptf
 - 工具鏈重建第一次採 `--network none`，因已依前輪要求移除專案 image 而缺 apt cache，
   分類為環境失敗；只在重建鎖版 image 時開網路。一次測試誤用登入 shell 找不到 Go，
   另一次 `xvfb-run` 缺 `xauth`，最後改回有 trap 的直接 Xvfb 並以同一 image 通過。
+
+### 同日續：固定 version-date 與 v.1.0.0-20260901 重發
+
+- 使用者確認正式版號固定為 `v.<主版>.<次版>.<修訂版>-YYYYMMDD`，本版指定
+  `v.1.0.0-20260901`；排除裸日期與同日 `.1` 後綴。打包／驗包入口改為只接受此格式，
+  沒帶版號或傳入舊 `20260901` 都失敗即關閉。
+- 依使用者明確授權刪除 GitHub 舊 `20260901` Release 與遠端 tag，並刪除本機失效 tag；
+  `git ls-remote` 已確認遠端不存在，避免後續誤推回。
+- README 畫面區新增目前正常入口的繁中招牌截圖，說明只替換三個操作選項文字層，
+  SIM CITY 標誌、按鈕框線與點擊矩形保留。
+- 從乾淨版本目錄重建 `dist-all/v.1.0.0-20260901/{full,release,promo}`：Linux
+  AppImage／tar.gz、Windows ZIP、macOS universal 的公開版與本機完整版均完成；所有
+  產物為 1000:1000，未覆寫舊 `dist-all/20260901` 歷史輸出。
+- 完整驗包通過 checksum、manifest、公開包素材拒絕清單、macOS universal 靜態結構、
+  27120-byte 存檔、AppImage 正常入口與滑鼠速度選單；人工抽查開場為「建立新城市／
+  載入城市／選擇劇本」，內建 OGG 送出 48611328 bytes 非零音訊，沒有 panic。

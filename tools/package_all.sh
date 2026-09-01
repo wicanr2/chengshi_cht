@@ -7,15 +7,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VER="${1:-$(date +%Y%m%d)}"
+VER="${1:-}"
 OUT="$ROOT/dist-all/$VER"
 
-case "$VER" in
-  *[!A-Za-z0-9._-]*|'')
-    echo "版本只能使用英數、點、底線與連字號：$VER" >&2
-    exit 2
-    ;;
-esac
+if [[ ! "$VER" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+-[0-9]{8}$ ]]; then
+  echo "用法：tools/package_all.sh v.<主版>.<次版>.<修訂版>-YYYYMMDD" >&2
+  exit 2
+fi
 
 if [ -e "$OUT" ]; then
   echo "拒絕覆蓋既有交付目錄：$OUT" >&2

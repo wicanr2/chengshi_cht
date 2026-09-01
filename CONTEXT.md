@@ -3,7 +3,7 @@
 全專案的單一現況入口。接手時先讀本檔，再讀 [`CLAUDE.md`](CLAUDE.md)
 與目標規格。
 
-最後核對：2026-08-31。
+最後核對：2026-09-01。
 
 ## 1. 目前狀態
 
@@ -11,6 +11,9 @@
 八個劇本開得起來，基本外觀加六種資料片風格切得動，工具蓋得下去，四個視窗
 打得開，存讀檔用的是原版 `.cty` 格式（拿去餵 Micropolis 也讀得起來）。
 Linux tar.gz／AppImage、Windows、macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
+正式版號固定使用 `v.<主版>.<次版>.<修訂版>-YYYYMMDD`；Git tag、GitHub Release、
+程式版本字串、`dist-all/<版本>/` 與 checksum 必須完全一致。目前重建目標是
+`v.1.0.0-20260901`，舊 `20260901` Release 與 tag 已依使用者決定刪除，不得復用。
 
 **逐次元對拍收斂了，精靈也在內。** 四份實驗、每份 8000 個 frame（400 個的
 短版一份）全部逐 frame 完全一致：空城 13 954 次抽樣、**Dullsville 劇本
@@ -136,8 +139,8 @@ ALSA 檔案裝置確認 OGG 經 Ebiten／oto 送出非零音訊。這是技術�
 ```bash
 tools/go.sh test ./...              # 全部測試（docker，含接線檢查與字型覆蓋率）
 tools/playtest.sh [種子]            # 正常玩家路徑實機驗證（真視窗、真鍵盤、真滑鼠）
-tools/package_all.sh 20260901       # 建 dist-all/<版本>/full|release|promo
-tools/verify_package_all.sh 20260901 # 驗 AppImage 入口、滑鼠選單、權利、存檔與音訊
+tools/package_all.sh v.1.0.0-20260901       # 建 dist-all/<版本>/full|release|promo
+tools/verify_package_all.sh v.1.0.0-20260901 # 驗 AppImage 入口、滑鼠選單、權利、存檔與音訊
 tools/build-mac.sh                  # macOS universal（osxcross）＋ 靜態驗收
 tools/screenshot.sh [秒] [檔名]     # 單張截圖，GAME_ARGS 帶遊戲參數
 tools/font.sh                       # 重烘點陣字圖集（改過譯文或註解後）

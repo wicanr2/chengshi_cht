@@ -8,9 +8,10 @@ if [ -z "$VER" ]; then
   echo "用法：tools/verify_package_all.sh <版本>" >&2
   exit 2
 fi
-case "$VER" in
-  *[!A-Za-z0-9._-]*|'') echo "不合法的版本：$VER" >&2; exit 2 ;;
-esac
+if [[ ! "$VER" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+-[0-9]{8}$ ]]; then
+  echo "不合法的版本；必須是 v.<主版>.<次版>.<修訂版>-YYYYMMDD：$VER" >&2
+  exit 2
+fi
 if [ ! -d "$ROOT/dist-all/$VER" ]; then
   echo "找不到 dist-all/$VER" >&2
   exit 2
