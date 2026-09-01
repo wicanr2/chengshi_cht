@@ -9,6 +9,8 @@
 #   GAME_HOLD="x,y" 截圖前把滑鼠按在這個螢幕座標上不放（下拉選單是按住式的）
 #   GAME_KEYDOWN="q" 截圖前按住這個鍵不放（查詢是「按住 Q ＋ 按住左鍵」）
 #   GAME_CONFIG_HOME="容器路徑" 隔離玩家設定目錄（持久化驗收用）
+#   GAME_BIN="容器路徑" 改用既有的執行檔（發行包／AppImage）代替 `go run`。
+#     驗的就不再是工作樹的原始碼，而是**打包後的那顆二進位**。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WAIT="${1:-6}"
@@ -30,8 +32,16 @@ docker run --rm \
     Xvfb :99 -screen 0 1920x1050x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
     export DISPLAY=:99
     for i in \$(seq 1 40); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.25; done
-    go run ./cmd/chengshi -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \
-        >/tmp/game.log 2>&1 &
+    # AppImage 在容器裡沒有 FUSE，用官方的解包執行模式。
+    export APPIMAGE_EXTRACT_AND_RUN=1
+    LAUNCH='${GAME_BIN:-}'
+    if [ -n "\$LAUNCH" ]; then
+      "\$LAUNCH" -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \
+          >/tmp/game.log 2>&1 &
+    else
+      go run ./cmd/chengshi -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \
+          >/tmp/game.log 2>&1 &
+    fi
     GAME=\$!
     sleep $WAIT
     for k in ${GAME_KEYS:-}; do xdotool key --clearmodifiers \$k; sleep 1; done

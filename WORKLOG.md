@@ -2223,3 +2223,39 @@ Cannot find message file:C:\DATA\west_msg.ptf
   `target_commitish` 遭 GitHub HTTP 422 拒絕，沒有產生 Release；改以已同步到相同提交的
   `main` 建立成功。回讀確認正式 Release 非 draft／prerelease、六個公開資產齊全，tag
   精確指向 `be250ea9…`，舊 `20260901` tag 沒有復活。
+
+## 2026-09-01：發行 AppImage 對 DOS 原版的畫面與操作流程對拍
+
+- 收據 `docs/playtest/appimage-parity-2026-09-01.md`；新增
+  `tools/appimage_parity.sh`、`tools/appimage_parity_inner.sh`、
+  `tools/shot_identical.py`、`tools/shot_pairset.py`；
+  `tools/screenshot.sh` 加 `GAME_BIN`，可驅動發行包的執行檔而不是 `go run`。
+- 開工前發現 `simcity-go:1.25` 與 `simcity-dosbox:x` 兩個 image 已不在本機，
+  依 `docker/*.Dockerfile` 重建。原版素材完整。
+- AppImage 內含的 `SIMCITY 1.10` 與 `workplace/dos110/` 逐位元相同（62 檔），
+  所以像素差異不可能來自素材不同。
+- **量測性質（negative result，會影響所有畫面對拍）**：這個遊戲的畫面不是逐次
+  可重播的。`game.LoadCity` 走 `LoadCitySeed(path, sim.RandomSeed())`，
+  `RandomSeed()` 是 `time.Now().UnixNano()`（`internal/sim/rand.go:147`），
+  `DoSimInit` 的 `MapScan` 會用到；`-seed` 只接到「開新城市」，`-load` 與
+  `-scenario` 都沒有（`cmd/chengshi/main.go:165–186`）。
+  實測：讀同一份暫停城市檔、三秒後 `Ctrl-S` 存回，三次存回的檔互不相同；
+  而同一個行程內間隔三秒的兩張截圖逐位元相同——變動發生在讀檔那一刻。
+- 第二個成因：模擬在劇本簡介蓋著時照跑（`updateTitle` 只擋招牌與劇本選單），
+  而 AppImage 比現建版多花一兩秒解包。用固定秒數等待會讓兩邊跑掉的刻數不同，
+  City Form 上就出現幾百個像素的差異。對策是等視窗出現再動作，並讓兩側都讀
+  一份 `MiscHis[57] = 0` 的城市檔。
+- 判準因此定為成對重複量測：兩側各三張，先量各側「自己跟自己」的雜訊底線，
+  再看跨側最小差距有沒有超過它。跑正對照（`A_KIND=dev B_KIND=dev`）確認過
+  雜訊確實存在：cityform 同一顆二進位跑兩次差 378 個像素。
+- 掉鍵是真的：預算那一幕連兩輪都有一張沒開到視窗（視窗區色數 3070 對 678），
+  而截圖本身完全正常。`xdotool windowfocus` 反而讓 graphs／eval 也開始掉鍵，
+  已撤；改成送鍵後比對前後畫面，沒變化就補送一次。修完雜訊底線最大值
+  從 883 432 降到 513。
+- 結果：階段 A 十四幕全過，十三幕有逐位元相同的截圖。階段 B 四項
+  （編輯區 502／512 格、City Form 130 583／131 600、地圖本體 107 836／108 300、
+  劇本選單 223 867／224 000）與 2026-08-31 一致。
+- 招牌 221 602／224 000，低於 8/31 的 223 849。DOS 側基準與當時逐位元相同，
+  差異的 2 247 個像素落在三個開場按鈕框內（commit 878206f 中文化），
+  框外 151 個像素 bbox 為 16×15，是 DOS 側游標。不是退步。
+- Docker：全部 `--rm`，只用既有 image，未清理任何共用資源。
