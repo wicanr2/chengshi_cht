@@ -2218,3 +2218,8 @@ Cannot find message file:C:\DATA\west_msg.ptf
 - 完整驗包通過 checksum、manifest、公開包素材拒絕清單、macOS universal 靜態結構、
   27120-byte 存檔、AppImage 正常入口與滑鼠速度選單；人工抽查開場為「建立新城市／
   載入城市／選擇劇本」，內建 OGG 送出 48611328 bytes 非零音訊，沒有 panic。
+- 發行提交為 `be250ea9c2dc07a660b2592c473e5a420fb21cb7`。本機 `.git` 的 tag 物件路徑為唯讀，
+  annotated tag 無法寫入；改由 GitHub Release 建立遠端 tag。第一次傳短 SHA 給
+  `target_commitish` 遭 GitHub HTTP 422 拒絕，沒有產生 Release；改以已同步到相同提交的
+  `main` 建立成功。回讀確認正式 Release 非 draft／prerelease、六個公開資產齊全，tag
+  精確指向 `be250ea9…`，舊 `20260901` tag 沒有復活。
