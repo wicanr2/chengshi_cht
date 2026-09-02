@@ -149,10 +149,15 @@ build_appimage() {
   cp "$ROOT/packaging/chengshi.svg" "$appdir/chengshi.svg"
   cp "$source_dir/LICENSE" "$source_dir/NotoSansCJK-copyright.txt" \
      "$source_dir/讀我.txt" "$appdir/"
+  # 地圖要跟著進 AppImage。少了這一段，tar.gz 的玩家拿得到五張地圖而
+  # AppImage 的玩家拿不到——而 AppImage 是 Linux 這邊的主要交付物。
+  cp -a "$source_dir/cities" "$appdir/cities"
   if [ "$mode" = full ]; then
     cp -a "$source_dir/SIMCITY 1.10" "$appdir/SIMCITY 1.10"
     cp -a "$source_dir/music" "$appdir/music"
     cp "$source_dir/完整版權利邊界.txt" "$appdir/"
+    [ -d "$source_dir/地形編輯器素材" ] \
+      && cp -a "$source_dir/地形編輯器素材" "$appdir/地形編輯器素材"
   else
     cp "$source_dir/素材與權利.txt" "$appdir/"
   fi
@@ -224,6 +229,11 @@ PY
 # promo 保存目前 README 使用的畫面與可追溯說明；不把本機 OGG 複製進去。
 mkdir -p "$DEST/promo/screenshots"
 cp "$ROOT"/docs/images/*.png "$DEST/promo/screenshots/"
+# 推廣影片：五張台灣地圖的運鏡。由 tools/promo_video.sh 產生（不進 Git）。
+PROMO_VIDEO=0
+for f in "$ROOT"/workplace/promo/promo.mp4 "$ROOT"/workplace/promo/promo.gif; do
+  [ -s "$f" ] && { cp "$f" "$DEST/promo/"; PROMO_VIDEO=1; }
+done
 BUILD_HEAD=$(git rev-parse HEAD 2>/dev/null || printf unknown)
 cat >"$DEST/promo/README.md" <<EOF
 # 城市 $VER 推廣素材
@@ -231,7 +241,9 @@ cat >"$DEST/promo/README.md" <<EOF
 - 來源：本次工作樹 $BUILD_HEAD
 - 畫面：README 目前引用的 remake 截圖；圖中原版美術只作專案說明。
 - 音訊：本目錄不含 SimCity 或 SimCity 2000 音樂。
-- 影片：本版尚未建立推廣影片；不得把本目錄冒稱為影片驗收完成。
+- 影片：$( [ "$PROMO_VIDEO" = 1 ] \
+    && echo "promo.mp4 與 promo.gif ＝ 五張台灣地圖（台灣／台北／台中／台南／高雄）的運鏡，由 tools/promo_video.sh 產生。畫面上的圖塊來自玩家自備的原版。" \
+    || echo "本版尚未建立推廣影片；不得把本目錄冒稱為影片驗收完成。" )
 EOF
 
 # 公開包拒絕清單：檔名與內容兩層。exe 是 Windows remake 本體，允許唯一的
@@ -278,7 +290,16 @@ for app in "$DEST/release"/*.AppImage; do
   rm -rf "$scan"
   mkdir -p "$scan"
   (cd "$scan" && "$app" --appimage-extract >/dev/null)
-  if find "$scan/squashfs-root" -type f \( \
+  # cities/ 是唯一例外，與 tar／zip 的掃描同一個理由；下面另外逐檔核對
+  # 它只含本儲存庫收錄的地圖。
+  for c in "$scan/squashfs-root"/cities/*.CTY; do
+    [ -e "$c" ] || continue
+    [ -f "$ROOT/cities/$(basename "$c")" ] || {
+      echo "公開 AppImage 的 cities/ 多了 $(basename "$c")：$app" >&2
+      exit 1
+    }
+  done
+  if find "$scan/squashfs-root" -type f -not -path '*/cities/*' \( \
       -iname '*.pgf' -o -iname '*.ppf' -o -iname '*.psn' -o -iname '*.ptf' -o \
       -iname '*.psf' -o -iname '*.cty' -o -iname '*.v4' -o -iname '*.ogg' -o \
       -iname '*.wav' -o -iname '*.xmi' -o -iname '*.mid' -o -iname 'SIMCITY.EXE' -o \

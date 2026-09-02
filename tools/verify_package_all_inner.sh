@@ -83,7 +83,15 @@ for pair in "public:$APP_REL" "full:$APP_FULL"; do
   fi
 done
 if [ -d "$TMP/appimage-public/squashfs-root" ]; then
-  if find "$TMP/appimage-public/squashfs-root" -type f \( \
+  # cities/ 是唯一例外，與 tar／zip 的掃描同一個理由；下面另外逐檔核對。
+  appimg_extra=0
+  for c in "$TMP/appimage-public/squashfs-root"/cities/*.CTY; do
+    [ -e "$c" ] || continue
+    [ -f "$ROOT/cities/$(basename "$c")" ] \
+      || { fail "公開 AppImage 的 cities/ 多了 $(basename "$c")"; appimg_extra=1; }
+  done
+  [ "$appimg_extra" = 0 ] && pass "公開 AppImage 的 cities/ 只有 repo 收錄的地圖"
+  if find "$TMP/appimage-public/squashfs-root" -type f -not -path '*/cities/*' \( \
       -iname '*.pgf' -o -iname '*.ppf' -o -iname '*.psn' -o -iname '*.ptf' -o \
       -iname '*.psf' -o -iname '*.cty' -o -iname '*.v4' -o -iname '*.ogg' -o \
       -iname '*.wav' -o -iname '*.xmi' -o -iname '*.mid' -o -iname 'SIMCITY.EXE' \) \
@@ -167,8 +175,17 @@ run_smoke() {
       xdotool key --clearmodifiers ctrl+s
       for _ in $(seq 1 4); do [ -s "$save" ] && break 2; sleep 0.25; done
     done
-    [ "$(stat -c%s "$save" 2>/dev/null || printf 0)" = 27120 ] \
-      && pass "$name 可寫 27120-byte 存檔" || fail "$name 存檔失敗"
+    # 預設存檔版面是 DOS 的 27248：128 位元組檔頭 ＋ 27120 檔身。
+    # 城市名唯一的容身處就是那個檔頭（使用者裁決，2026-09-02）。
+    # 只驗長度不夠——長度對而檔頭是垃圾的話，原版讀不出城市名而畫面正常。
+    local size magic
+    size=$(stat -c%s "$save" 2>/dev/null || printf 0)
+    magic=$(dd if="$save" bs=1 skip=65 count=8 2>/dev/null || true)
+    if [ "$size" = 27248 ] && [ "$magic" = CITYMCRP ]; then
+      pass "$name 可寫 27248-byte 存檔（含 CITYMCRP 檔頭）"
+    else
+      fail "$name 存檔失敗（$size 位元組，魔數 \"$magic\"）"
+    fi
   else
     fail "$name 無法啟動"
   fi
