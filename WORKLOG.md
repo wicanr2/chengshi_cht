@@ -2275,3 +2275,21 @@ Cannot find message file:C:\DATA\west_msg.ptf
   症狀是 `readme_shots.sh` 第一張就 `cp: 無法取得 '_rm.png' 的資訊`。已修，
   兩條分支各驗一次（不給 GAME_BIN 走 `go run`、給 AppImage 走發行執行檔）。
   ⚠ 2026-09-01 的階段 B 不受影響：AppImage 路徑不含空白，未加引號照樣展開正確。
+
+### 同日續：自評更新與打包判定
+
+- README 自評「跨平台發行」8 → 8.5，理由是發行的 Linux AppImage 多了畫面級對拍
+  （驗玩家拿到的那顆二進位，不只工作樹的原始碼）。整體維持 9：兩個扣分點
+  （取樣率暫代值、沒有人用手玩完）都沒變。
+- 同一列的扣分欄補正兩件事實：**Windows 與 macOS 都沒有實機試玩**（工具鏈裡沒有
+  wine，先前只寫了 macOS）；`verify_package_all.sh` 的獨立權利掃描只重掃 Linux tar
+  與兩個 AppImage，**Windows zip 只有打包器內那一次**。打包器本身確實掃了
+  （`package_all_inner.sh` 對 `$DEST/release` 每個 `.zip`／`.tar.gz` 都跑），
+  且實查該 zip 只有五個檔（`chengshi.exe`、LICENSE、讀我、素材與權利、字型版權），
+  沒有原版素材；缺的是獨立驗證那一層。
+- **不重新打包、不發新版**（使用者決定）。`v.1.0.0-20260901` 之後 `internal/`、
+  `cmd/`、`go.mod`、`go.sum` 一個位元組都沒改，只動文件、工具與截圖；重打會因建置
+  路徑與工具鏈版本產生不同雜湊，與已發布的 `SHA256SUMS` 對不上。
+- Windows 包狀態確認：`chengshi-v.1.0.0-20260901-windows-amd64.zip` 已在 GitHub
+  Release，雜湊 `a5909e4d…` 與 Release 的 `SHA256SUMS` 吻合。完整版 Windows zip
+  （含原版素材）只留本機。
