@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"image"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -557,4 +558,97 @@ func mcgaPalette(t *testing.T, dir string) []PGFColor {
 		return nil
 	}
 	return g.Palette
+}
+
+// meanRunLength 是一幅圖橫向「同色連續像素」的平均長度。
+//
+// 為什麼要這個：`.PPF` 的版面用長度反推高度，而**封裝式與平面式吃掉的
+// 位元組數可能一模一樣**（Tandy 的 4bpp 封裝 160 位元組/列 ＝ 4 平面
+// 40×4；CGA 的 2bpp 封裝 80 ＝ 2 平面 40×2）。解錯的那一邊尺寸照樣對、
+// 長度檢查照樣過，只有畫面是一整片直條雜訊——尺寸斷言抓不到。
+//
+// 真實畫面有大片同色（天空、招牌、底色），橫向連續段很長；把平面資料
+// 當封裝讀（或反過來）會把相鄰像素的位元交錯打散，連續段掉到 1～2。
+// 這個統計量不必存參考圖，也不綁特定畫面內容。
+func meanRunLength(im *image.RGBA) float64 {
+	b := im.Bounds()
+	runs, px := 0, 0
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		prev := im.RGBAAt(b.Min.X, y)
+		runs++
+		for x := b.Min.X + 1; x < b.Max.X; x++ {
+			c := im.RGBAAt(x, y)
+			if c != prev {
+				runs++
+				prev = c
+			}
+		}
+		px += b.Dx()
+	}
+	if runs == 0 {
+		return 0
+	}
+	return float64(px) / float64(runs)
+}
+
+// TestPPFDecodesAreNotScrambled 補上尺寸斷言看不到的那一半：畫面本身對不對。
+//
+// 門檻 4 取自實測（2026-09-02，DOS 1.03 的五幅招牌）：解對時
+// cega 11.52、cga 6.37、sega 與 tdy 都是 6.25、mono 4.83；
+// 把 Tandy 當 4 平面讀是 1.28。門檻夾在 1.28 與 4.83 之間。
+func TestPPFDecodesAreNotScrambled(t *testing.T) {
+	dir := dos103Dir(t)
+	for _, c := range []struct{ file, mode string }{
+		{"CEGANTRO.PPF", "cega"},
+		{"SEGANTRO.PPF", "sega"},
+		{"TDYNTRO.PPF", "tdy"},
+		{"MONONTRO.PPF", "mono"},
+		{"CGANTRO.PPF", "cga"},
+	} {
+		raw, err := os.ReadFile(filepath.Join(dir, c.file))
+		if err != nil {
+			t.Errorf("%s：%v", c.file, err)
+			continue
+		}
+		d, err := DecompressLZSS(raw)
+		if err != nil {
+			t.Errorf("%s：解壓失敗 %v", c.file, err)
+			continue
+		}
+		im, err := ParsePPFAs(d, nil, c.mode)
+		if err != nil {
+			t.Errorf("%s（%s）：%v", c.file, c.mode, err)
+			continue
+		}
+		got := meanRunLength(im)
+		t.Logf("%-13s %-5s 橫向平均連續段 %.2f 像素", c.file, c.mode, got)
+		if got < 4 {
+			t.Errorf("%s（%s）：橫向平均連續段 %.2f 像素，太碎，版面多半解錯",
+				c.file, c.mode, got)
+		}
+	}
+
+	// 反向對照：把 Tandy 的畫面當 sega（4 平面）讀。尺寸一樣是 320×200、
+	// 長度檢查照過，所以只有這個統計量分得出來。
+	raw, err := os.ReadFile(filepath.Join(dir, "TDYNTRO.PPF"))
+	if err != nil {
+		t.Fatalf("TDYNTRO.PPF：%v", err)
+	}
+	d, err := DecompressLZSS(raw)
+	if err != nil {
+		t.Fatalf("解壓失敗：%v", err)
+	}
+	wrong, err := ParsePPFAs(d, nil, "sega")
+	if err != nil {
+		t.Fatalf("拿錯誤模式解不開，這個對照就沒意義了：%v", err)
+	}
+	if wrong.Bounds().Dx() != 320 || wrong.Bounds().Dy() != 200 {
+		t.Errorf("錯誤模式解出 %v，本來就該與正確模式同尺寸——對照不成立",
+			wrong.Bounds().Size())
+	}
+	gotWrong := meanRunLength(wrong)
+	t.Logf("TDYNTRO.PPF   當成 sega（錯的）橫向平均連續段 %.2f 像素", gotWrong)
+	if gotWrong >= 4 {
+		t.Errorf("把 Tandy 當 4 平面讀應該解得很碎，卻是 %.2f 像素——門檻失效", gotWrong)
+	}
 }

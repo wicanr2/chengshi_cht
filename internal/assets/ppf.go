@@ -56,6 +56,7 @@ const (
 	kindPlanar ppfKind = iota // 逐列交錯的位元平面，高位在前
 	kindLinear                // 每像素一個位元組（256 色）
 	kindPacked2               // 封裝式 2bpp，一個位元組四個像素，高位在左
+	kindPacked4               // 封裝式 4bpp，一個位元組兩個像素，高位在左
 )
 
 // ppfLayout 是一種顯示模式的畫面版面。高度不記在這裡——它由檔案長度
@@ -73,7 +74,7 @@ type ppfLayout struct {
 var PPFModes = map[string]ppfLayout{
 	"cega": {"cega", 640, 320, 4, kindPlanar, 300, 400},
 	"sega": {"sega", 320, 160, 4, kindPlanar, 150, 250},
-	"tdy":  {"tdy", 320, 160, 4, kindPlanar, 150, 250},
+	"tdy":  {"tdy", 320, 160, 0, kindPacked4, 150, 250},
 	"mcga": {"mcga", 320, 320, 0, kindLinear, 150, 250},
 	"mono": {"mono", 640, 80, 1, kindPlanar, 300, 400},
 	"cga":  {"cga", 320, 80, 0, kindPacked2, 150, 250},
@@ -151,11 +152,20 @@ func parseWith(d []byte, pal []PGFColor, l ppfLayout, h int) (*image.RGBA, error
 		return ppfPlanar(d, l, h), nil
 	case kindPacked2:
 		return ppfPacked2(d, l, h), nil
+	case kindPacked4:
+		return ppfPacked4(d, l, h), nil
 	}
 	if pal == nil {
 		return nil, fmt.Errorf(".PPF：%s 是 256 色的，要傳同一個圖形集的調色盤", l.name)
 	}
 	return ppfLinear(d, l, h, pal), nil
+}
+
+// monoScreen 是單平面模式的兩色。Hercules 與 EGA Mono 都是單色顯示器，
+// 亮的那一色是白不是 `egaScreen[1]` 的藍——照十六色表解會得到一幅
+// 藍底黑字、看起來「有畫面」但顏色錯的圖。
+var monoScreen = [2]color.RGBA{
+	{0x00, 0x00, 0x00, 0xff}, {0xff, 0xff, 0xff, 0xff},
 }
 
 func ppfPlanar(d []byte, l ppfLayout, h int) *image.RGBA {
@@ -170,7 +180,11 @@ func ppfPlanar(d []byte, l ppfLayout, h int) *image.RGBA {
 				for p := 0; p < l.planes; p++ {
 					idx |= int((d[row+p*bpr+b]>>sh)&1) << uint(l.planes-1-p)
 				}
-				im.SetRGBA(b*8+bit, y, egaScreen[idx])
+				if l.planes == 1 {
+					im.SetRGBA(b*8+bit, y, monoScreen[idx])
+				} else {
+					im.SetRGBA(b*8+bit, y, egaScreen[idx])
+				}
 			}
 		}
 	}
@@ -189,6 +203,26 @@ func ppfPacked2(d []byte, l ppfLayout, h int) *image.RGBA {
 			for i := 0; i < 4; i++ {
 				im.SetRGBA(b*4+i, y, egaScreen[(v>>uint(6-2*i))&3])
 			}
+		}
+	}
+	return im
+}
+
+// ppfPacked4 解 Tandy／PCjr 的封裝式 4bpp：一個位元組兩個像素，高位在左，
+// 色號是 EGA 十六色的索引。
+//
+// ⚠ **這個模式與 4 平面 planar 吃掉的位元組數一模一樣**：320 像素在
+// 4bpp 封裝下是 160 個位元組，在 4 平面下是 40×4＝160，長度檢查兩邊都過。
+// 版面初版照 sega 抄成 planar，解出來的尺寸正確、`.PPF` 測試全綠，
+// 而畫面是一整片直條雜訊——**尺寸對不代表解對**，要看圖。
+// 同一個坑 CGA 也有（2bpp 封裝 vs 平面），兩次都是靠把圖畫出來裁掉的。
+func ppfPacked4(d []byte, l ppfLayout, h int) *image.RGBA {
+	im := image.NewRGBA(image.Rect(0, 0, l.w, h))
+	for y := 0; y < h; y++ {
+		for b := 0; b < l.bytesPerRow; b++ {
+			v := d[y*l.bytesPerRow+b]
+			im.SetRGBA(b*2, y, egaScreen[v>>4])
+			im.SetRGBA(b*2+1, y, egaScreen[v&0x0f])
 		}
 	}
 	return im

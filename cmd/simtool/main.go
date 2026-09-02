@@ -54,6 +54,8 @@ func main() {
 		cmdPgfMask(os.Args[2:])
 	case "pgfmini":
 		cmdPgfMini(os.Args[2:])
+	case "ppf":
+		cmdPPF(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
