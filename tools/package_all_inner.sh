@@ -8,6 +8,7 @@ DEST="$ROOT/dist-all/$VER"
 STAGE="$ROOT/workplace/package-all-$VER"
 DATA="$ROOT/workplace/dos110/SIMCITY 1.10"
 MUSIC="$ROOT/music"
+E220="$ROOT/workplace/e220"
 MAC_BUILD="$ROOT/workplace/package-mac-$VER"
 
 cleanup() { rm -rf "$STAGE"; }
@@ -37,18 +38,64 @@ install_public_docs() {
 玩家必須自行合法取得 SimCity 1.10（DOS）資料。若要播放背景音樂，請把自己
 有權使用的 .ogg／.wav 放入 music/，或用 -music 指定目錄。
 
+cities/ 裡的五個地圖檔是例外，它們不是原版素材：台北、台中、台南三張由本專案
+繪製，台灣與高雄兩張出自軟體世界 1990 年的發行，權利狀態見 LICENSE 附註第五條。
+地圖只有地形資料，不含任何 Maxis 的程式或美術。
+
 程式碼授權見 LICENSE；字型來源授權見 NotoSansCJK-copyright.txt。
 EOF
 }
 
+# cities/ 是本儲存庫公開收錄的地圖：三張本專案畫的，兩張軟體世界 1990 年的
+# （權利狀態見 LICENSE 附註第五條）。repo 裡是公開的，發行包就跟著帶。
+install_cities() {
+  local d=$1
+  mkdir -p "$d/cities"
+  cp "$ROOT/cities/README.md" "$d/cities/"
+  cp "$ROOT"/cities/*.CTY "$d/cities/"
+}
+
 install_public_docs "$STAGE/release-linux"
 install_public_docs "$STAGE/release-windows"
+install_cities "$STAGE/release-linux"
+install_cities "$STAGE/release-windows"
 if [ ! -x "$MAC_BUILD/城市.app/Contents/MacOS/chengshi" ]; then
   echo "缺少本版本的 macOS universal 輸入：$MAC_BUILD/城市.app" >&2
   exit 2
 fi
 cp -a "$MAC_BUILD/城市.app" "$STAGE/release-mac/"
 install_public_docs "$STAGE/release-mac"
+install_cities "$STAGE/release-mac"
+
+# install_e220 把軟體世界 1990 年地形編輯器磁片上的 Maxis 素材放進**完整版**：
+# 六種顯示模式的編輯器美術，以及 Maxis 自己的九座示範城市。
+#
+# ⚠ **這些只能留在本機。** 它們是 Maxis 的內容，與 cities/ 那五張不同
+# （後者是軟體世界自己畫的與本專案畫的，見 LICENSE 附註第五條）。
+# 公開包的拒絕清單會擋住它們，這裡刻意只寫進 full-*。
+install_e220() {
+  local d=$1
+  [ -d "$E220" ] || return 0
+  mkdir -p "$d/地形編輯器素材" "$d/cities"
+  cp "$E220"/*.PGF "$E220"/*.PPF "$d/地形編輯器素材/" 2>/dev/null || true
+  # 示範城市：磁片上 Maxis 自己那九座。軟體世界的兩張已經在 cities/ 裡了。
+  for f in "$E220"/*.CTY; do
+    case "$(basename "$f")" in
+      TAIWAN.CTY | KAOHSIUN.CTY) continue ;;
+    esac
+    cp "$f" "$d/cities/"
+  done
+  cat >"$d/地形編輯器素材/來源.txt" <<'TXT'
+本目錄與 cities/ 裡的示範城市取自軟體世界研究中心（高雄）1990 年重新打包的
+Maxis《SimCity Terrain Editor》磁片。這些是 Maxis 的美術與城市檔，只能留在
+本機或明確授權的私有位置，不得公開散布。
+
+cities/TAIWAN.CTY 與 cities/KAOHSIUN.CTY 不在此限——那兩張是軟體世界自己畫的，
+已隨本專案公開，權利狀態見 LICENSE 附註第五條。
+
+美術是地形編輯器自己的畫面，本重製版沒有地形編輯器，所以它們目前只作保存用途。
+TXT
+}
 
 # 完整版以公開 stage 為底，再加入本機素材。執行檔會自動尋找相鄰的
 # SIMCITY 1.10；啟動器固定 cwd，確保相鄰 music/ 也能被找到。
@@ -58,6 +105,7 @@ cp -a "$STAGE/release-mac/." "$STAGE/full-mac/"
 for d in "$STAGE/full-linux" "$STAGE/full-windows" "$STAGE/full-mac"; do
   cp -a "$DATA" "$d/SIMCITY 1.10"
   cp -a "$MUSIC" "$d/music"
+  install_e220 "$d"
   rm -f "$d/素材與權利.txt"
   cat >"$d/讀我.txt" <<'EOF'
 城市（chengshi_cht）本機完整版
@@ -188,20 +236,28 @@ EOF
 
 # 公開包拒絕清單：檔名與內容兩層。exe 是 Windows remake 本體，允許唯一的
 # chengshi.exe；其餘原版格式、音訊及原版識別檔一律拒絕。
-python3 - "$DEST/release" <<'PY'
+python3 - "$DEST/release" "$ROOT/cities" <<'PY'
 import os
 import sys
 import tarfile
 import zipfile
 
-root = sys.argv[1]
+root, cities_dir = sys.argv[1], sys.argv[2]
 bad_ext = {'.pgf', '.ppf', '.psn', '.ptf', '.psf', '.cty', '.v4', '.ogg', '.wav', '.xmi', '.mid'}
 bad_names = {'simcity.exe', 'simcity.cfg', 'settings.exe', 'sounddat.v4', 'read.me'}
 
+# 唯一的例外：cities/ 底下、而且**本儲存庫的 cities/ 真的有同名檔**的城市檔。
+# 例外綁在「已經公開的東西」上，不是綁在副檔名或目錄名上——這樣就算有人
+# 把 Maxis 的示範城市丟進 cities/，只要它沒進 repo 就照樣擋下來。
+allowed_cities = {f.lower() for f in os.listdir(cities_dir)} if os.path.isdir(cities_dir) else set()
+
 def check(names, archive):
     for raw in names:
-        name = raw.replace('\\', '/').rsplit('/', 1)[-1].lower()
+        path = raw.replace('\\', '/')
+        name = path.rsplit('/', 1)[-1].lower()
         ext = os.path.splitext(name)[1]
+        if ext == '.cty' and '/cities/' in '/' + path and name in allowed_cities:
+            continue
         if ext in bad_ext or name in bad_names:
             raise SystemExit(f'公開包混入受保護素材：{archive}: {raw}')
 

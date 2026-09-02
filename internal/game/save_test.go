@@ -65,12 +65,14 @@ func TestCityHeaderNameCutsAtNUL(t *testing.T) {
 		header []byte
 		want   string
 	}{
-		{"前綴等於字串長度", mk(11, "BadNews.cty"), "BadNews.cty"},
+		{"前綴等於字串長度，副檔名剝掉", mk(11, "BadNews.cty"), "BadNews"},
 		{"前綴大於字串長度（TAIWAN）", mk(13, "TAIWAN"), "TAIWAN"},
 		{"前綴大於字串長度（KAOHSIUN）", mk(13, "KAOHSIUN"), "KAOHSIUN"},
-		{"前綴多一（Joffebrg.cty）", mk(13, "Joffebrg.cty"), "Joffebrg.cty"},
-		{"前綴為零", mk(0, "Linear.cty"), "Linear.cty"},
-		{"前綴超出檔頭", mk(9999, "Meddeve.cty"), "Meddeve.cty"},
+		{"前綴多一（Joffebrg.cty）", mk(13, "Joffebrg.cty"), "Joffebrg"},
+		{"前綴為零", mk(0, "Linear.cty"), "Linear"},
+		{"前綴超出檔頭", mk(9999, "Meddeve.cty"), "Meddeve"},
+		{"不是 .cty 的副檔名不動", mk(9, "Port.town"), "Port.town"},
+		{"名字本身就叫 .cty 不剝成空的", mk(4, ".cty"), ".cty"},
 		{"沒有檔頭", nil, ""},
 		{"檔頭太短", []byte{0x00}, ""},
 	} {

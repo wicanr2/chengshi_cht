@@ -192,7 +192,22 @@ func cityHeaderName(header []byte) string {
 	if i := bytes.IndexByte(name, 0); i >= 0 {
 		name = name[:i]
 	}
-	return strings.TrimSpace(string(name))
+	return trimCityExt(strings.TrimSpace(string(name)))
+}
+
+// trimCityExt 去掉城市名尾端的 `.cty`。
+//
+// 兩族檔案的慣例不同：DOS 存檔（27248）存的是**不帶副檔名**的 DOS 8.3 檔名
+// （`detroit`、`Hamburg`、`TAIWAN`），而 Maxis 隨附的示範城市（27264）
+// 帶著副檔名（`BadNews.cty`、`Big_City.cty`、`Linear.cty`）。
+// 標題列顯示 `BadNews.cty` 是把檔名當成市名，原版不會這樣印。
+//
+// 只剝 `.cty`，大小寫不拘；其他副檔名不動，因為那可能真的是市名的一部分。
+func trimCityExt(name string) string {
+	if len(name) > 4 && strings.EqualFold(name[len(name)-4:], ".cty") {
+		return name[:len(name)-4]
+	}
+	return name
 }
 
 // LoadCity 讀一個原版格式的 `.cty`。

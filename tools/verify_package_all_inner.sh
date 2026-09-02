@@ -99,7 +99,9 @@ for f in "SIMCITY 1.10/DATA/MESSAGE.PTF" music/SC2000-10004.ogg 完整版權利�
 done
 
 # 公開包的解包內容再掃一次；打包器內的掃描不能替代獨立驗證。
-if find "$TMP/release" -type f \( \
+# cities/ 底下的城市檔是唯一例外（本專案畫的三張 ＋ 軟體世界的兩張，
+# 見 LICENSE 附註第五條），所以先把那個目錄排除再掃。
+if find "$TMP/release" -type f -not -path '*/cities/*' \( \
     -iname '*.pgf' -o -iname '*.ppf' -o -iname '*.psn' -o -iname '*.ptf' -o \
     -iname '*.psf' -o -iname '*.cty' -o -iname '*.v4' -o -iname '*.ogg' -o \
     -iname '*.wav' -o -iname '*.xmi' -o -iname '*.mid' -o -iname 'SIMCITY.EXE' -o \
@@ -108,6 +110,14 @@ if find "$TMP/release" -type f \( \
 else
   pass "公開版沒有原版資料與音樂"
 fi
+
+# cities/ 只准出現 repo 裡有的那幾個檔——例外綁在「已經公開的東西」上。
+unexpected=0
+for f in "$TMP/release"/cities/*.CTY; do
+  [ -e "$f" ] || continue
+  [ -f "$ROOT/cities/$(basename "$f")" ] || { fail "公開版的 cities/ 多了 $(basename "$f")"; unexpected=1; }
+done
+[ "$unexpected" = 0 ] && pass "公開版的 cities/ 只有 repo 收錄的地圖"
 
 for f in "SIMCITY 1.10/DATA/MESSAGE.PTF" music/SC2000-10003.ogg 完整版權利邊界.txt; do
   [ -s "$TMP/full/$f" ] && pass "完整版有 $f" || fail "完整版少了 $f"
