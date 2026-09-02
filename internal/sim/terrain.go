@@ -70,6 +70,22 @@ func (w *World) GenerateMap(seed uint32, p TerrainParams) {
 	}
 }
 
+// SmoothTerrain 把手工填出來的粗胚地形換成正確的邊界圖塊：
+// 水面填 REDGE、樹林填 WOODS，呼叫這個之後就會長出原版的岸線與林緣。
+//
+// 為什麼要匯出：地圖工具（tools/citymap）要畫出與原版同一套邊緣規則的地形，
+// 而規則就在 smoothRiver／smoothTrees 裡。與其在工具裡重寫一份會漂移的複製品，
+// 不如把原版這兩支直接開出來用。
+//
+// 這裡**不擲亂數**，所以同一份粗胚每次得到同一張地圖。
+// 樹林跑兩次與 doTrees 一致（s_gen.c:299-300）。
+func (w *World) SmoothTerrain() {
+	g := &terrainGen{w: w, p: DefaultTerrainParams()}
+	g.smoothRiver()
+	g.smoothTrees()
+	g.smoothTrees()
+}
+
 // clearMap 把整張圖填成空地。s_gen.c:156
 func (w *World) clearMap() {
 	for x := 0; x < WorldX; x++ {

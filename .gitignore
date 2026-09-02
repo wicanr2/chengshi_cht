@@ -15,6 +15,7 @@ Rare simcity.zip
 e220/
 simcity2000-pc98/
 SimCity_2000_Special_Edition_DOS.zip
+1.0/
 
 # 原版資料檔（DOS 1.10 與 X11 版）：即使有人手動解到 repo 裡也擋下來
 *.PGF
@@ -29,6 +30,10 @@ SimCity_2000_Special_Edition_DOS.zip
 *.psf
 *.CTY
 *.cty
+# 例外：cities/ 收錄的地圖檔是刻意進版控的。
+# 軟體世界那兩張的權利狀態見 LICENSE 附註第五條；其餘是本專案自己畫的。
+!cities/*.CTY
+!cities/*.cty
 *.V4
 
 # 解開的 DOS 資料在 workplace/dos110/（已被 workplace/ 涵蓋）

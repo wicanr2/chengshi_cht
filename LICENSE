@@ -97,7 +97,7 @@ modifies, limits, nor extends them.
 上述條款**不涵蓋**原版遊戲的執行檔、資料檔、美術、音樂、點陣字型、
 說明書掃描件，以及任何直接衍生自它們的素材。那些屬於各自的權利人；
 本專案不散布它們，使用者必須自備合法的原版副本。著作權人無法、也沒有
-就那些素材授予任何權利。
+就那些素材授予任何權利。**一個例外寫在下面第五條。**
 
 The license above covers only material authored by the copyright holder.
 It does NOT cover the original game's executables, data files, artwork,
@@ -134,6 +134,34 @@ All code is newly written in Go; no Micropolis source was copied. The
 copyright holder's position is that this work is therefore not a derivative
 work of Micropolis and not bound by GPL-3.0. That is the holder's position,
 not a court ruling.
+
+五、隨附的兩個城市地圖檔
+
+本儲存庫的 `cities/` 收錄兩個城市地圖檔：`TAIWAN.CTY` 與 `KAOHSIUN.CTY`。
+它們出自軟體世界研究中心（高雄）1990 年重新打包發行的《SimCity Terrain
+Editor》磁片，是台灣代理商當年自行繪製的台灣島與高雄地形，不是 Maxis 的
+內容。**同一片磁片上的 Maxis 程式、美術與示範城市不在本儲存庫內。**
+
+檔案內容是 27 248 個位元組的地形資料（128 位元組檔頭 ＋ 120×100 格的地圖），
+不含任何 Maxis 的程式碼或美術；格式規格見 docs/formats/01-city-file.md。
+
+**權利狀態的誠實揭露。** 台灣在 1992 年著作權法修正之前採註冊主義，
+原則上不保護無互惠關係的外國人著作，因此軟體世界當年的重新打包發行在
+當時的台灣法下很可能是合法的。但「當年在台灣合法」與「今日可自由散布」
+是兩件事：現行法下相關權利的歸屬與存續並未經法院認定。收錄這兩個檔案
+是著作權人的判斷，不是法律意見；權利人如有異議請寄 wicanr2@gmail.com，
+本專案會立即移除。
+
+The two city map files in `cities/` (TAIWAN.CTY, KAOHSIUN.CTY) come from
+the 1990 Soft-World (Kaohsiung, Taiwan) repackaging of the Maxis SimCity
+Terrain Editor. They are terrain data drawn by the Taiwanese distributor,
+not Maxis content, and contain no Maxis code or artwork. Maxis material
+from that disk is NOT included here. Taiwan's pre-1992 copyright statute
+generally did not protect foreign works absent reciprocity, so the 1990
+repackaging was likely lawful in Taiwan at the time; whether that extends
+to redistribution today has not been adjudicated. Their inclusion is the
+copyright holder's judgement, not legal advice. Rights holders with an
+objection may write to wicanr2@gmail.com and the files will be removed.
 
 ────────────────────────────────────────────────────────────────────────
 條款全文取自官方來源，未經改動：

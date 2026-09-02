@@ -162,6 +162,8 @@ tools/font.sh                       # 重烘點陣字圖集（改過譯文或註
 tools/i18n.sh                       # 比對原版 .PTF，列出 TSV 缺的鍵（預設空跑）
 tools/screen_parity.sh [劇本] [風格] # 畫面逐格對拍（自己跑一次 DOSBox 產基準）
 tools/appimage_parity.sh [版本]     # 發行 AppImage 的畫面對拍（同源證明 ＋ 原版抽查）
+python3 tools/gen_city_masks.py     # 畫台北／台中／台南的粗胚地形 → tools/maps/
+tools/go.sh run ./tools/citymap <粗胚.txt> <輸出.cty> <城市名>  # 粗胚轉城市檔
 tools/dosbox.sh <秒> <前綴>         # 跑 DOS 原版當 oracle（截圖 ＋ 錄音 ＋ 動作腳本）
 MODE=run tools/dos_parity.sh        # DOS 原版 vs remake 的抽樣對拍（八個劇本）
 tools/go.sh run ./cmd/simtool play all   # 自動玩家把八個劇本各玩一次
