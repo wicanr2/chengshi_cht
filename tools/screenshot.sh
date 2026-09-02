@@ -35,8 +35,8 @@ docker run --rm \
     # AppImage 在容器裡沒有 FUSE，用官方的解包執行模式。
     export APPIMAGE_EXTRACT_AND_RUN=1
     LAUNCH='${GAME_BIN:-}'
-    if [ -n "\$LAUNCH" ]; then
-      "\$LAUNCH" -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \
+    if [ -n \"\$LAUNCH\" ]; then
+      \"\$LAUNCH\" -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \
           >/tmp/game.log 2>&1 &
     else
       go run ./cmd/chengshi -data 'workplace/dos110/SIMCITY 1.10' -mute ${GAME_ARGS:-} \

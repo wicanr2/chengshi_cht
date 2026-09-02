@@ -2259,3 +2259,19 @@ Cannot find message file:C:\DATA\west_msg.ptf
   差異的 2 247 個像素落在三個開場按鈕框內（commit 878206f 中文化），
   框外 151 個像素 bbox 為 16×15，是 DOS 側游標。不是退步。
 - Docker：全部 `--rm`，只用既有 image，未清理任何共用資源。
+
+## 2026-09-02：README 截圖過期與 screenshot.sh 的引號回歸
+
+- `docs/images/brief.png` 拍的是劇本簡介還走通用深色圖片訊息框那一版，中央一大塊
+  近黑、深藍字幾乎讀不出來。`pictureScenario`（原版白底、藍框、紅字、置中「繼續」）
+  與那張圖同在 `1c46c89`——截圖先拍、程式後改，一起進版控。
+  以 `tools/readme_shots.sh` 重產六張，brief 已是白底版。
+- 另五張（city／style-medi／maps／eval／zoom）也一起更新。它們都用 `-scenario 6`，
+  而讀檔會擲亂數（見 2026-09-01 條），所以重拍本來就不會逐次相同。
+- **`tools/screenshot.sh` 的 `GAME_BIN` 分支引號寫錯**（2026-09-01 加的）：
+  外層是 `bash -c "…"`，內層雙引號必須跳脫成 `\"`，寫成 `"\$LAUNCH"` 會提前關閉
+  外層字串，容器收到未加引號的 `$LAUNCH`。變數空時整個字消失，`[ -n ]` 這種
+  單引數形式在 test 裡恆為真，於是走進 GAME_BIN 分支、把 `-data` 當命令執行。
+  症狀是 `readme_shots.sh` 第一張就 `cp: 無法取得 '_rm.png' 的資訊`。已修，
+  兩條分支各驗一次（不給 GAME_BIN 走 `go run`、給 AppImage 走發行執行檔）。
+  ⚠ 2026-09-01 的階段 B 不受影響：AppImage 路徑不含空白，未加引號照樣展開正確。
