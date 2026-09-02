@@ -1,11 +1,20 @@
 # 原版素材與參考封存一律不入版控（CLAUDE.md §8）
 # 玩家自備合法原版；公開產出只有引擎程式碼、規格文件與翻譯文本。
 *.rar
+*.RAR
 *.7z
+*.7Z
+# ⚠ git 的樣式在 Linux 上分大小寫：`*.zip` 擋不住 `E220-1.ZIP`。
 *.zip
+*.ZIP
+*.scp
+*.SCP
 珍029-模擬城市.rar
 SimCity_DOS_EN_v110.zip
 Rare simcity.zip
+e220/
+simcity2000-pc98/
+SimCity_2000_Special_Edition_DOS.zip
 
 # 原版資料檔（DOS 1.10 與 X11 版）：即使有人手動解到 repo 裡也擋下來
 *.PGF
