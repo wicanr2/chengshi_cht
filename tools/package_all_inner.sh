@@ -229,7 +229,8 @@ PY
 # promo 保存目前 README 使用的畫面與可追溯說明；不把本機 OGG 複製進去。
 mkdir -p "$DEST/promo/screenshots"
 cp "$ROOT"/docs/images/*.png "$DEST/promo/screenshots/"
-# 推廣影片：五張台灣地圖的運鏡。由 tools/promo_video.sh 產生（不進 Git）。
+# 推廣影片：五張台灣地圖的運鏡 ＋ 兩段實機遊玩，配樂是自己合成的。
+# 由 tools/promo_video.sh 產生（不進 Git）。
 PROMO_VIDEO=0
 for f in "$ROOT"/workplace/promo/promo.mp4 "$ROOT"/workplace/promo/promo.gif; do
   [ -s "$f" ] && { cp "$f" "$DEST/promo/"; PROMO_VIDEO=1; }
@@ -240,9 +241,9 @@ cat >"$DEST/promo/README.md" <<EOF
 
 - 來源：本次工作樹 $BUILD_HEAD
 - 畫面：README 目前引用的 remake 截圖；圖中原版美術只作專案說明。
-- 音訊：本目錄不含 SimCity 或 SimCity 2000 音樂。
+- 音訊：本目錄不含 SimCity 或 SimCity 2000 音樂。promo.mp4 的配樂由 tools/promomusic 合成，是本專案自己作的——原版沒有背景音樂（docs/re/19-no-music.md）。promo.gif 沒有聲音。
 - 影片：$( [ "$PROMO_VIDEO" = 1 ] \
-    && echo "promo.mp4 與 promo.gif ＝ 五張台灣地圖（台灣／台北／台中／台南／高雄）的運鏡，由 tools/promo_video.sh 產生。畫面上的圖塊來自玩家自備的原版。" \
+    && echo "promo.mp4 與 promo.gif ＝ 五張台灣地圖（台灣／台北／台中／台南／高雄）的運鏡，另含兩段實機遊玩（在台灣與高雄的地圖上蓋一座城市並快轉），由 tools/promo_video.sh 產生。畫面上的圖塊來自玩家自備的原版。" \
     || echo "本版尚未建立推廣影片；不得把本目錄冒稱為影片驗收完成。" )
 EOF
 

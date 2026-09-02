@@ -204,9 +204,18 @@ func main() {
 			fmt.Fprintln(os.Stderr, "這張地圖上找不到夠大的平地，換個 -seed 試試")
 			os.Exit(1)
 		}
+		// 快轉。**要先把速度撐到最快再跑**：`SimFrame` 在 `SimSpeed == 0` 時
+		// 直接返回，速度 1 與 2 也只讓五分之一、三分之一的畫格生效
+		// （`internal/sim/simulate.go:297`）。所以載進來的城市檔存著什麼速度，
+		// 就決定了 `-demo N` 實際跑幾年——`KAOHSIUN.CTY` 存的是暫停，
+		// 快轉整段是空轉，開起來還停在 1900 年，而畫面看起來完全正常。
+		// 跑完把速度還原成檔案裡的值，快轉是工具動作，不改玩家的狀態。
+		speed := w.SimSpeed
+		w.SimSpeed = 3
 		for i := 0; i < *demo*48*16; i++ {
 			w.Frame()
 		}
+		w.SimSpeed = speed
 	}
 
 	g := ui.NewGame(w, ts, font, txt)

@@ -5,10 +5,13 @@
 # （有 Go 與 Xvfb），編碼要跑在 simcity-sc2k-audio（有 ffmpeg）。
 #
 # 產出（都在 workplace/promo/，gitignore）：
-#   promo.mp4  H.264，給發行包與網頁
-#   promo.gif  給 README 內嵌（GitHub 不會播 mp4）
+#   promo.mp4  H.264 ＋ AAC 配樂，給發行包與網頁
+#   promo.gif  給 README 內嵌（GitHub 不會播 mp4，GIF 也沒有聲音）
+#   music.wav  配樂原始檔，由 tools/promomusic 合成
 #
 # ⚠ 影片裡的地圖圖塊來自玩家自備的原版；影片本身是本重製版跑出來的畫面。
+# ⚠ 配樂是本專案自己合成的（`tools/promomusic`），不是原版素材——
+#   原版根本沒有背景音樂，見 `docs/re/19-no-music.md`。
 #
 # 用法：tools/promo_video.sh
 set -euo pipefail
@@ -32,7 +35,8 @@ docker run --rm \
 
 FRAMES=$(find "$OUT/frames" -name '*.png' | wc -l)
 [ "$FRAMES" -gt 0 ] || { echo "沒有擷取到任何一格" >&2; exit 1; }
-echo "擷取到 $FRAMES 格"
+[ -s "$OUT/music.wav" ] || { echo "配樂沒有產出來" >&2; exit 1; }
+echo "擷取到 $FRAMES 格，配樂 $(stat -c%s "$OUT/music.wav") 位元組"
 
 echo
 echo "############ 第二階段：編碼 ############"
@@ -45,8 +49,10 @@ docker run --rm \
   simcity-sc2k-audio:bookworm-r1 bash -c '
 set -e
 # 1920×1050 縮到 960，畫面是整數倍縮放的整數分之一，圖塊不會糊掉。
-ffmpeg -y -loglevel error -framerate 12 -pattern_type glob -i "frames/*.png" \
-  -vf "scale=960:-2:flags=neighbor" -c:v libx264 -pix_fmt yuv420p -crf 20 promo.mp4
+# 配樂當第二路輸入；`-shortest` 讓長度以畫面為準（配樂刻意多留 0.4 秒）。
+ffmpeg -y -loglevel error -framerate 12 -pattern_type glob -i "frames/*.png" -i music.wav \
+  -vf "scale=960:-2:flags=neighbor" -c:v libx264 -pix_fmt yuv420p -crf 20 \
+  -c:a aac -b:a 160k -ac 2 -shortest promo.mp4
 # GIF 走兩趟調色盤，不然十六色的畫面會被抖動糊成一片。
 ffmpeg -y -loglevel error -framerate 12 -pattern_type glob -i "frames/*.png" \
   -vf "scale=640:-2:flags=neighbor,palettegen=stats_mode=diff" palette.png
@@ -56,5 +62,5 @@ rm -f palette.png
 '
 
 echo
-ls -la "$OUT"/promo.mp4 "$OUT"/promo.gif | awk '{printf "  %-10s %d 位元組\n", $9, $5}'
+ls -la "$OUT"/promo.mp4 "$OUT"/promo.gif "$OUT"/music.wav | awk '{printf "  %-28s %d 位元組\n", $9, $5}'
 echo "完成。影片在 $OUT/"
