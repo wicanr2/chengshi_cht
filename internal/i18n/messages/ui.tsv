@@ -47,6 +47,9 @@ resize_hint	方向鍵調整大小，Enter 或 Esc 結束	方向键调整大小�
 pic_hint	按空白鍵或點一下繼續	按空格键或点一下继续	スペースキーかクリックで続行	Press space or click to continue
 lang_title	語言 / Language	语言 / Language	言語 / Language	Language
 settings_title	設定	设置	設定	Settings
+savefmt_title	存檔格式	存档格式	保存形式	Save format
+savefmt_dos	含城市名（原版 DOS）	含城市名（原版 DOS）	都市名あり（DOS）	With city name (DOS)
+savefmt_bare	相容舊版（無城市名）	兼容旧版（无城市名）	旧版互換（都市名なし）	Legacy compatible (no name)
 settings_save_failed	設定無法儲存：%s	设置无法保存：%s	設定を保存できません：%s	Could not save settings: %s
 music_title	音樂	音乐	音楽	Music
 music_toggle	開關背景音樂（%s）	开关背景音乐（%s）	BGM の切替（%s）	Background music (%s)

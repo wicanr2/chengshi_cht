@@ -82,6 +82,8 @@ func (g *Game) sysMenuLen() int {
 		return len(powerTools)
 	case winLoad:
 		return len(g.loadFiles)
+	case winSaveFmt:
+		return 2
 	}
 	return 0
 }
@@ -105,6 +107,11 @@ func (g *Game) sysMenuLabel(i int) string {
 			return fmt.Sprintf(g.txt.UI("music_toggle"), g.onOff(g.musicOn()))
 		}
 		return g.MusicTracks()[i-1]
+	case winSaveFmt:
+		if i == 0 {
+			return g.txt.UI("savefmt_dos")
+		}
+		return g.txt.UI("savefmt_bare")
 	case winScenario:
 		return game.ScenarioNameZH(i + 1)
 	case winStyle:
@@ -144,6 +151,12 @@ func (g *Game) sysMenuPick(i int) {
 		g.loadFile(g.loadFiles[i])
 	case winLangSel:
 		g.setLang(i18n.Langs[i])
+	case winSaveFmt:
+		f := game.SaveWithHeader
+		if i == 1 {
+			f = game.SaveBareBody
+		}
+		g.setSaveFormat(f)
 	case winMusic:
 		if i == 0 {
 			g.toggleMusic()
@@ -329,13 +342,44 @@ func (g *Game) swapWorld(w *sim.World) {
 	g.resetCamera()
 }
 
+// setSaveFormat 換存檔版面，並把選擇寫回設定檔。
+//
+// 兩種都是原版認得的格式，差別在檔頭：DOS 版面存得住城市名但餵不進
+// Micropolis，裸檔身反之。取捨見 internal/game/save.go 的 SaveFormat。
+func (g *Game) setSaveFormat(f game.SaveFormat) {
+	g.saveFmt = f
+	g.win = winNone
+	if g.savePrefs != nil {
+		if err := g.savePrefs(g.lang, f.String()); err != nil {
+			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
+			return
+		}
+	}
+	if f == game.SaveBareBody {
+		g.setMessage(g.txt.UI("savefmt_bare"))
+	} else {
+		g.setMessage(g.txt.UI("savefmt_dos"))
+	}
+}
+
+// SetSaveFormat 由啟動層注入玩家上次的選擇（或命令列覆蓋）。
+func (g *Game) SetSaveFormat(f game.SaveFormat) { g.saveFmt = f }
+
+// SetPrefsSaver 由啟動層注入，把語言與存檔格式一起寫回設定檔。
+func (g *Game) SetPrefsSaver(save func(i18n.Lang, string) error) { g.savePrefs = save }
+
 // setLang 換遊戲語言。文字表四種語言都在同一份裡，換語言不必重讀檔案，
 // 也不必重載圖形集。
 func (g *Game) setLang(l i18n.Lang) {
 	g.lang = l
 	g.txt.SetLang(l)
 	g.win = winNone
-	if g.saveLang != nil {
+	if g.savePrefs != nil {
+		if err := g.savePrefs(l, g.saveFmt.String()); err != nil {
+			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
+			return
+		}
+	} else if g.saveLang != nil {
 		if err := g.saveLang(l); err != nil {
 			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
 			return

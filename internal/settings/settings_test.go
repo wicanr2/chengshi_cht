@@ -11,7 +11,7 @@ import (
 func TestSaveLoadLanguages(t *testing.T) {
 	for _, lang := range i18n.Langs {
 		p := filepath.Join(t.TempDir(), "nested", "settings.json")
-		if err := Save(p, lang); err != nil {
+		if err := Save(p, lang, "dos"); err != nil {
 			t.Fatalf("Save(%s): %v", lang, err)
 		}
 		got, err := Load(p)
@@ -55,5 +55,36 @@ func TestDefaultPathUsesUserConfigDir(t *testing.T) {
 	want := filepath.Join(dir, "chengshi", "settings.json")
 	if p != want {
 		t.Fatalf("DefaultPath = %q，預期 %q", p, want)
+	}
+}
+
+// 舊設定檔沒有 save_format 這一欄，不能因此整份被判為不支援——
+// 那會連玩家的語言選擇一起掉。空值由呼叫端當成預設。
+func TestLoadAcceptsSettingsWithoutSaveFormat(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "settings.json")
+	if err := os.WriteFile(p, []byte(`{"version":1,"language":"ja"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	f, err := Load(p)
+	if err != nil {
+		t.Fatalf("舊設定檔讀不起來：%v", err)
+	}
+	if f.Language != i18n.Ja {
+		t.Errorf("語言讀成 %q", f.Language)
+	}
+	if f.SaveFormat != "" {
+		t.Errorf("沒有那一欄時應為空字串，得到 %q", f.SaveFormat)
+	}
+}
+
+// 不認得的存檔格式要擋下來，不能默默寫壞玩家的存檔。
+func TestLoadRejectsUnknownSaveFormat(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "settings.json")
+	if err := os.WriteFile(p,
+		[]byte(`{"version":1,"language":"ja","save_format":"nonsense"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(p); err == nil {
+		t.Error("不認得的存檔格式應該回錯")
 	}
 }

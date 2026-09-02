@@ -43,10 +43,12 @@ const (
 	// winLoad 是「讀取舊有檔案」的檔案清單（同段第 8 筆）。原版開的是
 	// 檔名對話框；這裡列出存檔目錄裡的 `.cty`，上下鍵選、Enter 讀。
 	winLoad
-	// winLangSel／winMusic 是 remake 自己加的兩個副選單：換語言、開關音樂。
-	// 原版沒有——它只有一種語言，也沒有音樂（docs/re/19-no-music.md）。
+	// winLangSel／winMusic／winSaveFmt 是 remake 自己加的三個副選單：
+	// 換語言、開關音樂、選存檔格式。原版沒有——它只有一種語言、沒有音樂
+	// （docs/re/19-no-music.md），存檔也只有一種版面。
 	winLangSel
 	winMusic
+	winSaveFmt
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -167,6 +169,7 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	// remake 自己加的兩個
 	winLangSel: {170, 60, 300, 140},
 	winMusic:   {120, 40, 400, 240},
+	winSaveFmt: {150, 70, 340, 120},
 }
 
 // winFrame 回傳目前視窗的外框（螢幕像素）。玩家搬過的話用搬過的位置。
@@ -207,7 +210,7 @@ func (g *Game) closeBoxHit(mx, my int) bool {
 func (g *Game) sysMenuHit(mx, my int) int {
 	switch g.win {
 	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad,
-		winLangSel, winMusic:
+		winLangSel, winMusic, winSaveFmt:
 	default:
 		return -1
 	}
@@ -368,7 +371,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winSaveAs:
 		g.drawSaveAsWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
-	case winSystem, winScenario, winStyle, winLoad, winLangSel, winMusic:
+	case winSystem, winScenario, winStyle, winLoad, winLangSel, winMusic, winSaveFmt:
 		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	}
 }

@@ -44,9 +44,9 @@ func (g *Game) menuEntries(m int) []string {
 		out = append(out, trimMenu(g.txt.S(sec, i)))
 	}
 	// SYSTEM 的原版列完整保留在 0..12；最下方 13 是 remake 擴充分隔線，
-	// 14 是使用者確認加入的設定入口。其餘三個選單不變，避免污染原版對拍。
+	// 14 是設定入口、15 是存檔格式。其餘三個選單不變，避免污染原版對拍。
 	if m == 0 {
-		out = append(out, "-", g.txt.UI("settings_title"))
+		out = append(out, "-", g.txt.UI("settings_title"), g.txt.UI("savefmt_title"))
 	}
 	return out
 }
@@ -237,6 +237,8 @@ func (g *Game) pickSystem(row int) {
 		g.quit = true
 	case 14:
 		g.openLangNext = true
+	case 15:
+		g.openSaveFmtNext = true
 	}
 }
 

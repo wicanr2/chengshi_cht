@@ -80,7 +80,7 @@ func (g *Game) doSaveAs() {
 		dir = filepath.Dir(g.savePath)
 	}
 	p := filepath.Join(dir, name)
-	if err := game.SaveCity(p, g.world); err != nil {
+	if err := game.SaveCityAs(p, g.world, g.saveFmt); err != nil {
 		g.setMessage("存檔失敗：" + err.Error())
 		return
 	}

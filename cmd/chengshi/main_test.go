@@ -11,7 +11,7 @@ import (
 
 func TestResolveLanguagePrecedence(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "settings.json")
-	if err := settings.Save(p, i18n.Ja); err != nil {
+	if err := settings.Save(p, i18n.Ja, "dos"); err != nil {
 		t.Fatal(err)
 	}
 	if got, err := resolveLanguage("", p); err != nil || got != i18n.Ja {

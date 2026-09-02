@@ -158,6 +158,8 @@ type Game struct {
 	// openLangNext 把「SYSTEM→設定」延後到本次畫面所有輸入處理完成後提交，
 	// 避免開窗用的滑鼠／Enter 又被新視窗消費。
 	openLangNext bool
+	// openSaveFmtNext 同理，給「SYSTEM→存檔格式」用。
+	openSaveFmtNext bool
 
 	// 功能選單的三個 remake 端開關。前三個在 sim.World 裡（會存進城市檔），
 	// 這三個只影響呈現層，所以放這裡。
@@ -215,6 +217,11 @@ type Game struct {
 	// **兩個原版都沒有**：原版只有英文，也沒有音樂（docs/re/19-no-music.md）。
 	lang  i18n.Lang
 	music *musicPlayer
+	// saveFmt 是存檔要寫哪一種版面。兩種都是原版認得的格式，取捨見
+	// internal/game/save.go 的 SaveFormat。
+	saveFmt game.SaveFormat
+	// savePrefs 由啟動層注入，把語言與存檔格式一起寫回設定檔。
+	savePrefs func(i18n.Lang, string) error
 	// saveLang 由啟動層注入，避免 UI 套件決定各平台設定檔位置。
 	// nil 代表本次工作階段不持久化（例如測試或無法取得設定目錄）。
 	saveLang func(i18n.Lang) error
@@ -466,6 +473,11 @@ func (g *Game) Update() error {
 	}
 	g.handleKeys()
 	g.handleMouse()
+	if g.openSaveFmtNext {
+		g.openSaveFmtNext = false
+		g.openSubMenu(winSaveFmt)
+		g.waitEnterRelease = true
+	}
 	if g.openLangNext {
 		g.openLangNext = false
 		g.openLangSettings()
@@ -811,7 +823,7 @@ func (g *Game) handleWindowKeys() {
 			}
 		}
 	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad,
-		winLangSel, winMusic:
+		winLangSel, winMusic, winSaveFmt:
 		g.handleSysMenuKeys()
 	case winSaveAs:
 		g.handleSaveAsKeys()
@@ -1157,7 +1169,7 @@ func (g *Game) save() {
 	if p == "" {
 		p = "city.cty"
 	}
-	if err := game.SaveCity(p, g.world); err != nil {
+	if err := game.SaveCityAs(p, g.world, g.saveFmt); err != nil {
 		g.setMessage("存檔失敗：" + err.Error())
 		return
 	}

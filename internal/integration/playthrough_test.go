@@ -220,9 +220,12 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(raw) != sim.CityFileSize1x1 {
-		t.Fatalf("存出 %d 位元組，原版格式是 %d", len(raw), sim.CityFileSize1x1)
+	// 存的是 DOS 存檔那種 128 位元組檔頭 ＋ 27120 檔身。
+	// 檔頭放城市名——檔身裡沒有這個欄位。
+	if len(raw) != sim.CityFileSize1x1+128 {
+		t.Fatalf("存出 %d 位元組，DOS 存檔格式是 %d", len(raw), sim.CityFileSize1x1+128)
 	}
+	raw = raw[128:]
 
 	// 地圖的 round-trip 要在**序列化這一層**比，不能比 LoadCity 的結果。
 	//

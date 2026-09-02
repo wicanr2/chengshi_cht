@@ -62,19 +62,24 @@ func TestSystemMenuKeepsOriginalRowsAndAppendsSettings(t *testing.T) {
 	}
 	g := &Game{txt: txt}
 	items := g.menuEntries(0)
-	if len(items) != 15 {
-		t.Fatalf("SYSTEM 有 %d 列，預期原版 13 列加 2 列 remake 擴充", len(items))
+	if len(items) != 16 {
+		t.Fatalf("SYSTEM 有 %d 列，預期原版 13 列加 3 列 remake 擴充", len(items))
 	}
-	if items[13] != "-" || items[14] != txt.UI("settings_title") {
-		t.Fatalf("SYSTEM 擴充尾端 = %q, %q", items[13], items[14])
+	if items[13] != "-" || items[14] != txt.UI("settings_title") ||
+		items[15] != txt.UI("savefmt_title") {
+		t.Fatalf("SYSTEM 擴充尾端 = %q, %q, %q", items[13], items[14], items[15])
 	}
-	// 原版最後一列仍停在索引 12；不能因新增設定把 Exit 的動作錯位。
+	// 原版最後一列仍停在索引 12；不能因新增擴充把 Exit 的動作錯位。
 	if items[12] != trimMenu(txt.S(i18n.SecSysMenu, 12)) {
 		t.Fatalf("原版 Exit 列被改動：%q", items[12])
 	}
 	g.pickSystem(14)
 	if !g.openLangNext {
 		t.Fatal("SYSTEM→設定沒有排入畫面末端狀態轉移")
+	}
+	g.pickSystem(15)
+	if !g.openSaveFmtNext {
+		t.Fatal("SYSTEM→存檔格式沒有排入畫面末端狀態轉移")
 	}
 }
 

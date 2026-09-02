@@ -138,3 +138,66 @@ func TestLoadForeignCityFiles(t *testing.T) {
 		}
 	}
 }
+
+// 城市名要存得住、讀得回來，中文與長名字都要。
+//
+// 城市名唯一的容身處是 128 位元組檔頭；檔身 27120 裡沒有這個欄位。
+// 所以 SaveCity 從 2026-09-02 起寫 DOS 存檔那種 27248，
+// 代價是餵不進 Micropolis（使用者裁決城市名優先）。
+func TestSaveCityRoundTripsCityName(t *testing.T) {
+	for _, name := range []string{
+		"TAIWAN",
+		"高雄",
+		"台北盆地",
+		"A city with a rather long name",
+		"",
+	} {
+		w := sim.NewWorld(1)
+		w.CityName = name
+		path := filepath.Join(t.TempDir(), "rt.cty")
+		if err := SaveCity(path, w); err != nil {
+			t.Fatalf("%q：%v", name, err)
+		}
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(raw) != dosSaveSize {
+			t.Errorf("%q：存出 %d 位元組，應為 %d", name, len(raw), dosSaveSize)
+			continue
+		}
+		// 魔數與常數尾段照原版抄，不能被名字蓋掉。
+		if !bytes.Equal(raw[64:128], dosHeaderTail[:]) {
+			t.Errorf("%q：檔頭 0x40 起的常數段被蓋掉了", name)
+		}
+		back, err := LoadCitySeed(path, 1)
+		if err != nil {
+			t.Errorf("%q：讀不回來 %v", name, err)
+			continue
+		}
+		want := name
+		if want == "" {
+			want = "HERESVILLE" // 空名字不覆蓋 NewWorld 的預設
+		}
+		if back.CityName != want {
+			t.Errorf("%q：讀回來是 %q", name, back.CityName)
+		}
+	}
+}
+
+// 舊的 27120 裸檔身還是要讀得起來——換格式不能讓玩家的舊存檔變成孤兒。
+func TestLoadStillAcceptsBareBody(t *testing.T) {
+	w := sim.NewWorld(7)
+	w.CityName = "OLDSAVE"
+	path := filepath.Join(t.TempDir(), "old.cty")
+	if err := os.WriteFile(path, w.ToCityFile().Bytes(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	back, err := LoadCitySeed(path, 1)
+	if err != nil {
+		t.Fatalf("舊格式讀不起來：%v", err)
+	}
+	if back.CityName != "HERESVILLE" {
+		t.Errorf("裸檔身沒有名字欄位，應保留預設名，卻得到 %q", back.CityName)
+	}
+}

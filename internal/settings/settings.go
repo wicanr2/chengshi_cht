@@ -16,6 +16,13 @@ const Version = 1
 type File struct {
 	Version  int       `json:"version"`
 	Language i18n.Lang `json:"language"`
+	// SaveFormat 是存檔要寫哪一種版面："dos"（128 位元組檔頭 ＋ 27120，
+	// 城市名存得住）或 "bare"（27120 裸檔身，餵得進 Micropolis）。
+	//
+	// ⚠ 這個欄位是後加的，所以**不升版本號**：舊的設定檔沒有這一欄，
+	// 解出來是空字串，由呼叫端當成預設值。升版本會讓既有設定檔整份被判為
+	// 不支援，玩家的語言選擇跟著一起掉。
+	SaveFormat string `json:"save_format,omitempty"`
 }
 
 // DefaultPath 使用作業系統的使用者設定目錄，不與存檔或原版資料混在一起。
@@ -52,13 +59,28 @@ func Load(path string) (File, error) {
 	if !validLang(f.Language) {
 		return File{}, fmt.Errorf("不支援的語言 %q", f.Language)
 	}
+	if !validSaveFormat(f.SaveFormat) {
+		return File{}, fmt.Errorf("不支援的存檔格式 %q", f.SaveFormat)
+	}
 	return f, nil
 }
 
+// validSaveFormat 空字串代表舊設定檔沒有這一欄，交由呼叫端用預設值。
+func validSaveFormat(s string) bool {
+	switch s {
+	case "", "dos", "bare":
+		return true
+	}
+	return false
+}
+
 // Save 以同目錄暫存檔加 rename 原子替換，避免中途結束留下半份 JSON。
-func Save(path string, lang i18n.Lang) error {
+func Save(path string, lang i18n.Lang, saveFormat string) error {
 	if !validLang(lang) {
 		return fmt.Errorf("不支援的語言 %q", lang)
+	}
+	if !validSaveFormat(saveFormat) {
+		return fmt.Errorf("不支援的存檔格式 %q", saveFormat)
 	}
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
@@ -67,7 +89,8 @@ func Save(path string, lang i18n.Lang) error {
 	if err := os.Chmod(dir, 0o700); err != nil {
 		return err
 	}
-	raw, err := json.MarshalIndent(File{Version: Version, Language: lang}, "", "  ")
+	raw, err := json.MarshalIndent(
+		File{Version: Version, Language: lang, SaveFormat: saveFormat}, "", "  ")
 	if err != nil {
 		return err
 	}

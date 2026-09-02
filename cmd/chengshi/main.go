@@ -91,6 +91,8 @@ func main() {
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
 	langFlag := flag.String("lang", "", "本次啟動語言：zh-Hant 繁體／zh-Hans 简体／ja 日本語／en English（空白時讀取玩家設定）")
 	musicDir := flag.String("music", "", "背景音樂目錄（.ogg／.wav）；不給就找存檔目錄底下的 music/")
+	saveFmt := flag.String("save-format", "",
+		"存檔版面：dos（128 位元組檔頭，存得住城市名）／bare（27120 裸檔身，餵得進 Micropolis）；空白時讀玩家設定")
 	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
 
@@ -214,8 +216,15 @@ func main() {
 		g.SetCamera(cx, cy)
 	}
 	g.SetLang(lang)
+	sf, sfErr := resolveSaveFormat(*saveFmt, settingsPath)
+	if sfErr != nil {
+		fmt.Fprintf(os.Stderr, "%v（使用 DOS 存檔版面）\n", sfErr)
+	}
+	g.SetSaveFormat(sf)
 	if settingsPathErr == nil {
-		g.SetLangSaver(func(l i18n.Lang) error { return settings.Save(settingsPath, l) })
+		g.SetPrefsSaver(func(l i18n.Lang, f string) error {
+			return settings.Save(settingsPath, l, f)
+		})
 	}
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	// ⚠ 這一行也負責把**英文原文**從玩家那份 `.PTF` 讀進來，
@@ -288,6 +297,33 @@ func resolveLanguage(flagValue, settingsPath string) (i18n.Lang, error) {
 		return i18n.ZhHant, fmt.Errorf("設定檔無法讀取：%w", err)
 	}
 	return saved.Language, nil
+}
+
+// resolveSaveFormat 的優先序與語言相同：命令列 → 玩家設定 → 預設。
+// 預設是 DOS 版面，因為城市名唯一的容身處就是那個檔頭。
+func resolveSaveFormat(flagValue, settingsPath string) (game.SaveFormat, error) {
+	if flagValue != "" {
+		f, ok := game.ParseSaveFormat(flagValue)
+		if !ok {
+			return game.SaveWithHeader, fmt.Errorf("不認得的存檔版面 %q", flagValue)
+		}
+		return f, nil
+	}
+	if settingsPath == "" {
+		return game.SaveWithHeader, nil
+	}
+	saved, err := settings.Load(settingsPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return game.SaveWithHeader, nil
+	}
+	if err != nil {
+		return game.SaveWithHeader, fmt.Errorf("設定檔無法讀取：%w", err)
+	}
+	f, ok := game.ParseSaveFormat(saved.SaveFormat)
+	if !ok {
+		return game.SaveWithHeader, fmt.Errorf("設定檔的存檔版面 %q 不認得", saved.SaveFormat)
+	}
+	return f, nil
 }
 
 // defaultSavePath 回傳 Ctrl-S 的預設存檔位置。
