@@ -210,6 +210,9 @@ type Game struct {
 	screen screenMode
 	// loadFiles 是「讀取舊有檔案」列出來的城市檔。
 	loadFiles []string
+	// bundledCityDir 是發行包隨附的地圖目錄（cities/）。由啟動層注入，
+	// 因為只有它知道 AppImage 的 APPDIR 與 macOS 的 .app 版面。
+	bundledCityDir string
 	// zoom 是**縮小**倍數：1 是原版的一格 16 像素，2 是減半，4 再減半。
 	// 原版沒有這個功能，見 ZoomTile 的說明。
 	zoom int

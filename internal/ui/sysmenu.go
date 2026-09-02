@@ -293,11 +293,16 @@ func (g *Game) load() {
 }
 
 // cityFilesInSaveDir 列出存檔目錄裡的城市檔，照檔名排序。
-func (g *Game) cityFilesInSaveDir() []string {
-	dir := "."
-	if g.savePath != "" {
-		dir = filepath.Dir(g.savePath)
-	}
+// SetBundledCityDir 注入發行包隨附的地圖目錄。空字串代表沒有。
+func (g *Game) SetBundledCityDir(dir string) { g.bundledCityDir = dir }
+
+// isBundledCity 判斷這個檔是不是隨附地圖。隨附的那些在 AppImage 裡是唯讀的，
+// 讀了之後不能把存檔位置指過去，否則 Ctrl-S 會寫進暫存掛載點。
+func (g *Game) isBundledCity(p string) bool {
+	return g.bundledCityDir != "" && filepath.Dir(p) == filepath.Clean(g.bundledCityDir)
+}
+
+func ctyFilesIn(dir string) []string {
 	ents, err := os.ReadDir(dir)
 	if err != nil {
 		return nil
@@ -315,6 +320,35 @@ func (g *Game) cityFilesInSaveDir() []string {
 	return out
 }
 
+// cityFilesInSaveDir 列出「讀取舊有檔案」要顯示的城市檔：玩家自己的存檔，
+// 再接上發行包隨附的地圖。
+//
+// ⚠ **隨附的地圖一定要列進來。** AppImage 把整包掛在暫存目錄，玩家的工作
+// 目錄是別的地方；只掃存檔目錄的話，包裡明明有五張（完整版十四張）地圖，
+// 玩家在遊戲裡一張都看不到。
+//
+// 同名時存檔優先——玩家自己存的那份才是他要的。
+func (g *Game) cityFilesInSaveDir() []string {
+	dir := "."
+	if g.savePath != "" {
+		dir = filepath.Dir(g.savePath)
+	}
+	out := ctyFilesIn(dir)
+	if g.bundledCityDir == "" || filepath.Clean(g.bundledCityDir) == filepath.Clean(dir) {
+		return out
+	}
+	seen := map[string]bool{}
+	for _, p := range out {
+		seen[strings.ToLower(filepath.Base(p))] = true
+	}
+	for _, p := range ctyFilesIn(g.bundledCityDir) {
+		if !seen[strings.ToLower(filepath.Base(p))] {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 // loadFile 讀一個城市檔並換掉整個世界。
 func (g *Game) loadFile(p string) {
 	w, err := game.LoadCity(p)
@@ -323,7 +357,10 @@ func (g *Game) loadFile(p string) {
 		return
 	}
 	g.swapWorld(w)
-	g.savePath = p
+	// 隨附的地圖是唯讀的（AppImage 掛在暫存目錄），存檔位置不能指過去。
+	if !g.isBundledCity(p) {
+		g.savePath = p
+	}
 	g.setMessage(fmt.Sprintf(g.txt.UI("loaded"), p))
 }
 

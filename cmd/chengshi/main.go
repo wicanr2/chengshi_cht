@@ -164,7 +164,15 @@ func main() {
 	}
 
 	var w *sim.World
+	cityDir := findCityDir()
 	if *load != "" {
+		// 相對路徑在 AppImage 底下解析不到（工作目錄不是 AppDir），
+		// 所以找不到時回頭到隨附的地圖目錄再找一次。
+		if _, err := os.Stat(*load); err != nil && cityDir != "" {
+			if alt := filepath.Join(cityDir, filepath.Base(*load)); fileExists(alt) {
+				*load = alt
+			}
+		}
 		w, err = game.LoadCity(*load)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -206,6 +214,7 @@ func main() {
 		g.LookAt(demoX+6, demoY+6)
 	}
 	g.SetSavePath(*save)
+	g.SetBundledCityDir(cityDir)
 	g.SetVersion(version)
 	if *cam != "" {
 		var cx, cy int
@@ -349,6 +358,48 @@ func defaultSavePath() string {
 // 從 Finder 或桌面捷徑點開的時候沒有命令列參數，工作目錄也不是執行檔
 // 所在的地方——只靠 -data 的話，macOS 的 .app 按下去就是「閃一下沒反應」，
 // 而錯誤訊息寫在 stderr，玩家看不到。所以先找幾個約定的位置。
+// findCityDir 找隨附的地圖目錄。
+//
+// 為什麼需要：AppImage 把整包掛在暫存目錄，執行檔在 `usr/bin/`，而 `cities/`
+// 在 AppDir 根目錄。玩家的工作目錄是別的地方，所以 `-load cities/X.CTY`
+// 這種相對路徑解析不到，遊戲內的讀檔清單也只掃存檔目錄——地圖檔明明在包裡，
+// 玩家卻看不到也讀不到。
+//
+// AppRun 會設 `APPDIR`，那是最可靠的一條；其餘照 findDataDir 那幾種相對位置。
+func fileExists(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && !st.IsDir()
+}
+
+func findCityDir() string {
+	var cands []string
+	if d := os.Getenv("APPDIR"); d != "" {
+		cands = append(cands, filepath.Join(d, "cities"))
+	}
+	if exe, err := os.Executable(); err == nil {
+		dir := filepath.Dir(exe)
+		cands = append(cands,
+			filepath.Join(dir, "cities"),
+			// AppImage：usr/bin/chengshi → AppDir 根目錄
+			filepath.Join(dir, "..", "..", "cities"),
+			// macOS：.app/Contents/MacOS/chengshi → .app 旁邊
+			filepath.Join(dir, "..", "..", "..", "cities"))
+	}
+	cands = append(cands, "cities")
+	for _, c := range cands {
+		ents, err := os.ReadDir(c)
+		if err != nil {
+			continue
+		}
+		for _, e := range ents {
+			if !e.IsDir() && strings.EqualFold(filepath.Ext(e.Name()), ".cty") {
+				return c
+			}
+		}
+	}
+	return ""
+}
+
 func findDataDir() string {
 	var cands []string
 	if exe, err := os.Executable(); err == nil {

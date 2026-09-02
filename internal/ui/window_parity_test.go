@@ -2,6 +2,8 @@ package ui
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
@@ -178,5 +180,56 @@ func TestLanguageSaveFailureIsVisible(t *testing.T) {
 	g.setLang(i18n.ZhHans)
 	if g.message == "" {
 		t.Fatal("設定寫入失敗沒有顯示給玩家")
+	}
+}
+
+// 隨附的地圖一定要出現在「讀取舊有檔案」的清單裡。
+//
+// ⚠ AppImage 把整包掛在暫存目錄，玩家的工作目錄是別的地方。只掃存檔目錄的話，
+// 包裡明明有五張（完整版十四張）地圖，玩家在遊戲裡一張都看不到——
+// 檔案在包裡不等於玩家讀得到。
+func TestLoadListIncludesBundledCities(t *testing.T) {
+	saveDir := t.TempDir()
+	cityDir := t.TempDir()
+	body := make([]byte, sim.CityFileSize1x1)
+	for _, f := range []struct{ dir, name string }{
+		{saveDir, "MYCITY.cty"},
+		{cityDir, "TAIWAN.CTY"},
+		{cityDir, "TAIPEI.CTY"},
+		{cityDir, "MYCITY.cty"}, // 同名：存檔優先，不重複列
+	} {
+		if err := os.WriteFile(filepath.Join(f.dir, f.name), body, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	g := &Game{savePath: filepath.Join(saveDir, "city.cty")}
+	g.SetBundledCityDir(cityDir)
+
+	got := map[string]int{}
+	for _, p := range g.cityFilesInSaveDir() {
+		got[filepath.Base(p)]++
+	}
+	for _, want := range []string{"MYCITY.cty", "TAIWAN.CTY", "TAIPEI.CTY"} {
+		if got[want] == 0 {
+			t.Errorf("清單裡少了 %s", want)
+		}
+	}
+	if got["MYCITY.cty"] != 1 {
+		t.Errorf("同名檔出現 %d 次，應該只留存檔那份", got["MYCITY.cty"])
+	}
+}
+
+// 讀了隨附地圖之後，存檔位置不能被指到唯讀的隨附目錄。
+func TestLoadingBundledCityKeepsSavePath(t *testing.T) {
+	cityDir := t.TempDir()
+	saveDir := t.TempDir()
+	save := filepath.Join(saveDir, "city.cty")
+	g := &Game{savePath: save}
+	g.SetBundledCityDir(cityDir)
+	if !g.isBundledCity(filepath.Join(cityDir, "TAIWAN.CTY")) {
+		t.Fatal("隨附目錄裡的檔應被認出來")
+	}
+	if g.isBundledCity(save) {
+		t.Fatal("存檔目錄的檔不該被當成隨附地圖")
 	}
 }

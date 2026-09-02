@@ -2397,3 +2397,31 @@ Cannot find message file:C:\DATA\west_msg.ptf
   變成 0，背景任務回報「完成」，我因此以為打包過了。
   **`||` 後面接一定會成功的命令，等於把失敗吃掉。** 要先存退出碼再判斷。
 - 最終：`verify_package_all.sh` 54 項全過，含兩個 AppImage 的正常玩家路徑。
+
+### 同日續：AppImage 的地圖要「讀得到」，不只是「在包裡」
+
+先前只把 `cities/` 複製進 AppImage 就當作做完了，那是錯的：
+
+- AppImage 掛在暫存目錄、執行檔在 `usr/bin/`、玩家的工作目錄是別處，
+  所以 `-load cities/X.CTY` 這種相對路徑解析不到。
+- 遊戲內「讀取舊有檔案」的清單只掃**存檔目錄**，隨附的地圖一張都不會出現。
+  包裡有十四張，玩家看得到零張。
+
+修法照專案既有的分層（路徑由啟動層決定、UI 只收）：
+
+- `cmd/chengshi/main.go` 加 `findCityDir()`：先看 `APPDIR`（AppRun 會設），
+  再看執行檔旁、`usr/bin` 的上兩層（AppImage）、`.app` 的上三層（macOS）、
+  最後是工作目錄。找到有 `.cty` 的目錄才算。
+- `-load` 的相對路徑找不到時，回頭到隨附目錄用檔名再找一次。
+- `internal/ui` 的讀檔清單接上隨附目錄，同名時存檔優先。
+- **讀了隨附地圖之後不改存檔位置**：那些檔在 AppImage 裡是唯讀的，
+  指過去的話 Ctrl-S 會寫進暫存掛載點。
+
+驗收（真的 AppImage、工作目錄在別處）：
+完整版的讀檔清單列出十四張；公開版 `-load TAIPEI.CTY` 解析到
+`/tmp/appimage_extracted_*/cities/TAIPEI.CTY`，標題列顯示 `TAIPEI`。
+`verify_package_all.sh` 54 項全過。
+
+⚠ 又一次同類的 shell 判斷問題：`[ $rc -ne 0 ] && tail log` 當作最後一行，
+rc=0 時整條命令回傳 1，背景任務報「失敗」而打包其實成功了。
+**條件式當最後一行會決定退出碼。**
