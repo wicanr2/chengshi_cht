@@ -11,8 +11,19 @@ import (
 // **版面由長度認得出來**：
 //
 //	112000  CEGA   640×350，四個位元平面
-//	 32000  sega   320×200，四個位元平面
+//	 32000  sega   320×200，四個位元平面（**Tandy 用同一個版面**）
 //	 63680  mcga   320×199，每像素一個位元組（256 色）
+//	 64000  mcga   320×200，同上。**同一個顯示模式有兩種高度**
+//	 27760  MONO   640×347，一個位元平面
+//	 16000  CGA    320×200，**封裝式 2bpp**（一個位元組四個像素），不是位元平面
+//
+// ⚠ **高度不是每個模式一個常數**：`mcgantro.ppf` 是 320×199，
+// 而同一個目錄的 `mcgascen.ppf` 是 320×200。只登記 199 的話，
+// MCGA 模式的劇本選單畫面會整幅讀不出來。
+//
+// ⚠ **CGA 不是位元平面。** 320×200 的封裝式 2bpp 與「兩個位元平面」
+// 都剛好用掉 16000 位元組，長度檢查兩種都會過，但位元平面那種畫出來是
+// 剪切狀的條紋。裁決方式是把兩種都畫出來看（`workplace/ppfprobe/`）。
 //
 // 位元平面是**逐列交錯**的——每一列 (寬/8) 位元組 × 平面數——而且
 // **高位在前**：第一個平面是 EGA 的 I（亮度），最後一個才是 B。
@@ -26,24 +37,41 @@ const (
 	PPFHeight = 350
 )
 
-// ppfLayout 是一種顯示模式的畫面版面。planes 為 0 代表每像素一個位元組。
+// ppfKind 是像素怎麼排。
+type ppfKind int
+
+const (
+	kindPlanar ppfKind = iota // 逐列交錯的位元平面，高位在前
+	kindLinear                // 每像素一個位元組（256 色）
+	kindPacked2               // 封裝式 2bpp，一個位元組四個像素，高位在左
+)
+
+// ppfLayout 是一種顯示模式的畫面版面。
 type ppfLayout struct {
 	name   string
 	w, h   int
-	planes int
+	planes int // 只有 kindPlanar 用得到
+	kind   ppfKind
 }
 
 var ppfLayouts = []ppfLayout{
-	{"CEGA", 640, 350, 4},
-	{"sega", 320, 200, 4},
-	{"mcga", 320, 199, 0},
+	{"CEGA", 640, 350, 4, kindPlanar},
+	{"sega/tdy", 320, 200, 4, kindPlanar},
+	{"mcga", 320, 199, 0, kindLinear},
+	{"mcga", 320, 200, 0, kindLinear},
+	{"MONO", 640, 347, 1, kindPlanar},
+	{"CGA", 320, 200, 0, kindPacked2},
 }
 
 func (l ppfLayout) size() int {
-	if l.planes == 0 {
+	switch l.kind {
+	case kindLinear:
 		return l.w * l.h
+	case kindPacked2:
+		return l.w * l.h / 4
+	default:
+		return l.w * l.h / 8 * l.planes
 	}
-	return l.w * l.h / 8 * l.planes
 }
 
 // egaScreen 是標準 EGA 十六色。位元平面版的 `.PPF` 自己不帶調色盤，
@@ -70,8 +98,11 @@ func ParsePPF(d []byte, pal []PGFColor) (*image.RGBA, error) {
 		if l.size() != len(d) {
 			continue
 		}
-		if l.planes > 0 {
+		switch l.kind {
+		case kindPlanar:
 			return ppfPlanar(d, l), nil
+		case kindPacked2:
+			return ppfPacked2(d, l), nil
 		}
 		if pal == nil {
 			return nil, fmt.Errorf(".PPF：%s 是 256 色的，要傳同一個圖形集的調色盤", l.name)
@@ -94,6 +125,23 @@ func ppfPlanar(d []byte, l ppfLayout) *image.RGBA {
 					idx |= int((d[row+p*bpr+b]>>sh)&1) << uint(l.planes-1-p)
 				}
 				im.SetRGBA(b*8+bit, y, egaScreen[idx])
+			}
+		}
+	}
+	return im
+}
+
+// ppfPacked2 解 CGA 的封裝式 2bpp：一個位元組四個像素，最高的兩位在最左邊。
+// 色號是 CGA 四色盤的索引，這裡沿用 egaScreen 的前四色當佔位——
+// CGA 真正的四色盤（黑／青／洋紅／白等組合）還沒從資料裡讀出來。
+func ppfPacked2(d []byte, l ppfLayout) *image.RGBA {
+	bpr := l.w / 4
+	im := image.NewRGBA(image.Rect(0, 0, l.w, l.h))
+	for y := 0; y < l.h; y++ {
+		for b := 0; b < bpr; b++ {
+			v := d[y*bpr+b]
+			for i := 0; i < 4; i++ {
+				im.SetRGBA(b*4+i, y, egaScreen[(v>>uint(6-2*i))&3])
 			}
 		}
 	}

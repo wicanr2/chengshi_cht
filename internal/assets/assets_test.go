@@ -440,7 +440,12 @@ func TestPPFPlaneOrderIsHighBitFirst(t *testing.T) {
 // 版面是拿 DOSBox 分別跑 `Hires EGA Color`／`Lores EGA Color`／
 // `256 Color VGA` 三種設定截圖對出來的（2026-08-30）：
 // sega 是 320×200 四平面（招牌逐像素只差滑鼠游標那 128 點），
-// mcga 是 320×199 每像素一位元組，調色盤取自**同一個圖形集的 `.PGF`**。
+// mcga 的調色盤取自**同一個圖形集的 `.PGF`**。
+//
+// ⚠ **兩幅畫面都要驗，不能只驗招牌。** MCGA 的高度不是常數：
+// `mcgantro.ppf` 是 320×199，而 `mcgascen.ppf` 是 320×200。
+// 先前這個測試每個模式只抽一個檔，剛好抽到會過的那一個，
+// 於是「MCGA 模式的劇本選單整幅讀不出來」在測試全綠的情況下活了下來。
 func TestPPFAllDisplayModes(t *testing.T) {
 	dir := dosDir(t)
 	pal := mcgaPalette(t, dir)
@@ -450,8 +455,11 @@ func TestPPFAllDisplayModes(t *testing.T) {
 		needPal bool
 	}{
 		{filepath.Join("CEGA", "CEGANTRO.PPF"), 640, 350, false},
+		{filepath.Join("CEGA", "CEGASCEN.PPF"), 640, 350, false},
 		{filepath.Join("sega", "segantro.ppf"), 320, 200, false},
+		{filepath.Join("sega", "segascen.ppf"), 320, 200, false},
 		{filepath.Join("mcga", "mcgantro.ppf"), 320, 199, true},
+		{filepath.Join("mcga", "mcgascen.ppf"), 320, 200, true},
 	} {
 		raw, err := os.ReadFile(filepath.Join(dir, c.path))
 		if err != nil {

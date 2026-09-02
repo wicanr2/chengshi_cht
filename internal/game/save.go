@@ -1,9 +1,12 @@
 package game
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
@@ -32,7 +35,8 @@ func SaveCity(path string, w *sim.World) error {
 // dosSaveSize 是 DOS 原版自己存出來的城市檔大小。
 const dosSaveSize = sim.CityFileSize1x1 + 128 // 27248
 
-// psnSize 是解壓後的 DOS 劇本檔大小（144 位元組檔頭 ＋ 完整 27120）。
+// psnSize 是解壓後的 DOS 劇本檔大小。**檔頭也是 128**，多出來的 16 個位元組
+// 在檔尾，用途未解（docs/formats/01-city-file.md §三）。
 const psnSize = sim.CityFileSize1x1 + 144 // 27264
 
 // normalizeCityBytes 把各種來源的城市檔攤成本專案的標準 27120 版面。
@@ -63,15 +67,48 @@ const psnSize = sim.CityFileSize1x1 + 144 // 27264
 // `.PSN` 那邊同樣指到 3248（98%，次佳 61%）。
 // 工具：`tools/shot_locate.py`、`tools/shot_tilescan.py`。
 func normalizeCityBytes(raw []byte) ([]byte, error) {
+	body, _, err := splitCityBytes(raw)
+	return body, err
+}
+
+// cityHeaderLen 是 DOS 存檔與解壓後 `.PSN` 的檔頭長度。
+const cityHeaderLen = 128
+
+// splitCityBytes 把原始位元組切成檔身與檔頭。沒有檔頭時第二個回傳值是 nil。
+func splitCityBytes(raw []byte) (body, header []byte, err error) {
 	switch len(raw) {
 	case sim.CityFileSize1x1:
-		return raw, nil
+		return raw, nil, nil
 	case dosSaveSize, psnSize:
-		return raw[128 : 128+sim.CityFileSize1x1], nil
+		return raw[cityHeaderLen : cityHeaderLen+sim.CityFileSize1x1], raw[:cityHeaderLen], nil
 	}
-	return nil, fmt.Errorf("城市檔是 %d 位元組，不是 %d（無檔頭）、%d（DOS 存檔）"+
+	return nil, nil, fmt.Errorf("城市檔是 %d 位元組，不是 %d（無檔頭）、%d（DOS 存檔）"+
 		"或 %d（解壓後的 DOS 劇本）—— 這可能是還沒解壓的 `.PSN`",
 		len(raw), sim.CityFileSize1x1, dosSaveSize, psnSize)
+}
+
+// cityHeaderName 取出檔頭裡的城市名。
+//
+// 版面是大端 16 位元長度前綴 ＋ 名稱 ＋ 零填 ＋ 魔數 `CITYMCRP`
+// （docs/formats/01-city-file.md §三）。
+//
+// ⚠ **長度前綴不可盡信**：`TAIWAN`（名稱 6 字）、`KAOHSIUN`（8 字）與
+// `Joffebrg.cty`（12 字）三個檔的前綴都寫 13，而同一批其他檔的前綴確實等於
+// 字串長度。所以取前綴長度之後還要切到第一個 NUL，否則會把補零一起讀進來。
+// 前綴為什麼會是 13 未解——寫檔的程式可能不只一支。
+func cityHeaderName(header []byte) string {
+	if len(header) < 3 {
+		return ""
+	}
+	n := int(binary.BigEndian.Uint16(header))
+	if n <= 0 || n > len(header)-2 {
+		n = len(header) - 2
+	}
+	name := header[2 : 2+n]
+	if i := bytes.IndexByte(name, 0); i >= 0 {
+		name = name[:i]
+	}
+	return strings.TrimSpace(string(name))
 }
 
 // LoadCity 讀一個原版格式的 `.cty`。
@@ -104,7 +141,7 @@ func LoadCitySeed(path string, seed uint32) (*sim.World, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, err := normalizeCityBytes(raw)
+	body, header, err := splitCityBytes(raw)
 	if err != nil {
 		return nil, fmt.Errorf("%s：%w", filepath.Base(path), err)
 	}
@@ -114,6 +151,15 @@ func LoadCitySeed(path string, seed uint32) (*sim.World, error) {
 	}
 	w := sim.NewWorld(seed)
 	w.LoadCityFile(cf)
+	// 城市名在檔頭裡，不在檔身。沒有檔頭（Micropolis 那種 27120 的裸檔）
+	// 就保留 NewWorld 的預設名。
+	//
+	// ⚠ 寫入側目前不補檔頭：`SaveCity` 刻意只寫 27120 的裸檔身，讓存檔同時
+	// 餵得進原版與 Micropolis。代價是**remake 自己存的檔沒有城市名**，
+	// 下次讀回來會回到預設名。要改成寫 DOS 的 27248 就會失去 Micropolis 那半。
+	if n := cityHeaderName(header); n != "" {
+		w.CityName = n
+	}
 	w.InitSimLoad = 1
 	w.DoSimInit()
 	return w, nil
