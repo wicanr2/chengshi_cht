@@ -2293,3 +2293,40 @@ Cannot find message file:C:\DATA\west_msg.ptf
 - Windows 包狀態確認：`chengshi-v.1.0.0-20260901-windows-amd64.zip` 已在 GitHub
   Release，雜湊 `a5909e4d…` 與 Release 的 `SHA256SUMS` 吻合。完整版 Windows zip
   （含原版素材）只留本機。
+
+## 2026-09-02：軟體世界地形編輯器磁片（e220）的探查與接線
+
+素材：`E220-1.ZIP`／`E220-2.ZIP` ＝ Maxis SimCity Terrain Editor 的軟體世界版
+（1990，高雄）。玩家自備，解到 `workplace/e220/`。盤點見
+`docs/formats/00-e220-terrain-editor.md`。
+
+- **素材邊界事故（已擋下）**：兩個 ZIP 與 `simcity2000-pc98/` 的四個 `.scp`
+  已經在 git 索引裡等著被下一個 commit 帶走。成因是 `.gitignore` 寫 `*.zip`，
+  而 git 樣式在 Linux 分大小寫，擋不住 `.ZIP`。從未進過任何 commit；
+  已 `git restore --staged` 並補上 `*.ZIP`／`*.RAR`／`*.7Z`／`*.scp` 與目錄項目。
+- **修好一個現成缺陷**：MCGA 模式的劇本選單畫面整幅讀不出來。
+  `mcgantro.ppf` 解壓 63680（320×199），`mcgascen.ppf` 解壓 64000（320×200），
+  而版面表只登記 199。存活原因是 `TestPPFAllDisplayModes` 每個模式只抽一個檔，
+  三次都抽到招牌。測試改成六個檔全驗。
+- **三種新版面**（樣本來自這片磁片，各以畫出來的畫面裁決）：
+  Tandy 與 sega 同版面（320×200×4 平面，零行新程式碼）、MONO 640×347×1 平面、
+  CGA **封裝式 2bpp**。CGA 那個踩過：封裝式與雙位元平面都剛好用掉 16000 位元組，
+  長度檢查兩種都過，位元平面畫出來是剪切狀條紋。
+  ⚠ 這**沒有**補上 CLAUDE.md §2.1 的缺口——那裡缺的是遊戲的 CGA／Tandy 圖形集，
+  這片給的是編輯器的美術。解碼器認得了，但沒有遊戲檔案可以餵。
+- **城市名接線**：檔頭的市名 `docs/formats/01-city-file.md` 早就解出來，
+  但沒接進程式碼（G4 漏接）。載入 `TAIWAN.CTY` 標題列顯示預設的 HERESVILLE。
+  長度前綴不可盡信：`TAIWAN`（6 字）、`KAOHSIUN`（8 字）、`Joffebrg.cty`（12 字）
+  的前綴都寫 13，所以取長度後要切到第一個 NUL。已接上，實拍確認顯示
+  `TAIWAN　1900 一月`。
+  **寫入側維持 27120 裸檔身不動**：`SaveCity` 註解寫明那是為了同時餵得進原版與
+  Micropolis，加檔頭會失去後者。代價是 remake 自己存的檔沒有城市名。
+- **11 個外來城市檔的健壯性測試**：五個帶越界值（稅率 230／−1、年份 4930、
+  資金 11 億），全部載入成功、夾得住、跑 200 frame 不 panic。
+  同一批檔案第三次確認 128 位元組檔頭——144 每一個都是垃圾。
+- **`SOUNDDAT.PSF`**：磁片那份與 `DATA/` 那份逐位元相同、與根目錄那份不同。
+  回答的是「哪一份是原廠內容」，**不是**「遊戲執行時開哪一份」，後者仍未解。
+- 訂正兩處過期斷言：`save.go` 的 `psnSize` 註解與 `01-city-file.md` 的未解表
+  都寫「144 位元組檔頭」。
+- **沒有做**：`TERRAIN.EXE` 沒有反組譯。Micropolis 不涵蓋地形編輯器
+  （那裡的 terrain 只有 `generate.h` 的地形產生器），要重製得走反組譯退路。

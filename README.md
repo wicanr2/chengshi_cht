@@ -296,6 +296,29 @@ iThome 引述 EA 台灣分公司，估計 2000 代在台銷量約四至五萬片
 目前仍缺直接證據，不能把台灣史泛化成整個華人圈。完整時間線、證據等級與來源見
 [`docs/research/simcity-chinese-world-history.md`](docs/research/simcity-chinese-world-history.md)。
 
+### 軟體世界畫的台灣與高雄
+
+代理商做的不只是翻譯說明書。Maxis 的《SimCity Terrain Editor》1990 年由
+**軟體世界研究中心（高雄）** 重新打包發行，磁片裡除了 Maxis 自己那幾座示範城市，
+還多了兩個台灣做的地圖檔：`TAIWAN.CTY` 與 `KAOHSIUN.CTY`。磁片上的 `README`
+只有一個方框，寫著地址與一組 BBS 電話 `(07) 384-8901`。
+
+![軟體世界 1990 年做的台灣地圖，在本重製版裡跑起來](docs/images/map-taiwan.png)
+
+台灣島、中央山脈、西邊的澎湖，東南方還有綠島與蘭嶼。城市名讀自城市檔的
+128 位元組檔頭，標題列顯示的 `TAIWAN` 是檔案裡原本就寫著的字。
+
+![軟體世界 1990 年做的高雄地圖](docs/images/map-kaohsiung.png)
+
+高雄那張是港灣地形：西側那條長潟湖與內陸的水系都畫出來了。
+
+兩張地圖都是 1990 年在高雄做的，與珍藏版 29 說明書同一個代理商，
+比台北與高雄市民能投票選出自己的市長早了四年。逐檔盤點與雜湊見
+[`docs/formats/00-e220-terrain-editor.md`](docs/formats/00-e220-terrain-editor.md)。
+
+> 這兩張截圖是本重製版跑起來的畫面。**地圖檔與畫面上的圖塊都來自玩家自備的
+> 原版磁片**，本專案不散布它們，發行包裡也沒有。
+
 ---
 
 <a name="project"></a>
