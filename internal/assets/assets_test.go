@@ -483,6 +483,67 @@ func TestPPFAllDisplayModes(t *testing.T) {
 	}
 }
 
+// dos103Dir 回傳 DOS 1.03 的資料目錄；不在就跳過（玩家自備）。
+// 1.03 是目前唯一六種顯示模式的 `.PPF` 都齊全的來源——1.10 那份只有
+// CEGA／sega／mcga（CLAUDE.md §2.1）。
+func dos103Dir(t *testing.T) string {
+	t.Helper()
+	_, thisFile, _, _ := runtime.Caller(0)
+	p := filepath.Join(filepath.Dir(thisFile), "..", "..", "1.0", "original", "1.03")
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		t.Skip("沒有 DOS 1.03 的資料，跳過（玩家自備）")
+	}
+	return p
+}
+
+// 六種顯示模式的招牌與劇本選單都要解得開，而且高度要對。
+//
+// ⚠ **高度不是每個模式一個常數**，所以每個模式的兩幅都要驗：
+// CGA 的招牌是 175 列、劇本選單是 200 列；MONO 是 336 與 348；
+// mcga 是 199 與 200。只抽一幅來測的話，另一幅整幅讀不出來也不會變紅——
+// 2026-09-02 之前就是這樣漏掉 `mcgascen.ppf`。
+//
+// ⚠ mono 與 cga 每列都是 80 個位元組，長度分不出是哪一種，所以走
+// ParsePPFAs 指定模式。遊戲自己也是靠 SIMCITY.CFG 知道模式的。
+func TestPPFEveryDisplayModeFrom103(t *testing.T) {
+	dir := dos103Dir(t)
+	for _, c := range []struct {
+		file, mode string
+		w, h       int
+	}{
+		{"CEGANTRO.PPF", "cega", 640, 350},
+		{"CEGASCEN.PPF", "cega", 640, 350},
+		{"SEGANTRO.PPF", "sega", 320, 200},
+		{"SEGASCEN.PPF", "sega", 320, 200},
+		{"TDYNTRO.PPF", "tdy", 320, 200},
+		{"TDYSCEN.PPF", "tdy", 320, 200},
+		{"MONONTRO.PPF", "mono", 640, 336},
+		{"MONOSCEN.PPF", "mono", 640, 348},
+		{"CGANTRO.PPF", "cga", 320, 175},
+		{"CGASCEN.PPF", "cga", 320, 200},
+	} {
+		raw, err := os.ReadFile(filepath.Join(dir, c.file))
+		if err != nil {
+			t.Errorf("%s：%v", c.file, err)
+			continue
+		}
+		d, err := DecompressLZSS(raw)
+		if err != nil {
+			t.Errorf("%s：解壓失敗 %v", c.file, err)
+			continue
+		}
+		im, err := ParsePPFAs(d, nil, c.mode)
+		if err != nil {
+			t.Errorf("%s（%s）：%v", c.file, c.mode, err)
+			continue
+		}
+		if im.Bounds().Dx() != c.w || im.Bounds().Dy() != c.h {
+			t.Errorf("%s（%s）：解出 %v，應為 %d×%d",
+				c.file, c.mode, im.Bounds().Size(), c.w, c.h)
+		}
+	}
+}
+
 // mcgaPalette 讀 mcga 圖形集的調色盤，256 色的 `.PPF` 要用。
 func mcgaPalette(t *testing.T, dir string) []PGFColor {
 	t.Helper()

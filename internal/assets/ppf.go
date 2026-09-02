@@ -10,23 +10,32 @@ import (
 // docs/formats/06-ppf-screen.md。外層 LZSS，解壓後沒有檔頭，
 // **版面由長度認得出來**：
 //
-//	112000  CEGA   640×350，四個位元平面
-//	 32000  sega   320×200，四個位元平面（**Tandy 用同一個版面**）
-//	 63680  mcga   320×199，每像素一個位元組（256 色）
-//	 64000  mcga   320×200，同上。**同一個顯示模式有兩種高度**
-//	 27760  MONO   640×347，一個位元平面
-//	 16000  CGA    320×200，**封裝式 2bpp**（一個位元組四個像素），不是位元平面
+// **版面由「模式 ＋ 長度」決定**，寬度與每列位元組數固定，高度由長度除出來：
 //
-// ⚠ **高度不是每個模式一個常數**：`mcgantro.ppf` 是 320×199，
-// 而同一個目錄的 `mcgascen.ppf` 是 320×200。只登記 199 的話，
-// MCGA 模式的劇本選單畫面會整幅讀不出來。
+//	模式    寬   每列位元組  像素排法        實測到的高度
+//	CEGA    640     320      四個位元平面    350
+//	sega    320     160      四個位元平面    200
+//	tdy     320     160      四個位元平面    200（與 sega 同一個版面）
+//	mcga    320     320      每像素一位元組  199、200
+//	MONO    640      80      一個位元平面    336、347、348
+//	CGA     320      80      封裝式 2bpp     175、200
+//
+// ⚠ **高度不是每個模式一個常數。** `mcgantro.ppf` 是 320×199 而同一個目錄的
+// `mcgascen.ppf` 是 320×200；CGA 的招牌是 175 列、劇本選單是 200 列；
+// MONO 三份樣本是 336／347／348。把高度寫死成常數的話，同一個模式裡
+// 有些畫面讀得出來、有些整幅讀不出來——而且在別的模式下玩完全看不出問題。
+//
+// ⚠ **MONO 與 CGA 的每列位元組數都是 80，所以光看長度分不出是哪一種。**
+// 16000 可以是 CGA 320×200，也可以是 MONO 640×200。要解這兩種就得把模式
+// 傳進來（ParsePPFAs）——遊戲自己知道模式，它是從 SIMCITY.CFG 決定要載
+// 哪一組檔案的。ParsePPF 只認長度沒有歧義的那三種。
 //
 // ⚠ **CGA 不是位元平面。** 320×200 的封裝式 2bpp 與「兩個位元平面」
 // 都剛好用掉 16000 位元組，長度檢查兩種都會過，但位元平面那種畫出來是
 // 剪切狀的條紋。裁決方式是把兩種都畫出來看。
 //
-// Tandy／MONO／CGA 三種版面的樣本來自軟體世界 1990 年重新打包的地形編輯器
-// 磁片，盤點見 docs/formats/00-e220-terrain-editor.md。
+// 六種模式的樣本來自 DOS 1.03（玩家自備）；Tandy 的版面另有軟體世界 1990 年
+// 地形編輯器磁片的一份佐證，見 docs/formats/00-e220-terrain-editor.md。
 //
 // 位元平面是**逐列交錯**的——每一列 (寬/8) 位元組 × 平面數——而且
 // **高位在前**：第一個平面是 EGA 的 I（亮度），最後一個才是 B。
@@ -49,32 +58,47 @@ const (
 	kindPacked2               // 封裝式 2bpp，一個位元組四個像素，高位在左
 )
 
-// ppfLayout 是一種顯示模式的畫面版面。
+// ppfLayout 是一種顯示模式的畫面版面。高度不記在這裡——它由檔案長度
+// 除以 bytesPerRow 得到，因為同一個模式的不同畫面高度不一樣。
 type ppfLayout struct {
-	name   string
-	w, h   int
-	planes int // 只有 kindPlanar 用得到
-	kind   ppfKind
+	name        string
+	w           int
+	bytesPerRow int
+	planes      int // 只有 kindPlanar 用得到
+	kind        ppfKind
+	minH, maxH  int // 合理的高度範圍，見 height 的說明
 }
 
-var ppfLayouts = []ppfLayout{
-	{"CEGA", 640, 350, 4, kindPlanar},
-	{"sega/tdy", 320, 200, 4, kindPlanar},
-	{"mcga", 320, 199, 0, kindLinear},
-	{"mcga", 320, 200, 0, kindLinear},
-	{"MONO", 640, 347, 1, kindPlanar},
-	{"CGA", 320, 200, 0, kindPacked2},
+// PPFModes 是六種顯示模式的版面。鍵是 `SIMCITY.CFG` 與檔名共用的那組前綴。
+var PPFModes = map[string]ppfLayout{
+	"cega": {"cega", 640, 320, 4, kindPlanar, 300, 400},
+	"sega": {"sega", 320, 160, 4, kindPlanar, 150, 250},
+	"tdy":  {"tdy", 320, 160, 4, kindPlanar, 150, 250},
+	"mcga": {"mcga", 320, 320, 0, kindLinear, 150, 250},
+	"mono": {"mono", 640, 80, 1, kindPlanar, 300, 400},
+	"cga":  {"cga", 320, 80, 0, kindPacked2, 150, 250},
 }
 
-func (l ppfLayout) size() int {
-	switch l.kind {
-	case kindLinear:
-		return l.w * l.h
-	case kindPacked2:
-		return l.w * l.h / 4
-	default:
-		return l.w * l.h / 8 * l.planes
+// unambiguous 是長度不會與別的模式相撞的那幾種，給沒有模式資訊的呼叫端用。
+// mono 與 cga 不在內：兩者每列都是 80 個位元組，長度分不出來。
+var unambiguous = []string{"cega", "sega", "mcga"}
+
+// height 由長度除出來。除不盡或高度落在該模式的合理範圍外就回 0。
+//
+// ⚠ **高度範圍不是裝飾，是消歧義的必要條件。** 少了它，32000 個位元組
+// 除以 CEGA 的每列 320 剛好是 100，於是 sega 的畫面會被當成 CEGA 的
+// 640×100 解出來——畫面出得來、長度檢查也過，只是整幅是錯的。
+// 範圍取自實際的顯示模式：200 列那一批（sega／mcga／CGA）與
+// 350 列那一批（CEGA／MONO），各留寬裕的邊。
+func (l ppfLayout) height(n int) int {
+	if l.bytesPerRow == 0 || n%l.bytesPerRow != 0 {
+		return 0
 	}
+	h := n / l.bytesPerRow
+	if h < l.minH || h > l.maxH {
+		return 0
+	}
+	return h
 }
 
 // egaScreen 是標準 EGA 十六色。位元平面版的 `.PPF` 自己不帶調色盤，
@@ -97,28 +121,47 @@ var egaScreen = [16]color.RGBA{
 // 那是六位元 VGA 值展成八位元的兩種算法差異）。pal 傳 nil 的話
 // 只有位元平面的兩種模式解得開。
 func ParsePPF(d []byte, pal []PGFColor) (*image.RGBA, error) {
-	for _, l := range ppfLayouts {
-		if l.size() != len(d) {
-			continue
+	for _, name := range unambiguous {
+		if h := PPFModes[name].height(len(d)); h > 0 {
+			return parseWith(d, pal, PPFModes[name], h)
 		}
-		switch l.kind {
-		case kindPlanar:
-			return ppfPlanar(d, l), nil
-		case kindPacked2:
-			return ppfPacked2(d, l), nil
-		}
-		if pal == nil {
-			return nil, fmt.Errorf(".PPF：%s 是 256 色的，要傳同一個圖形集的調色盤", l.name)
-		}
-		return ppfLinear(d, l, pal), nil
 	}
-	return nil, fmt.Errorf(".PPF：解出 %d 位元組，對不上任何已知的版面", len(d))
+	return nil, fmt.Errorf(".PPF：解出 %d 位元組，對不上長度無歧義的版面"+
+		"（mono 與 cga 每列都是 80 個位元組，要用 ParsePPFAs 指定模式）", len(d))
 }
 
-func ppfPlanar(d []byte, l ppfLayout) *image.RGBA {
+// ParsePPFAs 由呼叫端指定顯示模式。遊戲自己知道模式——`SIMCITY.CFG` 決定
+// 要載哪一組檔案，檔名前綴就是模式。mono 與 cga 只能走這一條。
+func ParsePPFAs(d []byte, pal []PGFColor, mode string) (*image.RGBA, error) {
+	l, ok := PPFModes[mode]
+	if !ok {
+		return nil, fmt.Errorf(".PPF：不認得的顯示模式 %q", mode)
+	}
+	h := l.height(len(d))
+	if h == 0 {
+		return nil, fmt.Errorf(".PPF：%s 模式下 %d 個位元組不是每列 %d 的整數倍，"+
+			"或高度離譜", mode, len(d), l.bytesPerRow)
+	}
+	return parseWith(d, pal, l, h)
+}
+
+func parseWith(d []byte, pal []PGFColor, l ppfLayout, h int) (*image.RGBA, error) {
+	switch l.kind {
+	case kindPlanar:
+		return ppfPlanar(d, l, h), nil
+	case kindPacked2:
+		return ppfPacked2(d, l, h), nil
+	}
+	if pal == nil {
+		return nil, fmt.Errorf(".PPF：%s 是 256 色的，要傳同一個圖形集的調色盤", l.name)
+	}
+	return ppfLinear(d, l, h, pal), nil
+}
+
+func ppfPlanar(d []byte, l ppfLayout, h int) *image.RGBA {
 	bpr := l.w / 8
-	im := image.NewRGBA(image.Rect(0, 0, l.w, l.h))
-	for y := 0; y < l.h; y++ {
+	im := image.NewRGBA(image.Rect(0, 0, l.w, h))
+	for y := 0; y < h; y++ {
 		row := y * l.planes * bpr
 		for b := 0; b < bpr; b++ {
 			for bit := 0; bit < 8; bit++ {
@@ -137,10 +180,10 @@ func ppfPlanar(d []byte, l ppfLayout) *image.RGBA {
 // ppfPacked2 解 CGA 的封裝式 2bpp：一個位元組四個像素，最高的兩位在最左邊。
 // 色號是 CGA 四色盤的索引，這裡沿用 egaScreen 的前四色當佔位——
 // CGA 真正的四色盤（黑／青／洋紅／白等組合）還沒從資料裡讀出來。
-func ppfPacked2(d []byte, l ppfLayout) *image.RGBA {
+func ppfPacked2(d []byte, l ppfLayout, h int) *image.RGBA {
 	bpr := l.w / 4
-	im := image.NewRGBA(image.Rect(0, 0, l.w, l.h))
-	for y := 0; y < l.h; y++ {
+	im := image.NewRGBA(image.Rect(0, 0, l.w, h))
+	for y := 0; y < h; y++ {
 		for b := 0; b < bpr; b++ {
 			v := d[y*bpr+b]
 			for i := 0; i < 4; i++ {
@@ -151,9 +194,9 @@ func ppfPacked2(d []byte, l ppfLayout) *image.RGBA {
 	return im
 }
 
-func ppfLinear(d []byte, l ppfLayout, pal []PGFColor) *image.RGBA {
-	im := image.NewRGBA(image.Rect(0, 0, l.w, l.h))
-	for y := 0; y < l.h; y++ {
+func ppfLinear(d []byte, l ppfLayout, h int, pal []PGFColor) *image.RGBA {
+	im := image.NewRGBA(image.Rect(0, 0, l.w, h))
+	for y := 0; y < h; y++ {
 		for x := 0; x < l.w; x++ {
 			v := int(d[y*l.w+x])
 			c := color.RGBA{A: 0xff}

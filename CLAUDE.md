@@ -202,8 +202,13 @@ Micropolis — src/sim/s_scan.c:412 PopDenScan()
 3. **時間戳不等於內容被改。** `sega/` 整套是 1996 的時間戳，但官方手冊附錄列了
    `SEGADAT.PGF`——它是原廠檔，只是被 touch 過。判「這個檔被動過了嗎」要比內容。
 
-⚠ **這份副本缺 CGA 與 Tandy 的全部資料檔**（手冊有列）。`SIMCITY.CFG` 選得到那兩個模式，
-但檔案不在。要完整覆蓋八種顯示模式得另找一份磁片映像。
+⚠ **1.10 這份副本缺 CGA 與 Tandy 的全部資料檔**（手冊有列）。`SIMCITY.CFG` 選得到
+那兩個模式，但檔案不在。**缺口由 DOS 1.03 補上了**（玩家自備，`1.0/original/1.03/`）：
+那一份有 `CGADAT.PGF`／`CGANTRO.PPF`／`CGASCEN.PPF` 與 `TDYDAT.PGF`／`TDYNTRO.PPF`／
+`TDYSCEN.PPF`，連 1.10 也沒有的 `MONONTRO.PPF`／`MONOSCEN.PPF` 都在。
+1.03 沒有 `mcga`——那是後來的版本才加的。
+1.03 的 `SIMCITY.EXE` 另有一個好處：**沒有被打包、也不是破解版**（896 條可讀字串，
+1.10 那顆打包過的只有 266 條），是目前手上最乾淨的反組譯目標。
 
 ### 2.2 X11 版（`Rare simcity.zip`，玩家自備，不入版控）
 
