@@ -4,6 +4,10 @@ set -euo pipefail
 
 mkdir -p /tmp/game /tmp/capture
 cp -r "/orig/SIMCITY 1.10/." /tmp/game/
+# 額外來源（地形編輯器等）疊在遊戲目錄上。地形編輯器是**另一個產品**，
+# 但它要跟遊戲裝在同一個目錄——它自己帶 `*TED.PGF` 與 `*TE.PPF`，
+# 其餘（城市檔、設定檔）用遊戲的。
+[ -d /extra ] && cp -r /extra/. /tmp/game/
 chmod -R u+w /tmp/game
 
 # SIMCITY.CFG 的 Sound 欄決定用哪個發聲裝置：

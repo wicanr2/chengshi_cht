@@ -1,0 +1,22 @@
+# 原版地形編輯器的介面：招牌之後長什麼樣、有哪些工具。
+# 招牌畫面（*TE.PPF）已經解出來了，這裡要的是**工作介面**。
+wait 6
+shot 00-splash
+click 320 240
+wait 3
+shot 01-after-click
+key Return
+wait 3
+shot 02-after-enter
+key space
+wait 3
+shot 03-after-space
+move 320 200
+wait 2
+shot 04-moved
+click 60 60
+wait 2
+shot 05-click-left
+click 320 100
+wait 2
+shot 06-click-top

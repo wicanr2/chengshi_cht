@@ -1,0 +1,18 @@
+# 已經裝好了（workplace/te-installed），直接開編輯器看工作介面。
+wait 10
+shot 00-splash
+click 320 240
+wait 5
+shot 01-ui
+key space
+wait 4
+shot 02-ui2
+key Return
+wait 4
+shot 03-ui3
+move 320 200
+wait 3
+shot 04-moved
+click 30 30
+wait 3
+shot 05-topleft

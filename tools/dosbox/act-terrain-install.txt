@@ -1,0 +1,16 @@
+# 地形編輯器的設定檔要靠它自己的 INSTALL 產生（直接跑 TERRAIN 會說
+# configuration file not found）。這一輪只是看 INSTALL 問什麼。
+wait 5
+shot 00-install
+key Return
+wait 3
+shot 01-a
+key Return
+wait 3
+shot 02-b
+key y
+wait 3
+shot 03-c
+key Return
+wait 4
+shot 04-d

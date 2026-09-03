@@ -1,0 +1,31 @@
+# 先讓 INSTALL 跑完（它要從 A: 安裝，A: 掛的是編輯器磁片目錄），
+# 再開 TERRAIN 看工作介面。時間抓寬一點，安裝要複製十幾 MB。
+wait 6
+shot 00-install
+key Return
+wait 4
+shot 01-a
+key Return
+wait 4
+shot 02-b
+key Return
+wait 6
+shot 03-c
+key Return
+wait 6
+shot 04-d
+key Return
+wait 8
+shot 05-e
+key Return
+wait 10
+shot 06-terrain
+click 320 200
+wait 4
+shot 07-click
+key space
+wait 3
+shot 08-space
+move 320 240
+wait 2
+shot 09-moved

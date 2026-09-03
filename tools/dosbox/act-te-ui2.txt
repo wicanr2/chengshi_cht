@@ -1,0 +1,19 @@
+# 上一輪十秒還在載入。這次把截圖散在整段時間上，看它到底停在哪一步。
+wait 5
+shot 05s
+wait 10
+shot 15s
+wait 10
+shot 25s
+key space
+wait 5
+shot 30s
+key Return
+wait 5
+shot 35s
+click 320 240
+wait 5
+shot 40s
+move 320 200
+wait 5
+shot 45s

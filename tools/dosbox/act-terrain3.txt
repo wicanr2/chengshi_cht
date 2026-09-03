@@ -1,0 +1,36 @@
+# INSTALL 的流程：來源磁碟 → 目的地 → 顯示驅動清單 → [n/Y] 確認 → 複製。
+# 裝到 C:\SIMCITY\，所以之後要 cd 進去才跑得到 TERRAIN。
+wait 6
+key Return
+wait 3
+key Return
+wait 3
+key Return
+wait 3
+shot 00-prompt
+key y
+wait 2
+key Return
+wait 6
+shot 01-copying
+key Return
+wait 5
+key Return
+wait 5
+shot 02-after
+key Return
+wait 5
+key Return
+wait 8
+shot 03-done
+wait 8
+shot 04-terrain-splash
+click 320 200
+wait 4
+shot 05-ui
+key space
+wait 3
+shot 06-ui2
+move 320 240
+wait 2
+shot 07-moved
