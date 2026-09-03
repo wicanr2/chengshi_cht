@@ -133,6 +133,12 @@ type terrainScreen struct {
 	// saved 是進編輯器之前玩家正在玩的那張地圖。編輯器改的是自己那一張，
 	// 離開時把這一份放回去——原版是獨立程式，編輯器動不到遊戲裡的城市。
 	saved *sim.World
+	// savedPath 是進編輯器之前的存檔路徑。
+	//
+	// ⚠ **不能與遊戲共用**：共用的話在編輯器裡按「儲存城市」會直接蓋掉
+	// 玩家正在玩的那個存檔檔案，而畫面上只寫「已存檔」，看不出來出事了。
+	// 原版的編輯器是獨立程式，本來就有自己的檔名緩衝區。
+	savedPath string
 
 	openMenu int // 0 ＝ 沒拉開，1–3
 	menuRow  int
@@ -161,13 +167,17 @@ func (g *Game) openTerrainScreen() {
 	// 原版的編輯器一開機是 1900 年 1 月（實測標題列 `Jan 1900`），
 	// 不是遊戲那個 `CityTime = 50`（sim.c:183，會顯示 1901）。
 	w.CityTime = 0
-	w.CityName = g.world.CityName
+	// 市名不繼承玩家正在玩的那座城市：原版的編輯器是獨立程式，
+	// 標題列也不印城市名。繼承的話「以……檔名儲存」會預設成同一個檔名，
+	// 玩家一路按下去就把自己的存檔蓋掉了。留 NewWorld 的 HERESVILLE。
 	ts := &terrainScreen{
 		world: w,
 		saved: g.world,
 		sound: !g.soundOff,
 	}
 	ts.ed = sim.NewEditor(w)
+	ts.savedPath = g.savePath
+	g.savePath = "" // 第一次存檔一律走「以……檔名儲存」，不覆蓋遊戲的存檔
 	g.world = w
 	g.terrain = ts
 	g.camX, g.camY = 0, 0
@@ -181,6 +191,7 @@ func (g *Game) closeTerrainScreen() {
 		return
 	}
 	g.world = g.terrain.saved
+	g.savePath = g.terrain.savedPath
 	g.terrain = nil
 	g.win = winNone
 	g.mini = nil
@@ -515,7 +526,13 @@ func (g *Game) terrainAct(act string) {
 	case "saveas":
 		g.openSaveAs()
 	case "save":
-		g.save()
+		// 還沒指定過檔名就先問——不然會落到工作目錄的 city.cty，
+		// 玩家不知道東西存到哪去了。原版的 `sub_1FE44(0)` 也是問。
+		if g.savePath == "" {
+			g.openSaveAs()
+		} else {
+			g.save()
+		}
 	case "exit":
 		ts.confirmKey, ts.confirmAct = "te_confirm_exit", "exit!"
 	case "clear":
