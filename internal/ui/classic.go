@@ -69,9 +69,9 @@ const (
 	// 量法：把畫面上每個 16×16 位移拿去比對第 0 庫的 960 張圖塊，
 	// 命中最多的位移就是格網原點（螢幕 y 除以 16 餘 15，換算成遊戲座標是 55）。
 	// 先前寫 54，等於整張地圖上移一像素，而且沒有那圈框。
-	editViewY  = 55 // 地圖區（圖塊的第一列）
-	editViewH  = 256
-	editToolY  = 311 // 目前工具帶
+	editViewY = 55 // 地圖區（圖塊的第一列）
+	editViewH = 256
+	editToolY = 311 // 目前工具帶
 
 	// 帶內文字的字格位置，全部量自原版（見 drawEditWindow 的說明）。
 	fundsTextX = 8   // `Funds:`
@@ -86,12 +86,12 @@ const (
 	// 的同一張美術做二維位移搜尋（顏色先正規化到 EGA 四階，否則調色盤差異
 	// 會蓋過對齊訊號），最佳位移是 dx=dy=−2，2436 點中對上 2402 點。
 	editPalX, editPalY = 8, 55
-	editViewX          = 64    // 地圖區左緣（圖塊的第一欄；63 是白框）
-	editViewW          = 512   // 64–575，剛好 32 格
+	editViewX          = 64  // 地圖區左緣（圖塊的第一欄；63 是白框）
+	editViewW          = 512 // 64–575，剛好 32 格
 	// 需求指標（庫 3，46×39）。位置量自原版：C·R·I 的洋紅條在 x 15–53、
 	// y 253–259，據此回推圖的左上角。先前是 (8,236)，偏左 4、偏上 1。
-	editDemandX        = 12
-	editDemandY        = 237
+	editDemandX = 12
+	editDemandY = 237
 
 	// City Form 視窗。座標全部量自原版（`workplace/dosbox/w3-01-maps.png`，
 	// 逐列逐行讀色）：外框 x 240–639、y 21–347；標題列 y 25–41；
@@ -103,8 +103,8 @@ const (
 	// 從 245 起——照 244 blit 會整條左移一像素。
 	mapIconEdgeX = 244
 	mapIconX     = 245 // 圖層圖示（庫 5，26×226）
-	mapIconY   = 44
-	mapIconH   = 25 // 一格的高，選取的黃框照這個間距走
+	mapIconY     = 44
+	mapIconH     = 25 // 一格的高，選取的黃框照這個間距走
 	// 原版的圖示欄只有**九格**，而圖層有十一個——最後兩個圖示各管兩個
 	// 圖層（警力／消防那一格印著 `F` 與 `P`）。對應關係還沒解，
 	// 記在 CONTEXT.md §5.5；黃框畫得出來的只有前九個。
@@ -116,8 +116,8 @@ const (
 	mapContentH  = 304
 	mapRampX     = 248 // 色階圖例（庫 6／7，20×70）
 	mapRampY     = 273
-	mapViewX   = 274 // 地圖本體
-	mapViewY   = 44
+	mapViewX     = 274 // 地圖本體
+	mapViewY     = 44
 )
 
 // 選單列的四個標題，中心 x 量自原版。
@@ -362,12 +362,12 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 // **中間值是假設線性**：Micropolis 自己也是線性的（`w_update.c:230
 // SetDemand` 送出 `valve/100`），但 DOS 版沒有中段的實測點。
 const (
-	demandBarW   = 5
-	demandUpMax  = 12  // 往上最多幾列
-	demandDnMax  = 11  // 往下最多幾列
-	demandUpBot  = 251 // 往上長的底邊
-	demandDnTop  = 261 // 往下長的頂邊
-	demandClamp  = 1500
+	demandBarW  = 5
+	demandUpMax = 12  // 往上最多幾列
+	demandDnMax = 11  // 往下最多幾列
+	demandUpBot = 251 // 往上長的底邊
+	demandDnTop = 261 // 往下長的頂邊
+	demandClamp = 1500
 )
 
 // demandBarX 是三根長條的左緣（原版座標），順序 C、R、I。
@@ -580,10 +580,10 @@ func (g *Game) drawToolCursor(dst *ebiten.Image, vw, vh int) {
 	by := editViewY + (y0-g.camY)*sz
 	view := image.Rect(editViewX, editViewY, editViewX+vw, editViewY+vh)
 	for _, r := range []image.Rectangle{
-		image.Rect(0, 0, w, bw),         // 上
-		image.Rect(0, w-bw, w, w),       // 下
-		image.Rect(0, bw, bw, w-bw),     // 左
-		image.Rect(w-bw, bw, w, w-bw),   // 右
+		image.Rect(0, 0, w, bw),       // 上
+		image.Rect(0, w-bw, w, w),     // 下
+		image.Rect(0, bw, bw, w-bw),   // 左
+		image.Rect(w-bw, bw, w, w-bw), // 右
 	} {
 		// 超出地圖區的部分要裁掉，否則框會畫到工具盤與視窗外框上。
 		d := r.Add(image.Pt(bx, by)).Intersect(view)
@@ -992,7 +992,7 @@ func (g *Game) mapSubRect(icon int) (x, y, w, h int) {
 			w = tw
 		}
 	}
-	return mapSubX, mapIconY + mapIconH*icon - 4, w, mapSubRowH*len(rows)
+	return mapSubX, mapIconY + mapIconH*icon - 4, w, mapSubRowH * len(rows)
 }
 
 func (g *Game) mapSubLabel(layer int) string {

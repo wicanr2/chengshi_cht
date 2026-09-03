@@ -29,6 +29,9 @@ type TileSet struct {
 	Mini *assets.MiniTiles
 	// miniPal 是縮圖已經換好顏色的版本，避免每一格重查調色盤。
 	miniPal [][]color.RGBA
+	// vstretch 是這個顯示模式的美術縱向拉幾倍（只有 CGA Mono 是 2），
+	// 見 vStretchOf。
+	vstretch int
 	// UI 是介面美術，索引同 Sprites，但**色號 0 不透明**。
 	//
 	// ⚠ 兩份不能共用。精靈要拿色號 0 當透明（否則拖著一塊黑底走），
@@ -76,22 +79,67 @@ func (t *TileSet) UIImage(bank, i int) *ebiten.Image {
 // （`docs/spec/ui-layout.md`），其他模式的圖形檔只當圖塊來源用，
 // 版面不跟著換。原版那幾種 320×200 的畫面還沒重製。
 var graphicsDirs = []struct {
-	dir  string
-	ext  string
-	tile int
-	bpp  int
-	mode byte
+	dir string
+	ext string
+	// tw／th 是**基本圖形檔**（`<模式>DAT.PGF`）的圖塊寬高與位元深度。
+	// 風格檔自己帶這些欄位，只有基本檔沒有，得靠目錄名決定。
+	// CGA Mono 是唯一非正方形的（16×8）。
+	tw, th int
+	bpp    int
+	mode   byte
 }{
-	{"CEGA", ".PGF", 16, 4, 'E'},
-	{"cega", ".pgf", 16, 4, 'E'},
-	{"MONO", ".PGF", 16, 1, 'V'},
-	{"sega", ".pgf", 8, 4, 'e'},
-	{"mcga", ".pgf", 8, 8, '2'},
-	{"tdy", ".pgf", 8, 4, 'T'},
-	{"TDY", ".PGF", 8, 4, 'T'},
-	{"CGA", ".PGF", 16, 8, 'C'},
-	{"cga", ".pgf", 16, 8, 'C'},
+	{"CEGA", ".PGF", 16, 16, 4, 'E'},
+	{"cega", ".pgf", 16, 16, 4, 'E'},
+	{"MONO", ".PGF", 16, 16, 1, 'V'},
+	{"sega", ".pgf", 8, 8, 4, 'e'},
+	{"mcga", ".pgf", 8, 8, 8, '2'},
+	{"tdy", ".pgf", 8, 8, 4, 'T'},
+	{"TDY", ".PGF", 8, 8, 4, 'T'},
+	{"CGA", ".PGF", 16, 8, 1, 'C'},
+	{"cga", ".pgf", 16, 8, 1, 'C'},
 }
+
+// DisplayModes 是玩家選得到的六種顯示模式，順序照原版 `SIMCITY.CFG`
+// 那張解碼表由高解析到低解析。key 是目錄名（也是檔名後綴），
+// name 進系統選單。
+//
+// ⚠ **這個選項換的是地圖美術，不是版面。** remake 只有一套 640×350 的
+// EGA 高解析版面（`docs/spec/ui-layout.md`），介面美術（工具盤、需求指標、
+// 圖層圖示、色階）的位置與**點擊區**都是照 CEGA 的美術量出來的，
+// 所以那幾庫一律留 CEGA 的；換掉的是地圖圖塊、精靈與 City Form 的縮圖。
+// 結果是「用 Tandy 的地圖美術玩 EGA 版面」——**不是原版任何一種畫面**，
+// 是 remake 自訂的組合（使用者定案 2026-09-04）。
+var DisplayModes = []struct{ Key, Name string }{
+	{"cega", "EGA 高解析彩色"},
+	{"sega", "EGA 低解析彩色"},
+	{"tdy", "Tandy 彩色"},
+	{"mcga", "VGA 256 色"},
+	{"mono", "單色"},
+	{"cga", "CGA 單色"},
+}
+
+// ModeName 回傳顯示模式的中文名；不認得就回原字串。
+func ModeName(key string) string {
+	for _, m := range DisplayModes {
+		if m.Key == key {
+			return m.Name
+		}
+	}
+	return key
+}
+
+// ValidMode 回報是不是認得的顯示模式。
+func ValidMode(key string) bool {
+	for _, m := range DisplayModes {
+		if m.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+// ModeCEGA 是預設的顯示模式，也是 remake 版面所依據的那一種。
+const ModeCEGA = "cega"
 
 // StyleBase 是「沒有資料片的原始城市外觀」。
 //
@@ -99,13 +147,47 @@ var graphicsDirs = []struct {
 // 表是行內的），所以走另一條解析路徑。見 internal/assets/pgfbase.go。
 const StyleBase = "base"
 
-// LoadTileSet 從 DOS 1.10 的目錄讀一組圖形。
+// LoadTileSet 從 DOS 1.10 的目錄讀一組圖形，顯示模式照挑選順序自動決定。
 //
 // style 是六個資料片前綴之一（asia／medi／west／fusa／feur／moon），
 // 或 StyleBase（基本外觀）。
 func LoadTileSet(dataDir, style string) (*TileSet, error) {
+	return LoadTileSetMode(dataDir, style, "")
+}
+
+// LoadTileSetMode 讀指定顯示模式的圖形。
+//
+// mode 是空字串就照 graphicsDirs 的挑選順序（有 CEGA 就用 CEGA）；
+// 指定的話只找那一個模式的目錄，找不到回錯。
+//
+// ⚠ 非 CEGA 的模式**只換地圖那一半**：地圖圖塊、精靈與 City Form 的縮圖
+// 用選定模式的，介面美術（第 2–7 庫）一律換回 CEGA 的。理由見 DisplayModes——
+// 版面常數與點擊區都是照 CEGA 的美術量的，換成 320×200 那一套的話
+// 工具盤按鈕會**點到隔壁那一格**，而畫面看起來只是「圖小了一點」。
+func LoadTileSetMode(dataDir, style, mode string) (*TileSet, error) {
+	ts, err := loadOneMode(dataDir, style, mode)
+	if err != nil {
+		return nil, err
+	}
+	if mode == "" || mode == ModeCEGA {
+		return ts, nil
+	}
+	cega, err := loadOneMode(dataDir, style, ModeCEGA)
+	if err != nil {
+		// 沒有 CEGA 可借就用本模式自己的介面美術。位置會不準，
+		// 但總比開不起來好——訊息由呼叫端決定要不要顯示。
+		return ts, nil
+	}
+	ts.UI = cega.UI
+	return ts, nil
+}
+
+func loadOneMode(dataDir, style, mode string) (*TileSet, error) {
 	var lastErr error
 	for _, g := range graphicsDirs {
+		if mode != "" && !strings.EqualFold(g.dir, mode) {
+			continue
+		}
 		dir := filepath.Join(dataDir, g.dir)
 		if _, err := os.Stat(dir); err != nil {
 			continue
@@ -116,7 +198,7 @@ func LoadTileSet(dataDir, style string) (*TileSet, error) {
 				lastErr = err
 				continue
 			}
-			pgf, err := assets.LoadPGFBase(raw, g.tile, g.bpp, g.mode)
+			pgf, err := assets.LoadPGFBase(raw, g.tw, g.th, g.bpp, g.mode)
 			if err != nil {
 				lastErr = err
 				continue
@@ -150,7 +232,13 @@ func LoadTileSet(dataDir, style string) (*TileSet, error) {
 		}
 	}
 	if lastErr != nil {
-		return nil, fmt.Errorf("讀取風格 %q 的圖形失敗：%w", style, lastErr)
+		return nil, fmt.Errorf("讀取風格 %q（顯示模式 %q）的圖形失敗：%w",
+			style, mode, lastErr)
+	}
+	if mode != "" {
+		return nil, fmt.Errorf("在 %s 底下找不到顯示模式 %q 的圖形檔 —— "+
+			"Tandy 與 CGA 的檔案在兩片資料片的發行包與 1.03 裡，不在 1.10",
+			dataDir, mode)
 	}
 	return nil, fmt.Errorf("在 %s 底下找不到風格 %q 的 .PGF —— "+
 		"請確認那是解開的 SIMCITY 1.10 目錄（裡面應該有 CEGA/、mcga/、DATA/）",
@@ -166,7 +254,8 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 		return nil, fmt.Errorf("第 0 庫有 %d 張圖，應為 %d —— 這不是地圖圖塊庫",
 			len(b0.Images), sim.TILE_COUNT)
 	}
-	ts := &TileSet{Style: g.Name, Size: b0.Width}
+	vs := vStretchOf(b0)
+	ts := &TileSet{Style: g.Name, Size: b0.Width, vstretch: vs}
 	pal := make([]color.RGBA, 256)
 	for i, c := range g.Palette {
 		pal[i] = color.RGBA{c.R, c.G, c.B, 255}
@@ -180,7 +269,7 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 	// 改成透明版之後 remake 只剩一半的格子對得上，差的點全部是
 	// 「原版 (0,0,0)、remake (170,170,170)」。
 	for i := range b0.Images {
-		ts.Tiles = append(ts.Tiles, imageFromOpaque(&b0, i, pal))
+		ts.Tiles = append(ts.Tiles, imageFromOpaque(&b0, i, pal, vs))
 	}
 	ts.bank0 = b0
 	ts.invPal = invertPalette(pal, len(g.Palette))
@@ -190,8 +279,8 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 		b := g.Banks[bi]
 		var imgs, opaque []*ebiten.Image
 		for i := range b.Images {
-			imgs = append(imgs, imageFrom(&b, i, pal, masks[bi]))
-			opaque = append(opaque, imageFromOpaque(&b, i, pal))
+			imgs = append(imgs, imageFrom(&b, i, pal, masks[bi], vs))
+			opaque = append(opaque, imageFromOpaque(&b, i, pal, vs))
 		}
 		ts.Sprites = append(ts.Sprites, imgs)
 		ts.UI = append(ts.UI, opaque)
@@ -262,8 +351,12 @@ const pgfSinglePlaneFlag = 0x0100
 //
 // 遮罩的 1 是**透明**。沒有遮罩的庫（地圖圖塊、8 位元的精靈）才退回
 // 「色號 0 當透明」。
-func imageFrom(b *assets.PGFBank, i int, pal []color.RGBA, mask *assets.PGFBank) *ebiten.Image {
-	img := image.NewRGBA(image.Rect(0, 0, b.Width, b.Height))
+// vs 是縱向要複製幾列，見 vStretchOf。
+func imageFrom(b *assets.PGFBank, i int, pal []color.RGBA, mask *assets.PGFBank, vs int) *ebiten.Image {
+	if vs < 1 {
+		vs = 1
+	}
+	img := image.NewRGBA(image.Rect(0, 0, b.Width, b.Height*vs))
 	px := b.Images[i].Pixels
 	var mp []uint8
 	if mask != nil && i < len(mask.Images) {
@@ -281,19 +374,44 @@ func imageFrom(b *assets.PGFBank, i int, pal []color.RGBA, mask *assets.PGFBank)
 			} else if v == 0 {
 				c.A = 0
 			}
-			img.Set(x, y, c)
+			for k := 0; k < vs; k++ {
+				img.Set(x, y*vs+k, c)
+			}
 		}
 	}
 	return ebiten.NewImageFromImage(img)
 }
 
+// vStretchOf 回傳這個顯示模式的美術要縱向拉幾倍。
+//
+// **CGA Mono 的螢幕是 640×200**，像素本身是扁的，所以它的地圖圖塊只有
+// 16×8——貼在真機上仍然接近正方形。remake 的版面是 640×350 的方像素
+// （`docs/spec/ui-layout.md`），原樣貼上去每一格只填一半高，地圖區變成
+// 一條一條的橫紋，**看起來像圖形檔解錯，不像版面不合**。
+// 這裡照寬高比把它整份拉回來，六個模式裡只有 CGA 會拉。
+//
+// 拉的是整個圖形檔（圖塊、精靈、介面美術一起），不是只拉地圖——
+// 只拉一半的話精靈會比它站的那塊地矮一半。
+func vStretchOf(b0 assets.PGFBank) int {
+	if b0.Height > 0 && b0.Width/b0.Height >= 2 {
+		return b0.Width / b0.Height
+	}
+	return 1
+}
+
 // imageFromOpaque 同 imageFrom，但**不做去背**。介面美術用這個。
-func imageFromOpaque(b *assets.PGFBank, i int, pal []color.RGBA) *ebiten.Image {
-	img := image.NewRGBA(image.Rect(0, 0, b.Width, b.Height))
+func imageFromOpaque(b *assets.PGFBank, i int, pal []color.RGBA, vs int) *ebiten.Image {
+	if vs < 1 {
+		vs = 1
+	}
+	img := image.NewRGBA(image.Rect(0, 0, b.Width, b.Height*vs))
 	px := b.Images[i].Pixels
 	for y := 0; y < b.Height; y++ {
 		for x := 0; x < b.Width; x++ {
-			img.Set(x, y, pal[px[y*b.Width+x]])
+			c := pal[px[y*b.Width+x]]
+			for k := 0; k < vs; k++ {
+				img.Set(x, y*vs+k, c)
+			}
 		}
 	}
 	return ebiten.NewImageFromImage(img)
@@ -355,7 +473,7 @@ func (t *TileSet) InvTile(n, z int) *ebiten.Image {
 	if img, ok := t.invTiles[key]; ok {
 		return img
 	}
-	img := imageFromOpaque(&t.bank0, n, t.invPal)
+	img := imageFromOpaque(&t.bank0, n, t.invPal, t.vstretch)
 	if z > 1 {
 		img = shrink(img, z)
 	}

@@ -64,12 +64,14 @@ func TestSystemMenuKeepsOriginalRowsAndAppendsSettings(t *testing.T) {
 	}
 	g := &Game{txt: txt}
 	items := g.menuEntries(0)
-	if len(items) != 16 {
-		t.Fatalf("SYSTEM 有 %d 列，預期原版 13 列加 3 列 remake 擴充", len(items))
+	if len(items) != 18 {
+		t.Fatalf("SYSTEM 有 %d 列，預期原版 13 列加 5 列 remake 擴充", len(items))
 	}
 	if items[13] != "-" || items[14] != txt.UI("settings_title") ||
-		items[15] != txt.UI("savefmt_title") {
-		t.Fatalf("SYSTEM 擴充尾端 = %q, %q, %q", items[13], items[14], items[15])
+		items[15] != txt.UI("savefmt_title") || items[16] != txt.UI("mode_title") ||
+		items[17] != txt.UI("terrain_menu") {
+		t.Fatalf("SYSTEM 擴充尾端 = %q, %q, %q, %q, %q",
+			items[13], items[14], items[15], items[16], items[17])
 	}
 	// 原版最後一列仍停在索引 12；不能因新增擴充把 Exit 的動作錯位。
 	if items[12] != trimMenu(txt.S(i18n.SecSysMenu, 12)) {
@@ -83,6 +85,19 @@ func TestSystemMenuKeepsOriginalRowsAndAppendsSettings(t *testing.T) {
 	if !g.openSaveFmtNext {
 		t.Fatal("SYSTEM→存檔格式沒有排入畫面末端狀態轉移")
 	}
+	// 顯示模式與地形編輯器是 2026-09-04 加的。`winSystem` 那份
+	// `sysItems` 已經沒有入口（見 sysmenu.go 的警告），新列只走這裡——
+	// 少了這兩個判準，選單上看得到、點下去沒反應也不會變紅。
+	g.pickSystem(16)
+	if g.win != winMode {
+		t.Fatalf("SYSTEM→顯示模式沒開子選單，g.win = %v", g.win)
+	}
+	g.win = winNone
+	g.pickSystem(17)
+	if g.terrain == nil {
+		t.Fatal("SYSTEM→地形編輯器沒開起來")
+	}
+	g.terrain = nil
 }
 
 func TestLanguageSettingsHighlightsCurrentLanguage(t *testing.T) {

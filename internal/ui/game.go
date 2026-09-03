@@ -230,8 +230,11 @@ type Game struct {
 	// saveFmt 是存檔要寫哪一種版面。兩種都是原版認得的格式，取捨見
 	// internal/game/save.go 的 SaveFormat。
 	saveFmt game.SaveFormat
-	// savePrefs 由啟動層注入，把語言與存檔格式一起寫回設定檔。
-	savePrefs func(i18n.Lang, string) error
+	// savePrefs 由啟動層注入，把語言、存檔格式與顯示模式一起寫回設定檔。
+	savePrefs func(i18n.Lang, string, string) error
+	// mode 是目前的顯示模式（`internal/ui/tileset.go` 的 DisplayModes）。
+	// 空字串代表沒指定，走 graphicsDirs 的挑選順序。
+	mode string
 	// saveLang 由啟動層注入，避免 UI 套件決定各平台設定檔位置。
 	// nil 代表本次工作階段不持久化（例如測試或無法取得設定目錄）。
 	saveLang func(i18n.Lang) error
@@ -857,7 +860,7 @@ func (g *Game) handleWindowKeys() {
 				g.layer = mapLayer(i)
 			}
 		}
-	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad,
+	case winSystem, winScenario, winStyle, winMode, winSpeed, winPower, winLoad,
 		winLangSel, winMusic, winSaveFmt:
 		g.handleSysMenuKeys()
 	case winSaveAs:

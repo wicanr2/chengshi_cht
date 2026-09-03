@@ -69,23 +69,23 @@ func loadAnyPGF(raw []byte, name string) (*assets.PGF, error) {
 	if g, err := assets.ParsePGF(raw); err == nil {
 		return g, nil
 	}
-	tile, bpp := 16, 4
+	tw, th, bpp := 16, 16, 4
 	var mode byte = 'E'
 	switch {
 	case strings.Contains(strings.ToLower(name), "mcga"):
-		tile, bpp, mode = 8, 8, '2'
+		tw, th, bpp, mode = 8, 8, 8, '2'
 	case strings.Contains(strings.ToLower(name), "sega"):
-		tile, bpp, mode = 8, 4, 'e'
+		tw, th, bpp, mode = 8, 8, 4, 'e'
 	case strings.Contains(strings.ToLower(name), "mono"):
-		tile, bpp, mode = 16, 1, 'V'
+		tw, th, bpp, mode = 16, 16, 1, 'V'
 	case strings.Contains(strings.ToLower(name), "tdy"):
 		// Tandy 的 16 色是封裝式 4bpp，不是 EGA 平面式。
-		tile, bpp, mode = 8, 4, 'T'
+		tw, th, bpp, mode = 8, 8, 4, 'T'
 	case strings.Contains(strings.ToLower(name), "cga"):
-		// `SIMCITY.CFG` 的 `C` 是 **CGA Mono**（640×200 兩色），圖塊 16×8。
-		tile, bpp, mode = 16, 1, 'C'
+		// `SIMCITY.CFG` 的 `C` 是 **CGA Mono**（640×200 兩色），圖塊 **16×8**。
+		tw, th, bpp, mode = 16, 8, 1, 'C'
 	}
-	return assets.LoadPGFBase(raw, tile, bpp, mode)
+	return assets.LoadPGFBase(raw, tw, th, bpp, mode)
 }
 
 func writePNG(path string, g *assets.PGF, b assets.PGFBank, im assets.PGFImage) error {

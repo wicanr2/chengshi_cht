@@ -17,6 +17,17 @@ import "encoding/binary"
 //	MONO  2 880 ÷ 960 =  3 ÷ 1 平面 = 3 列 → 3×3
 //	sega  3 840 ÷ 960 =  4 ÷ 4 平面 = 1 列 → 3×1
 //	mcga    960 ÷ 960 =  1（256 色，一格一個色號）→ 1×1
+//	tdy     960 ÷ 960 =  1（封裝式 4bpp，色號在高四位）→ 1×1
+//
+// ⚠ Tandy 走**封裝式**，不是平面式（同 pgf.go 的 pgfPixels）。
+// 少了那一支，`per % planes` 過不了（1 % 4 ≠ 0），`parseMiniTiles` 直接回 nil，
+// City Form 的縮圖整片消失而**畫面照樣畫得出來**——只是退回純色方塊，
+// 看起來像「那個模式的地圖就長這樣」。
+//
+// 這一塊在**風格檔**六個模式都解得出來；**基本檔**只有 CEGA 與 sega 的
+// 位置對得上（緊接在第 0 庫之後），MONO／mcga／tdy／CGA 的基本檔中間還隔著
+// 一段（MONO 2 816＝128 個字×(8+14) 位元組，tdy 4 096＝128×32），
+// 目前一律解不出來，退回純色方塊。這是既有缺口，不是換顯示模式帶進來的。
 //
 // 寬度沒有寫在檔案裡，是從內容反推的：CEGA 與 MONO 的縮圖區**每一個位元組
 // 的低五位都是 0**，只有最高三位在動——所以一列只有三個像素。3×3 也正好
@@ -62,7 +73,7 @@ func (f *PGFFont) Count() int {
 
 // parseMiniTiles 讀縮圖區，回傳縮圖與它之後的位移。
 // 讀不出合理的版面就回 nil，讓呼叫端照舊當成未解位元組。
-func parseMiniTiles(d []byte, bpp int) (*MiniTiles, int) {
+func parseMiniTiles(d []byte, bpp int, mode byte) (*MiniTiles, int) {
 	if len(d) < 3 {
 		return nil, 0
 	}
@@ -73,6 +84,26 @@ func parseMiniTiles(d []byte, bpp int) (*MiniTiles, int) {
 	per := n / tileCount
 	body := d[3 : 3+n]
 	m := &MiniTiles{}
+	if mode == modeTandy && bpp == 4 {
+		// Tandy 走封裝式：一個位元組兩個像素、高四位在前。
+		// 實測六個風格檔**都是** 960 ÷ 960 = 1 個位元組一格，而且 960 張的
+		// 低四位全部是 0——所以一格只有一個像素，色號在高四位，低四位是
+		// 封裝式的填充。驗證：取高四位得到的色號與同風格的 sega 相同
+		// （ASIA 等五個是空地 6、水 1、樹林 2、道路 7；MOON 自己一組）。
+		//
+		// per 不是 1 的情形手上沒有樣本，寬度就無從量起（3 個像素與 4 個
+		// 像素同樣佔 2 個位元組，兩種都自洽）。與其猜一個，不如回 nil ——
+		// 猜錯是整張地圖歪掉，回 nil 只是退回純色方塊。
+		if per != 1 {
+			return nil, 0
+		}
+		m.Width, m.Height = 1, 1
+		m.Pixels = make([]uint8, tileCount)
+		for t := 0; t < tileCount; t++ {
+			m.Pixels[t] = body[t] >> 4
+		}
+		return m, 3 + n
+	}
 	planes := 4
 	switch bpp {
 	case 8:

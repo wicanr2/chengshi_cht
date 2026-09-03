@@ -195,7 +195,7 @@ func ParsePGF(raw []byte) (*PGF, error) {
 		g.Banks = append(g.Banks, b)
 	}
 	// 宣告的圖形庫之後是地圖縮圖，再之後（單色與 256 色）是介面字型。
-	if mini, next := parseMiniTiles(data[p:], g.BitsPerPixel); mini != nil {
+	if mini, next := parseMiniTiles(data[p:], g.BitsPerPixel, mode); mini != nil {
 		g.Mini = mini
 		g.Fonts = parsePGFFonts(data[p+next:], g.BitsPerPixel)
 	}

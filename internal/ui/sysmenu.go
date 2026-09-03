@@ -26,8 +26,14 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/sim"
 )
 
-// sysItems 是系統選單的項目，順序與值都取自訊息檔第 17 段
-// （分隔線 1／4／7／11 不列）。
+// sysItems 是**全畫面版**系統選單（`winSystem`）的項目，順序與值都取自
+// 訊息檔第 17 段（分隔線 1／4／7／11 不列）。
+//
+// ⚠ **目前沒有任何入口會開 `winSystem`**：2026-08-30 的介面改版把系統選單
+// 換成了選單列的下拉（`menubar.go` 的 `menuEntries`／`pickSystem`），
+// 這一份留著當那次改版的對照。**要加新項目請加到 `menubar.go`，
+// 加在這裡玩家點不到**（2026-09-04 踩過：地形編輯器加在這裡，
+// 結果只有 `-window terrain` 進得去）。
 //
 // ⚠ 「印表」是 remake 自訂的對應物：原版印的是紙上的全市地圖，
 // 這裡存成 PNG。標在 docs/spec/controls.md，不要寫成原版行為。
@@ -38,6 +44,7 @@ var sysItems = []struct {
 	{0, "about"},    // 關於本遊戲
 	{2, "print"},    // 印表 → 存成 PNG
 	{3, "style"},    // 讀取圖形集
+	{-4, "mode"},    // 顯示模式 —— remake 加的，原版是安裝時選的
 	{5, "scenario"}, // 讀取悲情城市
 	{6, "new"},      // 重新建造一新城市
 	{-3, "terrain"}, // 地形編輯器 —— remake 加的，原版是獨立程式 TERRAIN.EXE
@@ -65,6 +72,10 @@ func (g *Game) SetDataDir(dir, style string) {
 	g.loadEnglish()
 }
 
+// SetDisplayMode 由啟動層注入玩家上次的選擇（或命令列覆蓋）。
+// 圖形本身由啟動層自己載，這裡只是把選擇記下來，讓系統選單顯示得對。
+func (g *Game) SetDisplayMode(m string) { g.mode = m }
+
 func (g *Game) sysMenuLen() int {
 	switch g.win {
 	case winSystem:
@@ -77,6 +88,8 @@ func (g *Game) sysMenuLen() int {
 		return 8
 	case winStyle:
 		return len(styleOrder)
+	case winMode:
+		return len(DisplayModes)
 	case winSpeed:
 		return 5
 	case winPower:
@@ -101,6 +114,8 @@ func (g *Game) sysMenuLabel(i int) string {
 			return g.txt.UI("music_title")
 		case -3:
 			return g.txt.UI("terrain_menu")
+		case -4:
+			return g.txt.UI("mode_title")
 		}
 		return trimMenu(g.txt.S(i18n.SecSysMenu, sysItems[i].msg))
 	case winLangSel:
@@ -119,6 +134,8 @@ func (g *Game) sysMenuLabel(i int) string {
 		return game.ScenarioNameZH(i + 1)
 	case winStyle:
 		return styleOrder[i].name
+	case winMode:
+		return DisplayModes[i].Name
 	case winSpeed:
 		return trimMenu(g.txt.S(i18n.SecSpeed, i))
 	case winPower:
@@ -175,6 +192,8 @@ func (g *Game) sysMenuPick(i int) {
 		g.loadScenario(i + 1)
 	case winStyle:
 		g.loadStyle(styleOrder[i].key)
+	case winMode:
+		g.loadMode(DisplayModes[i].Key)
 	case winPower:
 		g.tool = powerTools[i].tool
 		g.win = winNone
@@ -194,6 +213,8 @@ func (g *Game) sysMenuPick(i int) {
 			g.openSaveAs()
 		case "style":
 			g.openSubMenu(winStyle)
+		case "mode":
+			g.openSubMenu(winMode)
 		case "scenario":
 			g.openSubMenu(winScenario)
 		case "new":
@@ -269,8 +290,36 @@ func (g *Game) loadStyle(key string) {
 	// 不然換完之後英文那一欄留著上一個資料片的字。
 	g.txt.SetLang(g.lang)
 	g.loadEnglish()
+	g.mini = nil
 	g.win = winNone
 	g.setMessage(trimMenu(g.txt.S(i18n.SecSysMenu, 3)))
+}
+
+// loadMode 換顯示模式（remake 加的）。
+//
+// **只換地圖美術，版面不換**：介面美術一律留 CEGA 的，理由見
+// `tileset.go` 的 DisplayModes。換完要把 City Form 的縮圖快取丟掉——
+// 每個模式的縮圖尺寸不一樣（CEGA／MONO 3×3、sega 3×1、mcga 1×1），
+// 不丟的話新模式會拿舊尺寸的快取畫，看起來像縮圖解錯了。
+func (g *Game) loadMode(key string) {
+	if g.dataDir == "" {
+		g.setMessage("沒有原版資料目錄，換不了顯示模式")
+		return
+	}
+	ts, err := LoadTileSetMode(g.dataDir, g.style, key)
+	if err != nil {
+		g.setMessage("顯示模式載入失敗：" + err.Error())
+		return
+	}
+	g.tiles, g.mode = ts, key
+	g.mini = nil
+	g.win = winNone
+	g.setMessage(g.txt.UI("mode_title") + "：" + ModeName(key))
+	if g.savePrefs != nil {
+		if err := g.savePrefs(g.lang, g.saveFmt.String(), key); err != nil {
+			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
+		}
+	}
 }
 
 // newCity 開「建造新城市」對話框（市名欄 ＋ 技術等級），實作在 newcity.go。
@@ -392,7 +441,7 @@ func (g *Game) setSaveFormat(f game.SaveFormat) {
 	g.saveFmt = f
 	g.win = winNone
 	if g.savePrefs != nil {
-		if err := g.savePrefs(g.lang, f.String()); err != nil {
+		if err := g.savePrefs(g.lang, f.String(), g.mode); err != nil {
 			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
 			return
 		}
@@ -407,8 +456,10 @@ func (g *Game) setSaveFormat(f game.SaveFormat) {
 // SetSaveFormat 由啟動層注入玩家上次的選擇（或命令列覆蓋）。
 func (g *Game) SetSaveFormat(f game.SaveFormat) { g.saveFmt = f }
 
-// SetPrefsSaver 由啟動層注入，把語言與存檔格式一起寫回設定檔。
-func (g *Game) SetPrefsSaver(save func(i18n.Lang, string) error) { g.savePrefs = save }
+// SetPrefsSaver 由啟動層注入，把語言、存檔格式與顯示模式一起寫回設定檔。
+func (g *Game) SetPrefsSaver(save func(i18n.Lang, string, string) error) {
+	g.savePrefs = save
+}
 
 // setLang 換遊戲語言。文字表四種語言都在同一份裡，換語言不必重讀檔案，
 // 也不必重載圖形集。
@@ -417,7 +468,7 @@ func (g *Game) setLang(l i18n.Lang) {
 	g.txt.SetLang(l)
 	g.win = winNone
 	if g.savePrefs != nil {
-		if err := g.savePrefs(l, g.saveFmt.String()); err != nil {
+		if err := g.savePrefs(l, g.saveFmt.String(), g.mode); err != nil {
 			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
 			return
 		}

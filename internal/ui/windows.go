@@ -49,6 +49,11 @@ const (
 	winLangSel
 	winMusic
 	winSaveFmt
+	// winMode 是顯示模式（Tandy／CGA／EGA 低解析…）的副選單。
+	// 原版是安裝時選的（`SIMCITY.CFG` 的 `Screen Mode:`），不在遊戲選單裡；
+	// 這是 remake 自己加的。**換的是地圖美術不是版面**，見 tileset.go
+	// 的 DisplayModes。
+	winMode
 )
 
 // disasterItems 是災難選單的六個項目，順序照訊息檔第 20 段。
@@ -170,6 +175,7 @@ var winRect = map[window]struct{ x, y, w, h int }{
 	winLangSel: {170, 60, 300, 140},
 	winMusic:   {120, 40, 400, 240},
 	winSaveFmt: {150, 70, 340, 120},
+	winMode:    {150, 40, 260, 160},
 }
 
 // winFrame 回傳目前視窗的外框（螢幕像素）。玩家搬過的話用搬過的位置。
@@ -209,7 +215,7 @@ func (g *Game) closeBoxHit(mx, my int) bool {
 // 與同一組 inner inset／font.Line 幾何共用，不能另猜一套座標。
 func (g *Game) sysMenuHit(mx, my int) int {
 	switch g.win {
-	case winSystem, winScenario, winStyle, winSpeed, winPower, winLoad,
+	case winSystem, winScenario, winStyle, winMode, winSpeed, winPower, winLoad,
 		winLangSel, winMusic, winSaveFmt:
 	default:
 		return -1
@@ -331,6 +337,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecSysMenu, 5)
 	case winStyle:
 		title = g.txt.S(i18n.SecSysMenu, 3)
+	case winMode:
+		title = g.txt.UI("mode_title")
 	case winAbout:
 		title = g.txt.S(i18n.SecSysMenu, 0)
 	case winSaveAs:
@@ -371,7 +379,8 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		g.drawAboutWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
 	case winSaveAs:
 		g.drawSaveAsWindow(dst, inner.Min.X, inner.Min.Y, inner.Dx(), inner.Dy())
-	case winSystem, winScenario, winStyle, winLoad, winLangSel, winMusic, winSaveFmt:
+	case winSystem, winScenario, winStyle, winLoad, winLangSel, winMusic,
+		winSaveFmt, winMode:
 		g.drawSysMenu(dst, inner.Min.X, inner.Min.Y)
 	}
 }

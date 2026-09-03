@@ -129,3 +129,70 @@ func TestAllSixDisplayModesDecode(t *testing.T) {
 		}
 	}
 }
+
+// Tandy 的 City Form 縮圖也是封裝式：960 個位元組、一格一個，
+// **色號在高四位**（低四位是封裝式的填充，960 張全部是 0）。
+//
+// 判準是與 sega 同色：兩個模式的縮圖都畫在同一個地圖視窗上，
+// 空地、水、樹林、道路的色號本來就該一樣。
+//
+// ⚠ 少了這一支的後果沒有症狀：`parseMiniTiles` 的 `per % planes`
+// （1 % 4）過不了，直接回 nil，City Form 退回純色方塊——
+// 看起來像「Tandy 的全市地圖就長這樣」。
+func TestTandyMiniTiles(t *testing.T) {
+	dir := modeDir(t)
+	for _, style := range []string{"ASIA", "MEDI", "WEST", "FUSA", "FEUR", "MOON"} {
+		tdy := loadPGFFile(t, filepath.Join(dir, style+"TDY.PGF"))
+		sega := loadPGFFile(t, filepath.Join(dir, style+"SEGA.PGF"))
+		if tdy.Mini == nil {
+			t.Fatalf("%s 的 Tandy 縮圖沒解出來", style)
+		}
+		if tdy.Mini.Width != 1 || tdy.Mini.Height != 1 {
+			t.Fatalf("%s 的 Tandy 縮圖 %dx%d，要 1x1",
+				style, tdy.Mini.Width, tdy.Mini.Height)
+		}
+		// 空地、水、樹林、道路。sega 的縮圖是 3×1，取第一個像素比。
+		for _, c := range []struct {
+			tile int
+			what string
+		}{{0, "空地"}, {2, "水"}, {37, "樹林"}, {64, "道路"}} {
+			a, b := tdy.Mini.Tile(c.tile), sega.Mini.Tile(c.tile)
+			if len(a) == 0 || len(b) == 0 {
+				t.Fatalf("%s 圖塊 %d 取不到縮圖", style, c.tile)
+			}
+			if a[0] != b[0] {
+				t.Errorf("%s 的%s（圖塊 %d）縮圖色號：Tandy %d、sega %d",
+					style, c.what, c.tile, a[0], b[0])
+			}
+		}
+	}
+}
+
+// CGA Mono 的基本圖形檔（`CGADAT.PGF`，1.03 才有）圖塊是 **16×8 單色**，
+// 不是正方形——六個顯示模式裡只有它不是。
+//
+// 判準是「解得開」本身：猜錯尺寸會硬錯出來，不是畫得醜。
+// 16×16×8bpp 要 246 528 個位元組而整份檔案只有 34 123；
+// 16×16×1bpp 走得到第 0 庫尾，但後面二十一個行內庫表全部對不齊。
+func TestCGABaseIs16x8Mono(t *testing.T) {
+	dir := dos103Dir(t)
+	raw, err := os.ReadFile(filepath.Join(dir, "CGADAT.PGF"))
+	if err != nil {
+		t.Skipf("讀不到 CGADAT.PGF：%v", err)
+	}
+	g, err := LoadPGFBase(raw, 16, 8, 1, 'C')
+	if err != nil {
+		t.Fatalf("CGA 基本檔解不開：%v", err)
+	}
+	b := g.Banks[0]
+	if b.Width != 16 || b.Height != 8 || len(b.Images) != tileCount {
+		t.Fatalf("第 0 庫 %d 張 %d×%d，要 %d 張 16×8",
+			len(b.Images), b.Width, b.Height, tileCount)
+	}
+	if _, err := LoadPGFBase(raw, 16, 16, 8, 'C'); err == nil {
+		t.Error("16×16 的 8bpp 也解得開 —— 那這個判準分不出對錯")
+	}
+	if _, err := LoadPGFBase(raw, 16, 16, 1, 'C'); err == nil {
+		t.Error("16×16 的單色也解得開 —— 那這個判準分不出對錯")
+	}
+}

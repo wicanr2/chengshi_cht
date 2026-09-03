@@ -3080,3 +3080,70 @@ remake 自己畫上去的中文按鈕，不是版面錯位。已寫進
 ⚠ **版面沒有跟著換**。remake 只有一套 640×350 的 EGA 高解析版面
 （`docs/spec/ui-layout.md`），其他模式的圖形檔目前只當「圖塊來源」用。
 原版那幾種 320×200 的畫面還沒重製，那是另一件事。
+
+## 2026-09-04 — 六種顯示模式接進遊戲，順手撈出三個沉默的解碼錯
+
+使用者定案：**加「顯示模式」選項，版面不換**。做法是 `-mode` 旗標
+＋ 系統選單第 16 列，設定記進 `settings.json` 的 `display_mode`。
+規格與理由寫在 `docs/spec/ui-layout.md` 的「顯示模式」一節，
+worklist 第 40 項。
+
+### 三個沉默的錯
+
+三個的共同形狀是**沒有症狀**：編得過、測得過、玩得動，
+而畫面上的錯誤看起來都像別的東西。
+
+| 錯 | 看起來像什麼 | 怎麼抓到的 |
+|---|---|---|
+| Tandy 的 16 色當成 EGA 平面式 | 檔案壞了（一片彩色雜訊）| 位元組數兩種讀法一樣，長度檢查抓不到；改用與 sega 逐格比色號陣列 |
+| Tandy 的 City Form 縮圖也是封裝式 | 「Tandy 的全市地圖就長這樣」| `per % planes`（1 % 4）過不了 → `parseMiniTiles` 回 nil → 退回純色方塊，**沒有任何錯誤訊息** |
+| CGA 基本檔寫成 16×16 的 8bpp | `-style base -mode cga` 開不起來 | 第 0 庫要 246 528 位元組而檔案只有 34 123；三種讀法只有 16×8 單色能一路串到檔尾 |
+
+第三個順手把 `LoadPGFBase` 的 `tile` 拆成 `tw, th`——六個模式裡
+**只有 CGA 不是正方形**，一個參數表達不了。
+
+### CGA 的美術要縱向拉兩倍
+
+CGA Mono 的螢幕是 640×200，像素本身是扁的，所以圖塊只有 16×8。
+貼進 remake 的方像素畫布，每格只填一半高，地圖區變成一條一條的橫紋——
+**那看起來像圖形檔解錯，不像版面不合**，很容易往解碼那邊追。
+`vStretchOf` 照寬高比整份拉（圖塊、精靈、介面美術一起；只拉地圖的話
+精靈會比它站的那塊地矮一半）。六個模式裡只有 CGA 會拉。
+
+### 判準是「三種讀法只有一種成立」，不是「畫出來像地形」
+
+CGA 那一條的價值在**兩個反例都會硬錯**：16×16 的 8bpp 長度就不夠，
+16×16 的單色第 0 庫尾對得上但後面 21 個行內庫表一個都對不齊。
+所以 `TestCGABaseIs16x8Mono` 除了驗正確參數，還驗那兩個錯的參數**解不開**——
+少了後半段，這個測試分不出對錯。
+
+### 改了什麼
+
+- `internal/assets/pgfmini.go`：Tandy 的封裝式縮圖分支。
+  只接受實測到的「一格一個位元組」，`per` 不是 1 就回 nil——
+  3 個像素與 4 個像素同樣佔 2 個位元組，手上沒有樣本就無從量起，
+  猜錯是整張地圖歪掉，回 nil 只是退回純色方塊。
+- `internal/assets/pgfbase.go`：`LoadPGFBase(raw, tw, th, bpp, mode)`。
+- `internal/ui/tileset.go`：`graphicsDirs` 補 `tw/th`，CGA 改成 16×8 單色；
+  `vStretchOf` 與三處 `imageFrom*` 帶 vs；`LoadTileSetMode` 借 CEGA 的介面美術。
+- `internal/ui/menubar.go`、`sysmenu.go`、`windows.go`：系統選單第 16 列與副選單。
+- `cmd/chengshi/main.go`、`internal/settings/settings.go`：`-mode` 與設定持久化。
+- 測試：`TestTandyMiniTiles`（六個風格）、`TestCGABaseIs16x8Mono`、
+  `TestPGFBaseParses` 補 tdy 與 CGA（1.10 沒有，退到 1.03 找）、
+  `TestSystemMenuKeepsOriginalRowsAndAppendsSettings` 補新增兩列的動作。
+
+### 驗收
+
+六個模式各跑一次實機截圖（`workplace/shots/mode6-*.png`，拼圖 `mode6-grid.png`），
+六個都畫得出地圖與 City Form；顯示模式副選單 `mode-submenu.png`。
+CGA 那一張在拉伸修好之前是整片橫紋，修好之後看得到海岸線，
+與 City Form 的形狀對得上。
+
+### 未解
+
+**基本檔的縮圖只有 CEGA 與 sega 位置對得上。**
+`MONODAT`／`mcgadat`／`TDYDAT`／`CGADAT` 的縮圖表頭不在第 0 庫的正後方，
+中間隔著一段（MONO 2 816 ＝ 128 字 ×(8+14)、tdy 4 096 ＝ 128 字 × 32，
+長度都對得上自帶字型，所以基本檔**可能是字型在前縮圖在後**，與風格檔相反）。
+目前這四個模式的基本檔 City Form 退回純色方塊。
+⚠ 這是既有缺口——`MONODAT` 與 `mcgadat` 在加顯示模式之前就是這樣。

@@ -43,10 +43,13 @@ func (g *Game) menuEntries(m int) []string {
 	for i := 0; g.txt.Has(sec, i); i++ {
 		out = append(out, trimMenu(g.txt.S(sec, i)))
 	}
-	// SYSTEM 的原版列完整保留在 0..12；最下方 13 是 remake 擴充分隔線，
-	// 14 是設定入口、15 是存檔格式。其餘三個選單不變，避免污染原版對拍。
+	// SYSTEM 的原版列完整保留在 0..12；13 是 remake 擴充分隔線，
+	// 14 設定、15 存檔格式、16 顯示模式、17 地形編輯器。
+	// 其餘三個選單不變，避免污染原版對拍。
 	if m == 0 {
-		out = append(out, "-", g.txt.UI("settings_title"), g.txt.UI("savefmt_title"))
+		out = append(out, "-",
+			g.txt.UI("settings_title"), g.txt.UI("savefmt_title"),
+			g.txt.UI("mode_title"), g.txt.UI("terrain_menu"))
 	}
 	return out
 }
@@ -239,6 +242,10 @@ func (g *Game) pickSystem(row int) {
 		g.openLangNext = true
 	case 15:
 		g.openSaveFmtNext = true
+	case 16:
+		g.openSubMenu(winMode)
+	case 17:
+		g.openTerrainScreen()
 	}
 }
 

@@ -286,6 +286,14 @@ remake 因此只接 `Ctrl` ＋ 方向鍵那一條，並且讓不加 `Ctrl` 也�
 |---|---|
 | 語言 | 繁體中文／简体中文／日本語／English。命令列 `-lang zh-Hant／zh-Hans／ja／en` |
 | 音樂 | 開關與選曲。命令列 `-music <目錄>`；快速鍵 `M` 開關、`[`／`]` 上一首下一首 |
+| 存檔格式 | DOS `.CTY`／X11 `.cty`。命令列 `-save-format` |
+| 顯示模式 | 六個（EGA 高解析／低解析彩色、Tandy 彩色、VGA 256 色、單色、CGA 單色）。命令列 `-mode cega／sega／tdy／mcga／mono／cga`。⚠ **換的是地圖美術，不是版面**，見 [`ui-layout.md`](ui-layout.md) 的「顯示模式」一節 |
+| 地形編輯器 | 開全畫面編輯器，見 §十六 |
+
+這五列在系統選單裡是第 14–17 列（第 13 列是分隔線），
+原版那 13 列停在索引 12 一字不動。⚠ **`winSystem` 那份 `sysItems` 自
+2026-08-30 起沒有入口了**，新列只加在 `menubar.go` 的 `menuEntries`／
+`pickSystem` 才會生效；只改 `sysItems` 的話選單上看不到，而且不會有錯誤。
 
 **英文是執行時從玩家自己那份 `.PTF` 讀出來的**，不在版控也不進發行包
 （`CLAUDE.md` §8）——那是原版的文字。`Funds:` 這種**執行檔裡**的字

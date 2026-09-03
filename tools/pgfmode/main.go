@@ -36,6 +36,53 @@ func load(p string) *assets.PGF {
 
 func main() {
 	switch os.Args[1] {
+	case "mini":
+		// 兩個模式的 City Form 縮圖逐格比色號陣列，判準同 cmp。
+		a, b := load(os.Args[2]), load(os.Args[3])
+		if a.Mini == nil || b.Mini == nil {
+			fmt.Printf("縮圖解不出來：A nil? %v／B nil? %v\n", a.Mini == nil, b.Mini == nil)
+			return
+		}
+		fmt.Printf("A %s 縮圖 %dx%d／B %s 縮圖 %dx%d\n",
+			os.Args[2], a.Mini.Width, a.Mini.Height,
+			os.Args[3], b.Mini.Width, b.Mini.Height)
+		if a.Mini.Width != b.Mini.Width || a.Mini.Height != b.Mini.Height {
+			fmt.Println("尺寸不同，不能逐格比")
+			return
+		}
+		same, diff := 0, 0
+		for i := 0; i < 960; i++ {
+			ta, tb := a.Mini.Tile(i), b.Mini.Tile(i)
+			eq := len(ta) == len(tb)
+			for j := range ta {
+				if !eq || ta[j] != tb[j] {
+					eq = false
+					break
+				}
+			}
+			if eq {
+				same++
+			} else {
+				diff++
+			}
+		}
+		fmt.Printf("縮圖逐格相同 %d 張、不同 %d 張\n", same, diff)
+	case "minidump":
+		g := load(os.Args[2])
+		if g.Mini == nil {
+			fmt.Println("沒有縮圖")
+			return
+		}
+		fmt.Printf("%s 縮圖 %dx%d\n", os.Args[2], g.Mini.Width, g.Mini.Height)
+		for _, n := range []int{0, 2, 37, 64} {
+			t := g.Mini.Tile(n)
+			fmt.Printf("  圖塊 %3d 色號 %v 顏色", n, t)
+			for _, v := range t {
+				c := g.Palette[v]
+				fmt.Printf(" (%d,%d,%d)", c.R, c.G, c.B)
+			}
+			fmt.Println()
+		}
 	case "cmp":
 		a, b := load(os.Args[2]), load(os.Args[3])
 		ba, bb := a.Banks[0], b.Banks[0]

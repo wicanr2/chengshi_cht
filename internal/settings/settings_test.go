@@ -11,7 +11,7 @@ import (
 func TestSaveLoadLanguages(t *testing.T) {
 	for _, lang := range i18n.Langs {
 		p := filepath.Join(t.TempDir(), "nested", "settings.json")
-		if err := Save(p, lang, "dos"); err != nil {
+		if err := Save(p, lang, "dos", ""); err != nil {
 			t.Fatalf("Save(%s): %v", lang, err)
 		}
 		got, err := Load(p)

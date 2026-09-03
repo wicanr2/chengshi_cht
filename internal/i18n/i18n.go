@@ -72,7 +72,7 @@ const (
 	// SecMapSub 是兩個「一格管兩個圖層」的圖示按住時跳出來的小選單：
 	// 人口分佈／警力範圍／消防範圍／人口成長。九個圖示對十一個圖層，
 	// 差的兩個就在這裡（實測見 docs/spec/controls.md §九）。
-	SecMapSub = 11
+	SecMapSub   = 11
 	SecClass    = 12 // 城市等級
 	SecProblem  = 13 // 評估視窗的嚴重問題
 	SecTileName = 14 // 查詢工具的地物名稱

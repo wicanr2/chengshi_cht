@@ -171,7 +171,7 @@ func TestMiniTilesSharedExceptMoon(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := LoadPGFBase(raw, 16, 4, 'E')
+	b, err := LoadPGFBase(raw, 16, 16, 4, 'E')
 	if err != nil {
 		t.Fatal(err)
 	}

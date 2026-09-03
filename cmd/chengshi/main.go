@@ -17,11 +17,11 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
+	"github.com/wicanr2/chengshi_cht/internal/assets"
 	"github.com/wicanr2/chengshi_cht/internal/game"
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
 	"github.com/wicanr2/chengshi_cht/internal/settings"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
-	"github.com/wicanr2/chengshi_cht/internal/assets"
 	"github.com/wicanr2/chengshi_cht/internal/ui"
 )
 
@@ -89,6 +89,9 @@ func main() {
 	save := flag.String("save", defaultSavePath(), "Ctrl-S 的存檔位置")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
+	modeFlag := flag.String("mode", "", "顯示模式（換的是地圖美術不是版面）："+
+		"cega 高解析彩色／sega 低解析彩色／tdy Tandy／mcga 256 色／mono 單色／cga CGA 單色。"+
+		"⚠ Tandy 與 CGA 的圖形檔在兩片資料片的發行包與 1.03 裡，不在 1.10")
 	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas／newcity／terrain／terrainparams／load／language")
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
 	langFlag := flag.String("lang", "", "本次啟動語言：zh-Hant 繁體／zh-Hans 简体／ja 日本語／en English（空白時讀取玩家設定）")
@@ -159,12 +162,21 @@ func main() {
 		os.Exit(2)
 	}
 
-	ts, err := ui.LoadTileSet(*data, *style)
+	// 顯示模式：命令列 → 玩家設定 → 預設（`cega`，remake 的版面就是照它量的）。
+	// ⚠ **刻意不讀 `SIMCITY.CFG` 的 `Screen Mode:`**：那一欄是原版安裝時選的，
+	// 照它走的話 CFG 寫 `T` 的玩家一開機就是 Tandy 的地圖美術配 EGA 版面，
+	// 而且畫面對拍的基準會跟著變。要換就明講。
+	mode, modeErr := resolveDisplayMode(*modeFlag, settingsPathEarly())
+	if modeErr != nil {
+		fmt.Fprintln(os.Stderr, "顯示模式：", modeErr)
+	}
+	ts, err := ui.LoadTileSetMode(*data, *style, mode)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Printf("圖形集：%s（%s）%s\n", *style, ts.Style, styleSource)
+	fmt.Printf("圖形集：%s（%s）%s／顯示模式：%s\n",
+		*style, ts.Style, styleSource, ui.ModeName(mode))
 	font, err := ui.LoadFont()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "字型載入失敗：", err)
@@ -264,14 +276,15 @@ func main() {
 	g.StartWatchdog(filepath.Dir(*save), time.Duration(*watchdog)*time.Second)
 	g.SetFreezeTest(time.Duration(*freezeTest) * time.Second)
 	if settingsPathErr == nil {
-		g.SetPrefsSaver(func(l i18n.Lang, f string) error {
-			return settings.Save(settingsPath, l, f)
+		g.SetPrefsSaver(func(l i18n.Lang, f, m string) error {
+			return settings.Save(settingsPath, l, f, m)
 		})
 	}
 	// 系統選單要靠這兩個才換得了劇本與圖形集（Alt-S）。
 	// ⚠ 這一行也負責把**英文原文**從玩家那份 `.PTF` 讀進來，
 	// 所以要在 SetLang 之後——英文那一層是疊在語言表上面的。
 	g.SetDataDir(*data, *style)
+	g.SetDisplayMode(mode)
 	// 原版一啟動是招牌畫面（`CEGANTRO.PPF`），不是城市。只有在玩家沒有
 	// 指定要玩哪一座城時才走那條路——命令列點名了劇本、存檔、示範城市或
 	// 起始鏡頭，就是直接進去，試玩與截圖腳本靠這個。
@@ -317,6 +330,39 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// settingsPathEarly 在設定檔路徑還沒算出來之前先取一次；取不到回空字串，
+// resolveDisplayMode 會退回預設值。
+func settingsPathEarly() string {
+	p, err := settings.DefaultPath()
+	if err != nil {
+		return ""
+	}
+	return p
+}
+
+// resolveDisplayMode 的優先序與語言相同：命令列 → 玩家設定 → 預設。
+func resolveDisplayMode(flagValue, settingsPath string) (string, error) {
+	if flagValue != "" {
+		if !ui.ValidMode(flagValue) {
+			return ui.ModeCEGA, fmt.Errorf("不認得的顯示模式 %q，用預設的 %s",
+				flagValue, ui.ModeCEGA)
+		}
+		return flagValue, nil
+	}
+	if settingsPath == "" {
+		return ui.ModeCEGA, nil
+	}
+	saved, err := settings.Load(settingsPath)
+	if err != nil || saved.DisplayMode == "" {
+		return ui.ModeCEGA, nil
+	}
+	if !ui.ValidMode(saved.DisplayMode) {
+		return ui.ModeCEGA, fmt.Errorf("設定檔的顯示模式 %q 不認得，用預設的 %s",
+			saved.DisplayMode, ui.ModeCEGA)
+	}
+	return saved.DisplayMode, nil
 }
 
 // resolveLanguage 的優先序是命令列 → 玩家設定 → 繁體預設。

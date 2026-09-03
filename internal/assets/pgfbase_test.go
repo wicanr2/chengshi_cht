@@ -15,16 +15,24 @@ func TestPGFBaseParses(t *testing.T) {
 	dir := dosDir(t)
 	cases := []struct {
 		sub, name string
-		tile, bpp int
+		tw, th    int
+		bpp       int
 		mode      byte
 	}{
-		{"CEGA", "CEGADAT.PGF", 16, 4, 'E'},
-		{"sega", "segadat.pgf", 8, 4, 'e'},
-		{"MONO", "MONODAT.PGF", 16, 1, 'V'},
-		{"mcga", "mcgadat.pgf", 8, 8, '2'},
+		{"CEGA", "CEGADAT.PGF", 16, 16, 4, 'E'},
+		{"sega", "segadat.pgf", 8, 8, 4, 'e'},
+		{"MONO", "MONODAT.PGF", 16, 16, 1, 'V'},
+		{"mcga", "mcgadat.pgf", 8, 8, 8, '2'},
+		{"tdy", "TDYDAT.PGF", 8, 8, 4, 'T'},
+		{"CGA", "CGADAT.PGF", 16, 8, 1, 'C'},
 	}
 	for _, c := range cases {
 		path := findCase(dir, c.sub, c.name)
+		if path == "" {
+			// Tandy 與 CGA 的基本檔 1.10 沒有，只有 1.03 有，
+			// 而且 1.03 是平的一層（CLAUDE.md §2.1）。
+			path = findCase(dos103Dir(t), ".", c.name)
+		}
 		if path == "" {
 			t.Logf("%s/%s 不在，跳過", c.sub, c.name)
 			continue
@@ -33,7 +41,7 @@ func TestPGFBaseParses(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		g, err := LoadPGFBase(raw, c.tile, c.bpp, c.mode)
+		g, err := LoadPGFBase(raw, c.tw, c.th, c.bpp, c.mode)
 		if err != nil {
 			t.Errorf("%s：%v", c.name, err)
 			continue
@@ -41,8 +49,9 @@ func TestPGFBaseParses(t *testing.T) {
 		if len(g.Banks[0].Images) != tileCount {
 			t.Errorf("%s 第 0 庫 %d 張，應為 %d", c.name, len(g.Banks[0].Images), tileCount)
 		}
-		if g.Banks[0].Width != c.tile {
-			t.Errorf("%s 圖塊邊長 %d，應為 %d", c.name, g.Banks[0].Width, c.tile)
+		if g.Banks[0].Width != c.tw || g.Banks[0].Height != c.th {
+			t.Errorf("%s 圖塊 %d×%d，應為 %d×%d",
+				c.name, g.Banks[0].Width, g.Banks[0].Height, c.tw, c.th)
 		}
 		t.Logf("%-12s %d 個庫，第 0 庫 %d 張 %d×%d，調色盤 %d 色",
 			c.name, len(g.Banks), len(g.Banks[0].Images),
@@ -64,7 +73,7 @@ func TestPGFBaseDirtIsBrown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	g, err := LoadPGFBase(raw, 16, 4, 'E')
+	g, err := LoadPGFBase(raw, 16, 16, 4, 'E')
 	if err != nil {
 		t.Fatal(err)
 	}

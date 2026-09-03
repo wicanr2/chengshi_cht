@@ -23,6 +23,12 @@ type File struct {
 	// 解出來是空字串，由呼叫端當成預設值。升版本會讓既有設定檔整份被判為
 	// 不支援，玩家的語言選擇跟著一起掉。
 	SaveFormat string `json:"save_format,omitempty"`
+	// DisplayMode 是顯示模式（`cega`／`sega`／`tdy`／`mcga`／`mono`／`cga`）。
+	// 換的是**地圖美術**不是版面，見 `internal/ui/tileset.go` 的 DisplayModes。
+	//
+	// ⚠ 與 SaveFormat 同理，這一欄也是後加的，**不升版本號**：
+	// 舊設定檔沒有這一欄，解出來是空字串，由呼叫端當成預設值（`cega`）。
+	DisplayMode string `json:"display_mode,omitempty"`
 }
 
 // DefaultPath 使用作業系統的使用者設定目錄，不與存檔或原版資料混在一起。
@@ -75,7 +81,7 @@ func validSaveFormat(s string) bool {
 }
 
 // Save 以同目錄暫存檔加 rename 原子替換，避免中途結束留下半份 JSON。
-func Save(path string, lang i18n.Lang, saveFormat string) error {
+func Save(path string, lang i18n.Lang, saveFormat, displayMode string) error {
 	if !validLang(lang) {
 		return fmt.Errorf("不支援的語言 %q", lang)
 	}
@@ -90,7 +96,8 @@ func Save(path string, lang i18n.Lang, saveFormat string) error {
 		return err
 	}
 	raw, err := json.MarshalIndent(
-		File{Version: Version, Language: lang, SaveFormat: saveFormat}, "", "  ")
+		File{Version: Version, Language: lang, SaveFormat: saveFormat,
+			DisplayMode: displayMode}, "", "  ")
 	if err != nil {
 		return err
 	}

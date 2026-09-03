@@ -107,3 +107,4 @@ te_terraforming	正在造地形	正在造地形	地形生成中	Now terraforming
 te_smoothing	平滑中……	平滑中……	整えています…	Smoothing...
 te_citymap	全市地圖	全市地图	全体マップ	City Map
 te_year_bad	年份要四位數，而且要大於 1900	年份要四位数，而且要大于 1900	年は4桁で、1900より後にしてください	Year must be 4 digits and later than 1900
+mode_title	顯示模式	显示模式	表示モード	Display Mode
