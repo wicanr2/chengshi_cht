@@ -71,3 +71,38 @@ terrain_lakes	湖泊數量	湖泊数量	湖の数	Lakes
 terrain_curve	河流彎曲	河流弯曲	曲がり	Curviness
 terrain_go	開始	开始	開始	Go
 terrain_cancel	取消	取消	取消	Cancel
+te_sys	系統	系统	システム	SYSTEM
+te_terrain	地形	地形	地形	TERRAIN
+te_params	參數	参数	パラメータ	PARAMETERS
+te_about	關於地形編輯器	关于地形编辑器	地形エディタについて	About TERRAIN
+te_print	印表	印表	印刷	Print
+te_new	開新地圖	开新地图	新規マップ	Start New City
+te_load	讀取城市  Ctrl-L	读取城市  Ctrl-L	都市をロード Ctrl-L	Load City  Ctrl-L
+te_saveas	以……檔名儲存	以……档名储存	名前を付けて保存	Save City as ...
+te_save	儲存城市  Ctrl-S	储存城市  Ctrl-S	都市を保存 Ctrl-S	Save City  Ctrl-S
+te_exit	離開編輯器  Ctrl-X	离开编辑器  Ctrl-X	エディタ終了 Ctrl-X	Exit  Ctrl-X
+te_clear	清除地圖  Ctrl-C	清除地图  Ctrl-C	マップを消去 Ctrl-C	Clear Map  Ctrl-C
+te_clear_art	清除人造物	清除人造物	人工物を消去	Clear Unnatural Objects
+te_random	產生隨機地形  Ctrl-T	产生随机地形  Ctrl-T	ランダム地形 Ctrl-T	Create Random Terrain  Ctrl-T
+te_smooth_trees	平滑樹林	平滑树林	森を整える	Smooth Trees
+te_smooth_rivers	平滑河流	平滑河流	川を整える	Smooth Rivers
+te_smooth_all	全部平滑  Ctrl-A	全部平滑  Ctrl-A	すべて整える Ctrl-A	Smooth Everything  Ctrl-A
+te_island	造島  Ctrl-I	造岛  Ctrl-I	島を作る Ctrl-I	Create Island  Ctrl-I
+te_name_level	市名與難度	市名与难度	都市名と難易度	Name & Level
+te_year	遊戲年份	游戏年份	開始年	Game Year
+te_sound	音效	音效	サウンド	Sound
+te_tool_dirt	空地	空地	更地	DIRT
+te_tool_trees	樹林	树林	森	TREES
+te_tool_river	河流	河流	川	RIVER
+te_tool_channel	水道	水道	水路	CHANNEL
+te_tool_fill	填滿	填满	塗りつぶし	FILL
+te_tool_undo	復原	复原	元に戻す	UNDO
+te_year_prompt	輸入遊戲年份：	输入游戏年份：	開始年を入力：	Enter Game Year:
+te_confirm_new	開新地圖會清掉目前這一張，確定嗎？	开新地图会清掉目前这一张，确定吗？	新規マップで現在の地図を消します。よろしいですか？	Start a new map? The current one will be cleared.
+te_confirm_exit	離開地形編輯器？沒存的地圖會不見。	离开地形编辑器？没存的地图会不见。	エディタを終了しますか？保存していない地図は失われます。	Exit the terrain editor? Unsaved work will be lost.
+te_yes	確定	确定	はい	OK
+te_no	取消	取消	キャンセル	Cancel
+te_terraforming	正在造地形	正在造地形	地形生成中	Now terraforming
+te_smoothing	平滑中……	平滑中……	整えています…	Smoothing...
+te_citymap	全市地圖	全市地图	全体マップ	City Map
+te_year_bad	年份要四位數，而且要大於 1900	年份要四位数，而且要大于 1900	年は4桁で、1900より後にしてください	Year must be 4 digits and later than 1900

@@ -123,11 +123,12 @@ configuration file not found.`，設定檔要由磁片自己的 `INSTALL.EXE` �
 |---|---|
 | `SYSTEM` | `About TERRAIN`／`Print`／`Start New City`／`Load City Ctrl-L`／`Save City as ...`／`Save City Ctrl-S`／`Exit Ctrl-X` |
 | `TERRAIN` | `Clear Map Ctrl-C`／`Clear Unnatural Objects`／`Create Random Terrain CTRL-T`／`Smooth Trees`／`Smooth Rivers`／`Smooth Everything CTRL-A`／`Create Island CTRL-I` |
-| `PARAMETERS` | `Name & Level`／`Game Year`／`Sound On` |
+| `PARAMETERS` | `Name & Level`／`Game Year`／`Sound On`（開關，字串本體是 ` Sound Off`）|
 
 兩件事因此定案：
 
-- **`Create Island` 有介面**，在 `TERRAIN` 選單裡，是一個**動作**不是一個滑桿。
+- **`Create Island` 在 `TERRAIN` 選單裡，而且是一個「開關」**：勾起來之後
+  下一次「產生隨機地形」才造島，不是按下去就造一座島。反組譯的證據在 §十二。
 - **參數對話框掛在 `TERRAIN` → `Create Random Terrain`**，不在 `PARAMETERS` 選單裡；
   `PARAMETERS` → `Name & Level` 開的是遊戲本體那個「市名 ＋ 技術等級 ＋ OK」對話框。
 
@@ -160,7 +161,8 @@ configuration file not found.`，設定檔要由磁片自己的 `INSTALL.EXE` �
 
 ## 五、介面：字串全拿到了（已確認）
 
-解包版的字串把整個介面攤開了。**編輯器不是畫筆工具，是參數式地形產生器。**
+解包版的字串把介面的文字全攤開了（工具盤那六個標籤是**畫**出來的，
+不在字串表裡——見 §九）。
 
 ```
 MAXIS SimCity Terrain Editor
@@ -199,11 +201,11 @@ type TerrainParams struct {
 ```
 
 出自 `s_gen.c:76-79`，早就照著實作了（`GenerateMap`），`Smoothing...` 對應的
-`smoothRiver`／`smoothTrees` 也在（`SmoothTerrain`）。**編輯器的規則層等於全解，
-缺的只有那個對話框的版面。**
+`smoothRiver`／`smoothTrees` 也在（`SmoothTerrain`）。
 
-⚠ **`CreateIsland` 在原版編輯器的介面上沒有對應的字串。** 它是不是藏在別處、
-或者編輯器根本不開放它，**未解**——不要因為 remake 有這個欄位就自己加一個滑桿上去。
+`CreateIsland` 在字串表裡找不到，是因為它是 `TERRAIN` 選單的一條
+（` Create Island           CTRL-I`，`dseg:0x19A4`），而且是**開關**不是參數——
+見 §十二。
 
 ## 六、反組譯：版面挖出來了（已確認）
 
@@ -325,31 +327,322 @@ type TerrainParams struct {
 **這就是六份 `%3d%%%%` 的用途**——三個參數各兩份，初次畫用前三份、重畫用後三份，
 不是「六個標籤」。
 
-## 九、還沒做的
+## 九、主畫面的版面（實機量測，已確認）
 
-編輯器本體在 remake 裡**只做了參數對話框那一個**。原版是一個完整的繪圖程式，
-下列都還沒有對應物：
+量法同 §四之三：`E` 模式截圖裁出 640×350 的遊戲區，逐列逐行讀色
+（`workplace/dosbox/tep-00-ui.png`、`tef-15-filled.png`）。
 
-| 原版 | remake |
-|---|---|
-| 六個工具 `DIRT`／`TREES`／`RIVER`／`CHANNEL`／`FILL`／`UNDO` | 沒有 |
-| `TERRAIN` 選單的七個動作 | 只有「產生地形」那一條，而且是對話框按「開始」時做的 |
-| `SYSTEM` 選單（讀寫城市檔、列印、離開）| 遊戲本體有對應物，編輯器沒有自己的入口 |
-| `PARAMETERS` → `Game Year`／`Sound On` | 沒有 |
-| `City Map` 全市地圖視窗 | 遊戲本體有 |
+**結論先講：編輯器用的是遊戲本體那一套視窗系統，座標一模一樣。**
+`docs/spec/ui-layout.md` §二量到的每一個數字都對得上——選單列 y 0–17、
+編輯視窗外框 x 5–579／y 21–324、標題列 y 24–37、資金帶 y 38–54、
+地圖區 x 64–575／y 55–310、工具帶 y 311–324、City Form 視窗 x 240–639／
+y 21–347。所以 remake 不必為編輯器另量一套版面。
 
-規則層的東西倒是齊的：`Clear Map`／`Smooth Trees`／`Smooth Rivers`／
-`Create Island` 在 `internal/sim/terrain.go` 都有對應函式（`clearMap`、
-`smoothTrees`、`smoothRiver`、`makeIsland`），缺的是介面與「畫筆改地圖」那一層。
+| 元件 | 編輯器 | 遊戲本體 |
+|---|---|---|
+| 選單列 | 三個標題（中心 x ＝ **159／347／551**）| 四個（112／250／402／554）|
+| 編輯視窗標題列 | **只有年月**（實測 `Jan 1900`），沒有城市名 | 城市名置中 ＋ 年月靠右 |
+| 資金／訊息帶 | **空的**（純深灰）| `Funds: $20,000` ＋ 訊息 |
+| 工具盤 | 六個 52×24 的文字按鈕，x 8–63、y 55–210 | 庫 2 的美術，2 欄 × 7 列 |
+| 需求指標 | 沒有 | 庫 3，(12,237) |
+| 工具帶 | 目前工具的名稱（`Dirt`／`Trees`）| 名稱 ＋ 造價 |
+| 右邊的視窗 | `City Map`，**沒有圖層圖示也沒有色階** | City Form，九個圖層圖示 ＋ 色階 |
 
-## 十、規則層其實已經解完了
+### 工具盤的六格
 
-編輯器要寫的東西 remake 早就有：
+```
+外框     x 8–63、y 55–210（白 2 像素、內一圈黑）
+按鈕     x 11–62（寬 52），第 i 個 y ＝ 59 ＋ 25i，高 24
+分隔     每個按鈕之間一列 (85,85,85)，上緣 y 57–58、下緣 y 208–209
+選取     內縮的黃色 2 像素框（DIRT 選取時實測 y 59–60 與 80–81 是黃）
+```
+
+每一格的底是**對應地物的圖塊平鋪**——DIRT 是泥土、TREES 是樹林、
+RIVER 是水面、CHANNEL 是水道；FILL 是灰底加藍斜線、UNDO 是紅底。
+標籤是帶黑描邊的粗體字，顏色固定：DIRT 黃、TREES 白、RIVER 與 CHANNEL 青、
+FILL 與 UNDO 黑。**選取狀態只由那一圈黃框表示，不是換字色。**
+UNDO 沒得復原時整格鋪紅白棋盤（看起來被停用）。
+
+⚠ 這解釋了 §二 的「`*TED.PGF` 裡沒有介面美術」：按鈕的底就是第 0 庫的
+地圖圖塊，程式自己鋪的，不需要另一份美術。
+
+## 十、六個工具（反組譯，已確認）
+
+### 十之一 工具描述表
+
+`sub_1EF36` 與 `sub_1F0C0` 都用 `18 × byte_595E0` 當索引去讀 `ds:0x2B42`
+起的一張表，一列 18 位元組。把資料段的位元組印出來（dseg 在解包檔的
+偏移是 **0x4B6E0**）：
+
+| 列 | +0x00 | +0x02 旗標 | +0x04 造價 | +0x0C 圖塊 | +0x10 尺寸 | 是誰 |
+|---:|---|---|---:|---:|---:|---|
+| 1 | 01 | 0000 | 0 | 0 | 1 | **DIRT** |
+| 2 | 01 | 3000 | 0 | 37 | 1 | **TREES** |
+| 3 | 01 | 0000 | 0 | 3 | 1 | **RIVER** |
+| 4 | 01 | 0000 | 0 | 4 | 1 | **CHANNEL** |
+| 5 | 01 | 1000 | 10 | 40 | 1 | 遊戲的公園（編輯器沒用到）|
+| 6–15 | 00 | … | 100–10000 | 240／423／612／770／761／779／811／693／709／745 | 3–6 | 遊戲的分區與建物 |
+
+第 6–15 列與 Micropolis 的 `RESBASE 240`／`COMBASE 423`／`INDBASE 612`／
+`PORTBASE 693`／`AIRPORTBASE 709`／`COALBASE 745` 逐項對得上，
+造價也與訊息檔的 `Police station: $500`⋯一致——**這張表是遊戲與編輯器共用的**，
+編輯器只用得到前四列。
+
+寫入那一行是 `sub_1EF36`＋0x1F0A6：
+
+```
+Map[x][y] = 表[工具].圖塊 + 表[工具].旗標
+```
+
+所以四個畫筆寫的 16 位元字是 **0 ／ 0x3025 ／ 3 ／ 4**。
+`0x3025` ＝ WOODS 37 加 `BURNBIT|BULLBIT`。
+
+⚠ **RIVER 寫的是 3（REDGE）不是 2（RIVER）**。真正的河面圖塊要靠之後的
+「平滑河流」算出來——這也是為什麼原版要把平滑放進選單。
+
+### 十之二 一次一格，值一樣就不寫
+
+`sub_1EF36` 的尾巴：
+
+```
+cmp [bx+di+4482h], ax   ; 現值 == 要寫的值？
+jz  short loc_1F0B6     ; 一樣就直接回 1，不記復原也不寫
+call sub_106BA          ; 記一格的復原
+mov [bx+di+4482h], ax
+```
+
+界外（`x+size > 120` 或 `y+size > 100` 或負數）直接回 0。
+**尺寸欄雖然參與界限判斷，寫入卻只有一格**——編輯器那四列的尺寸都是 1。
+
+### 十之三 拖曳
+
+`sub_1F0C0` 是按住不放時的迴圈：`sub_17C40` 回報還按著就一直呼叫
+`sub_1EF36`，並在游標移出視窗時捲動地圖。表的 +0x00 是「可不可以拖曳」，
+編輯器那四列都是 1（遊戲的分區是 0，所以蓋不出一排體育館）。
+
+## 十一、FILL 是開關，UNDO 是動作（已確認）
+
+`sub_22636(n)` 是編輯器自己的「選工具」，**不是單純設值**：
+
+```
+n == 6 → sub_10862()            復原（動作）
+n == 5 → byte_59194 ^= 1        油漆桶（開關）
+n <  5 → byte_595E0 = n         換畫筆
+之後一律 sub_2268C(0) 重畫工具盤
+```
+
+所以工具盤那六格是「四個畫筆 ＋ 一個開關 ＋ 一個動作」，不是六個畫筆。
+
+### 十一之一 油漆桶（`sub_229F0`）
+
+油漆桶亮著時，`sub_22DAE` 把點擊送到 `sub_229F0(x, y, 目前畫筆)`。
+
+**帶是由起點那一格的地物類別決定的，不是由畫筆決定的**
+（`sub_229F0`＋0x22A94 起的三段比較，上界都是開區間）：
+
+| 起點的圖塊編號 | 帶 | 什麼情況不做事 |
+|---|---|---|
+| < 2 | [0, 2) 空地 | 畫筆是 DIRT |
+| < 21 | [2, 21) 水域與河岸 | 畫筆是 RIVER 或 CHANNEL |
+| < 40 | [21, 40) 樹林 | 畫筆是 TREES |
+| ≥ 40 | —— | **退化成單格畫筆**（`loc_22B64` 直接呼叫 `sub_1F0C0`）|
+
+然後 `sub_106BA(-1,-1)` 記一份全圖快照，再做掃描線填色：沿 x 軸走、
+上下兩列找新的種子，落在帶裡的格子一律寫成
+
+```
+畫筆 1 → 0        畫筆 2 → 0x3025
+畫筆 3 → 3        畫筆 4 → 4
+```
+
+（`loc_22D02`／`loc_22D28`／`loc_22D40`／`loc_22D58` 四個 case，
+寫的是**原始字**不是「圖塊＋旗標」，值與畫筆那一組相同。）
+
+倒完之後 `loc_22D98` 呼叫 `sub_22636(5)` 把油漆桶**熄掉**——一次性的。
+
+### 十一之二 復原（`sub_106BA` 記、`sub_10862` 還原）
+
+環形緩衝區 **5000 格**，一格四個位元組 `{x, y, 舊值}`，
+折返靠 `sub_1C9C2(0, idx±1, 0x1387)`（小於下限折到上限、大於上限折到下限）。
+
+- `sub_106BA(x, y)`：把 `Map[x][y]` 的現值寫進環，head 前進；
+  head 撞上 tail 就把 tail 也推一格（最舊的那一步被擠掉）。
+- `sub_106BA(-1, -1)`：**全圖快照**。快照緩衝區最多四份（`cmp word_4BFC2, 4`），
+  滿了就把環的 tail 推到最舊那個快照標記的後面、緩衝區整批往前搬一格，
+  再把 12 000 格複製進去。快照在環裡也佔一格，x 與 y 都寫 `0xFF`。
+- `sub_10862`（復原）：`head == tail` 就發**第 7 號音效**（工具失敗）並收工；
+  否則 head 退一格，`x == 0xFF` 就從最後一份快照還原整張圖，
+  否則只還原那一格。
+
+會記快照的動作：清除地圖、清除人造物、產生隨機地形、三個平滑、油漆桶。
+
+## 十二、三個選單的命令碼（已確認）
+
+字串表在 `dseg:0x1950`（SYSTEM，11 列）、`0x1980`（TERRAIN，10 列）、
+`0x19CC`（PARAMETERS，4 列），三張表的位置又列在 `dseg:0x19E0`。
+標題在 `dseg:0x1940`：`0x170A` SYSTEM／`0x1711` TERRAIN／`0x1719` PARAMETERS。
+
+**命令碼就是 `(選單編號 << 4) | 列號`**，直接當成 `sub_10A0A` 的參數。
+證據是分隔線：SYSTEM 的分隔線在第 1／3／5／9 列，而 IDA 把
+`sub_10A0A` 的 case 1、3、5、9 標成 default——四個都對得上，
+`0x0B`–`0x0F`（SYSTEM 只有 11 列）也是 default。
+
+| 碼 | 選單／列 | 動作 |
+|---|---|---|
+| `0x00` | SYSTEM 0 About TERRAIN | `sub_1E5FC()` 開關於視窗 |
+| `0x02` | SYSTEM 2 Print | `sub_1D078()` 然後 return |
+| `0x04` | SYSTEM 4 Start New City | 確認框標題 `NEW GAME`（`ds:0xEF`）→ `sub_1CEA0(0)` |
+| `0x06` | SYSTEM 6 Load City | `sub_1FA6A(0,0,0)` ＋ 兩次 `sub_2190A` |
+| `0x07` | SYSTEM 7 Save City as | `sub_1FE44(0)`（沒帶檔名 → 問）|
+| `0x08` | SYSTEM 8 Save City | `sub_1FE44(目前檔名)` |
+| `0x0A` | SYSTEM 10 Exit | 確認框標題 `EXIT`（`ds:0xCD`）→ `sub_102DA("MAXIS SimCity Terrain Editor")` |
+| `0x10` | TERRAIN 0 Clear Map | 快照 → `sub_119EC`（SeedRand）→ `sub_109E0` 重畫 |
+| `0x11` | TERRAIN 1 Clear Unnatural Objects | 見 §十三 |
+| `0x13` | TERRAIN 3 Create Random Terrain | 參數對話框 → 20×5 的「Now terraforming」→ 產生流程（§七）|
+| `0x15` | TERRAIN 5 Smooth Trees | 16×5 的「Smoothing...」→ `SmoothTrees` ×2 |
+| `0x16` | TERRAIN 6 Smooth Rivers | 同上 → `sub_11A24` ＋ `SmoothRiver` |
+| `0x17` | TERRAIN 7 Smooth Everything | 兩個位元都設：**先河後樹** |
+| `0x19` | TERRAIN 9 Create Island | `byte_52E72 ^= 1` ＋ `sub_17E9A` 重畫選單 |
+| `0x20` | PARAMETERS 0 Name & Level | `sub_1C9F8()` ＋ `sub_230E6()` |
+| `0x21` | PARAMETERS 1 Game Year | `sub_111E4()`，見 §十四 |
+| `0x23` | PARAMETERS 3 Sound | `byte_59444 ^= 1` ＋ `sub_17E9A` 重畫選單 |
+
+`Sound` 那一列的字串是 ` Sound Off`（`dseg:0x18CF`），程式把結尾三個字
+換成 `dseg:0x19F4` 的 `On`／`Off`，所以畫面上看到的是 `Sound On`。
+
+### ⚠ 這一節推翻了 §四之二 的一句話
+
+`Create Island` **不是一個動作**，是一個**開關**：它只翻轉 `byte_52E72`，
+下一次「產生隨機地形」走到 `if (byte_52E72) call sub_11CD4` 才會造島
+（`sub_10A0A`＋0x10C6B）。原本寫成「是一個動作不是一個滑桿」只講對了一半。
+
+## 十三、Clear Unnatural Objects（已確認）
+
+`sub_10A0A` 的 case 0x11（`loc_10B39`）：逐格取低十位元，
+**大於 37（WOODS）就把整個 16 位元字寫成 0**——旗標一起清掉，不是只換圖塊。
+
+```
+for x in 0..119:
+  for y in 0..99:
+    if (Map[x][y] & 0x3FF) > 37: Map[x][y] = 0
+```
+
+## 十三之二、Smooth Rivers 的前置（`sub_11A24`，已確認）
+
+「平滑河流」不是直接呼叫 `SmoothRiver`，前面還有一支
+**Micropolis 沒有的**函式：把每一個**四鄰裡有非水面**的水格打回 `REDGE`。
+
+```
+水面 ＝ 圖塊編號在 [2, 20]
+for x in 0..119, y in 0..99:
+  if 不是水面: 下一格
+  if x > 0   且 左鄰不是水面 → 寫 3
+  if x < 119 且 右鄰不是水面 → 寫 3
+  if y > 0   且 上鄰不是水面 → 寫 3
+  if y < 99  且 下鄰不是水面 → 寫 3
+```
+
+⚠ **地圖最外圈那一側的鄰居不檢查**（`or di,di / jle`、`cmp si,77h / jge` 那幾條），
+所以貼著邊的水面不會被打回 REDGE。
+
+為什麼需要它：`SmoothRiver` 只改寫**本來就是 REDGE** 的格子，
+而畫筆與油漆桶畫出來的水塊內部全是 REDGE 或 CHANNEL，沒有這一步算不出岸線。
+
+## 十四、Game Year（`sub_111E4`，已確認）
+
+視窗是 `sub_1C010(&win, 0x12, 5)` ＝ **18 欄 × 5 列**，
+標題 `Enter Game Year:`（`dseg:0x127`），欄位預填 `sprintf("%4d", CityTime/48 + 1900)`
+（`dseg:0x137` 是那個 `%4d`）。
+
+收下的規則（`sub_111E4`＋0x11365 起）：
+
+```
+if strlen(輸入) != 4: 發第 7 號音效，丟掉
+t = atol(輸入) * 48 - 0x16440      ; 0x16440 = 91200 = 1900 × 48
+if t <= 0: 丟掉
+CityTime = t
+```
+
+**所以年份必須是四位數而且要大於 1900**，換算是 `CityTime = (年 − 1900) × 48`。
+
+⚠ 這裡的基準是 **1900**，與 `docs/re/16-dos-oracle.md` §七 量到的
+「遊戲狀態列顯示 `1849 + CityTime/48`」不同。編輯器與手冊、劇本簡介同一個基準，
+狀態列才是那個對不上的。（實測編輯器的標題列是 `Jan 1900`，不是 `Jan 1849`。）
+
+## 十五、關於畫面（實機截圖，已確認）
+
+`SYSTEM → About TERRAIN` 開一個黃框視窗（實測外框 x 168–471、y 28–307），
+藍白棋盤底、深藍字。全文轉錄（保存用）：
+
+```
+SimCity Terrain Editor
+Copyright Maxis 1989
+
+Concept & design:Will Wright
+IBM programming :Paul Schmidt
+            and :Daniel Goldman
+City artwork    :Don Bayless
+Title screens   :Richard Payne
+  and icons
+Documentation   :Michael Bremer
+
+For more information contact:
+  Maxis
+  1042 Country Club Drive, Suite C
+  Moraga, CA 94556
+
+  Tel: (415) 376-6434
+  FAX: (415) 376-1823
+```
+
+（截圖：`workplace/dosbox/ted2-03-about.png`，不入版控。）
+
+**remake 不照抄這一頁**：職稱表是史料，留著；1989 年的地址、電話與傳真
+不放進會跑起來的程式裡——那等於拿別人的聯絡方式當自己的。
+remake 的關於頁寫在 `internal/ui/terrain_draw.go` 的 `teAboutLines`。
+
+## 十六、remake 做到哪裡
+
+**整個編輯器都接上了**（`internal/sim/editor.go`、`internal/ui/terrain_screen.go`、
+`internal/ui/terrain_draw.go`）：三個選單的十七條命令、六格工具盤、
+畫筆與拖曳、油漆桶、五千格的復原環加四份全圖快照、參數對話框、
+年份輸入、市名與難度、City Map 視窗、狀態列。
+
+| 原版 | remake | 備註 |
+|---|---|---|
+| 四個畫筆 ＋ 油漆桶 ＋ 復原 | 全做 | 寫的 16 位元字與原版表相同 |
+| `TERRAIN` 的七條 | 全做 | 造島是**開關**，照原版 |
+| `SYSTEM` 的讀寫城市檔 | 沿用遊戲本體那一套 | |
+| `SYSTEM` → `Print` | 沿用遊戲的「存成 PNG」 | **remake 自訂的對應物** |
+| `SYSTEM` → `Exit` | 離開編輯器回遊戲 | **remake 自訂**：原版是離開程式 |
+| `PARAMETERS` 三條 | 全做 | 年份的四位數與 > 1900 判斷照原版 |
+| `About TERRAIN` | 只轉錄職稱表 | 見 §十五 |
+| `Now terraforming`／`Smoothing...` | 照原版的字元格畫，留幾格畫格 | remake 的動作是瞬間完成的 |
+
+還沒解的：
+
+- **確認框（`sub_1C4B2`）的版面**。原版在「開新地圖」與「離開」前會問一次，
+  標題分別是 `NEW GAME` 與 `EXIT`，但框的尺寸與按鈕位置沒有量。
+  remake 先沿用參數對話框那一套配色與 70×20 的按鈕，**標成自訂**。
+- **`Now terraforming`／`Smoothing...` 與年份框的絕對位置**。
+  欄列數是從 `sub_1C010` 的參數讀出來的（20×5、16×5、18×5），
+  但視窗原點的公式只有 36×10 那一個實際量過，其餘是外推（假說）。
+- **`TERRAIN.CFG` 第 5 個位元組 `0x91`**（§三）。
+- **`MCGATE.PPF` 的調色盤**（§一）。
+
+## 十七、規則層與 Micropolis 的關係
+
+編輯器要寫的東西大部分 remake 早就有：
 
 - 地形圖塊編號與河岸／樹林的邊緣規則 → `internal/sim/terrain.go` 的
-  `SmoothTerrain()`（`s_gen.c` 的 `smoothRiver`／`smoothTrees`）。
+  `smoothRiver`／`smoothTrees`（`s_gen.c`）。
 - 城市檔的讀寫與逐位元組 round-trip → `internal/game/save.go`、
   [`../formats/01-city-file.md`](../formats/01-city-file.md)。
 - 從遮罩產生地圖的路徑 → `tools/citymap`（本專案畫台北台中台南用的就是它）。
 
-差的只有樹叢數量那一式，已經補進 `TerrainParams.EditorDOS`。
+**但有三條是 Micropolis 沒有、只在 `TERRAIN.EXE` 裡的**，全部寫進
+`internal/sim/editor.go`：
+
+1. 樹叢數量 `3 × pct`（§七）。
+2. 平滑河流之前的 `ResetRiverEdges`（§十三之二）——`s_gen.c` 沒有這一步。
+3. 「清除人造物」的 `> 37 就整格寫 0`（§十三）。

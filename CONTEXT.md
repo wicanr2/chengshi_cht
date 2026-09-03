@@ -66,6 +66,14 @@ AppImage 與同一份原始碼現建的執行檔，在十四幕玩家畫面上�
 存檔 round-trip 全部正常），以及 `.PPF` 的位元平面組反（版面分毫不差、
 字讀得出來，只有顏色整組錯位）。
 
+**1990 年那支地形編輯器整支重製完了。** 原版 `TERRAIN.EXE` 是軟體世界那片
+磁片附的獨立程式，LZEXE 解包之後反組譯：三個選單的十七條命令、六格工具盤
+（四個畫筆、油漆桶、復原）、五千格的復原環加四份全圖快照、參數對話框、
+年份輸入全部照原版做出來。**它用的是遊戲本體那一套視窗系統**，座標一模一樣，
+所以 remake 不必為它另量一套版面。出口也照原版：編輯器只存檔，回遊戲自己讀。
+規則層在 `internal/sim/editor.go`（headless、有單元測試），
+規格 [`docs/spec/terrain-editor.md`](docs/spec/terrain-editor.md)（READY）。
+
 **remake 加了三樣原版沒有的東西**，都標明是加的、不是還原：
 **縮小**（`-`／`=`／滾輪，1 → 1/2 → 1/4）、**四種語言**
 （繁中／简中／日文／English，SYSTEM→設定；會保存到使用者設定檔，`-lang` 只覆蓋
@@ -484,20 +492,27 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     不是靜音，而那 1 秒是對話框提示音（正對照）。
     remake 加了背景音樂，播的是玩家自己準備的檔案。
 
-36. ~~地形編輯器~~ **完成**：[`docs/re/20-terrain-editor.md`](docs/re/20-terrain-editor.md)
+36. ~~地形編輯器~~ **完成（整支，不只對話框）**：
+    [`docs/re/20-terrain-editor.md`](docs/re/20-terrain-editor.md)
     ＋ [`docs/spec/terrain-editor.md`](docs/spec/terrain-editor.md)（READY），
-    實作在 `internal/ui/terrain_editor.go`，掛在系統選單。
-    原版是 1990 年隨磁片附的獨立程式 `TERRAIN.EXE`；LZEXE 0.91 解包之後反組譯，
-    版面（36×10 字元格、八個控制項的欄列）、操作（±1、夾限 0–100、長按重複、
-    `+`／`-` 輪焦點）與三個百分比的語意全部讀出來。
-    **三個百分比就是 `TreeLevel`／`LakeLevel`／`CurveLevel` 本身**：生成流程與
-    `s_gen.c:127 GenerateMap()` 逐行對得上，四個消費式裡有三個連常數都一樣，
-    只有樹叢數量是 `3 × pct`（`s_gen.c:301` 是 `TreeLevel + 3`）——
-    那一條接在 `TerrainParams.EditorDOS`。
-    對話框的版面另外**實機量測**過（`E` 模式截圖逐像素讀）：反組譯推的欄列
-    全部吻合，並補上原本未解的視窗絕對位置（左欄×8＝172、頂列×14＝95）與配色。
-    ⚠ **編輯器本體只做了這一個對話框**——原版是完整的繪圖程式，
-    六個工具與三個選單都還沒有對應物，清單見 `docs/re/20-terrain-editor.md` §九。
+    規則層 `internal/sim/editor.go`、呈現層 `internal/ui/terrain_screen.go`
+    ＋ `terrain_draw.go` ＋ `terrain_editor.go`，掛在系統選單。
+    原版是 1990 年隨磁片附的獨立程式 `TERRAIN.EXE`；LZEXE 0.91 解包之後反組譯。
+    **做完的東西**：三個選單的十七條命令、六格工具盤（四個畫筆 ＋ 油漆桶 ＋ 復原）、
+    畫筆與拖曳、油漆桶、五千格的復原環加四份全圖快照、參數對話框、年份輸入、
+    市名與難度、City Map 視窗、狀態列。
+    幾個關鍵結論：**編輯器用的是遊戲本體那一套視窗系統，座標完全相同**；
+    四個畫筆寫的 16 位元字來自遊戲與編輯器共用的工具描述表
+    （`dseg:0x2B42`，`DIRT` 0／`TREES` 0x3025／`RIVER` **3（REDGE 不是 RIVER）**／
+    `CHANNEL` 4）；**選單命令碼就是 `(選單 << 4) | 列號`**（分隔線佔號，
+    正好對上 IDA 標的 default case）；**「造島」是開關不是動作**；
+    「平滑河流」前面還有一支 Micropolis 沒有的 `ResetRiverEdges`；
+    年份的換算是 `CityTime = (年 − 1900) × 48`，只收四位數且要大於 1900。
+    三個百分比就是 `TreeLevel`／`LakeLevel`／`CurveLevel` 本身，
+    只有樹叢數量是 `3 × pct`（接在 `TerrainParams.EditorDOS`）。
+    出口照原版：**編輯器只存檔**，回遊戲之後自己讀那個檔（使用者定案 2026-09-03）。
+    ⚠ 兩處還沒解：**確認框的版面**，以及**進度框與年份框的絕對位置**
+    （欄列數讀得出來，視窗原點的公式只有 36×10 那一個量過）。
 37. ~~兩片資料片（六個圖形集）的畫面對拍~~ **完成**：
     [`docs/playtest/style-parity-2026-09-03.md`](docs/playtest/style-parity-2026-09-03.md)。
     六個圖形集都是 498/512 格逐位元相同，不同的 14 格在六個集裡位置完全一樣

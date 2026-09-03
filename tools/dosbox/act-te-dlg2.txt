@@ -1,0 +1,49 @@
+# 第二輪：上一輪 move 與 release 之間沒有間隔，選單項目沒被選中。
+# 這次每一步都留時間，只拍兩個對話框與工具游標。
+wait 10
+# 先把編輯視窗叫到前面（右鍵），拿到全寬版面
+shot 00-ui
+# --- PARAMETERS → Game Year ---
+press 551 8
+wait 1
+move 551 30
+wait 1
+move 551 43
+wait 2
+release
+wait 3
+shot 01-gameyear
+key Escape
+wait 2
+shot 02-after-esc
+# --- SYSTEM → About TERRAIN ---
+press 160 8
+wait 1
+move 160 22
+wait 1
+move 160 29
+wait 2
+release
+wait 3
+shot 03-about
+key Return
+wait 2
+shot 04-after-about
+# --- TERRAIN 選單全開一張，量版面 ---
+press 340 8
+wait 2
+shot 05-terrain-menu
+release
+wait 1
+# --- 單格畫筆：選 TREES 點一格，看游標與狀態列 ---
+click 35 95
+wait 1
+shot 06-trees-selected
+click 200 150
+wait 2
+shot 07-one-tree
+click 35 120
+wait 1
+click 300 150
+wait 2
+shot 08-one-river

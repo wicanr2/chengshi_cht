@@ -142,21 +142,30 @@ func (g *Game) terrainPress(id int) {
 	}
 }
 
-// terrainGo 收下三個百分比，交給「建造新城市」對話框接手。
+// terrainGo 收下三個百分比並產生地形。
 //
-// 原版按 Go 之後是「Now terraforming」→「Smoothing...」→ 問年份 → 問難度
-// （docs/spec/terrain-editor.md §三，等級：強證據）。remake 只接難度那一段——
-// 進度訊息與年份輸入的版面**未解**，沒有版面就不自己編一個。
+// 原版按 Go 之後顯示「Now terraforming」，產生完**回到編輯器**讓玩家
+// 繼續用六個工具改（docs/spec/terrain-editor.md §三）。年份與難度不在
+// 這條路上——那兩項在 PARAMETERS 選單。
 func (g *Game) terrainGo() {
 	b := g.terrainDlg
+	vals := b.val
+	g.terrainDlg = nil
+	// 在編輯器裡按「開始」是**就地重造這張地圖**，做完回到編輯器
+	// （原版 `sub_10A0A` 的 case 0x13：產生完就回主迴圈，不進遊戲）。
+	if ts := g.terrain; ts != nil {
+		ts.ed.GenerateRandom(sim.RandomSeed(), vals[0], vals[1], vals[2])
+		g.teProgress("te_terraforming", 20)
+		return
+	}
+	// 從遊戲的系統選單直接叫參數對話框時，仍走「建造新城市」那一條。
 	p := sim.TerrainParams{
-		TreeLevel:    b.val[0],
-		LakeLevel:    b.val[1],
-		CurveLevel:   b.val[2],
-		CreateIsland: 0, // 原版編輯器沒有這個介面元素，不要自己加
+		TreeLevel:    vals[0],
+		LakeLevel:    vals[1],
+		CurveLevel:   vals[2],
+		CreateIsland: 0,
 		EditorDOS:    true,
 	}
-	g.terrainDlg = nil
 	g.openNewCity()
 	g.newCityDlg.terrain = &p
 }

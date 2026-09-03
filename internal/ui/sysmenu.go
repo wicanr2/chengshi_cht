@@ -199,8 +199,7 @@ func (g *Game) sysMenuPick(i int) {
 		case "new":
 			g.newCity()
 		case "terrain":
-			g.openTerrainEditor()
-			g.win = winNone
+			g.openTerrainScreen()
 		case "load":
 			g.load()
 		case "save":

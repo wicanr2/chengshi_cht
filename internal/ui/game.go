@@ -249,9 +249,11 @@ type Game struct {
 	mini *minimap
 
 	// newCityBox 是「建造新城市」對話框，nil 代表沒開。見 newcity.go。
-	newCityDlg           *newCityBox
-	terrainDlg           *terrainBox // 地形編輯器的參數對話框
-	newCityTitleBackdrop bool        // 從招牌進入時，原版只畫選單列與灰色桌面
+	newCityDlg *newCityBox
+	terrainDlg *terrainBox // 地形編輯器的參數對話框
+	// terrain 非 nil 代表整個畫面被地形編輯器接管（terrain_screen.go）。
+	terrain              *terrainScreen
+	newCityTitleBackdrop bool // 從招牌進入時，原版只畫選單列與灰色桌面
 
 	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
 	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
@@ -381,6 +383,9 @@ func (g *Game) OpenWindow(name string) bool {
 	case "newcity":
 		g.openNewCity()
 	case "terrain":
+		g.openTerrainScreen()
+	case "terrainparams":
+		g.openTerrainScreen()
 		g.openTerrainEditor()
 	case "language", "settings":
 		g.openLangSettings()
@@ -486,8 +491,16 @@ func (g *Game) Update() error {
 	if g.updateTitle() {
 		return nil
 	}
-	g.handleKeys()
-	g.handleMouse()
+	// 地形編輯器接管整個畫面：自己的選單列、工具盤與視窗，
+	// 模擬也停著（原版的編輯器是獨立程式，不跑模擬）。
+	//
+	// ⚠ **只換掉輸入那一段，不是整個 Update 早退**：訊息計時、音效播放器的
+	// 回收（`pumpSounds` 的 `reap`）與音樂都在下面，早退會讓存檔訊息永遠不消失，
+	// 而且音效播放器不回收——那正是 issue #1 找到的那條沒有上界的資源。
+	if !g.updateTerrain() {
+		g.handleKeys()
+		g.handleMouse()
+	}
 	if g.openSaveFmtNext {
 		g.openSaveFmtNext = false
 		g.openSubMenu(winSaveFmt)
@@ -500,8 +513,10 @@ func (g *Game) Update() error {
 	// 「最快」是同一個速率下一個畫格多跑幾次模擬（Micropolis 的 sim_skips），
 	// 不是第五個速率——見 speedMsgIdx 的說明。
 	g.updateMusic()
-	for i := 0; i < simFramesPerTick[clamp(g.speedLevel, 0, 4)]; i++ {
-		g.world.Frame()
+	if g.terrain == nil {
+		for i := 0; i < simFramesPerTick[clamp(g.speedLevel, 0, 4)]; i++ {
+			g.world.Frame()
+		}
 	}
 	// 圖塊動畫。原版的條件是 `DoAnimation && SimSpeed && !TilesAnimated`
 	// （`w_editor.c:874`）——暫停時不動，而且一個畫格只做一次。
@@ -1070,6 +1085,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		fill(screen, 0, 0, OrigW, OrigH, colDesktop)
 		g.drawMenuBar(screen)
 		g.drawNewCity(screen)
+		return
+	}
+	if g.terrain != nil {
+		g.drawTerrainScreen(screen)
 		return
 	}
 	g.drawClassic(screen)

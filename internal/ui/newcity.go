@@ -91,6 +91,18 @@ type newCityBox struct {
 	// terrain 是地形編輯器交下來的三個百分比（terrain_editor.go）。
 	// nil 代表走原版遊戲的預設值（三個旋鈕都是 -1，隨機）。
 	terrain *sim.TerrainParams
+	// nameOnly 是地形編輯器 PARAMETERS → 市名與難度那一條：**只改市名與
+	// 難度**，不重造地形也不換掉目前這張地圖（原版把同一個對話框
+	// 掛在那條選單上，`sub_10A0A` 的 case 0x20）。
+	nameOnly bool
+}
+
+// openNewCityNameOnly 開同一個對話框，但按確定只設市名與難度。
+func (g *Game) openNewCityNameOnly() {
+	g.openNewCity()
+	g.newCityDlg.nameOnly = true
+	g.newCityDlg.name = []rune(g.world.CityName)
+	g.newCityDlg.level = g.world.GameLevel
 }
 
 // openNewCity 打開對話框。原版是從標題畫面的「建造新城市」進來，
@@ -164,6 +176,14 @@ func (g *Game) handleNewCityMouse(mx, my int) bool {
 // （Micropolis — src/sim/w_util.c:177 SetGameLevelFunds）。
 func (g *Game) startNewCity() {
 	b := g.newCityDlg
+	if b.nameOnly {
+		if n := strings.TrimSpace(string(b.name)); n != "" {
+			g.world.CityName = n
+		}
+		g.world.SetGameLevelFunds(b.level)
+		g.newCityDlg = nil
+		return
+	}
 	s := sim.RandomSeed()
 	w := sim.NewWorld(s)
 	w.SetGameLevelFunds(b.level)
