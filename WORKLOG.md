@@ -2679,3 +2679,36 @@ Terrain Editor，那是工具不是圖形集。兩片磁片的內容是一手證
 - `tools/dosbox.sh` 加 `EXTRA`：把另一個目錄疊進遊戲副本，給「另一個產品但
   要裝在同一個目錄」的東西用。
 - `cmd/simtool` 加 `ppf` 子命令：單幅 `.PPF` → PNG。
+
+## 2026-09-03（續三）：LZEXE 解開了，編輯器的介面文字全拿到
+
+`unlzexe` 是現成的（`mywave82/unlzexe` 的 C 原始碼，容器內 `gcc` 直接編），
+一次就解開 LZEXE 0.91。83 373 → 325 728 位元組，可讀字串 481 → **751**。
+
+⚠ 它的輸出檔名緩衝區只有 12 個字元，給長路徑會**默默**截斷成別的檔名
+（第一次跑出來的是 `/src/workpla`）。要 `cd` 到目標目錄再用短檔名。
+
+### 收穫：編輯器不是畫筆工具，是參數式地形產生器
+
+字串把介面攤開了：`Terrain Creation Parameters` 對話框有三個參數——
+`Number of Trees`、`Number of Lakes`、`River Curviness`，各配一個 `%3d%%`，
+兩個按鈕 `Go`／`Cancel`；進度訊息 `Now terraforming`／`Smoothing...`；
+還有 `Enter Game Year:` 與 `Easy`／`Medium`／`Hard`。
+
+**這三個參數 remake 早就有**：`internal/sim/terrain.go` 的 `TerrainParams`
+（`TreeLevel`／`LakeLevel`／`CurveLevel`，出自 `s_gen.c:76-79`），
+`Smoothing...` 對應的 `SmoothTerrain` 也在。所以編輯器的規則層等於全解，
+**缺的只有那個對話框的版面**。
+
+⚠ `CreateIsland` 在原版編輯器的介面字串裡沒有對應項。不要因為 remake 的結構
+有這個欄位就自己加一個滑桿上去——未解就是未解。
+
+### 還是跑不起來，但錯誤訊息變得有意義
+
+解包版的錯誤從「INT 6 無限迴圈」變成
+`256K of VGA/EGA memory / Couldn't load VGA/EGA blocks!`，
+`svga_s3` 與 `ega` 兩種機器都一樣。所以打包殼確實是 INT 6 的成因，
+底下還有第二個問題。下一個要動的是 `vmemsize`／`machine`，不是 CPU。
+
+**停在這裡是決定不是放棄。** 同一個問題等了三輪好幾分鐘，而介面文字已經到手，
+繼續追只為了像素級版面——那是取捨，不是動工的必要條件。

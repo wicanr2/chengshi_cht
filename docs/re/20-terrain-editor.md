@@ -98,17 +98,91 @@ MZ 檔頭：頁數 163、最後頁 429 → 映像 83 373 位元組 ＝ 實際檔
 `LZ91` 也解釋了為什麼字串是碎的（481 條裡幾乎都是壓縮資料的碎片）——
 與 1.10 的 `SIMCITY.EXE`、資料片的 `UPDATE.DAT` 同一類，不能直接反組譯。
 
-## 五、下一個入口（依序試，不要跳）
+## 四之二、解包之後：錯誤訊息變得有意義，但還是跑不起來
 
-1. **把 LZEXE 0.91 解開。** 這條同時解決兩件事：解開後是乾淨的反組譯目標
-   （對照組：1.03 的 `SIMCITY.EXE` 沒打包，859 條可讀字串），而且解開的
-   執行檔常常在模擬器上跑得起來——INT 6 有可能就是打包殼與 DOSBox-X 的
-   組合問題。格式是公開的，寫一支解包器是有界的工作。
-2. **換原版 DOSBox。** 容器裡只有 `dosbox-x`；1990 年的程式在 vanilla
-   DOSBox 上的相容性經常比較好。要改 image。
-3. **再掃模擬器設定**（`machine=vgaonly`、`cputype=386_prefetch`、
-   `core=simple`、更低的 cycles）。便宜但是亂槍打鳥，**排在前兩項之後**。
-4. **找編輯器自己的說明書。** 版面與工具清單如果有印出來，就不必靠跑。
+`unlzexe`（`mywave82/unlzexe` 的 C 原始碼，容器內 `gcc` 編）一次就解開：
+
+```
+file 'TERRAIN.EXE' is compressed by LZEXE Ver. 0.91
+```
+
+| | 位元組 | 可讀字串 |
+|---|---:|---:|
+| 打包版 | 83 373 | 481（幾乎都是壓縮資料的碎片）|
+| **解包版** | **325 728** | **751（真的字串）** |
+
+⚠ `unlzexe` 的輸出檔名緩衝區只有 12 個字元（DOS 時代的遺跡），
+給長路徑會被截斷成別的檔名而且**不報錯**。要 `cd` 到目標目錄再用短檔名。
+
+解包版拿去跑，錯誤訊息從「INT 6 無限迴圈」變成明確的一行：
+
+```
+FATAL ERROR: PROGRAM ABORTED
+256K of VGA/EGA memory
+Couldn't load VGA/EGA blocks!
+```
+
+`machine=svga_s3` 與 `machine=ega` 兩種都一樣。**所以打包殼確實是 INT 6 的成因，
+但底下還有第二個問題**：它載不進 VGA/EGA 的圖形區塊。還沒解。
+
+## 五、介面：字串全拿到了（已確認）
+
+解包版的字串把整個介面攤開了。**編輯器不是畫筆工具，是參數式地形產生器。**
+
+```
+MAXIS SimCity Terrain Editor
+NEW GAME                       EXIT
+Terrain Creation Parameters
+ Number     Number     River
+of Trees   of Lakes  Curviness
+   Go        Cancel
+%3d%%   （六個，三個參數各兩個？未解）
+Now terraforming
+Smoothing...
+Enter Game Year:
+Easy   Medium   Hard
+Cannot Picture file.
+Please insert SimCity disk %c in drive %c
+```
+
+圖形檔名是照模式選的，六種都在：`cgated.pgf`／`tdyted.pgf`／`monoted.pgf`／
+`mcgated.pgf`／`cegated.pgf`／`segated.pgf`，路徑用 `%s\%s` 組。
+
+後面接的是地物名稱表（`Open land`／`Water`／`Forest`／`Park`／`Rubble`／`Flood`／
+`Radio Active`／`Fire`／`Road`／`Power line`／`Rail`／`Residential`…），與遊戲共用。
+
+### 這三個參數 remake 早就有
+
+`Number of Trees`／`Number of Lakes`／`River Curviness` 正好對上
+`internal/sim/terrain.go` 的 `TerrainParams`：
+
+```go
+type TerrainParams struct {
+	TreeLevel    int // -1 => 隨機量
+	LakeLevel    int // -1 => 隨機量；0 => 不造湖
+	CurveLevel   int // -1 => 預設彎曲度；0 => 不造河
+	CreateIsland int // -1 => 一成機率；0 => 不造島；1 => 一定造島
+}
+```
+
+出自 `s_gen.c:76-79`，早就照著實作了（`GenerateMap`），`Smoothing...` 對應的
+`smoothRiver`／`smoothTrees` 也在（`SmoothTerrain`）。**編輯器的規則層等於全解，
+缺的只有那個對話框的版面。**
+
+⚠ **`CreateIsland` 在原版編輯器的介面上沒有對應的字串。** 它是不是藏在別處、
+或者編輯器根本不開放它，**未解**——不要因為 remake 有這個欄位就自己加一個滑桿上去。
+
+## 六、下一個入口（依序試，不要跳）
+
+1. **反組譯解包版。** 現在它是乾淨的目標（751 條字串），版面座標與控制項的
+   位置在程式裡。這條不必等模擬器。
+2. **`vmemsize`／`machine=vgaonly`。** 錯誤訊息點名 VGA/EGA 記憶體，
+   下一個要動的就是這個設定，不是 CPU。
+3. **換原版 DOSBox。** 容器裡只有 `dosbox-x`，要改 image。
+4. **找編輯器自己的說明書。** 版面如果有印出來就不必靠跑。
+
+⚠ **不必等這四項才能動工。** 介面文字已經是一手證據，三個參數與規則層也齊了；
+缺的只有「每個控制項擺在哪」。要不要為了像素級的版面繼續追，是取捨不是必要條件。
 
 ## 六、規則層其實已經解完了
 
