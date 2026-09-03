@@ -966,7 +966,7 @@ func (g *Game) handleMouse() {
 	}
 	// 工具盤：編輯視窗左緣，2 欄 × 7 列（classic.go）。
 	if just {
-		if i := paletteHit(mx, my); i >= 0 {
+		if i := g.paletteHit(mx, my); i >= 0 {
 			if i == powerCell {
 				// 發電廠那一格是副選單，不是直接選工具。
 				g.openPowerSub()

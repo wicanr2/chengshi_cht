@@ -29,9 +29,16 @@ type TileSet struct {
 	Mini *assets.MiniTiles
 	// miniPal 是縮圖已經換好顏色的版本，避免每一格重查調色盤。
 	miniPal [][]color.RGBA
-	// vstretch 是這個顯示模式的美術縱向拉幾倍（只有 CGA Mono 是 2），
-	// 見 vStretchOf。
+	// vstretch 是這個顯示模式的**地圖**美術縱向拉幾倍（只有 CGA Mono 是 2），
+	// 見 vStretchOf。介面美術不拉，見 buildTileSet 的說明。
 	vstretch int
+	// Geom 是這個顯示模式的介面格線（工具盤、統計圖、圖層圖示、需求長條）。
+	// 六個模式各一組量測值，見 uigeom.go。
+	Geom uiGeom
+	// MapIcons 是庫 5 切出來的九張圖層圖示。**切開再排**是因為六個模式的
+	// 排法不一樣（直的一欄／兩欄五列／橫的九欄），而 remake 的圖示欄
+	// 只有 30 像素寬，塞不下兩欄。
+	MapIcons []*ebiten.Image
 	// UI 是介面美術，索引同 Sprites，但**色號 0 不透明**。
 	//
 	// ⚠ 兩份不能共用。精靈要拿色號 0 當透明（否則拖著一塊黑底走），
@@ -103,11 +110,16 @@ var graphicsDirs = []struct {
 // 那張解碼表由高解析到低解析。key 是目錄名（也是檔名後綴），
 // name 進系統選單。
 //
-// ⚠ **這個選項換的是地圖美術，不是版面。** remake 只有一套 640×350 的
-// EGA 高解析版面（`docs/spec/ui-layout.md`），介面美術（工具盤、需求指標、
-// 圖層圖示、色階）的位置與**點擊區**都是照 CEGA 的美術量出來的，
-// 所以那幾庫一律留 CEGA 的；換掉的是地圖圖塊、精靈與 City Form 的縮圖。
-// 結果是「用 Tandy 的地圖美術玩 EGA 版面」——**不是原版任何一種畫面**，
+// ⚠ **這個選項換的是全部美術，不換版面。** 地圖圖塊、精靈、City Form 的
+// 縮圖與介面美術（工具盤、需求指標、統計圖按鈕、圖層圖示、色階）都換成
+// 選定模式自己的；換不掉的是那一套 640×350 的座標
+// （`docs/spec/ui-layout.md`）。
+//
+// 介面美術一換，格線就得跟著換——六個模式的工具盤是 57×182／56×123／
+// 56×119／56×182／55×120，格子大小與列距全都不同，拿 CEGA 的格線去點
+// tdy 的美術會**點到隔壁那一格**。六組量測值在 uigeom.go。
+//
+// 結果是「用 Tandy 的美術玩 EGA 高解析版面」——**不是原版任何一種畫面**，
 // 是 remake 自訂的組合（使用者定案 2026-09-04）。
 var DisplayModes = []struct{ Key, Name string }{
 	{"cega", "EGA 高解析彩色"},
@@ -160,26 +172,15 @@ func LoadTileSet(dataDir, style string) (*TileSet, error) {
 // mode 是空字串就照 graphicsDirs 的挑選順序（有 CEGA 就用 CEGA）；
 // 指定的話只找那一個模式的目錄，找不到回錯。
 //
-// ⚠ 非 CEGA 的模式**只換地圖那一半**：地圖圖塊、精靈與 City Form 的縮圖
-// 用選定模式的，介面美術（第 2–7 庫）一律換回 CEGA 的。理由見 DisplayModes——
-// 版面常數與點擊區都是照 CEGA 的美術量的，換成 320×200 那一套的話
-// 工具盤按鈕會**點到隔壁那一格**，而畫面看起來只是「圖小了一點」。
+// ⚠ **版面不換，美術全換。** 地圖圖塊、精靈、City Form 的縮圖與
+// 介面美術（第 2–7 庫）都用選定模式自己的；換不掉的是那一套
+// 640×350 的座標（`docs/spec/ui-layout.md`）。
+//
+// 介面美術跟著換，格線就得跟著換——六個模式的工具盤是
+// 57×182／56×123／56×119／56×182／55×120，格子大小與列距全都不同。
+// 那六組量測值在 uigeom.go，`buildTileSet` 依 `.PGF` 檔頭的模式碼挑。
 func LoadTileSetMode(dataDir, style, mode string) (*TileSet, error) {
-	ts, err := loadOneMode(dataDir, style, mode)
-	if err != nil {
-		return nil, err
-	}
-	if mode == "" || mode == ModeCEGA {
-		return ts, nil
-	}
-	cega, err := loadOneMode(dataDir, style, ModeCEGA)
-	if err != nil {
-		// 沒有 CEGA 可借就用本模式自己的介面美術。位置會不準，
-		// 但總比開不起來好——訊息由呼叫端決定要不要顯示。
-		return ts, nil
-	}
-	ts.UI = cega.UI
-	return ts, nil
+	return loadOneMode(dataDir, style, mode)
 }
 
 func loadOneMode(dataDir, style, mode string) (*TileSet, error) {
@@ -271,6 +272,7 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 	for i := range b0.Images {
 		ts.Tiles = append(ts.Tiles, imageFromOpaque(&b0, i, pal, vs))
 	}
+	ts.Geom = geomFor(g.Mode)
 	ts.bank0 = b0
 	ts.invPal = invertPalette(pal, len(g.Palette))
 	// 其餘圖形庫原樣收著，精靈與介面美術都在裡面。兩份，透明處理不同。
@@ -279,12 +281,17 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 		b := g.Banks[bi]
 		var imgs, opaque []*ebiten.Image
 		for i := range b.Images {
+			// ⚠ 精靈拉、介面**不拉**。精靈畫在地圖上、跟著圖塊走，
+			// 所以要跟圖塊一樣拉；介面美術是貼在版面量好的絕對位置上的，
+			// 拉了會撞到別的東西——CGA 拉完的工具盤是 55×240，
+			// 從 y=55 貼下去會蓋掉 y=237 的需求指標。
 			imgs = append(imgs, imageFrom(&b, i, pal, masks[bi], vs))
-			opaque = append(opaque, imageFromOpaque(&b, i, pal, vs))
+			opaque = append(opaque, imageFromOpaque(&b, i, pal, 1))
 		}
 		ts.Sprites = append(ts.Sprites, imgs)
 		ts.UI = append(ts.UI, opaque)
 	}
+	ts.MapIcons = sliceMapIcons(g, ts.Geom, pal)
 	if g.Mini != nil {
 		ts.Mini = g.Mini
 		per := g.Mini.Width * g.Mini.Height
@@ -578,4 +585,48 @@ func readAnyCase(dir, name string) ([]byte, error) {
 		}
 	}
 	return nil, fmt.Errorf("%s 底下沒有 %s", dir, name)
+}
+
+// sliceMapIcons 把庫 5 切成九張圖層圖示。
+//
+// 六個模式的排法不一樣（CEGA／MONO 直的一欄九列、sega／tdy／mcga
+// 兩欄五列、CGA 橫的九欄一列），而 remake 的圖示欄固定是一欄——
+// 所以一律切開，畫的時候自己排。
+//
+// ⚠ **格子要裁到美術的實際大小，不能超出就放棄。** 同一個顯示模式的
+// 六個圖形集，介面美術的尺寸會差一兩個像素——`ASIACEGA` 的庫 5 是
+// 26×226，`WESTCEGA` 是 25×225。以 asia 量到的格線去切 west，
+// 最後一列剛好超出一個像素；整批放棄的話九個圖示**一個都不會出現**，
+// 而畫面上只是圖示欄變成一片綠，看起來像「那個圖形集沒有圖示」。
+func sliceMapIcons(g *assets.PGF, u uiGeom, pal []color.RGBA) []*ebiten.Image {
+	if len(g.Banks) <= BankMapIcons || u.icnCols <= 0 {
+		return nil
+	}
+	b := g.Banks[BankMapIcons]
+	if len(b.Images) == 0 {
+		return nil
+	}
+	px := b.Images[0].Pixels
+	out := make([]*ebiten.Image, 0, mapIconCount)
+	for i := 0; i < mapIconCount; i++ {
+		x0, y0 := u.icnPos(i)
+		w, h := u.icnCellW, u.icnCellH
+		if x0+w > b.Width {
+			w = b.Width - x0
+		}
+		if y0+h > b.Height {
+			h = b.Height - y0
+		}
+		if x0 < 0 || y0 < 0 || w <= 0 || h <= 0 {
+			return nil
+		}
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				img.Set(x, y, pal[px[(y0+y)*b.Width+x0+x]])
+			}
+		}
+		out = append(out, ebiten.NewImageFromImage(img))
+	}
+	return out
 }

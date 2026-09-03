@@ -47,8 +47,10 @@ const (
 	editX, editY = 5, 21
 	// editFrameW 是編輯視窗外框的寬度，四邊都是 3 像素。
 	editFrameW = 3
-	// ditherTop 是網點區相對工具盤上緣的位移（原版量到網點從 y 235 起，
-	// 工具盤在 y 55，所以是 180）。
+	// ditherTop 是 CEGA 的網點區相對工具盤上緣的位移（原版量到網點
+	// 從 y 235 起，工具盤在 y 55，所以是 180）。**其他模式的工具盤比較矮**
+	// （tdy 123、CGA 120），網點要跟著往上補，所以實際起點由
+	// `drawLeftColumnDither` 依美術高度算，這個常數只當作最後的退路。
 	ditherTop = 180
 	// 預設大小。玩家可以用「調整編輯窗大小」（Ctrl-R）改，改過的存在
 	// Game 的 ew／eh，畫圖與命中判斷一律走 g.editSize()。
@@ -293,7 +295,7 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	fill(dst, editX+editFrameW, editViewY-1, ew-2*editFrameW, toolY-editViewY+1, colDesktop)
 	// 工具盤與需求指標之間、以及需求指標下方，原版填的是**黑白一像素網點**
 	// （x 8–63、y 235–310，(x+y) 偶數為黑）。先前那裡是空的桌面灰。
-	drawLeftColumnDither(dst, toolY)
+	g.drawLeftColumnDither(dst, toolY)
 
 	g.drawEditTitle(dst, ew)
 
@@ -363,17 +365,15 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 // SetDemand` 送出 `valve/100`），但 DOS 版沒有中段的實測點。
 const (
 	demandBarW  = 5
-	demandUpMax = 12  // 往上最多幾列
-	demandDnMax = 11  // 往下最多幾列
-	demandUpBot = 251 // 往上長的底邊
-	demandDnTop = 261 // 往下長的頂邊
 	demandClamp = 1500
 )
 
-// demandBarX 是三根長條的左緣（原版座標），順序 C、R、I。
-var demandBarX = [3]int{20, 33, 46}
-
+// ⚠ 長條的位置是**相對庫 3 那張圖**量的，不是螢幕絕對座標——
+// 六個模式的需求指標是 46×39（CEGA／MONO）、48×32（sega／tdy／mcga）
+// 或 48×25（CGA），三根長條與「C · R · I」標籤帶的位置跟著不同。
+// 寫死螢幕座標的話換模式就會畫到框外面。
 func (g *Game) drawDemandBars(dst *ebiten.Image) {
+	u := g.tiles.Geom
 	w := g.world
 	bars := [3]struct {
 		v int
@@ -393,14 +393,16 @@ func (g *Game) drawDemandBars(dst *ebiten.Image) {
 		}
 		switch {
 		case v > 0:
-			h := v * demandUpMax / demandClamp
+			h := v * u.demUpMax / demandClamp
 			if h > 0 {
-				fill(dst, demandBarX[i], demandUpBot-h+1, demandBarW, h, b.c)
+				fill(dst, editDemandX+u.demBarX[i], editDemandY+u.demUpBot-h+1,
+					demandBarW, h, b.c)
 			}
 		case v < 0:
-			h := -v * demandDnMax / demandClamp
+			h := -v * u.demDnMax / demandClamp
 			if h > 0 {
-				fill(dst, demandBarX[i], demandDnTop, demandBarW, h, b.c)
+				fill(dst, editDemandX+u.demBarX[i], editDemandY+u.demDnTop,
+					demandBarW, h, b.c)
 			}
 		}
 	}
@@ -412,10 +414,18 @@ func (g *Game) drawDemandBars(dst *ebiten.Image) {
 // `(x+y)` 為偶數的像素是黑、奇數是白。需求指標的白色面板疊在它上面，
 // 所以只有面板四周看得到網點——先前那裡留成桌面灰，整條左欄的明度都不對。
 //
-// 上緣接在工具盤圖（庫 2，57×182，畫在 (8,55)）的下面，下緣接到工具帶。
-func drawLeftColumnDither(dst *ebiten.Image, toolY int) {
+// 上緣接在工具盤圖（庫 2，畫在 (8,55)）的下面，下緣接到工具帶。
+// ⚠ 工具盤的高度**每個顯示模式不一樣**（CEGA 182、tdy 123、CGA 120），
+// 所以上緣要量美術，不能寫死——寫死的話換模式會在工具盤與網點之間
+// 留一條桌面灰。
+func (g *Game) drawLeftColumnDither(dst *ebiten.Image, toolY int) {
 	x0, x1 := editX+editFrameW, editViewX-1
-	y0, y1 := editPalY+ditherTop, toolY-1
+	// 網點從工具盤美術的下緣接下去（CEGA 剛好是 ditherTop 那個量測值）。
+	top := ditherTop
+	if im := g.tiles.UIImage(BankToolPalette, 0); im != nil {
+		top = im.Bounds().Dy() - 2
+	}
+	y0, y1 := editPalY+top, toolY-1
 	for y := y0; y <= y1; y++ {
 		for x := x0; x < x1; x++ {
 			c := colInkLight
@@ -614,26 +624,24 @@ func (g *Game) drawToolHighlight(dst *ebiten.Image) {
 	if i < 0 {
 		return
 	}
-	x, y := paletteCell(i)
-	vector.StrokeRect(dst, s(x), s(y), s(palCellW), s(palCellH),
+	x, y := g.paletteCell(i)
+	u := g.tiles.Geom
+	vector.StrokeRect(dst, s(x), s(y), s(u.palCellW), s(u.palCellH),
 		float32(UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
 }
 
-// 工具盤的格線。量自 workplace/gfx/bank02-00.png：
-// 兩欄的暗框在 x=2／31，七列在 y=5、30、55、80、105、130、155，
-// 所以間距是 29×25、格子 26×23。
+// 工具盤是 2 欄 × 7 列。**格子大小與列距每個顯示模式都不一樣**
+// （CEGA 57×182、tdy 56×123、CGA 55×120…），所以格線走
+// `g.tiles.Geom`，不是寫死的常數——六組量測值與量法在 uigeom.go。
 const (
-	palCols   = 2
-	palRows   = 7
-	palCellW  = 26
-	palCellH  = 23
-	palPitchX = 29
-	palPitchY = 25
+	palCols = 2
+	palRows = 7
 )
 
-func paletteCell(i int) (int, int) {
+func (g *Game) paletteCell(i int) (int, int) {
+	u := g.tiles.Geom
 	c, r := i%palCols, i/palCols
-	return editPalX + 2 + c*palPitchX, editPalY + 5 + r*palPitchY
+	return editPalX + u.palXOff + c*u.palPitchX, editPalY + u.palYOff + r*u.palPitchY
 }
 
 // paletteOrder 是工具盤十四格的工具，順序照原版由左到右、由上到下。
@@ -665,11 +673,12 @@ func paletteIndexOf(t sim.Tool) int {
 }
 
 // paletteHit 把畫面座標換成工具盤格號；不在盤上回 −1。
-func paletteHit(px, py int) int {
+func (g *Game) paletteHit(px, py int) int {
+	u := g.tiles.Geom
 	x, y := px/UIScale, py/UIScale
 	for i := range paletteOrder {
-		cx, cy := paletteCell(i)
-		if x >= cx && x < cx+palCellW && y >= cy && y < cy+palCellH {
+		cx, cy := g.paletteCell(i)
+		if x >= cx && x < cx+u.palCellW && y >= cy && y < cy+u.palCellH {
 			return i
 		}
 	}
@@ -770,7 +779,15 @@ func (g *Game) drawCityFormWindow(dst *ebiten.Image) {
 	// 庫 5 的美術只有中間那 25 行。原版的規則同其他網點：`(x+y)` 偶數是黑。
 	ih := mapIconH * mapIconCount
 	ditherRect(dst, mapIconEdgeX, mapIconY, 1, ih, colInk, colInkLight)
-	blit(dst, g.tiles.UIImage(BankMapIcons, 0), mapIconX, mapIconY)
+	// 九張圖示一張一張貼。庫 5 的排法每個模式不一樣（直的一欄／兩欄五列／
+	// **橫的九欄**），而這一欄只有 30 像素寬，所以在 `sliceMapIcons`
+	// 就切開了，這裡只負責往下排。
+	for i, im := range g.tiles.MapIcons {
+		if i >= mapIconCount {
+			break
+		}
+		blit(dst, im, mapIconX, mapIconY+i*mapIconH)
+	}
 	// ⚠ 右邊那兩行要畫在圖示**後面**：庫 5 的圖是 26 行寬（245–270），
 	// 會蓋掉 270 那一行。先畫的話每一列都差兩個像素，而且看起來只是
 	// 「邊緣有點髒」。

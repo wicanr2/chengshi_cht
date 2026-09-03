@@ -613,8 +613,9 @@ func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 		{5, &g.world.PollutionHis, color.RGBA{0x50, 0xa0, 0x30, 0xff}},
 	}
 
-	// 左側圖示盤。庫 4 是一整張 51×102，格線量自 workplace/gfx/bank04-00.png：
-	// 兩欄間距 25、四列間距 25、格子 24×23。
+	// 左側圖示盤。庫 4 的格線**每個顯示模式不一樣**（CEGA 51×102、
+	// tdy 56×76、MONO 48×99、CGA 60×77），六組量測值在 uigeom.go。
+	u := g.tiles.Geom
 	blit(dst, g.tiles.UIImage(BankGraphBtns, 0), x/UIScale, y/UIScale)
 	for i := 0; i < 8; i++ {
 		on := false
@@ -626,13 +627,13 @@ func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 		if !on {
 			continue
 		}
-		cx, cy := graphCell(x/UIScale, y/UIScale, i)
-		vector.StrokeRect(dst, s(cx), s(cy), s(graphCellW), s(graphCellH),
+		cx, cy := g.graphCell(x/UIScale, y/UIScale, i)
+		vector.StrokeRect(dst, s(cx), s(cy), s(u.grfCellW), s(u.grfCellH),
 			float32(UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
 	}
 
 	// 右側曲線圖。
-	gx := x + (graphPanelW+6)*UIScale
+	gx := x + (g.graphPanelW()+6)*UIScale
 	gw, gh := x+w-gx, h-16*UIScale
 	vector.DrawFilledRect(dst, float32(gx), float32(y), float32(gw), float32(gh),
 		colMenuBar, false)
@@ -704,25 +705,34 @@ const (
 
 // 統計圖圖示盤的格線（原版像素）。
 const (
-	graphCellW, graphCellH = 24, 23
-	graphPitch             = 25
-	graphPanelW            = 51
+	// 曲線圖的格線與刻度間距（與圖示盤無關，那一組在 uigeom.go）。
+	graphPanelWFallback = 51
 )
 
+// graphPanelW 是左側圖示盤佔的寬度，量自那個模式自己的庫 4。
+func (g *Game) graphPanelW() int {
+	if im := g.tiles.UIImage(BankGraphBtns, 0); im != nil {
+		return im.Bounds().Dx()
+	}
+	return graphPanelWFallback
+}
+
 // graphCell 回傳第 i 個圖示格的左上角（原版座標）。
-func graphCell(px, py, i int) (int, int) {
-	return px + (i%2)*graphPitch, py + 2 + (i/2)*graphPitch
+func (g *Game) graphCell(px, py, i int) (int, int) {
+	u := g.tiles.Geom
+	return px + u.grfXOff + (i%2)*u.grfPitchX, py + u.grfYOff + (i/2)*u.grfPitchY
 }
 
 // graphHit 把畫面座標換成圖示格號；不在盤上回 −1。
 func (g *Game) graphHit(mx, my int) int {
+	u := g.tiles.Geom
 	x0, y0, _, _ := g.winFrame()
 	px := x0/UIScale + 6
 	py := y0/UIScale + 16
 	x, y := mx/UIScale, my/UIScale
 	for i := 0; i < 8; i++ {
-		cx, cy := graphCell(px, py, i)
-		if x >= cx && x < cx+graphCellW && y >= cy && y < cy+graphCellH {
+		cx, cy := g.graphCell(px, py, i)
+		if x >= cx && x < cx+u.grfCellW && y >= cy && y < cy+u.grfCellH {
 			return i
 		}
 	}
