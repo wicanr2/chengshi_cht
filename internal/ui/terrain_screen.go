@@ -183,6 +183,8 @@ func (g *Game) openTerrainScreen() {
 	g.camX, g.camY = 0, 0
 	g.win = winNone
 	g.openMenu = 0
+	// 原版的編輯器那條帶是空的。不清掉的話開機那句「繁體中文」會跟進來。
+	g.message = ""
 }
 
 // closeTerrainScreen 離開編輯器，把玩家原本的城市放回去。
