@@ -1,0 +1,43 @@
+package ui
+
+import (
+	"image/color"
+	"testing"
+)
+
+// TestInvertPaletteIsEGAComplement 釘住工具佔地框的顏色規則。
+//
+// 原版是把底下那一點的 EGA 色號取補數（`docs/spec/controls.md` §十三，
+// 量到 460/460 個像素 XOR 15）。這條測試同時擋住一個很容易犯的簡化：
+// 「反正就是把顏色反過來」——十六色裡棕(6)與淡藍(9)的 RGB 互補值
+// 不在調色盤上，而棕色是地圖上最多的底色。
+func TestInvertPaletteIsEGAComplement(t *testing.T) {
+	ega := []color.RGBA{
+		{0x00, 0x00, 0x00, 0xff}, {0x00, 0x00, 0xaa, 0xff},
+		{0x00, 0xaa, 0x00, 0xff}, {0x00, 0xaa, 0xaa, 0xff},
+		{0xaa, 0x00, 0x00, 0xff}, {0xaa, 0x00, 0xaa, 0xff},
+		{0xaa, 0x55, 0x00, 0xff}, {0xaa, 0xaa, 0xaa, 0xff},
+		{0x55, 0x55, 0x55, 0xff}, {0x55, 0x55, 0xff, 0xff},
+		{0x55, 0xff, 0x55, 0xff}, {0x55, 0xff, 0xff, 0xff},
+		{0xff, 0x55, 0x55, 0xff}, {0xff, 0x55, 0xff, 0xff},
+		{0xff, 0xff, 0x55, 0xff}, {0xff, 0xff, 0xff, 0xff},
+	}
+	pal := make([]color.RGBA, 256)
+	copy(pal, ega)
+	inv := invertPalette(pal, 16)
+
+	for i := 0; i < 16; i++ {
+		if got, want := inv[i], ega[15-i]; got != want {
+			t.Errorf("色號 %d 的補數是 %v，應為 %v（15−%d）", i, got, want, i)
+		}
+	}
+	// 反面：RGB 反相在這兩個色號上會得到調色盤外的顏色。少了這一段，
+	// 有人把實作換成混色反相時上面那段照樣過不了，但沒人知道為什麼不能換。
+	for _, i := range []int{6, 9} {
+		c := ega[i]
+		rgbInv := color.RGBA{255 - c.R, 255 - c.G, 255 - c.B, 0xff}
+		if rgbInv == ega[15-i] {
+			t.Errorf("色號 %d 的 RGB 反相等於補數色，這條測試的前提不成立", i)
+		}
+	}
+}

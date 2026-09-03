@@ -1,0 +1,45 @@
+# 工具佔地框：選了工具之後游標移到地圖上，原版會畫一個框。
+# 要回答的是：框的顏色、線寬、尺寸跟不跟工具走、蓋不下去時會不會變。
+# 開場序列照 act-tools.txt（已知可用）。
+wait 3
+click 200 197
+wait 5
+click 311 245
+wait 6
+key Return
+wait 3
+click 311 190
+wait 3
+# 住宅區（3×3）
+click 49 121
+wait 1
+move 200 120
+wait 1
+shot res-a
+move 232 152
+wait 1
+shot res-b
+# 推土機（1×1）
+click 22 70
+wait 1
+move 200 120
+wait 1
+shot bulldozer
+# 體育館（4×4）
+click 22 196
+wait 1
+move 200 120
+wait 1
+shot stadium
+# 道路（1×1，可拖曳）
+click 49 70
+wait 1
+move 200 120
+wait 1
+shot road
+# 查詢工具：看它有沒有框
+click 311 190
+wait 1
+move 200 120
+wait 1
+shot query

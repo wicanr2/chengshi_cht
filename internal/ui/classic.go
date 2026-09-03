@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"strings"
 
@@ -235,27 +236,26 @@ func (g *Game) editViewSize() (int, int) {
 //
 // ⚠ 只有點在**兩個視窗重疊的那一塊**時才吞掉這一下。點在編輯視窗只屬於
 // 自己的地方（City Form 蓋不到的左半邊）要照樣蓋東西——吞掉的話，
-// 玩家每次切回編輯視窗都要多點一下，而且第一下「沒反應」。
-// 試玩腳本就是這樣少蓋了一座發電廠，而畫面像素檢查照樣過（疊放順序換了，
-// 畫面確實變了），只有存檔內容檢查抓得到。
+// raiseWindowAt 把游標底下的視窗拉到前面。**只由右鍵呼叫**——原版就是
+// 按右鍵換疊放順序（`docs/spec/ui-layout.md` §二），左鍵一律歸最前面那個
+// 視窗。綁在左鍵上的話，兩個視窗重疊的那一塊會變成怎麼點都蓋不了東西。
 //
-// 原版是按右鍵拉到前面；這裡用左鍵，因為 remake 的右鍵沒有別的用途。
+// 回傳值代表「這一下被疊放順序吃掉了」。
 func (g *Game) raiseWindowAt(mx, my int) bool {
 	if g.mapClosed {
 		if g.inEditWindow(mx, my) {
 			g.editFront = true
+			return true
 		}
 		return false
 	}
 	if inCityForm(mx, my) {
-		if g.editFront {
-			g.editFront = false
-			return true // 重疊區：這一下只用來把 City Form 叫回前面
-		}
-		return false
+		g.editFront = false
+		return true
 	}
 	if g.inEditWindow(mx, my) {
-		g.editFront = true // 非重疊區：順手拉到前面，但這一下照樣算數
+		g.editFront = true
+		return true
 	}
 	return false
 }
@@ -305,6 +305,7 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	}
 
 	g.drawEditMap(dst)
+	g.drawToolCursor(dst, vw, vh)
 	g.drawEditViewFrame(dst, vw, vh)
 	blit(dst, g.tiles.UIImage(BankToolPalette, 0), editPalX, editPalY)
 	g.drawToolHighlight(dst)
@@ -494,6 +495,105 @@ func (g *Game) drawEditMap(dst *ebiten.Image) {
 			dst.DrawImage(img, &op)
 		}
 	}
+}
+
+// drawToolCursor 畫工具的佔地框：跟著游標的空心方框，大小照工具佔地。
+//
+// 原版量法（DOSBox 實跑，`workplace/dosbox/toolbox-*.png`，等級：已確認）：
+//
+//   - 框就是佔地的外緣。住宅區 3×3 量到 48×48 像素、體育館 4×4 量到 64×64，
+//     一格 16 像素整除；推土機與道路那種 1×1 的也有框。
+//   - 線寬 2 像素，四邊一樣。
+//   - **顏色是把底下那一點的 EGA 色號取補數。** 拿兩張游標位置不同的截圖
+//     互相當背景比對，460 個差異像素的色號 XOR 全部是 15。
+//
+// 所以這裡不是「畫一個紫色框」，是拿補數調色盤重畫佔地底下的圖塊
+// （`TileSet.InvTile`），再把四條邊貼上去。用固定顏色或 RGB 反相都會錯，
+// 理由見 `invertPalette`。
+func (g *Game) drawToolCursor(dst *ebiten.Image, vw, vh int) {
+	if g.win != winNone || g.picture != "" || g.newCityDlg != nil || g.openMenu != 0 {
+		return
+	}
+	n := int(g.tool)
+	if n < 0 || n >= len(sim.ToolSize) {
+		return
+	}
+	size := sim.ToolSize[n]
+	if size <= 0 {
+		return
+	}
+	mx, my := ebiten.CursorPosition()
+	if !g.inEditView(mx, my) {
+		return
+	}
+	// City Form 蓋住的那一塊蓋不了東西，也就不該有框。
+	if !g.editFront && !g.mapClosed && inCityForm(mx, my) {
+		return
+	}
+	sz := g.tileSize()
+	px := sz * tileScale
+	if px <= 0 {
+		return
+	}
+	tx := g.camX + (mx-editViewX*UIScale)/px
+	ty := g.camY + (my-editViewY*UIScale)/px
+	x0, y0 := tx-sim.ToolOffset[n], ty-sim.ToolOffset[n]
+	w := size * sz
+	bw := 2
+	if sz < 8 {
+		bw = 1
+	}
+	if w < 2*bw {
+		return
+	}
+
+	buf := g.cursorBuf(w)
+	buf.Clear()
+	for j := 0; j < size; j++ {
+		for i := 0; i < size; i++ {
+			wx, wy := x0+i, y0+j
+			if wx < 0 || wy < 0 || wx >= sim.WorldX || wy >= sim.WorldY {
+				continue
+			}
+			img := g.tiles.InvTile(g.world.TileNum(wx, wy), g.zoom)
+			if img == nil {
+				continue
+			}
+			var op ebiten.DrawImageOptions
+			op.GeoM.Translate(float64(i*sz), float64(j*sz))
+			buf.DrawImage(img, &op)
+		}
+	}
+
+	bx := editViewX + (x0-g.camX)*sz
+	by := editViewY + (y0-g.camY)*sz
+	view := image.Rect(editViewX, editViewY, editViewX+vw, editViewY+vh)
+	for _, r := range []image.Rectangle{
+		image.Rect(0, 0, w, bw),         // 上
+		image.Rect(0, w-bw, w, w),       // 下
+		image.Rect(0, bw, bw, w-bw),     // 左
+		image.Rect(w-bw, bw, w, w-bw),   // 右
+	} {
+		// 超出地圖區的部分要裁掉，否則框會畫到工具盤與視窗外框上。
+		d := r.Add(image.Pt(bx, by)).Intersect(view)
+		if d.Empty() {
+			continue
+		}
+		src := d.Sub(image.Pt(bx, by))
+		var op ebiten.DrawImageOptions
+		op.GeoM.Scale(UIScale, UIScale)
+		op.GeoM.Translate(float64(d.Min.X*UIScale), float64(d.Min.Y*UIScale))
+		dst.DrawImage(buf.SubImage(src).(*ebiten.Image), &op)
+	}
+}
+
+// cursorBuf 是佔地框用的暫存圖，最大的工具是機場 6×6。
+// 只在尺寸不夠時重建，不逐格配置——每一格新建影像是 GPU 記憶體的慢性中毒。
+func (g *Game) cursorBuf(w int) *ebiten.Image {
+	if g.curBuf == nil || g.curBuf.Bounds().Dx() < w {
+		g.curBuf = ebiten.NewImage(w, w)
+	}
+	return g.curBuf
 }
 
 // drawToolHighlight 把目前選的工具那一格框起來。

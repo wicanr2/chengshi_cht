@@ -38,6 +38,12 @@ type TileSet struct {
 	// zoomed 是縮小過的圖塊，鍵是縮小倍數（2 ＝ 邊長減半）。
 	// 這是 remake 自己加的「縮小」功能用的，原版沒有——見 ZoomTile。
 	zoomed map[int][]*ebiten.Image
+	// bank0／invPal／invTiles 是工具佔地框用的「色號取補數」圖塊。
+	// 整套先建太浪費（960 張裡一次只會用到幾張），所以留著原始資料
+	// 與補數調色盤，用到哪張建哪張。見 InvTile。
+	bank0    assets.PGFBank
+	invPal   []color.RGBA
+	invTiles map[int]*ebiten.Image
 }
 
 // 介面美術在哪一庫。證據：docs/formats/03-pgf-graphics.md §5之二。
@@ -163,6 +169,8 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 	for i := range b0.Images {
 		ts.Tiles = append(ts.Tiles, imageFromOpaque(&b0, i, pal))
 	}
+	ts.bank0 = b0
+	ts.invPal = invertPalette(pal, len(g.Palette))
 	// 其餘圖形庫原樣收著，精靈與介面美術都在裡面。兩份，透明處理不同。
 	masks := maskBanks(g)
 	for bi := 1; bi < len(g.Banks); bi++ {
@@ -287,6 +295,61 @@ func (t *TileSet) TileImage(n int) *ebiten.Image {
 	return t.Tiles[n]
 }
 
+// invertPalette 把調色盤取補數，給工具佔地框用。
+//
+// **十六色照 EGA 的規則：色號 i → 15−i。** 量法是拿原版兩張游標位置
+// 不同的截圖互相當背景比對（`workplace/dosbox/toolbox-res-a/b.png`）：
+// 460 個差異像素的 EGA 色號 XOR **全部**是 15。等級：已確認。
+//
+// ⚠ **這不等於 RGB 反相。** 十六色裡有兩個色號的 RGB 互補值不在調色盤上：
+// 棕 6 (170,85,0) 的補數是淡藍 9 (85,85,255)，而 RGB 反相會得到
+// (85,170,255)；淡藍 9 反過來同理。棕色是地圖上最多的底色，
+// 所以「用混色模式反相」看起來會對，實際上最常見的那一格就是錯的。
+//
+// 256 色（mcga）的規則**未解**——原版在那個模式下怎麼畫框沒有量過，
+// 這裡退回 RGB 反相，並且不宣稱它與原版一致。
+func invertPalette(pal []color.RGBA, n int) []color.RGBA {
+	out := make([]color.RGBA, len(pal))
+	if n == 16 {
+		for i := 0; i < 16; i++ {
+			out[i] = pal[15-i]
+		}
+		// 十六色以外的索引用不到，補成黑色免得畫出隨機顏色。
+		for i := 16; i < len(out); i++ {
+			out[i] = color.RGBA{0, 0, 0, 255}
+		}
+		return out
+	}
+	for i, c := range pal {
+		out[i] = color.RGBA{255 - c.R, 255 - c.G, 255 - c.B, 255}
+	}
+	return out
+}
+
+// InvTile 回傳圖塊 n 的補數版本（縮小 z 倍），工具佔地框用。
+// 按需建立並快取——一次只會用到佔地底下那幾張。
+func (t *TileSet) InvTile(n, z int) *ebiten.Image {
+	if n < 0 || n >= len(t.bank0.Images) || t.invPal == nil {
+		return nil
+	}
+	if z < 1 {
+		z = 1
+	}
+	if t.invTiles == nil {
+		t.invTiles = map[int]*ebiten.Image{}
+	}
+	key := z<<16 | n
+	if img, ok := t.invTiles[key]; ok {
+		return img
+	}
+	img := imageFromOpaque(&t.bank0, n, t.invPal)
+	if z > 1 {
+		img = shrink(img, z)
+	}
+	t.invTiles[key] = img
+	return img
+}
+
 // ZoomTile 回傳縮小 z 倍的圖塊（z ＝ 1 就是原尺寸）。
 //
 // **這是 remake 加的功能，原版沒有**：原版的編輯視窗永遠是一格 16 像素，
@@ -319,23 +382,31 @@ func (t *TileSet) ZoomTile(n, z int) *ebiten.Image {
 
 // buildZoom 把整套圖塊縮小 z 倍，一次做完存起來。
 func (t *TileSet) buildZoom(z int) []*ebiten.Image {
-	sz := t.Size / z
-	if sz < 1 {
-		sz = 1
-	}
 	out := make([]*ebiten.Image, len(t.Tiles))
 	for i, src := range t.Tiles {
-		dst := ebiten.NewImage(sz, sz)
-		b := src.Bounds()
-		for y := 0; y < sz; y++ {
-			for x := 0; x < sz; x++ {
-				sx, sy := b.Min.X+x*z, b.Min.Y+y*z
-				dst.Set(x, y, src.At(sx, sy))
-			}
-		}
-		out[i] = dst
+		out[i] = shrink(src, z)
 	}
 	return out
+}
+
+// shrink 把一張圖縮小 z 倍，取樣用最近鄰（每 z×z 塊取左上角）。
+// 平均會把點陣圖糊掉，見 ZoomTile 的說明。
+func shrink(src *ebiten.Image, z int) *ebiten.Image {
+	b := src.Bounds()
+	w, h := b.Dx()/z, b.Dy()/z
+	if w < 1 {
+		w = 1
+	}
+	if h < 1 {
+		h = 1
+	}
+	dst := ebiten.NewImage(w, h)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			dst.Set(x, y, src.At(b.Min.X+x*z, b.Min.Y+y*z))
+		}
+	}
+	return dst
 }
 
 // styleNameZH 是六種城市風格的中文名。

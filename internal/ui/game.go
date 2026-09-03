@@ -173,6 +173,8 @@ type Game struct {
 	dragWin        window
 	dragDX, dragDY int
 
+	// curBuf 是工具佔地框的暫存圖，見 drawToolCursor。
+	curBuf *ebiten.Image
 	// editFront 記錄編輯視窗有沒有被拉到 City Form 視窗前面。
 	// 原版一開始是 City Form 在前面。
 	editFront bool
@@ -912,9 +914,14 @@ func (g *Game) handleMouse() {
 	pressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	just := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 
-	// 疊放順序：點到哪個視窗哪個就到前面。要放在工具盤與地圖之前，
-	// 否則「把被蓋住的編輯視窗叫到前面」那一下會直接蓋出一格東西。
-	if just && g.raiseWindowAt(mx, my) {
+	// 疊放順序：**原版是按右鍵把視窗拉到前面**（`docs/spec/ui-layout.md` §二）。
+	//
+	// ⚠ 先前綁在左鍵上，於是兩個視窗重疊的那一塊，每一次左鍵都被拿去換
+	// 疊放順序，蓋不了東西——玩家的回報是「就算把地圖視窗放到後面，
+	// 點到原本的位置它還是會跳上來卡住編輯」（issue #1）。
+	// 左鍵一律歸最前面那個視窗，這才是原版的行為。
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) &&
+		g.raiseWindowAt(mx, my) {
 		return
 	}
 	// City Form 的圖層圖示（含兩個共用圖示的小選單）。
