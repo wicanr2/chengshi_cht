@@ -108,7 +108,7 @@ Mac），第一次開啟要在圖示上按右鍵 → 打開 → 再按一次「�
 
 六、授權
 
-本專案自己的部分採 PolyForm Noncommercial 1.0.0：非商業用途可以自由
+本專案自己的部分採 RRSAL-1.0（復古重製 source-available 授權條款）：非商業用途可以自由
 使用、修改與散布，商業使用請先聯絡 wicanr2@gmail.com。全文見 LICENSE。
 
 內建的點陣字型衍生自 Noto Sans CJK TC，採 SIL Open Font License 1.1，

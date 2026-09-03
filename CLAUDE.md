@@ -353,15 +353,20 @@ tools/            go.sh（docker 建置）、對拍、抽取與整理腳本
 
 ## 7. 授權
 
-`LICENSE` 是 **PolyForm Noncommercial License 1.0.0**（使用者定案 2026-08-29）：
-非商業免費，**含散布與修改後散布**；商業使用要先洽談。
-`~/.claude/rulebook/85-retro-remake-licensing.md` 把 PolyForm 列為同一個模型的
-標準條款版本，本專案採用它。
+`LICENSE` 是 **RRSAL-1.0**（復古重製 source-available 授權條款 1.0／
+Retro Remake Source-Available License 1.0，SPDX `LicenseRef-RRSAL-1.0`，
+使用者定案 2026-09-03）：非商業免費含修改後散布、**實況與影片的平台分潤明示允許**、
+貢獻回授、商業使用要先洽談。範本與各條設計理由在
+`~/.claude/knowledge-base/retro/rrsal-1.0.md`，規則在
+`~/.claude/rulebook/85-retro-remake-licensing.md`。
 
-**條款全文一個字都不能改。** 檔案結構是：`Required Notice:` 標頭 → PolyForm 全文逐字 →
-「附註」段（明確標示**不是條款的一部分**）。原版素材排除、商標、規格參考揭露全部寫在附註，
-不寫進條款本體。全文取自 PolyForm 官方 repo 的 `1.0.0` tag，SHA-256 記在檔尾；
-要重新產生就重抓官方檔並 `diff`，不要手打。
+**條款本文（第 1–13 條）一個字都不能改，要改就是新版號。** 本檔只換占位符，
+以及第 2 條 (c)、(d) 點名的灰色地帶與第三方元件——那兩項要照本儲存庫**實際有什麼**填，
+不抄別的專案。填完 `grep -n '@' LICENSE` 只能剩 e-mail 裡的 `@`。
+
+**專案特有的揭露不寫進 `LICENSE`。** RRSAL 沒有附註段（第 12 條已經涵蓋
+「與原權利人無隸屬關係」），所以商標、Micropolis 立場寫在 README 的授權段，
+軟體世界那兩個地形檔的權利狀態寫在 `cities/README.md`。
 
 這個專案有一個前幾個專案沒有的授權張力，寫任何對外文字時都要照下面講：
 
@@ -370,16 +375,15 @@ tools/            go.sh（docker 建置）、對拍、抽取與整理腳本
   **一行都不照抄。** 這條不是為了規避授權，是 §0 的閘門要求：
   照抄會讓「這條規則從哪來、推論等級多少」永遠說不清楚。
 - **這個立場有法律風險，而且要誠實揭露，不要粉飾。** 「讀 GPL 原始碼後重寫」
-  是否構成衍生著作，實務上有爭議。`LICENSE` 的附註與 README 都要寫明：
+  是否構成衍生著作，實務上有爭議。README 的授權段要寫明：
   這是著作權人的立場，不是法院見解。
 - **不要把本專案叫 open source。** 非商業限制不符合 OSI 的開源定義，
-  對外一律寫 **source-available** 或「PolyForm Noncommercial 授權」。
-- **不要把原版素材寫進授權範圍。** 條款第 1 條已經把界線劃掉：原版執行檔、資料檔、
-  美術、音樂、點陣字型與掃描件不在內。
+  對外一律寫 **source-available** 或「RRSAL-1.0 授權」。
+- **不要把原版素材寫進授權範圍。** 條款第 2 條 (b) 已經把界線劃掉：原版執行檔、
+  資料檔、美術、音樂、點陣字型與掃描件不在內。
 - **`LICENSE` 要出現在四個地方**：repo 根目錄、README 的授權段、**每一個發行包裡**、
   發行根目錄與 AppImage 的 `usr/share/doc/`。打包腳本要複製，不要靠人記得。
-  PolyForm 的 Notices 條款自己就要求這件事：拿到副本的人必須同時拿到條款（或其網址）
-  與 `Required Notice:` 那一行。**APK 是例外**，assets 塞得進去但沒人看得到，
+  條款第 5 條自己就要求散布時保留全文。**APK 是例外**，assets 塞得進去但沒人看得到，
   正確做法是遊戲內「關於」頁顯示；還沒做就在發行紀錄留一列「未解」。
 - SimCity 與 Maxis 是 Electronic Arts 的商標。repo 取名 `chengshi_cht` 就是為了避開；
   對外文字用商標只能作指示性使用，並附「與 EA 無隸屬關係」聲明。

@@ -217,7 +217,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | 方法論、四道閘門、證據優先序、授權立場 |
 | [`README.md`](README.md) | 專案首頁：這是什麼、為何保存、現況 |
-| [`LICENSE`](LICENSE) | PolyForm Noncommercial 1.0.0 全文（逐字未改）＋ 附註：原版素材排除、商標、規格參考揭露 |
+| [`LICENSE`](LICENSE) | RRSAL-1.0 全文（占位符已填、條款本文逐字未改）：非商業免費含修改再散布、實況分潤明示允許、貢獻回授、商業洽談 |
 | [`WORKLOG.md`](WORKLOG.md) | 逐輪工作紀錄：日期、命令、失敗、negative result |
 | [`docs/research/`](docs/research/) | 查證筆記：玩家與評論對一代的說法（二手彙整，每條標來源）|
 | [`docs/re/`](docs/re/) | 機制筆記（讀 Micropolis 與反組譯的產物）。入口是 `00-master-index.md`、`00-function-index.md`、`00-wiring-status.md` |

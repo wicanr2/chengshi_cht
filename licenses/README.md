@@ -1,6 +1,7 @@
 # 第三方授權
 
-本專案自己的程式碼、文件與譯文採 PolyForm Noncommercial 1.0.0，見根目錄的
+本專案自己的程式碼、文件與譯文採 RRSAL-1.0（復古重製 source-available
+授權條款），見根目錄的
 [`LICENSE`](../LICENSE)。這個目錄放的是**別人的**東西的授權條款。
 
 | 檔案 | 涵蓋什麼 |

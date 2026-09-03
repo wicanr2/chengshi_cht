@@ -15,7 +15,7 @@ import (
 
 // 系統選單裡原本沒接的三項：關於本遊戲、印表、以……檔名儲存。
 //
-// 「關於本遊戲」不只是禮貌。授權條款（PolyForm Noncommercial 1.0.0）要求
+// 「關於本遊戲」不只是禮貌。授權條款（RRSAL-1.0）要求
 // 拿到副本的人同時拿到條款與 `Required Notice:` 那一行，而 **APK 沒有地方
 // 放文字檔給玩家看**——CLAUDE.md §7 明寫那種情形的正解就是遊戲內的
 // 「關於」頁。所以這一頁是發行條件之一，不是裝飾。
@@ -36,7 +36,7 @@ func (g *Game) aboutLines() []string {
 		"Required Notice: Copyright 2026 Wang Chun-Yu (wicanr2)",
 		"https://github.com/wicanr2/chengshi_cht",
 		"",
-		"授權：PolyForm Noncommercial License 1.0.0",
+		"授權：RRSAL-1.0（非商業免費，商業洽談）",
 		"非商業免費，含修改後散布；商業使用請洽 wicanr2@gmail.com。",
 		"全文在發行包的 LICENSE 檔，或上面那個網址。",
 		"原版《SimCity》(1989) 由 Will Wright 設計、Maxis 發行。",

@@ -56,6 +56,6 @@ card 08-modes -line "CGA、Tandy、EGA、VGA、Mono" -line "六種顯示模式�
 card 09-grid  -image "$P/modes/grid.png" -line "同一幅招牌，六種顯示卡"
 card 10-end   -big "城　市" \
   -line "github.com/wicanr2/chengshi_cht" \
-  -line "PolyForm Noncommercial 授權　非商業免費" \
+  -line "RRSAL-1.0 授權　非商業免費" \
   -line "遊戲資料請自備合法原版"
 ls "$P/cards" | tr '\n' ' '; echo

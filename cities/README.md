@@ -18,8 +18,32 @@ chengshi -data "/path/to/SIMCITY 1.10" -load cities/TAIPEI.CTY
 同一片磁片上的 Maxis 程式、美術與示範城市**不在**本儲存庫內。
 磁片逐檔盤點見 [`../docs/formats/00-e220-terrain-editor.md`](../docs/formats/00-e220-terrain-editor.md)。
 
-權利狀態的說明在 [`../LICENSE`](../LICENSE) 附註第五條，包含「當年在台灣合法」
-與「今日可自由散布」是兩件事這個保留。
+### 權利狀態：誠實揭露
+
+檔案內容是 27 248 個位元組的地形資料（128 位元組檔頭 ＋ 120×100 格的地圖），
+不含任何 Maxis 的程式碼或美術；格式規格見
+[`../docs/formats/01-city-file.md`](../docs/formats/01-city-file.md)。
+
+台灣在 1992 年著作權法修正之前採註冊主義，原則上不保護無互惠關係的外國人著作，
+因此軟體世界當年的重新打包發行在當時的台灣法下很可能是合法的。**但「當年在台灣
+合法」與「今日可自由散布」是兩件事**：現行法下相關權利的歸屬與存續並未經法院認定。
+
+收錄這兩個檔案是著作權人的判斷，不是法律意見。權利人如有異議請寄
+<wicanr2@gmail.com>，本專案會立即移除。
+
+The two files come from the 1990 Soft-World Research Center (Kaohsiung,
+Taiwan) repackaging of the Maxis "SimCity Terrain Editor" disks. They are
+27 248-byte terrain files drawn by the Taiwanese distributor; they contain
+no Maxis code or artwork. Taiwan's pre-1992 copyright statute did not
+generally protect works by foreign nationals without a reciprocity treaty,
+so that repackaging was probably lawful under the law of the time — but
+"lawful in Taiwan then" is not the same as "freely distributable now", and
+no court has ruled on the present status. Including them is the copyright
+holder's judgement, not legal advice. Rights holders with an objection may
+write to wicanr2@gmail.com and the files will be removed.
+
+這兩個檔案在 [`../LICENSE`](../LICENSE) 第 2 條 (c) 逐項點名為「含有原版成分」，
+不在本專案的授權範圍內。
 
 | 檔案 | 位元組 | SHA-256（前 16 碼）|
 |---|---:|---|
