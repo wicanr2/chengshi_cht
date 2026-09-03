@@ -59,6 +59,16 @@ const (
 
 // 原版這個對話框只用三個顏色：外框與字是 EGA 9、按鈕與欄位底是 EGA 11、
 // 客戶區是白的。
+// 地形編輯器自己設 EGA 的調色盤暫存器，用的不是遊戲那三個色。
+// 量自原版（`workplace/dosbox/ter-20-random-terrain.png`）：
+// 框與字 (0,0,255)、按鈕底 (0,170,255)、客戶區白。
+// ⚠ (0,170,255) **不在 EGA 預設十六色裡**，是 64 色盤裡的一個——
+// 每個通道兩位元（0／85／170／255）都合法，所以它是重新載入過的調色盤。
+var (
+	colTELine = color.RGBA{0x00, 0x00, 0xff, 0xff}
+	colTEFill = color.RGBA{0x00, 0xaa, 0xff, 0xff}
+)
+
 var (
 	colDlgLine = color.RGBA{0x55, 0x55, 0xff, 0xff}
 	colDlgFill = color.RGBA{0x55, 0xff, 0xff, 0xff}

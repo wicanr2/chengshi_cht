@@ -23,15 +23,30 @@ import (
 )
 
 const (
-	teCols, teRows   = 36, 10 // sub_1C010(&win, 0x24, 0x0A)
-	teCellW, teCellH = 8, 14  // 一個字元格。8 出自版面換算，14 是 EGA 高解析的行高
-	teW, teH         = teCols * teCellW, teRows * teCellH
-	teX, teY         = (OrigW - teW) / 2, (OrigH - teH) / 2
+	teCellW, teCellH = 8, 14 // 一個字元格。14 是 EGA 高解析的行高
 
-	teLabelRow  = 3 // 原版兩行英文標籤佔 3 與 4；中文一行放得下，只用 3
+	// 視窗的原點是 `sub_1C010(&win, 0x24, 0x0A)` 那個結構的「左欄／頂列」，
+	// **不是**白色客戶區的左上角。兩者差一格寬、半列高。
+	// 絕對位置量自原版（`workplace/dosbox/ter-20-random-terrain.png`）：
+	// 白底 x 180–459、y 102–233，藍框三像素在外圈 x 177–179、y 99–101。
+	// 反推 左欄×8 ＝ 172、頂列×14 ＝ 95。
+	teX, teY = 172, 95
+
+	// 客戶區（白底）。280×132 是量出來的，不是 36×10 格算出來的——
+	// 那個 36×10 是視窗結構的參數，含邊框與內縮。
+	teClientDX, teClientDY = 8, 7
+	teClientW, teClientH   = 280, 132
+	teBorder               = 3
+
+	teTitleRow  = 1 // 原版標題在第 1 列，不是第 0 列
+	teLabelRow  = 4 // 原版兩行英文標籤佔 3 與 4；中文一行放得下，貼著數值列放
 	teValueRow  = 5 // 三個 %3d%% 與六個 ◄／► 同一列
 	teButtonRow = 8
-	teBtnCols   = 8 // `   Go   ` 與 ` Cancel ` 都是八格
+
+	// 控制項的尺寸，全部量自原版：`◄`／`►` 是 14×20，按鈕是 70×20
+	// （八格標籤 64 加左右各三像素的框）。
+	teArrowW, teCtrlH = 14, 20
+	teBtnW            = 70
 
 	// teRepeat 是長按增減鍵的重複間隔。原版是「按著不放且經過 5 個計時單位」
 	// 就再做一次（`sub_11402`＋0x118E9）。**5 個單位是多久未解**：計時來源
@@ -50,6 +65,10 @@ var teGroups = [3]struct {
 	{14, 21, "terrain_lakes"},
 	{25, 32, "terrain_curve"},
 }
+
+// teClientX／teClientY 是白色客戶區的左上角（原版像素）。
+func teClientX() int { return teX + teClientDX }
+func teClientY() int { return teY + teClientDY }
 
 // terrainBox 是對話框的狀態。三個值的初值都是 50（`dseg:0x0B6` 起 `32 00` ×3）。
 type terrainBox struct {
@@ -76,14 +95,14 @@ func teControlRect(id int) (x, y, w, h int) {
 		if id == 7 {
 			c = 25
 		}
-		return teCol(c), teRow(teButtonRow), teBtnCols * teCellW, teCellH
+		return teCol(c), teRow(teButtonRow), teBtnW, teCtrlH
 	}
 	gp := teGroups[id/2]
 	c := gp.dec
 	if id%2 == 1 {
 		c = gp.inc
 	}
-	return teCol(c), teRow(teValueRow), teCellW, teCellH
+	return teCol(c), teRow(teValueRow), teArrowW, teCtrlH
 }
 
 // teHit 找出滑鼠落在哪個控制項上，沒有就回 -1。
@@ -202,15 +221,26 @@ func (g *Game) handleTerrainMouse(mx, my int) bool {
 	return true
 }
 
-// drawTerrainArrow 畫一個 ◄ 或 ►。原版用的是 CP437 的 0x11／0x10，
-// 字型圖集裡沒有這兩個字，所以直接畫成三角形（原本也就是 8×14 的點陣字）。
-func drawTerrainArrow(dst *ebiten.Image, x, y int, left bool, c color.RGBA) {
-	for i := 0; i < 6; i++ {
-		cx := x + 1 + i
+// teArrowRun 是三角形每一列的寬度，量自原版
+// （`workplace/dosbox/ter-20-random-terrain.png` 逐像素讀出來）。
+// 九列，寬度 1-2-3-5-7-5-3-2-1，斜邊不是等速——所以照抄不用公式算。
+var teArrowRun = [9]int{1, 2, 3, 5, 7, 5, 3, 2, 1}
+
+// drawTerrainArrow 畫一個 `◄`／`►` 按鈕。
+//
+// 原版不是「一個字元」而是一個 14×20 的按鈕：藍框、青底、中間一個藍三角形，
+// 三角形的**平邊固定在離框 4 像素處**，尖端朝外（第一次是照 CP437 的
+// 0x11／0x10 當成字元畫的，尺寸與外觀都不對）。
+func drawTerrainArrow(dst *ebiten.Image, x, y int, left bool, line, fillc color.RGBA) {
+	fill(dst, x, y, teArrowW, teCtrlH, line)
+	fill(dst, x+1, y+1, teArrowW-2, teCtrlH-2, fillc)
+	y0 := y + (teCtrlH-len(teArrowRun))/2
+	for i, w := range teArrowRun {
+		x0 := x + 10 - w // ◄：平邊固定在 x+9，尖端往左長
 		if !left {
-			cx = x + 6 - i
+			x0 = x + 4 // ►：平邊固定在 x+4，尖端往右長
 		}
-		fill(dst, cx, y+7-i, 1, 2*i+1, c)
+		fill(dst, x0, y0+i, w, 1, line)
 	}
 }
 
@@ -220,41 +250,45 @@ func (g *Game) drawTerrainEditor(dst *ebiten.Image) {
 	if b == nil {
 		return
 	}
-	fill(dst, teX-ncBorder, teY-ncBorder,
-		teW+2*ncBorder, teH+2*ncBorder, colDlgLine)
-	fill(dst, teX, teY, teW, teH, colDlgBG)
+	line, fillc := colTELine, colTEFill
+	cx, cy := teClientX(), teClientY()
+	fill(dst, cx-teBorder, cy-teBorder,
+		teClientW+2*teBorder, teClientH+2*teBorder, line)
+	fill(dst, cx, cy, teClientW, teClientH, colDlgBG)
 
 	g.font.DrawCentered(dst, g.txt.UI("terrain_title"),
-		teX*UIScale, teRow(0)*UIScale, teW*UIScale, colDlgLine)
+		cx*UIScale, teRow(teTitleRow)*UIScale, teClientW*UIScale, line)
 
 	for i, gp := range teGroups {
 		// 標籤置中在 ◄ 與 ► 圍出來的範圍上。
 		lx, lw := teCol(gp.dec), (gp.inc-gp.dec+1)*teCellW
 		g.font.DrawCentered(dst, g.txt.UI(gp.key),
-			lx*UIScale, teRow(teLabelRow)*UIScale, lw*UIScale, colDlgLine)
+			lx*UIScale, teRow(teLabelRow)*UIScale, lw*UIScale, line)
 
 		ax, ay, _, _ := teControlRect(i * 2)
 		bx, _, _, _ := teControlRect(i*2 + 1)
-		drawTerrainArrow(dst, ax, ay, true, colDlgLine)
-		drawTerrainArrow(dst, bx, ay, false, colDlgLine)
+		drawTerrainArrow(dst, ax, ay, true, line, fillc)
+		drawTerrainArrow(dst, bx, ay, false, line, fillc)
 
-		// `%3d%%` 四格，左對齊在 ◄ 右邊兩格（原版 X ＝ 左欄×8+16+24）。
-		// 字型的半形字正好一格寬，所以逐格對得上原版。
-		g.font.Draw(dst, fmt.Sprintf("%3d%%", b.val[i]),
-			teCol(gp.dec+2)*UIScale, teRow(teValueRow)*UIScale, colDlgLine)
+		// `%3d%%` 置中在兩個箭頭中間。原版量到字串起點在 左欄+5.5 格，
+		// 而 `◄` 佔到 4.9 格、`►` 從 10.1 格開始——四個字元正好置中在那段空隙。
+		lo := ax + teArrowW
+		g.font.DrawCentered(dst, fmt.Sprintf("%3d%%", b.val[i]),
+			lo*UIScale, (ay+(teCtrlH-teCellH)/2)*UIScale,
+			(bx-lo)*UIScale, line)
 	}
 
 	for id, key := range [2]string{"terrain_go", "terrain_cancel"} {
 		x, y, w, h := teControlRect(6 + id)
-		fill(dst, x, y, w, h, colDlgLine)
-		fill(dst, x+1, y+1, w-2, h-2, colDlgFill)
+		fill(dst, x, y, w, h, line)
+		fill(dst, x+1, y+1, w-2, h-2, fillc)
 		g.font.DrawCentered(dst, g.txt.UI(key),
-			x*UIScale, y*UIScale, w*UIScale, colDlgLine)
+			x*UIScale, (y+(teCtrlH-teCellH)/2)*UIScale, w*UIScale, line)
 	}
 
 	// 選取框。原版是把游標移過去，沒有框；這是 remake 的替代品。
 	fx, fy, fw, fh := teControlRect(b.focus)
-	outline(dst, fx-2, fy-2, fw+4, fh+4, colDlgLine)
+	outline(dst, fx-1, fy-1, fw+2, fh+2, line)
 }
 
 // outline 畫一個一像素的方框。

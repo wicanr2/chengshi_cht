@@ -40,7 +40,33 @@ type soundSystem struct {
 	last [assets.SoundCount]int
 	// frame 是自己數的畫格，不用 Ebiten 的計時器。
 	frame int
+	// live 是還在播的播放器。**兩個理由都不能省**：
+	//
+	//  1. Ebiten 的 `audio.Context` 只在 `playingPlayers` 裡抓 `playerImpl`，
+	//     不抓 `*Player` 本身（`audio.go:265 updatePlayers`）。`Play()` 之後
+	//     把 `*Player` 丟掉，它就是不可達物件，GC 隨時可以執行
+	//     `NewPlayer` 註冊的 `runtime.AddCleanup(p, (*playerImpl).finalize, …)`
+	//     ——聲音會在播到一半被切掉，而且只在 GC 剛好落在那一刻時才發生。
+	//  2. 播完的播放器不 `Close` 就只能等 GC 回收，是一條**沒有上界**的資源。
+	//     蓋城市會一直觸發工具音，時間拉長就一直長。
+	live []livePlayer
 }
+
+// livePlayer 記住一個播放器與它開始播的畫格。
+//
+// 要記畫格是因為**剛 `Play()` 的那一格 `IsPlaying()` 可能還是 false**
+// （music.go 那邊踩過同一件事），立刻回收會把還沒開始的聲音關掉。
+type livePlayer struct {
+	p     *eaudio.Player
+	start int
+}
+
+// livePlayerGrace 是新播放器免於回收的畫格數。
+const livePlayerGrace = 3
+
+// maxLivePlayers 是同時活著的播放器上限。超過就關掉最舊的——
+// 上界是刻意的：沒有上界的資源在長時間遊玩下就是慢性中毒。
+const maxLivePlayers = 16
 
 // minGapFrames 是同一段音效的最短間隔（畫格）。
 //
@@ -154,7 +180,28 @@ func (s *soundSystem) play(n int) {
 	}
 	p := s.ctx.NewPlayerFromBytes(pcm)
 	p.Play()
+	s.live = append(s.live, livePlayer{p: p, start: s.frame})
+	if len(s.live) > maxLivePlayers {
+		_ = s.live[0].p.Close()
+		s.live = s.live[1:]
+	}
 	s.last[n] = s.frame
+}
+
+// reap 關掉播完的播放器。每個畫格呼叫一次。
+func (s *soundSystem) reap() {
+	if s == nil || len(s.live) == 0 {
+		return
+	}
+	kept := s.live[:0]
+	for _, lp := range s.live {
+		if s.frame-lp.start < livePlayerGrace || lp.p.IsPlaying() {
+			kept = append(kept, lp)
+			continue
+		}
+		_ = lp.p.Close()
+	}
+	s.live = kept
 }
 
 // PlaySoundOnce 直接播一段。給驗收用（`-sound-test`）：
@@ -168,6 +215,7 @@ func (g *Game) pumpSounds() {
 		return
 	}
 	g.snd.frame++
+	g.snd.reap()
 	for _, n := range queued {
 		g.snd.play(n)
 	}

@@ -1,0 +1,11 @@
+# 地形編輯器：不同螢幕模式各跑一次，看它停在哪。
+# 截圖散在整段時間上——載入慢與載入失敗在早期畫面上長得一樣。
+wait 4
+shot 04s
+wait 6
+shot 10s
+wait 10
+shot 20s
+key Return
+wait 5
+shot 25s

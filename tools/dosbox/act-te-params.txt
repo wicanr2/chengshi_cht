@@ -1,0 +1,23 @@
+# 地形編輯器：把三個選單與參數對話框抓下來。
+# 選單是按住式的（原版的一貫做法）：press 標題 → move 到項目 → release。
+wait 12
+key Return
+wait 6
+shot 00-ui
+press 550 8
+wait 2
+shot 01-parameters-menu
+release
+wait 2
+shot 02-after-release
+press 340 8
+wait 2
+shot 03-terrain-menu
+release
+wait 1
+press 160 8
+wait 2
+shot 04-system-menu
+release
+wait 2
+shot 05-final

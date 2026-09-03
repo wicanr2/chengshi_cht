@@ -44,7 +44,20 @@ docker run --rm \
     fi
     GAME=\$!
     sleep $WAIT
-    for k in ${GAME_KEYS:-}; do xdotool key --clearmodifiers \$k; sleep 1; done
+    # ⚠ 組合鍵不能用 \`xdotool key ctrl+c\`：按下與放開會落在同一個輪詢畫格裡，
+    # 遊戲讀到 C 的時候 Ctrl 可能還沒按下或已經放開，快捷鍵就**靜默失效**——
+    # 畫面看起來正常，只是該關的視窗還開著，而截圖之後才發現。
+    for k in ${GAME_KEYS:-}; do
+      case \"\$k\" in
+        *+*)
+          xdotool keydown \"\${k%%+*}\"; sleep 0.2
+          xdotool key \"\${k##*+}\"; sleep 0.2
+          xdotool keyup \"\${k%%+*}\"
+          ;;
+        *) xdotool key --clearmodifiers \$k ;;
+      esac
+      sleep 1
+    done
     for p in ${GAME_CLICKS:-}; do
       xdotool mousemove \${p%,*} \${p#*,}; xdotool click 1; sleep ${GAME_CLICK_WAIT:-1}
     done

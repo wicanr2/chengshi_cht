@@ -26,7 +26,7 @@ cd "$ROOT"
 SCEN="${1:-1}"
 STYLE="${2:-west}"
 DATA="workplace/dos110/SIMCITY 1.10"
-OUT=workplace/screen-parity
+OUT=workplace/screen-parity/$STYLE-$SCEN
 mkdir -p "$OUT"
 
 # 劇本選擇畫面的八個位置（640×350 的畫面座標）。
@@ -64,8 +64,11 @@ key Return
 wait 3
 EOF
 
+# ⚠ DOS 那一側的風格是 `SIMCITY.CFG` 的 `Graphics Set` 決定的，不是命令列。
+# 少了這一行，換風格只換到 remake 那一邊，比出來的是兩套不同的美術。
 echo "== 原版（DOSBox）=="
-RUN=simcity ACTIONS="$ROOT/$ACT" timeout 300 ./tools/dosbox.sh 50 sp >/dev/null 2>&1
+GFX=$(echo "$STYLE" | tr '[:lower:]' '[:upper:]')CEGA
+RUN=simcity CFG_GFX="$GFX" ACTIONS="$ROOT/$ACT" timeout 300 ./tools/dosbox.sh 50 sp >/dev/null 2>&1
 cp workplace/dosbox/sp-00-city-form.png "$OUT/dos-city-form.png"
 cp workplace/dosbox/sp-01-edit.png "$OUT/dos.png"
 

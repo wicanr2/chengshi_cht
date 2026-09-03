@@ -80,7 +80,9 @@ const (
 	toolTextX  = 64  // 目前工具的名稱與造價
 	editToolH  = 14
 
-	// 工具盤圖（庫 2，57×182）。⚠ 是 (8,55) 不是 (6,53)：拿原版與 remake
+	// 工具盤圖（庫 2）。**尺寸跟著風格走**：ASIA 57×182、
+	// MEDI／FEUR／MOON 56×184、base／WEST／FUSA 56×182。
+	// ⚠ 位置是 (8,55) 不是 (6,53)：拿原版與 remake
 	// 的同一張美術做二維位移搜尋（顏色先正規化到 EGA 四階，否則調色盤差異
 	// 會蓋過對齊訊號），最佳位移是 dx=dy=−2，2436 點中對上 2402 點。
 	editPalX, editPalY = 8, 55
@@ -304,13 +306,22 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 		g.font.Draw(dst, g.message, msgTextX*UIScale, infoTextY*UIScale, colInkLight)
 	}
 
-	g.drawEditMap(dst)
-	g.drawToolCursor(dst, vw, vh)
-	g.drawEditViewFrame(dst, vw, vh)
+	// ⚠ 左欄的兩張介面圖要畫在**地圖之前**。
+	//
+	// 庫 2（工具盤）的尺寸每個風格都不一樣：ASIA 是 57×182，
+	// MEDI／FEUR／MOON 是 56×184，其餘 56×182。畫在 (8,55) 的話
+	// 57 寬那一份會多蓋到 x=64 —— 那是地圖區的第一欄。原版的順序是
+	// 先鋪介面再畫地圖與白框，多出來的那一欄被蓋掉，所以看不出來。
+	// 先前照「地圖 → 白框 → 工具盤」畫，asia 的地圖左緣被工具盤蓋掉一欄，
+	// 而 west／base／fusa 因為寬度剛好 56 完全看不出差別。
 	blit(dst, g.tiles.UIImage(BankToolPalette, 0), editPalX, editPalY)
 	g.drawToolHighlight(dst)
 	blit(dst, g.tiles.UIImage(BankDemand, 0), editDemandX, editDemandY)
 	g.drawDemandBars(dst)
+
+	g.drawEditMap(dst)
+	g.drawToolCursor(dst, vw, vh)
+	g.drawEditViewFrame(dst, vw, vh)
 
 	// 目前工具帶。底色是一像素的白藍網點（實測原版：y 311 整列白、
 	// 312–321 網點、322–324 實心藍，x 5–579 滿版寬）。

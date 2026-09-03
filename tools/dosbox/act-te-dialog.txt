@@ -1,0 +1,14 @@
+# 從 TERRAIN 選單點「Create Random Terrain」，抓參數對話框。
+# 選單是按住式：press 標題 → move 到項目 → release。
+wait 12
+key Return
+wait 6
+press 340 8
+wait 2
+move 300 71
+wait 1
+release
+wait 3
+shot 20-random-terrain
+wait 3
+shot 21-after

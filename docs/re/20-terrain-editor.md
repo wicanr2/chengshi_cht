@@ -68,62 +68,95 @@ configuration file not found.`，設定檔要由磁片自己的 `INSTALL.EXE` �
 裝好的副本留在 `workplace/te-installed/`，之後不必重裝
 （`tools/dosbox.sh` 的 `EXTRA` 會把它疊進遊戲目錄）。
 
-## 四、卡住的地方：`TERRAIN.EXE` 在 DOSBox-X 跑不起來
+## 四、怎麼在 DOSBox-X 裡跑起來（已確認）
 
-設定檔補齊之後，程式會啟動、不報錯、也不回到提示符，畫面停在文字模式，
-DOSBox 的 log 一路刷：
+**三件事都要對，少一件就跑不起來：**
 
-```
-ERROR CPU:Illegal Unhandled Interrupt Called 6
-```
+1. **執行檔要先解 LZEXE。** 打包版（83 373 位元組，偏移 0x1C 有 `LZ91`）在
+   DOSBox-X 上是 `ERROR CPU:Illegal Unhandled Interrupt Called 6` 無限迴圈。
+   `unlzexe` 解出來的 325 728 位元組版本跑得動。
+   ⚠ `unlzexe` 的輸出檔名緩衝區只有 12 個字元，給長路徑會被截斷成別的檔名
+   而且**不報錯**。要 `cd` 到目標目錄再用短檔名。
+2. **圖形資料檔要跟執行檔在同一個目錄。** 少了對應模式的 `*TED.PGF`，
+   程式印的是
+   ```
+   FATAL ERROR: PROGRAM ABORTED
+   256K of VGA/EGA memory
+   Couldn't load VGA/EGA blocks!
+   ```
+   那則訊息**只是它自己組的一句話**（`dseg:0x2163` 的 `\n%dK of VGA/EGA memory\n`
+   `Couldn't load VGA/EGA blocks!`），`%d` 是從 BIOS 資料區 `0000:0487` 的
+   bit 5–6 查表得到的診斷數字，不是失敗原因。真正的失敗在 `sub_167E3`
+   回 0，而它只有三條回 0 的路：`malloc(0x5000)` 失敗、
+   `open(<模式>ted.pgf)` 回的 handle ≤ 0、以及解壓縮讀不滿 0x5000。
+   **檔名是小寫寫死在 `dseg:0xE90` 的 `cegated.pgf`**。
+3. **`TERRAIN.CFG` 的第 0 個位元組要選一個模擬得出來的顯示模式。**
+   `H`（Hercules）與 `T`（Tandy）在 `machine=svga_s3` 下會停在
+   `Hercules not detected.  Continue anyway [y/N]?` 等輸入。
 
-INT 6 是無效指令。試過兩組設定，四十五秒內都沒有進圖形模式：
+實測七種模式（`tools/te_modes.sh`）：
 
-| 設定 | 結果 |
+| `TERRAIN.CFG[0]` | 模式 | 資料檔 | 結果 |
+|---|---|---|---|
+| `E` | Hires EGA Color 640×350 | `CEGATED.PGF` | **進得了介面** |
+| `M` | Hires EGA Mono | `MONOTED.PGF` | 進得了介面（黑白）|
+| `e` | Lores EGA Color 320×200 | `SEGATED.PGF` | 進得了介面 |
+| `C` | CGA | `CGATED.PGF` | 進得了介面 |
+| `2` | 256 Color VGA/MCGA | `MCGATED.PGF` | 進得了介面 |
+| `H` | Hercules | — | 停在「未偵測到」的詢問 |
+| `T` | Tandy Color | — | 停在「未偵測到」的詢問 |
+
+跑法：`EXTRA=workplace/te-modes RUN=terrain ACTIONS=<絕對路徑> tools/dosbox.sh`。
+
+## 四之二、介面全貌（已確認，實機截圖）
+
+**編輯器是一個完整的繪圖程式，不只是一個參數對話框。**
+畫面是 640×350（`E` 模式），最上面是選單列，左邊是編輯視窗與直立的工具盤，
+右邊預設開著 `City Map` 全市地圖視窗，底下是目前工具的狀態列。
+
+**工具盤（六個，由上而下）**：`DIRT`／`TREES`／`RIVER`／`CHANNEL`／`FILL`／
+`UNDO`（`UNDO` 平常是灰的）。
+
+**三個選單**（按住式，與遊戲本體一致）：
+
+| 選單 | 項目 |
 |---|---|
-| `machine=svga_s3　cputype=386　memsize=16　cycles=fixed 20000` | INT 6 迴圈 |
-| `machine=ega　cputype=286　memsize=1　cycles=fixed 3000` | INT 6 迴圈 |
+| `SYSTEM` | `About TERRAIN`／`Print`／`Start New City`／`Load City Ctrl-L`／`Save City as ...`／`Save City Ctrl-S`／`Exit Ctrl-X` |
+| `TERRAIN` | `Clear Map Ctrl-C`／`Clear Unnatural Objects`／`Create Random Terrain CTRL-T`／`Smooth Trees`／`Smooth Rivers`／`Smooth Everything CTRL-A`／`Create Island CTRL-I` |
+| `PARAMETERS` | `Name & Level`／`Game Year`／`Sound On` |
 
-⚠ **同一套環境跑得動遊戲本體**（`SIMCITY.EXE` 一路正常），所以不是容器或
-X 的問題，是這支程式與這個模擬器的組合。
+兩件事因此定案：
 
-執行檔本身是好的，而且知道是怎麼包的：
+- **`Create Island` 有介面**，在 `TERRAIN` 選單裡，是一個**動作**不是一個滑桿。
+- **參數對話框掛在 `TERRAIN` → `Create Random Terrain`**，不在 `PARAMETERS` 選單裡；
+  `PARAMETERS` → `Name & Level` 開的是遊戲本體那個「市名 ＋ 技術等級 ＋ OK」對話框。
 
-```
-MZ 檔頭：頁數 163、最後頁 429 → 映像 83 373 位元組 ＝ 實際檔案大小（沒有截斷）
-重定位項 0、檔頭 32 位元組、CS:IP = 13a1:000e
-偏移 0x1C 有 "LZ91" → LZEXE 0.91 打包
-```
+截圖：`workplace/dosbox/tep-*.png`、`ter-20-random-terrain.png`（不入版控）。
 
-`LZ91` 也解釋了為什麼字串是碎的（481 條裡幾乎都是壓縮資料的碎片）——
-與 1.10 的 `SIMCITY.EXE`、資料片的 `UPDATE.DAT` 同一類，不能直接反組譯。
+## 四之三、參數對話框的版面（實機量測，已確認）
 
-## 四之二、解包之後：錯誤訊息變得有意義，但還是跑不起來
+反組譯推出來的欄列與實機量到的完全一致，另外補上原本未解的絕對位置與配色。
 
-`unlzexe`（`mywave82/unlzexe` 的 C 原始碼，容器內 `gcc` 編）一次就解開：
+量法：`E` 模式的截圖裁出 640×350 的遊戲區，找白色客戶區的外接矩形與
+藍色邊框，再把各元素的非白像素依列分群。
 
-```
-file 'TERRAIN.EXE' is compressed by LZEXE Ver. 0.91
-```
+| 項目 | 量到的值 |
+|---|---|
+| 客戶區（白底）| x 180–459、y 102–233 → **280×132** |
+| 邊框 | 藍 `(0,0,255)`，**三像素**，在客戶區外圈 |
+| 視窗原點 | 反推 **左欄×8 ＝ 172、頂列×14 ＝ 95**；客戶區在原點右 8、下 7 |
+| 標題 | 第 **1** 列（不是第 0 列）|
+| 兩行標籤 | 第 3、4 列 |
+| 三個數值與六個箭頭 | 第 5 列 |
+| `Go`／`Cancel` | 第 8 列 |
+| `◄`／`►` 的欄 | 3／10、14／21、25／32 —— **與反組譯推的六個欄號完全相同** |
+| `◄`／`►` 的尺寸 | **14×20 的按鈕**：藍框、青底 `(0,170,255)`、中間一個藍三角形 |
+| 三角形 | 九列，寬度 1-2-3-5-7-5-3-2-1，平邊固定在離框 4 像素處 |
+| `Go`／`Cancel` 的尺寸 | **70×20**（八格標籤 64 ＋ 左右各三像素的框）|
 
-| | 位元組 | 可讀字串 |
-|---|---:|---:|
-| 打包版 | 83 373 | 481（幾乎都是壓縮資料的碎片）|
-| **解包版** | **325 728** | **751（真的字串）** |
-
-⚠ `unlzexe` 的輸出檔名緩衝區只有 12 個字元（DOS 時代的遺跡），
-給長路徑會被截斷成別的檔名而且**不報錯**。要 `cd` 到目標目錄再用短檔名。
-
-解包版拿去跑，錯誤訊息從「INT 6 無限迴圈」變成明確的一行：
-
-```
-FATAL ERROR: PROGRAM ABORTED
-256K of VGA/EGA memory
-Couldn't load VGA/EGA blocks!
-```
-
-`machine=svga_s3` 與 `machine=ega` 兩種都一樣。**所以打包殼確實是 INT 6 的成因，
-但底下還有第二個問題**：它載不進 VGA/EGA 的圖形區塊。還沒解。
+⚠ **`(0,170,255)` 不在 EGA 預設十六色裡**。EGA 的 64 色盤每個通道兩位元
+（0／85／170／255）都合法，所以那是編輯器自己重載過的調色盤暫存器。
+拿遊戲本體的對話框配色套上去會整個偏色。
 
 ## 五、介面：字串全拿到了（已確認）
 
@@ -292,15 +325,22 @@ type TerrainParams struct {
 **這就是六份 `%3d%%%%` 的用途**——三個參數各兩份，初次畫用前三份、重畫用後三份，
 不是「六個標籤」。
 
-## 九、下一個入口（依序試，不要跳）
+## 九、還沒做的
 
-1. **`vmemsize`／`machine=vgaonly`。** 錯誤訊息點名 VGA/EGA 記憶體，
-   下一個要動的就是這個設定，不是 CPU。
-2. **換原版 DOSBox。** 容器裡只有 `dosbox-x`，要改 image。
-3. **找編輯器自己的說明書。** 版面如果有印出來就不必靠跑。
+編輯器本體在 remake 裡**只做了參數對話框那一個**。原版是一個完整的繪圖程式，
+下列都還沒有對應物：
 
-這三項是為了「眼睛確認」，不是實作的必要條件：介面文字、版面、參數語意與換算
-都已經是一手證據。
+| 原版 | remake |
+|---|---|
+| 六個工具 `DIRT`／`TREES`／`RIVER`／`CHANNEL`／`FILL`／`UNDO` | 沒有 |
+| `TERRAIN` 選單的七個動作 | 只有「產生地形」那一條，而且是對話框按「開始」時做的 |
+| `SYSTEM` 選單（讀寫城市檔、列印、離開）| 遊戲本體有對應物，編輯器沒有自己的入口 |
+| `PARAMETERS` → `Game Year`／`Sound On` | 沒有 |
+| `City Map` 全市地圖視窗 | 遊戲本體有 |
+
+規則層的東西倒是齊的：`Clear Map`／`Smooth Trees`／`Smooth Rivers`／
+`Create Island` 在 `internal/sim/terrain.go` 都有對應函式（`clearMap`、
+`smoothTrees`、`smoothRiver`、`makeIsland`），缺的是介面與「畫筆改地圖」那一層。
 
 ## 十、規則層其實已經解完了
 
@@ -312,4 +352,4 @@ type TerrainParams struct {
   [`../formats/01-city-file.md`](../formats/01-city-file.md)。
 - 從遮罩產生地圖的路徑 → `tools/citymap`（本專案畫台北台中台南用的就是它）。
 
-差的只有樹叢數量那一式，已經補進 `TerrainParams.TreeAmountDOS`。
+差的只有樹叢數量那一式，已經補進 `TerrainParams.EditorDOS`。

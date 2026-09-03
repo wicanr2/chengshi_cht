@@ -6,23 +6,22 @@ import "testing"
 // 這裡把它釘死：版面改壞了要有東西變紅，不能只靠肉眼看畫面。
 func TestTerrainControlRectsMatchSpec(t *testing.T) {
 	want := []struct {
-		col, row, cols int
+		col, row, w int
 	}{
-		{3, teValueRow, 1},   // 0x800 樹木 ◄
-		{10, teValueRow, 1},  // 0x801 樹木 ►
-		{14, teValueRow, 1},  // 0x802 湖泊 ◄
-		{21, teValueRow, 1},  // 0x803 湖泊 ►
-		{25, teValueRow, 1},  // 0x804 彎曲 ◄
-		{32, teValueRow, 1},  // 0x805 彎曲 ►
-		{3, teButtonRow, 8},  // 0x806 開始
-		{25, teButtonRow, 8}, // 0x807 取消
+		{3, teValueRow, teArrowW},  // 0x800 樹木 ◄
+		{10, teValueRow, teArrowW}, // 0x801 樹木 ►
+		{14, teValueRow, teArrowW}, // 0x802 湖泊 ◄
+		{21, teValueRow, teArrowW}, // 0x803 湖泊 ►
+		{25, teValueRow, teArrowW}, // 0x804 彎曲 ◄
+		{32, teValueRow, teArrowW}, // 0x805 彎曲 ►
+		{3, teButtonRow, teBtnW},   // 0x806 開始
+		{25, teButtonRow, teBtnW},  // 0x807 取消
 	}
 	for id, w := range want {
 		x, y, cw, ch := teControlRect(id)
-		if x != teCol(w.col) || y != teRow(w.row) ||
-			cw != w.cols*teCellW || ch != teCellH {
-			t.Errorf("控制項 %#x：得到 (%d,%d,%d,%d)，規格是欄 %d 列 %d 寬 %d 格",
-				0x800+id, x, y, cw, ch, w.col, w.row, w.cols)
+		if x != teCol(w.col) || y != teRow(w.row) || cw != w.w || ch != teCtrlH {
+			t.Errorf("控制項 %#x：得到 (%d,%d,%d,%d)，量到的是欄 %d 列 %d 寬 %d",
+				0x800+id, x, y, cw, ch, w.col, w.row, w.w)
 		}
 	}
 	// 每個控制項都要點得到，而且不能互相重疊。
@@ -34,12 +33,15 @@ func TestTerrainControlRectsMatchSpec(t *testing.T) {
 	}
 }
 
-// 視窗放得下所有控制項：原版是 36 欄 × 10 列，取消鈕的右緣正好在第 33 欄。
+// 所有控制項都要落在白色客戶區裡。客戶區 280×132 是量自原版的
+// （workplace/dosbox/ter-20-random-terrain.png，白底 x 180–459、y 102–233）。
 func TestTerrainDialogFitsOriginalWindow(t *testing.T) {
+	cx, cy := teClientX(), teClientY()
 	for id := 0; id < 8; id++ {
 		x, y, w, h := teControlRect(id)
-		if x < teX || x+w > teX+teW || y < teY || y+h > teY+teH {
-			t.Errorf("控制項 %#x 超出 %d×%d 的視窗", 0x800+id, teCols, teRows)
+		if x < cx || x+w > cx+teClientW || y < cy || y+h > cy+teClientH {
+			t.Errorf("控制項 %#x（%d,%d,%d,%d）超出客戶區 (%d,%d,%d,%d)",
+				0x800+id, x, y, w, h, cx, cy, teClientW, teClientH)
 		}
 	}
 }
