@@ -21,6 +21,7 @@ import (
 	"github.com/wicanr2/chengshi_cht/internal/i18n"
 	"github.com/wicanr2/chengshi_cht/internal/settings"
 	"github.com/wicanr2/chengshi_cht/internal/sim"
+	"github.com/wicanr2/chengshi_cht/internal/assets"
 	"github.com/wicanr2/chengshi_cht/internal/ui"
 )
 
@@ -76,7 +77,8 @@ func firstLine(s string) string {
 
 func main() {
 	data := flag.String("data", "", "解開的 SIMCITY 1.10 目錄（裡面要有 CEGA/、mcga/、DATA/）")
-	style := flag.String("style", "base", "城市風格：base 基本／asia／medi／west／fusa／feur／moon")
+	style := flag.String("style", "", "城市風格：base 基本／asia／medi／west／fusa／feur／moon"+
+		"（留空 ＝ 照原版 SIMCITY.CFG 的 Graphics Set）")
 	mute := flag.Bool("mute", false, "不要音效")
 	cam := flag.String("cam", "", "起始鏡頭左上角的格子座標，例如 -cam 54,42（試玩腳本用）")
 	probe := flag.Bool("audio-probe", false, "內部用：試開音效裝置後結束（0 ＝ 開得起來）")
@@ -93,8 +95,25 @@ func main() {
 	musicDir := flag.String("music", "", "背景音樂目錄（.ogg／.wav）；不給就找存檔目錄底下的 music/")
 	saveFmt := flag.String("save-format", "",
 		"存檔版面：dos（128 位元組檔頭，存得住城市名）／bare（27120 裸檔身，餵得進 Micropolis）；空白時讀玩家設定")
+	freezeTest := flag.Int("freeze-test", 0,
+		"內部用：跑滿這麼多秒之後故意讓主迴圈卡住，驗收卡死偵測")
+	watchdog := flag.Int("watchdog", 10,
+		"主迴圈停住幾秒就把現場寫成報告（0 ＝ 關閉）")
 	showVer := flag.Bool("version", false, "印出版本後結束")
 	flag.Parse()
+
+	// 風格沒指定就照原版設定檔。**原版就是這樣決定開機時用哪一套圖形**
+	// （`SETTINGS.EXE` 寫進 `SIMCITY.CFG`），進遊戲之後從
+	// SYSTEM → 讀取圖形集 再換。留空而不是預設 "base"，是為了讓
+	// 「玩家在原版設定過古城風情」這件事被沿用。
+	styleSource := "（-style 指定）"
+	if *style == "" {
+		if s := assets.StyleFromConfig(*data); s != "" {
+			*style, styleSource = s, "（照 SIMCITY.CFG 的 Graphics Set）"
+		} else {
+			*style, styleSource = ui.StyleBase, "（預設）"
+		}
+	}
 
 	// -audio-probe 是內部用的：只試開一次音效裝置就結束，回傳碼給
 	// audioUsable 判斷。要放在所有其他初始化之前，它不需要任何資料。
@@ -145,6 +164,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	fmt.Printf("圖形集：%s（%s）%s\n", *style, ts.Style, styleSource)
 	font, err := ui.LoadFont()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "字型載入失敗：", err)
@@ -239,6 +259,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v（使用 DOS 存檔版面）\n", sfErr)
 	}
 	g.SetSaveFormat(sf)
+	// 卡死偵測：主迴圈停住就把所有 goroutine 的堆疊與最後的狀態寫成報告。
+	// 報告放存檔目錄——那是玩家找得到、而且一定可寫的地方。
+	g.StartWatchdog(filepath.Dir(*save), time.Duration(*watchdog)*time.Second)
+	g.SetFreezeTest(time.Duration(*freezeTest) * time.Second)
 	if settingsPathErr == nil {
 		g.SetPrefsSaver(func(l i18n.Lang, f string) error {
 			return settings.Save(settingsPath, l, f)

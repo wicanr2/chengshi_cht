@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"time"
 	"fmt"
 	"image/color"
 	"strings"
@@ -173,6 +174,10 @@ type Game struct {
 	dragWin        window
 	dragDX, dragDY int
 
+	// watch／frameNo 是卡死偵測用的，見 watchdog.go。
+	watch    *watchState
+	frameNo  uint64
+	freezeAt time.Time
 	// curBuf 是工具佔地框的暫存圖，見 drawToolCursor。
 	curBuf *ebiten.Image
 	// editFront 記錄編輯視窗有沒有被拉到 City Form 視窗前面。
@@ -470,6 +475,8 @@ func (g *Game) Layout(int, int) (int, int) { return CanvasW, CanvasH }
 // ⚠ 順序不能反。玩家這一個 frame 蓋的東西要在同一個 frame 進模擬，
 // 否則「按下去到看到反應」會多一格延遲，手感會鬆。
 func (g *Game) Update() error {
+	g.beat()
+	g.maybeFreeze()
 	if g.quit {
 		return ebiten.Termination
 	}

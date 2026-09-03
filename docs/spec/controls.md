@@ -338,3 +338,47 @@ remake 的作法是拿補數調色盤重畫佔地底下的圖塊（`TileSet.InvT
 
 **256 色（mcga）模式下的規則未解**：沒有量過原版在那個模式怎麼畫框，
 remake 在那裡退回 RGB 反相，不宣稱與原版一致。
+
+## 十四、圖形集怎麼選（已確認）
+
+原版有**兩個**入口，remake 兩個都照做：
+
+| 入口 | 原版 | 證據 |
+|---|---|---|
+| 開機時的預設 | `SIMCITY.CFG` 的 `Graphics Set:`，由 `SETTINGS.EXE` 寫入 | 設定檔本身（自帶解碼表）；資料片的 `README` 也指向「the Settings program」|
+| 遊戲進行中 | SYSTEM 選單第 3 列 **`Load Graphics`**（在 `Print` 與 `Load Scenario` 之間）| 原版截圖 `workplace/dosbox/g-ui-01-system.png` |
+
+`Graphics Set:` 的值同時編了圖形集與顯示模式，例如 `WESTCEGA` ＝ Wild West
+的 EGA 高解析版。手上只有這一個樣本，所以 `assets.StyleFromConfig` 只認
+六個資料片前綴（`ASIA`／`MEDI`／`WEST`／`FUSA`／`FEUR`／`MOON`），
+**對不上就當基本集，不硬猜基本集的值長什麼樣**。
+
+remake 的 `-style` 留空時走設定檔，指定時以指定為準；啟動時會印一行說明
+自己用了哪一個、依據是什麼。遊戲內從 SYSTEM → 讀取圖形集 換
+（`menubar.go` 的 `pickSystem` 第 3 列），圖塊與文字一起換。
+
+⚠ **SimCity 一代的主題圖形集只有六個，沒有第七個。** 官方只出過兩片資料片
+（Graphics Set 1 — Ancient Cities 1990、Graphics Set 2 — Future Cities 1991），
+各三套；另一個周邊商品是 SimCity Terrain Editor，那是工具不是圖形集。
+等級：強證據（兩片磁片的內容是一手，"只有這兩片" 來自 MobyGames 與
+Wikipedia 的產品列表，二手）。
+
+## 十五、卡死偵測（remake 加的，原版沒有）
+
+主迴圈每一格敲一次心跳，另一條 goroutine 每秒檢查；超過 `-watchdog` 秒
+（預設 10，0 ＝ 關閉）沒有進位就把現場寫成 `chengshi-freeze-<時間>.log`，
+放在存檔目錄，同時在 stderr 印一行。報告內容：
+
+- 停住多久、停在第幾格
+- 最後一次的狀態：城市名、年月、資金、住商工人口、模擬速度、鏡頭、
+  縮小倍率、目前工具、開著哪個視窗、疊放狀態、語言
+- 記憶體（堆疊用量、系統要到多少、GC 次數、goroutine 數）
+- **所有 goroutine 的堆疊** —— 卡在哪一行就在裡面
+
+⚠ **狀態快照是主迴圈自己留下的副本，不是偵測時才去讀的。**
+從別的 goroutine 讀主迴圈正在改的欄位是資料競爭，可能讀到寫到一半的值——
+那會變成「為了診斷當機而自己造出當機」。
+
+驗收靠 `-freeze-test <秒>`（內部用）：跑滿指定秒數後故意讓主迴圈永遠不返回。
+實測門檻 3 秒時在第 4 秒寫出報告，堆疊裡看得到卡住的 `ui.(*Game).Update`。
+沒有這個開關的話，「偵測器會不會動」只能等下一次真的卡死才知道。

@@ -628,6 +628,8 @@ oracle 之外，沒有第三方跑過這些數字。
 ```bash
 ./chengshi -data "/path/to/SIMCITY 1.10"                 # 新城市
 ./chengshi -data "…" -style medi                          # 換城市風格
+                                                          # 不給 -style 就照原版
+                                                          # SIMCITY.CFG 的 Graphics Set
 ./chengshi -data "…" -scenario 6                          # 第 6 個悲情城市（底特律）
 ./chengshi -data "…" -load city.cty                       # 讀城市檔
 chmod +x chengshi-*-linux-amd64.AppImage
