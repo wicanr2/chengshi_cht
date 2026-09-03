@@ -139,6 +139,9 @@ type terrainScreen struct {
 	// 玩家正在玩的那個存檔檔案，而畫面上只寫「已存檔」，看不出來出事了。
 	// 原版的編輯器是獨立程式，本來就有自己的檔名緩衝區。
 	savedPath string
+	// fromTitle 記得玩家是從招牌那個按鈕進來的：離開時回招牌，
+	// 不是掉進一座他沒選過的城市。
+	fromTitle bool
 
 	openMenu int // 0 ＝ 沒拉開，1–3
 	menuRow  int
@@ -192,12 +195,16 @@ func (g *Game) closeTerrainScreen() {
 	if g.terrain == nil {
 		return
 	}
+	back := g.terrain.fromTitle
 	g.world = g.terrain.saved
 	g.savePath = g.terrain.savedPath
 	g.terrain = nil
 	g.win = winNone
 	g.mini = nil
 	g.LookAt(sim.WorldX/2, sim.WorldY/2)
+	if back && g.titlePic != nil {
+		g.screen = scrTitle
+	}
 }
 
 // teCurTool 回傳目前畫筆。

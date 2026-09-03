@@ -11,7 +11,7 @@ func TestTitleButtonLabelsAreLocalizedAndFit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantHant := [3]string{"建立新城市", "載入城市", "選擇劇本"}
+	wantHant := [4]string{"建立新城市", "載入城市", "選擇劇本", "地形編輯器"}
 	for _, lang := range i18n.Langs {
 		catalog, err := i18n.LoadLang("west", lang)
 		if err != nil {

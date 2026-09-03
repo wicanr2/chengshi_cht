@@ -36,27 +36,63 @@ const (
 	scrScen                    // 劇本選單
 )
 
-// 招牌上三個按鈕的框（原版 640×350 座標，量白色框線得到）。
-var titleButtons = [3]image.Rectangle{
+// 招牌上的按鈕框（原版 640×350 座標，量白色框線得到）。
+//
+// ⚠ 前三個是原版的；**第四個是 remake 加的**（與系統選單那條「地形編輯器」
+// 同類）。位置不是隨便挑的：`209–423 × 255–288` 那一塊量出來是**整片招牌綠、
+// 沒有任何原版美術**，所以放一個與其他三個同尺寸（214×30）的按鈕蓋不掉東西。
+// 高度比前三個矮四像素（26 而不是 30），為的是讓它上下各留兩列綠——
+// 原版的「SELECT SCENARIO」上面就是留兩列綠再接深灰外圈，照同一個節奏。
+// 這一塊會讓招牌的畫面對拍多一段已知差異，記在 docs/spec/ui-layout.md。
+var titleButtons = [4]image.Rectangle{
 	image.Rect(95, 183, 309, 213),  // START NEW CITY
 	image.Rect(319, 183, 533, 213), // LOAD A CITY
 	image.Rect(209, 223, 423, 253), // SELECT SCENARIO
+	image.Rect(209, 259, 423, 285), // 地形編輯器 —— remake 加的
 }
 
 // titleButtonFill 是招牌按鈕內側的原版色盤綠（目前 NTRO.PPF 實際解碼為
 // RGB 0,170,0）。框線與陰影仍保留原圖，只覆蓋固定在圖裡的英文操作文字。
 var titleButtonFill = color.RGBA{0x00, 0xaa, 0x00, 0xff}
 
-func (g *Game) titleButtonLabels() [3]string {
-	return [3]string{
+func (g *Game) titleButtonLabels() [4]string {
+	return [4]string{
 		g.txt.UI("title_new_city"),
 		g.txt.UI("title_load_city"),
 		g.txt.UI("title_scenario"),
+		g.txt.UI("title_terrain"),
 	}
+}
+
+// 招牌按鈕的外框配色，逐像素量自原版的「SELECT SCENARIO」那一顆
+// （x 209–423、y 223–253）：外圈兩像素深灰，內側左與上是白、右與下是淺灰，
+// 中間招牌綠。第四顆是 remake 加的，得自己照這個配方畫一顆一樣的。
+var (
+	titleBtnDark  = color.RGBA{0x55, 0x55, 0x55, 0xff}
+	titleBtnLight = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	titleBtnShade = color.RGBA{0xaa, 0xaa, 0xaa, 0xff}
+)
+
+// drawTitleAddedButton 畫第四顆按鈕的框。前三顆的框是原版美術自己畫的，
+// 這裡只補 remake 加的那一顆。
+func drawTitleAddedButton(dst *ebiten.Image, r image.Rectangle) {
+	x, y, w, h := r.Min.X, r.Min.Y, r.Dx(), r.Dy()
+	// 外圈深灰兩像素。
+	fill(dst, x-2, y-2, w+6, 2, titleBtnDark)
+	fill(dst, x-2, y+h, w+6, 2, titleBtnDark)
+	fill(dst, x-2, y-2, 2, h+4, titleBtnDark)
+	fill(dst, x+w+2, y-2, 2, h+4, titleBtnDark)
+	// 內側：底先鋪綠，再壓左上白、右下淺灰。
+	fill(dst, x, y, w+2, h, titleButtonFill)
+	fill(dst, x, y, w, 2, titleBtnLight)
+	fill(dst, x, y, 2, h, titleBtnLight)
+	fill(dst, x+w, y, 2, h, titleBtnShade)
+	fill(dst, x+2, y+h-2, w, 2, titleBtnShade)
 }
 
 func (g *Game) drawTitleButtonLabels(dst *ebiten.Image) {
 	const inset = 3
+	drawTitleAddedButton(dst, titleButtons[3])
 	labels := g.titleButtonLabels()
 	for i, r := range titleButtons {
 		x := (r.Min.X + inset) * UIScale
@@ -167,6 +203,10 @@ func (g *Game) updateTitle() bool {
 		g.load()
 	case p.In(titleButtons[2]): // 選悲情城市
 		g.screen = scrScen
+	case p.In(titleButtons[3]): // 地形編輯器（remake 加的）
+		g.screen = scrPlay
+		g.openTerrainScreen()
+		g.terrain.fromTitle = true
 	}
 	return true
 }
