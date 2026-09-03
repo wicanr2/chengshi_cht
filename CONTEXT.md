@@ -503,6 +503,11 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     六個圖形集都是 498/512 格逐位元相同，不同的 14 格在六個集裡位置完全一樣
     （游標框，既有差異）。過程中修掉兩個缺陷：左欄介面圖畫在地圖之後蓋掉
     地圖左緣（庫 2 的尺寸每個圖形集不一樣），以及抓圖腳本的組合鍵靜默失效。
+39. ~~交付 `v.1.2.0-20260903`~~ **完成**：四個平台 × 公開／完整兩個變體，
+    `tools/verify_package_all.sh` 全過，GitHub release 已發布（附 `promo.mp4`）。
+    推廣影片重出一版：57 秒、25 段，新增地形編輯器段落。
+    ⚠ **release 的 tag 要指到建置那一個 commit**——`gh release create` 是拿
+    遠端當時的 HEAD 建 tag 的，本機還沒推的 commit 不算。
 38. **issue #1 第三項（雪花亂碼卡死）**：程式流程分析寫在
     [`docs/playtest/issue1-freeze-analysis-2026-09-03.md`](docs/playtest/issue1-freeze-analysis-2026-09-03.md)。
     找到並修掉音效播放器沒有關也沒有留參考的問題，壓力測試補上音效與縮放。
