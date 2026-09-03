@@ -21,6 +21,13 @@ type TerrainParams struct {
 	LakeLevel    int // -1 => 隨機量；0 => 不造湖
 	CurveLevel   int // -1 => 預設彎曲度；0 => 不造河
 	CreateIsland int // -1 => 一成機率；0 => 不造島；1 => 一定造島
+
+	// EditorDOS 走 DOS 地形編輯器（TERRAIN.EXE）那一式，不是 s_gen.c 的。
+	// 只有兩處差別，位址在 docs/re/20-terrain-editor.md §七：
+	//   - 樹叢數量是 3 × TreeLevel（sub_11ED8＋0x11F10），s_gen.c:301 是 TreeLevel + 3
+	//   - DoTrees 之外再跑兩次 SmoothTrees（sub_10A0A＋0x010C9C），而且不受樹木數量是否為零影響
+	// 其餘三式（湖泊 /2、彎曲 +10／+100、擴散 2n+100）兩邊連常數都一樣。
+	EditorDOS bool
 }
 
 // DefaultTerrainParams 是原版的初值。s_gen.c:76-79
@@ -67,6 +74,12 @@ func (w *World) GenerateMap(seed uint32, p TerrainParams) {
 	g.smoothRiver()
 	if p.TreeLevel != 0 {
 		g.doTrees()
+	}
+	if p.EditorDOS {
+		// sub_10A0A＋0x010C9C：原版編輯器在 DoTrees 之外又呼叫兩次，
+		// 而且擺在「樹木數量是否為零」的判斷外面。
+		g.smoothTrees()
+		g.smoothTrees()
 	}
 }
 
@@ -216,10 +229,13 @@ func (g *terrainGen) treeSplash(xloc, yloc int) {
 func (g *terrainGen) doTrees() {
 	w := g.w
 	var amount int
-	if g.p.TreeLevel < 0 {
+	switch {
+	case g.p.TreeLevel < 0:
 		amount = w.Rand.Rand(100) + 50
-	} else {
-		amount = g.p.TreeLevel + 3
+	case g.p.EditorDOS:
+		amount = g.p.TreeLevel * 3 // sub_11ED8＋0x11F10
+	default:
+		amount = g.p.TreeLevel + 3 // s_gen.c:301
 	}
 	for x := 0; x < amount; x++ {
 		xloc := w.Rand.Rand(WorldX - 1)

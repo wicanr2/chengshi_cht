@@ -40,6 +40,7 @@ var sysItems = []struct {
 	{3, "style"},    // 讀取圖形集
 	{5, "scenario"}, // 讀取悲情城市
 	{6, "new"},      // 重新建造一新城市
+	{-3, "terrain"}, // 地形編輯器 —— remake 加的，原版是獨立程式 TERRAIN.EXE
 	{8, "load"},     // 讀取舊有檔案  Ctrl-L
 	{9, "saveas"},   // 以……檔名儲存
 	{10, "save"},    // 儲存現有城市  Ctrl-S
@@ -98,6 +99,8 @@ func (g *Game) sysMenuLabel(i int) string {
 			return g.txt.UI("lang_title")
 		case -2:
 			return g.txt.UI("music_title")
+		case -3:
+			return g.txt.UI("terrain_menu")
 		}
 		return trimMenu(g.txt.S(i18n.SecSysMenu, sysItems[i].msg))
 	case winLangSel:
@@ -195,6 +198,9 @@ func (g *Game) sysMenuPick(i int) {
 			g.openSubMenu(winScenario)
 		case "new":
 			g.newCity()
+		case "terrain":
+			g.openTerrainEditor()
+			g.win = winNone
 		case "load":
 			g.load()
 		case "save":

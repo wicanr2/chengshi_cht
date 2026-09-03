@@ -242,6 +242,26 @@
 > 電腦玩家那篇回顧提到資料片系列叫「古城風情系列」與「回到未來系列」，
 > 那是**資料片的商品名**，不是六個風格各自的名字，不能拿來當譯名。
 
+## 十之二、地形編輯器
+
+**說明書未收，本專案新譯。** 原版是 1990 年軟體世界隨磁片附的獨立程式
+`TERRAIN.EXE`（畫面自稱 *MAXIS SimCity Terrain Editor 1.0*），
+遊戲說明書沒有這一段。原文出自反組譯，位址見
+[`docs/re/20-terrain-editor.md`](../docs/re/20-terrain-editor.md)。
+
+| 原文 | 繁中 | 來源 |
+|---|---|---|
+| SimCity Terrain Editor | 地形編輯器 | 新譯 |
+| Terrain Creation Parameters | 地形參數 | 新譯 |
+| Number of Trees | 樹木數量 | 新譯 |
+| Number of Lakes | 湖泊數量 | 新譯 |
+| River Curviness | 河流彎曲 | 新譯 |
+| Go | 開始 | 新譯 |
+| Cancel | 取消 | 說明書 p.30 已有「取消」 |
+
+> 原版的兩行標籤（`Number` / `of Trees`）是英文放不下才折的，
+> 中文四個字一行放得下，所以只用一行。
+
 ## 十一、現況
 
 說明書已**逐頁轉錄完成**（p.1–82，操作手冊全本 ＋ 參考手冊兩章），

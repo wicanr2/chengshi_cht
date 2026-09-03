@@ -89,7 +89,7 @@ func main() {
 	save := flag.String("save", defaultSavePath(), "Ctrl-S 的存檔位置")
 	scale := flag.Float64("scale", 1.0, "視窗縮放倍率")
 	demo := flag.Int("demo", 0, "先蓋一座起始城市並快轉這麼多年再開始")
-	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas／newcity／load／language")
+	win := flag.String("window", "", "啟動時開啟的視窗：maps／graphs／budget／eval／about／saveas／newcity／terrain／load／language")
 	layer := flag.Int("layer", 0, "地圖視窗的圖層編號（0–10）")
 	langFlag := flag.String("lang", "", "本次啟動語言：zh-Hant 繁體／zh-Hans 简体／ja 日本語／en English（空白時讀取玩家設定）")
 	musicDir := flag.String("music", "", "背景音樂目錄（.ogg／.wav）；不給就找存檔目錄底下的 music/")

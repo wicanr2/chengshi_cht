@@ -78,6 +78,9 @@ func (g *Game) levelName(i int) string {
 type newCityBox struct {
 	name  []rune
 	level int
+	// terrain 是地形編輯器交下來的三個百分比（terrain_editor.go）。
+	// nil 代表走原版遊戲的預設值（三個旋鈕都是 -1，隨機）。
+	terrain *sim.TerrainParams
 }
 
 // openNewCity 打開對話框。原版是從標題畫面的「建造新城市」進來，
@@ -157,7 +160,11 @@ func (g *Game) startNewCity() {
 	if n := strings.TrimSpace(string(b.name)); n != "" {
 		w.CityName = n
 	}
-	w.GenerateMap(s, sim.DefaultTerrainParams())
+	p := sim.DefaultTerrainParams()
+	if b.terrain != nil {
+		p = *b.terrain
+	}
+	w.GenerateMap(s, p)
 	w.DoSimInit()
 	g.newCityDlg = nil
 	g.newCityTitleBackdrop = false

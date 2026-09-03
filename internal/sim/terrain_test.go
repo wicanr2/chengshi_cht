@@ -138,3 +138,64 @@ func TestGenerateMapProducesValidTiles(t *testing.T) {
 		}
 	}
 }
+
+// DOS 地形編輯器那一式。差別只有樹叢數量：TERRAIN.EXE 的 sub_11ED8 算
+// `3 × 百分比`，s_gen.c:301 算 `TreeLevel + 3`。100% 是 300 叢對 103 叢，
+// 差三倍——所以同一個種子下 DOS 那一式的樹一定明顯多。
+// 證據：docs/re/20-terrain-editor.md §七。
+func TestEditorDOSPlantsMoreTrees(t *testing.T) {
+	count := func(dos bool) int {
+		w := NewWorld(12345)
+		p := TerrainParams{TreeLevel: 100, LakeLevel: 0, CurveLevel: 0,
+			CreateIsland: 0, EditorDOS: dos}
+		w.GenerateMap(12345, p)
+		n := 0
+		for x := 0; x < WorldX; x++ {
+			for y := 0; y < WorldY; y++ {
+				if isTree(w.Map[x][y]) {
+					n++
+				}
+			}
+		}
+		return n
+	}
+	micro, dos := count(false), count(true)
+	if micro == 0 {
+		t.Fatal("s_gen.c 那一式一棵樹都沒種，測試前提壞了")
+	}
+	if dos <= micro {
+		t.Fatalf("DOS 那一式的樹沒有比較多：%d vs %d", dos, micro)
+	}
+}
+
+// 同樣的參數與種子要得到同樣的地圖——逐 tick 對拍靠這個。
+func TestEditorDOSIsDeterministic(t *testing.T) {
+	p := TerrainParams{TreeLevel: 37, LakeLevel: 62, CurveLevel: 15,
+		CreateIsland: 0, EditorDOS: true}
+	a, b := NewWorld(7), NewWorld(7)
+	a.GenerateMap(7, p)
+	b.GenerateMap(7, p)
+	for x := 0; x < WorldX; x++ {
+		for y := 0; y < WorldY; y++ {
+			if a.Map[x][y] != b.Map[x][y] {
+				t.Fatalf("(%d,%d) 不一樣：%d vs %d", x, y, a.Map[x][y], b.Map[x][y])
+			}
+		}
+	}
+}
+
+// 樹木百分比為零時原版仍然跑兩次 SmoothTrees（sub_10A0A＋0x010C9C 在
+// 判斷外面）。看不出畫面差別，但接線不能少——這裡確認它不會炸也不改地圖。
+func TestEditorDOSZeroTreesStillSmooths(t *testing.T) {
+	p := TerrainParams{TreeLevel: 0, LakeLevel: 50, CurveLevel: 50,
+		CreateIsland: 0, EditorDOS: true}
+	w := NewWorld(3)
+	w.GenerateMap(3, p)
+	for x := 0; x < WorldX; x++ {
+		for y := 0; y < WorldY; y++ {
+			if isTree(w.Map[x][y]) {
+				t.Fatalf("樹木 0%% 卻在 (%d,%d) 長出樹", x, y)
+			}
+		}
+	}
+}

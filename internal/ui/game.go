@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"time"
 	"fmt"
 	"image/color"
 	"strings"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -250,7 +250,8 @@ type Game struct {
 
 	// newCityBox 是「建造新城市」對話框，nil 代表沒開。見 newcity.go。
 	newCityDlg           *newCityBox
-	newCityTitleBackdrop bool // 從招牌進入時，原版只畫選單列與灰色桌面
+	terrainDlg           *terrainBox // 地形編輯器的參數對話框
+	newCityTitleBackdrop bool        // 從招牌進入時，原版只畫選單列與灰色桌面
 
 	// picture 是目前顯示的圖片訊息全文（多行）。空字串代表沒有。
 	// 原版的圖片訊息會開一個視窗擋住畫面，玩家按一下才關掉——
@@ -379,6 +380,8 @@ func (g *Game) OpenWindow(name string) bool {
 		g.openSaveAs()
 	case "newcity":
 		g.openNewCity()
+	case "terrain":
+		g.openTerrainEditor()
 	case "language", "settings":
 		g.openLangSettings()
 	case "load":
@@ -583,6 +586,10 @@ func (g *Game) handleKeys() {
 		}
 		g.waitEnterRelease = false
 	}
+	// 地形編輯器與新城市對話框都是**強制回應**的。
+	if g.handleTerrainKeys() {
+		return
+	}
 	// 新城市對話框是**強制回應**的：原版要選完等級與市名才進得了遊戲。
 	if g.handleNewCityKeys() {
 		return
@@ -641,7 +648,8 @@ func (g *Game) handleKeys() {
 	// 縮小／放大。**這是 remake 加的功能，原版沒有**（原版的編輯視窗永遠
 	// 一格 16 像素）。鍵位選 `-`／`=` 而不是原版參考附表上的 `+`／`-`：
 	// 那兩個鍵在原版是「在視窗的可點處之間循環」，留給它。
-	if g.win == winNone && g.newCityDlg == nil && g.picture == "" &&
+	if g.win == winNone && g.newCityDlg == nil && g.terrainDlg == nil &&
+		g.picture == "" &&
 		!ebiten.IsKeyPressed(ebiten.KeyControl) &&
 		!ebiten.IsKeyPressed(ebiten.KeyAlt) {
 		if inpututil.IsKeyJustPressed(ebiten.KeyMinus) ||
@@ -906,6 +914,9 @@ func (g *Game) handleMouse() {
 			g.stepZoom(-1)
 		}
 	}
+	if g.handleTerrainMouse(mx, my) {
+		return
+	}
 	if g.handleNewCityMouse(mx, my) {
 		return
 	}
@@ -1066,6 +1077,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawPicture(screen)
 	g.drawMenu(screen)
 	g.drawNewCity(screen)
+	g.drawTerrainEditor(screen)
 }
 
 // drawDemand 畫 R／C／I 需求柱。原版用短柱的正負表示需要或過剩。

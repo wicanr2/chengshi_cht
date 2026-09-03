@@ -484,6 +484,18 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     不是靜音，而那 1 秒是對話框提示音（正對照）。
     remake 加了背景音樂，播的是玩家自己準備的檔案。
 
+36. ~~地形編輯器~~ **完成**：[`docs/re/20-terrain-editor.md`](docs/re/20-terrain-editor.md)
+    ＋ [`docs/spec/terrain-editor.md`](docs/spec/terrain-editor.md)（READY），
+    實作在 `internal/ui/terrain_editor.go`，掛在系統選單。
+    原版是 1990 年隨磁片附的獨立程式 `TERRAIN.EXE`；LZEXE 0.91 解包之後反組譯，
+    版面（36×10 字元格、八個控制項的欄列）、操作（±1、夾限 0–100、長按重複、
+    `+`／`-` 輪焦點）與三個百分比的語意全部讀出來。
+    **三個百分比就是 `TreeLevel`／`LakeLevel`／`CurveLevel` 本身**：生成流程與
+    `s_gen.c:127 GenerateMap()` 逐行對得上，四個消費式裡有三個連常數都一樣，
+    只有樹叢數量是 `3 × pct`（`s_gen.c:301` 是 `TreeLevel + 3`）——
+    那一條接在 `TerrainParams.EditorDOS`。
+    沒做的兩步（進度訊息、輸入年份）版面未解，見規格 §六。
+
 ## 7. 現行驗證入口
 
 見第 1 節「驗證入口」。

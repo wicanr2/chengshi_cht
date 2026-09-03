@@ -198,19 +198,111 @@ type TerrainParams struct {
 也就是 CP437 的 `◄` 與 `►`。光看 `.asm` 只會看到兩個位移，
 是把資料段的位元組印出來才認出來的——**位移要換算回位元組再看**。
 
-## 七、下一個入口（依序試，不要跳）
+## 七、參數的語意與換算（已確認）
 
-1. **把百分比換算成 `TerrainParams` 的數值域。** 這是實作前唯一的必要缺口，
-   在 `sub_11402` 後半段與 Go 的處理裡，同一份 `.i64` 再倒一次就好。
-2. **`vmemsize`／`machine=vgaonly`。** 錯誤訊息點名 VGA/EGA 記憶體，
+三個百分比存在 dseg 的三個 16 位元全域，定義處就寫著初值：
+
+```
+059196  word_59196  dw 32h      ← Number of Trees，50
+059198  word_59198  dw 32h      ← Number of Lakes，50
+05919A  word_5919A  dw 32h      ← River Curviness，50
+```
+
+全檔掃過一遍，這三個全域只有 **26 處**引用（`TERRAIN.EXE.asm`，707 個函式），
+分成四群：對話框顯示、`◄`／`►` 處理、產生流程的三個閘門、三支消費函式。
+沒有第四種用途。
+
+### 產生流程與 Micropolis 的 `GenerateMap` 逐行對得上
+
+`sub_10A0A`（主選單）在 `0x010C58` 起的九個呼叫，對照 `s_gen.c:127 GenerateMap()`：
+
+| `s_gen.c` | TERRAIN.EXE |
+|---|---|
+| `SeedRand(r)` | `0x010C58 call sub_119EC` |
+| `ClearMap()` | `0x010C5D call sub_11EA4` |
+| `MakeNakedIsland()`（`CreateIsland == 1`）| `if (byte_52E72) call sub_11CD4` |
+| `if (CurveLevel != 0) DoRivers()` | `if (word_5919A) call sub_121EE` |
+| `if (LakeLevel != 0) MakeLakes()` | `if (word_59198) call sub_11DEA` |
+| `SmoothRiver()` | `0x010C8B call sub_11FC4` |
+| `if (TreeLevel != 0) DoTrees()` | `if (word_59196) call sub_11ED8` |
+| `SmoothTrees()` ×2 | `0x010C9C`／`0x010CA1 call sub_120F4` ×2 |
+
+**三個百分比就是 `TreeLevel`／`LakeLevel`／`CurveLevel` 本身**，不是要再換算的中間量：
+判空的方式（`!= 0` 才做）與傳進去的位置都一樣。
+
+### 三支消費函式讀出來的式子
+
+| 參數 | TERRAIN.EXE | 位址 | `s_gen.c` |
+|---|---|---|---|
+| 湖泊數量 | `Lim1 = pct / 2` | `sub_11DEA`＋`0x11DFB`（`cwd`／`sub ax,dx`／`sar ax,1`）| `Lim1 = LakeLevel / 2`（`s_gen.c:234`）**相同** |
+| 河流彎曲 | `r1 = pct + 10`、`r2 = pct + 100` | `sub_12248`（DoBRiv）、`sub_122D4`（DoSRiv）| `s_gen.c:422-423`／`447-448` **相同** |
+| 樹叢擴散距離 | `dis = Rand(2 × pct + 100) + 50` | `sub_11F30`＋`0x11F3C` | `dis = Rand(100 + TreeLevel * 2) + 50`（`s_gen.c:279`）**相同** |
+| **樹叢數量** | **`Amount = 3 × pct`** | `sub_11ED8`＋`0x11F10`（`mov cx,ax`／`shl ax,1`／`add ax,cx`）| `Amount = TreeLevel + 3`（`s_gen.c:301`）**不同** |
+
+樹叢數量是唯一不一致的一條。50% 在 DOS 編輯器是 150 叢，照 `s_gen.c` 只有 53 叢——
+差三倍，不是捨入誤差。其餘三式連常數都一樣，所以這不是「兩份無關的實作」，
+是同一份程式在這一行上的分歧。
+
+⚠ **`SIMCITY.EXE` 走哪一式未查。** 遊戲本身沒有調這三個值的介面，
+`TreeLevel` 一直是 -1（走 `Rand(100) + 50` 那一支），這條分歧在遊戲裡是死碼；
+要回答得把整支 `SIMCITY.EXE` 反組譯，目前 `workplace/ida/image16.bin.asm`
+只涵蓋 4 支函式。
+
+### 樹林平滑跑幾次
+
+`sub_11ED8` 自己結尾就呼叫 `sub_120F4` 兩次（與 `DoTrees()` 一樣），
+而 `sub_10A0A` 在它之後**又呼叫兩次**。所以：
+
+- 樹木百分比 > 0 → `SmoothTrees` 共四次
+- 樹木百分比 ＝ 0 → 兩次（此時沒有樹可平滑，看不出差別）
+
+`s_gen.c` 只有 `DoTrees()` 裡的兩次。
+
+## 八、對話框的操作（已確認）
+
+`sub_11402` 在 `0x11720` 起是訊息迴圈。
+
+**鍵盤**（`sub_25DE6` 取字元）：
+
+| 鍵 | 動作 |
+|---|---|
+| `+` | 焦點往後：`focus = (focus + 1) % 8`，再 `sub_19139(0x800 + focus)` 反白 |
+| `-` | 焦點往前，0 折回 7 |
+| `Enter`／`G`／`g` | 等同 Go |
+| `Esc`／`C`／`c` | 等同 Cancel |
+
+八個控制項的編號 `0x800`–`0x807` 與 §六的表一致，焦點就在這八個之間輪。
+
+**滑鼠**（`0x117B3` 起的 switch，八個 case）：
+
+| 編號 | 動作 |
+|---|---|
+| 0x800／0x801 | `word_59196 = clamp(值 ∓ 1, 0, 100)` |
+| 0x802／0x803 | `word_59198` 同上 |
+| 0x804／0x805 | `word_5919A` 同上 |
+| 0x806 | 結果 ＝ 1（Go）|
+| 0x807 | 結果 ＝ 0（Cancel）|
+
+夾限是 `sub_113E4(0, 值, 100)`（cdecl 由右往左推 `100`、`值`、`0`）。
+**一次只加減 1**，沒有加速段；長按由自動重複補：`0x118B0` 起記下按下的時刻
+（`sub_18CA9` 取計時器），只要 `sub_17C40` 還回報按著、且經過的時間超過 **5** 個
+計時單位，就跳回 `0x117B3` 再執行一次同一個 case。
+
+改完值之後只重畫那一行：格式字串換成 `dseg:0x1C8`／`0x1D0`／`0x1D8`。
+**這就是六份 `%3d%%%%` 的用途**——三個參數各兩份，初次畫用前三份、重畫用後三份，
+不是「六個標籤」。
+
+## 九、下一個入口（依序試，不要跳）
+
+1. **`vmemsize`／`machine=vgaonly`。** 錯誤訊息點名 VGA/EGA 記憶體，
    下一個要動的就是這個設定，不是 CPU。
-3. **換原版 DOSBox。** 容器裡只有 `dosbox-x`，要改 image。
-4. **找編輯器自己的說明書。** 版面如果有印出來就不必靠跑。
+2. **換原版 DOSBox。** 容器裡只有 `dosbox-x`，要改 image。
+3. **找編輯器自己的說明書。** 版面如果有印出來就不必靠跑。
 
-⚠ **不必等這四項才能動工。** 介面文字已經是一手證據，三個參數與規則層也齊了；
-缺的只有「每個控制項擺在哪」。要不要為了像素級的版面繼續追，是取捨不是必要條件。
+這三項是為了「眼睛確認」，不是實作的必要條件：介面文字、版面、參數語意與換算
+都已經是一手證據。
 
-## 六、規則層其實已經解完了
+## 十、規則層其實已經解完了
 
 編輯器要寫的東西 remake 早就有：
 
@@ -220,5 +312,4 @@ type TerrainParams struct {
   [`../formats/01-city-file.md`](../formats/01-city-file.md)。
 - 從遮罩產生地圖的路徑 → `tools/citymap`（本專案畫台北台中台南用的就是它）。
 
-**缺的只有介面**：原版的版面、工具清單、操作方式。所以第五節那四條全都是
-為了同一個問題——把介面看清楚。
+差的只有樹叢數量那一式，已經補進 `TerrainParams.TreeAmountDOS`。

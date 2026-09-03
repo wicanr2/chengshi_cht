@@ -64,3 +64,10 @@ map_saved	地圖存成 %s	地图存成 %s	地図を %s に保存しました	Map
 level_easy	簡易	简易	かんたん	Easy
 level_medium	適中	适中	ふつう	Medium
 level_hard	艱難	艰难	むずかしい	Hard
+terrain_menu	地形編輯器	地形编辑器	地形エディタ	Terrain Editor
+terrain_title	地形參數	地形参数	地形パラメータ	Terrain Parameters
+terrain_trees	樹木數量	树木数量	木の数	Trees
+terrain_lakes	湖泊數量	湖泊数量	湖の数	Lakes
+terrain_curve	河流彎曲	河流弯曲	曲がり	Curviness
+terrain_go	開始	开始	開始	Go
+terrain_cancel	取消	取消	取消	Cancel
