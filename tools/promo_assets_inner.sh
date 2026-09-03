@@ -48,6 +48,7 @@ card 00-open  -big "城　市" \
 card 01-cht   -line "這款遊戲當年沒有中文版" -line "台灣代理的是英文遊戲 ＋ 中文說明書"
 card 02-swmap -line "1990 年，軟體世界在高雄" -line "畫了台灣與高雄兩張地圖"
 card 03-newmap -line "台北、台中、台南" -line "這一版補上"
+card 03b-terr -line "1990 年隨磁片附的地形編輯器" -line "三個旋鈕，一張新地圖"
 card 04-build -line "從一片空地開始"
 card 05-disast -big "天災" -line "火災、洪水、空難、龍捲風、地震、怪獸"
 card 06-data  -line "預算、統計、評估" -line "每一個欄位都讀得懂"

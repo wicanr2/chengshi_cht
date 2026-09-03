@@ -62,6 +62,8 @@ card 03-newmap 2.2  0.1,5,0.5
 live taipei
 live taichung
 live tainan         0.4,6,0.4
+card 03b-terr  2.4  0.1,5,0.5
+live terrain        0.3,5,0.5 1.4,5,0.5 2.6,6,0.7
 card 04-build  2.0  0.1,5,0.5
 live build          0.3,6,0.7 1.3,6,0.7 2.3,6,0.7
 card 05-disast 2.2  0.2,3,0.8

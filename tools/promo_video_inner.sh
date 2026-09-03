@@ -102,6 +102,29 @@ pan taipei    TAIPEI.CTY    0,28 14
 pan taichung  TAICHUNG.CTY  0,28 14
 pan tainan    TAINAN.CTY    0,28 14
 
+# 三之二、地形編輯器：三個旋鈕調一調，按開始長出一張新地圖。
+#
+# ⚠ 這一段**不能用 `grabs`**：它每格會送一次空白鍵，而空白鍵在對話框裡是
+# 「按下目前選取的控制項」——會把參數改掉，甚至直接按到開始。
+# 座標是原版像素 ×3（UIScale）：對話框原點 (172,95)，`►` 在第 10／21 欄、
+# 第 5 列，`開始` 在第 3 欄、第 8 列。
+still() { local i; for i in $(seq 1 "${1:-1}"); do grab; done; }
+poke() { xdotool mousemove "$1" "$2" click 1; sleep 0.12; grab; }
+start_seg terrain; launch -window terrain -seed 7
+still 5
+for _ in 1 2 3 4 5 6 7 8; do poke 777 525; done   # 樹木 ►
+for _ in 1 2 3 4 5;       do poke 1041 525; done  # 湖泊 ►
+for _ in 1 2 3 4;         do poke 1137 525; done  # 彎曲 ◄
+still 4
+xdotool mousemove 693 651 click 1; sleep 0.6      # 開始
+still 4
+xdotool mousemove 936 735 click 1; sleep 1.4      # 建造新城市 → 確定
+still 3
+xdotool mousemove 1919 1049; sleep 0.3
+combo ctrl c
+still 10
+done_seg
+
 # 四、實機遊玩：台灣地圖上蓋一座城市、快轉 25 年，關掉 City Form 讓城市看得見。
 start_seg build; launch -load cities/TAIWAN.CTY -demo 25
 xdotool key --clearmodifiers space; sleep 0.3
