@@ -183,7 +183,7 @@ func ParsePGF(raw []byte) (*PGF, error) {
 				copy(im.Head[:], data[q:q+4])
 				q += 4
 			}
-			px, next, err := pgfPixels(data, q, w, h, g.BitsPerPixel, fl)
+			px, next, err := pgfPixels(data, q, w, h, g.BitsPerPixel, fl, mode)
 			if err != nil {
 				return nil, fmt.Errorf("第 %d 庫第 %d 張：%w", i, j, err)
 			}
@@ -202,12 +202,41 @@ func ParsePGF(raw []byte) (*PGF, error) {
 	return g, nil
 }
 
+// modeTandy 是 `SIMCITY.CFG` 與 `.PGF` 檔頭共用的 Tandy 模式碼。
+//
+// ⚠ **Tandy 的 16 色不是 EGA 的平面式，是封裝式**：一個位元組兩個像素，
+// 高四位元在前。位元組數與四平面完全一樣（8×8 兩者都是 32 個位元組），
+// 所以長度檢查抓不到——照平面式讀出來是一片彩色雜訊，
+// 而且**看起來像檔案壞了**，不像讀法錯了。
+const modeTandy = 'T'
+
 // pgfPixels 讀一張圖的像素。
 //
-// 8bpp 是每格一個位元組；4 平面與 1 平面是 EGA 式的**平面式**排列：
-// 整張圖的第 0 平面在前，接著第 1 平面，以此類推。
-func pgfPixels(data []byte, q, w, h, bpp int, fl uint16) ([]uint8, int, error) {
+// 三種排列：
+//   - 8bpp：每格一個位元組（MCGA）。
+//   - 4 平面與 1 平面：EGA 式的**平面式**，逐列交錯（CEGA／sega／MONO／CGA Mono）。
+//   - Tandy：**封裝式** 4bpp，一個位元組兩個像素。
+func pgfPixels(data []byte, q, w, h, bpp int, fl uint16, mode byte) ([]uint8, int, error) {
 	out := make([]uint8, w*h)
+	if mode == modeTandy && bpp == 4 {
+		rowBytes := (w + 1) / 2
+		need := rowBytes * h
+		if q+need > len(data) {
+			return nil, 0, fmt.Errorf("像素讀不完")
+		}
+		for y := 0; y < h; y++ {
+			base := q + y*rowBytes
+			for x := 0; x < w; x++ {
+				b := data[base+x/2]
+				if x%2 == 0 {
+					out[y*w+x] = b >> 4
+				} else {
+					out[y*w+x] = b & 0x0f
+				}
+			}
+		}
+		return out, q + need, nil
+	}
 	switch bpp {
 	case 8:
 		if q+w*h > len(data) {

@@ -15,7 +15,7 @@ func main() {
 	var pal []assets.PGFColor
 	if g, err := assets.ParsePGF(raw); err == nil {
 		pal = g.Palette
-	} else if g, err2 := assets.LoadPGFBase(raw, 8, 8); err2 == nil {
+	} else if g, err2 := assets.LoadPGFBase(raw, 8, 8, 0); err2 == nil {
 		pal = g.Palette
 	} else {
 		panic(err)

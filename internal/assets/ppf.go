@@ -53,10 +53,10 @@ const (
 type ppfKind int
 
 const (
-	kindPlanar ppfKind = iota // 逐列交錯的位元平面，高位在前
-	kindLinear                // 每像素一個位元組（256 色）
-	kindPacked2               // 封裝式 2bpp，一個位元組四個像素，高位在左
-	kindPacked4               // 封裝式 4bpp，一個位元組兩個像素，高位在左
+	kindPlanar  ppfKind = iota // 逐列交錯的位元平面，高位在前
+	kindLinear                 // 每像素一個位元組（256 色）
+	kindPacked2                // 封裝式 2bpp，一個位元組四個像素，高位在左
+	kindPacked4                // 封裝式 4bpp，一個位元組兩個像素，高位在左
 )
 
 // ppfLayout 是一種顯示模式的畫面版面。高度不記在這裡——它由檔案長度

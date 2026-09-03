@@ -16,11 +16,12 @@ func TestPGFBaseParses(t *testing.T) {
 	cases := []struct {
 		sub, name string
 		tile, bpp int
+		mode      byte
 	}{
-		{"CEGA", "CEGADAT.PGF", 16, 4},
-		{"sega", "segadat.pgf", 8, 4},
-		{"MONO", "MONODAT.PGF", 16, 1},
-		{"mcga", "mcgadat.pgf", 8, 8},
+		{"CEGA", "CEGADAT.PGF", 16, 4, 'E'},
+		{"sega", "segadat.pgf", 8, 4, 'e'},
+		{"MONO", "MONODAT.PGF", 16, 1, 'V'},
+		{"mcga", "mcgadat.pgf", 8, 8, '2'},
 	}
 	for _, c := range cases {
 		path := findCase(dir, c.sub, c.name)
@@ -32,7 +33,7 @@ func TestPGFBaseParses(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		g, err := LoadPGFBase(raw, c.tile, c.bpp)
+		g, err := LoadPGFBase(raw, c.tile, c.bpp, c.mode)
 		if err != nil {
 			t.Errorf("%s：%v", c.name, err)
 			continue
@@ -63,7 +64,7 @@ func TestPGFBaseDirtIsBrown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	g, err := LoadPGFBase(raw, 16, 4)
+	g, err := LoadPGFBase(raw, 16, 4, 'E')
 	if err != nil {
 		t.Fatal(err)
 	}

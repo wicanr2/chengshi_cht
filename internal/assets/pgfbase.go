@@ -37,15 +37,18 @@ var monoPalette = [2][3]uint8{{0x00, 0x00, 0x00}, {0xff, 0xff, 0xff}}
 
 // LoadPGFBase 讀一個基本圖形檔。
 //
-// tile 是地圖圖塊的邊長（CEGA／MONO 是 16，mcga／sega 是 8），
-// bpp 是位元深度（CEGA／sega 4、mcga 8、MONO 1）。這兩個值由目錄決定，
-// 檔案裡沒寫——基本檔連位元深度都沒有欄位可放。
-func LoadPGFBase(raw []byte, tile, bpp int) (*PGF, error) {
+// tile 是地圖圖塊的邊長（CEGA／MONO 是 16，mcga／sega／tdy 是 8），
+// bpp 是位元深度（CEGA／sega／tdy 4、mcga 8、MONO／CGA Mono 1）。
+// 這三個值由目錄決定，檔案裡沒寫——基本檔連位元深度都沒有欄位可放。
+//
+// mode 是顯示模式碼，目前只用來分辨 Tandy 的封裝式 4bpp（見 pgfPixels）；
+// 其他模式傳 0 即可。
+func LoadPGFBase(raw []byte, tile, bpp int, mode byte) (*PGF, error) {
 	data, err := DecompressLZSS(raw)
 	if err != nil {
 		return nil, fmt.Errorf("解壓失敗：%w", err)
 	}
-	g := &PGF{Name: "基本", BitsPerPixel: bpp}
+	g := &PGF{Name: "基本", BitsPerPixel: bpp, Mode: mode}
 
 	off := 0
 	switch bpp {
@@ -77,14 +80,14 @@ func LoadPGFBase(raw []byte, tile, bpp int) (*PGF, error) {
 	if bpp == 1 {
 		planes = 1
 	}
-	one := baseImageBytes(tile, tile, planes, bpp)
+	one := baseImageBytes(tile, tile, planes, bpp, mode)
 	end := off + tileCount*one
 	if end > len(data) {
 		return nil, fmt.Errorf("第 0 庫要 %d 位元組，檔案只有 %d", end, len(data))
 	}
 	b0 := PGFBank{Width: tile, Height: tile}
 	for i := 0; i < tileCount; i++ {
-		px, _, err := pgfPixels(data, off+i*one, tile, tile, bpp, flagsFor(planes, bpp))
+		px, _, err := pgfPixels(data, off+i*one, tile, tile, bpp, flagsFor(planes, bpp), mode)
 		if err != nil {
 			return nil, fmt.Errorf("第 0 庫第 %d 張：%w", i, err)
 		}
@@ -98,7 +101,7 @@ func LoadPGFBase(raw []byte, tile, bpp int) (*PGF, error) {
 	// 全部要對齊才算數，撞對的機率可以忽略。
 	start := -1
 	for s := end; s < len(data) && s < end+65536; s++ {
-		if _, ok := walkBaseBanks(data, s, bpp, false); ok {
+		if _, ok := walkBaseBanks(data, s, bpp, mode, false); ok {
 			start = s
 			break
 		}
@@ -106,7 +109,7 @@ func LoadPGFBase(raw []byte, tile, bpp int) (*PGF, error) {
 	if start < 0 {
 		return nil, fmt.Errorf("從 %d 起找不到行內的圖形庫表", end)
 	}
-	banks, _ := walkBaseBanks(data, start, bpp, true)
+	banks, _ := walkBaseBanks(data, start, bpp, mode, true)
 	g.Banks = append(g.Banks, banks...)
 	// 第 0 庫與行內庫表之間那一塊就是地圖縮圖（＋單色／256 色的介面字型）。
 	if mini, next := parseMiniTiles(data[end:start], bpp); mini != nil {
@@ -125,9 +128,12 @@ func flagsFor(planes, bpp int) uint16 {
 	return 0
 }
 
-func baseImageBytes(w, h, planes, bpp int) int {
+func baseImageBytes(w, h, planes, bpp int, mode byte) int {
 	if bpp == 8 {
 		return w * h
+	}
+	if mode == modeTandy && bpp == 4 {
+		return ((w + 1) / 2) * h // 封裝式：一個位元組兩個像素
 	}
 	return ((w + 7) / 8) * planes * h
 }
@@ -135,7 +141,7 @@ func baseImageBytes(w, h, planes, bpp int) int {
 // walkBaseBanks 從 off 走完行內的圖形庫表。
 //
 // collect 為假時只驗證走不走得到檔尾——掃描起點時用，省掉解像素的成本。
-func walkBaseBanks(data []byte, off, bpp int, collect bool) ([]PGFBank, bool) {
+func walkBaseBanks(data []byte, off, bpp int, mode byte, collect bool) ([]PGFBank, bool) {
 	var out []PGFBank
 	n := 0
 	for off+3 <= len(data) {
@@ -160,7 +166,7 @@ func walkBaseBanks(data []byte, off, bpp int, collect bool) ([]PGFBank, bool) {
 				bank.Width, bank.Height = w, h
 			}
 			if collect {
-				px, _, err := pgfPixels(data, q+4, w, h, bpp, bank.Flags&pgfSinglePlane)
+				px, _, err := pgfPixels(data, q+4, w, h, bpp, bank.Flags&pgfSinglePlane, mode)
 				if err != nil {
 					return nil, false
 				}
@@ -168,7 +174,7 @@ func walkBaseBanks(data []byte, off, bpp int, collect bool) ([]PGFBank, bool) {
 			} else {
 				bank.Images = append(bank.Images, PGFImage{})
 			}
-			q += 4 + baseImageBytes(w, h, planes, bpp)
+			q += 4 + baseImageBytes(w, h, planes, bpp, mode)
 		}
 		if q != end {
 			return nil, false

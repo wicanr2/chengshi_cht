@@ -1,0 +1,14 @@
+# Tandy 模式：關掉查驗對話框，再把鏡頭移到河上。
+wait 12
+click 208 221
+wait 5
+key Return
+wait 8
+key Return
+wait 4
+click 151 107
+wait 3
+shot 00-cleared
+click 184 53
+wait 4
+shot 01-river

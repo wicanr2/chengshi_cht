@@ -66,18 +66,31 @@ func (t *TileSet) UIImage(bank, i int) *ebiten.Image {
 }
 
 // 圖形檔的挑選順序。CEGA 是 EGA 640×350、圖塊 16×16，細節最多，
-// 所以優先；找不到才退到 8×8 的模式。
+// 所以優先；找不到才退到別的模式。
+//
+// mode 是 `SIMCITY.CFG` 與 `.PGF` 檔頭共用的模式碼，只有 Tandy 用得到
+// （它的 16 色是**封裝式** 4bpp，不是 EGA 的平面式，見
+// `internal/assets/pgf.go` 的 `pgfPixels`）。
+//
+// ⚠ **這是挑選順序不是玩家選項**：remake 的版面是 640×350 的 EGA 高解析那一套
+// （`docs/spec/ui-layout.md`），其他模式的圖形檔只當圖塊來源用，
+// 版面不跟著換。原版那幾種 320×200 的畫面還沒重製。
 var graphicsDirs = []struct {
 	dir  string
 	ext  string
 	tile int
 	bpp  int
+	mode byte
 }{
-	{"CEGA", ".PGF", 16, 4},
-	{"cega", ".pgf", 16, 4},
-	{"MONO", ".PGF", 16, 1},
-	{"sega", ".pgf", 8, 4},
-	{"mcga", ".pgf", 8, 8},
+	{"CEGA", ".PGF", 16, 4, 'E'},
+	{"cega", ".pgf", 16, 4, 'E'},
+	{"MONO", ".PGF", 16, 1, 'V'},
+	{"sega", ".pgf", 8, 4, 'e'},
+	{"mcga", ".pgf", 8, 8, '2'},
+	{"tdy", ".pgf", 8, 4, 'T'},
+	{"TDY", ".PGF", 8, 4, 'T'},
+	{"CGA", ".PGF", 16, 8, 'C'},
+	{"cga", ".pgf", 16, 8, 'C'},
 }
 
 // StyleBase 是「沒有資料片的原始城市外觀」。
@@ -103,7 +116,7 @@ func LoadTileSet(dataDir, style string) (*TileSet, error) {
 				lastErr = err
 				continue
 			}
-			pgf, err := assets.LoadPGFBase(raw, g.tile, g.bpp)
+			pgf, err := assets.LoadPGFBase(raw, g.tile, g.bpp, g.mode)
 			if err != nil {
 				lastErr = err
 				continue
