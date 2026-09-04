@@ -591,6 +591,13 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     `docs/images/en/`、`docs/images/ja/`，由 `tools/readme_shots.sh` 的
     語言迴圈產生；`panels.png`（純圖示）與 `promo.gif`（只有中文版）三份共用。
 
+48. ~~交付 `v.1.5.1-20260904`~~ **完成**：修的是日文地形編修程式工具盤的
+    「塗りつぶし」「元に戻す」寫出 57 像素盤面外（**`v.1.4.0` 補完日文時就在了，
+    不是這一版的 regression**），外加 README 三語的譯名出處一節與三語截圖重產。
+    四個平台 × 公開／完整兩個變體，`tools/verify_package_all.sh` 全過
+    （執行檔版本字串確認為 `v.1.5.1-20260904`），GitHub release 已發布（七個附件）。
+    tag 指到建置那一個 commit `7433789`。完整版只留本機。
+
 47. ~~README 三語補上「畫面上的字都有出處」~~ **完成**（2026-09-04）：
     三份 README 各加一節，含一張新截圖與「畫面上的字 ← 哪一本說明書哪一頁」對照表，
     並交代三處刻意沒照說明書、四處說明書比原文粗。`tools/readme_shots.sh` 加了
