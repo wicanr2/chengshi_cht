@@ -13,8 +13,8 @@
 城市名存在檔頭裡；讀取端三種都吃得下（裸檔身、DOS 存檔、解壓後的 `.PSN`）。
 Linux tar.gz／AppImage、Windows、macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
 正式版號固定使用 `v.<主版>.<次版>.<修訂版>-YYYYMMDD`；Git tag、GitHub Release、
-程式版本字串、`dist-all/<版本>/` 與 checksum 必須完全一致。目前重建目標是
-`v.1.0.0-20260901`，舊 `20260901` Release 與 tag 已依使用者決定刪除，不得復用。
+程式版本字串、`dist-all/<版本>/` 與 checksum 必須完全一致。目前最新版是
+`v.1.3.0-20260904`，舊 `20260901` Release 與 tag 已依使用者決定刪除，不得復用。
 
 **逐次元對拍收斂了，精靈也在內。** 四份實驗、每份 8000 個 frame（400 個的
 短版一份）全部逐 frame 完全一致：空城 13 954 次抽樣、**Dullsville 劇本
@@ -565,6 +565,11 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     ⚠ **未解**：基本檔的縮圖只有 CEGA 與 sega 位置對得上，
     `MONODAT`／`mcgadat`／`TDYDAT`／`CGADAT` 中間隔著一段（長度對得上自帶字型），
     目前解不出來，City Form 退回純色方塊。這是既有缺口，不是這一輪帶進來的。
+41. ~~交付 `v.1.3.0-20260904`~~ **完成**：四個平台 × 公開／完整兩個變體，
+    `tools/verify_package_all.sh` 28 項全過，GitHub release 已發布（附 `promo.mp4`）。
+    tag 指到建置那一個 commit（`55e76a2`）。這一版的內容是六種顯示模式、
+    面板與配色跟著模式換，以及四個沉默的解碼錯（Tandy 的 `.PGF` 與縮圖、
+    CGA 的基本圖形檔與招牌 `.PPF`）。README 另加英文與日文版。
 38. **issue #1 第三項（雪花亂碼卡死）**：程式流程分析寫在
     [`docs/playtest/issue1-freeze-analysis-2026-09-03.md`](docs/playtest/issue1-freeze-analysis-2026-09-03.md)。
     找到並修掉音效播放器沒有關也沒有留參考的問題，壓力測試補上音效與縮放。
