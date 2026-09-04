@@ -185,10 +185,13 @@ func loadPPF(dir, suffix, mode string) (image.Image, error) {
 				continue
 			}
 			if im, err := try(g.dir, strings.ToLower(mode)); err == nil {
-				// 只有**滿版寬**的才換得過去，高度可以短一點
-				// （單色的招牌是 640×336、劇本選單 640×348，
-				// 兩幅都比 CEGA 的 640×350 矮，畫面下緣會露出桌面色）。
-				if im.Bounds().Dx() == OrigW {
+				// 換得過去的條件：**寬度剛好滿版，高度也要接近滿版**。
+				// 單色那兩幅是 640×336 與 640×348，比 CEGA 的 640×350
+				// 矮十幾列，貼齊下緣就對得上；**CGA 那兩幅雖然也是 640 寬，
+				// 但只有 175 與 200 列**（它的螢幕是 640×200），貼進
+				// 640×350 的畫布會空掉上面一半，三顆按鈕也全部錯位。
+				b := im.Bounds()
+				if b.Dx() == OrigW && b.Dy() >= OrigH-24 {
 					return im, nil
 				}
 			}

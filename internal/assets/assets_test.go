@@ -500,7 +500,7 @@ func dos103Dir(t *testing.T) string {
 // 六種顯示模式的招牌與劇本選單都要解得開，而且高度要對。
 //
 // ⚠ **高度不是每個模式一個常數**，所以每個模式的兩幅都要驗：
-// CGA 的招牌是 175 列、劇本選單是 200 列；MONO 是 336 與 348；
+// CGA 的招牌是 640×175、劇本選單是 640×200；MONO 是 336 與 348；
 // mcga 是 199 與 200。只抽一幅來測的話，另一幅整幅讀不出來也不會變紅——
 // 2026-09-02 之前就是這樣漏掉 `mcgascen.ppf`。
 //
@@ -520,8 +520,8 @@ func TestPPFEveryDisplayModeFrom103(t *testing.T) {
 		{"TDYSCEN.PPF", "tdy", 320, 200},
 		{"MONONTRO.PPF", "mono", 640, 336},
 		{"MONOSCEN.PPF", "mono", 640, 348},
-		{"CGANTRO.PPF", "cga", 320, 175},
-		{"CGASCEN.PPF", "cga", 320, 200},
+		{"CGANTRO.PPF", "cga", 640, 175},
+		{"CGASCEN.PPF", "cga", 640, 200},
 	} {
 		raw, err := os.ReadFile(filepath.Join(dir, c.file))
 		if err != nil {
@@ -603,7 +603,11 @@ func TestPPFDecodesAreNotScrambled(t *testing.T) {
 		{"SEGANTRO.PPF", "sega"},
 		{"TDYNTRO.PPF", "tdy"},
 		{"MONONTRO.PPF", "mono"},
-		{"CGANTRO.PPF", "cga"},
+		// ⚠ **CGA 不在這裡**：它是 640×200 單色，底圖是密網點，
+		// 橫向連續段天生就短（實測解對是 3.12，比門檻還低），
+		// 而**解錯的那一種反而比較長**（當成 320 寬的四色是 6.37）。
+		// 這個統計量對 CGA 是反向的，改用「只有兩色」當判準，
+		// 見 TestCGAPPFIsMonochrome。
 	} {
 		raw, err := os.ReadFile(filepath.Join(dir, c.file))
 		if err != nil {
@@ -651,4 +655,56 @@ func TestPPFDecodesAreNotScrambled(t *testing.T) {
 	if gotWrong >= 4 {
 		t.Errorf("把 Tandy 當 4 平面讀應該解得很碎，卻是 %.2f 像素——門檻失效", gotWrong)
 	}
+}
+
+// CGA 的招牌是 **640×175 兩色**，不是 320×175 四色。
+//
+// 兩種讀法**每列都是 80 個位元組**，長度分不出來；而且錯的那一種
+// **畫出來是一幅看得懂的招牌**——只是每個像素寬了一倍、顏色變成
+// EGA 的前四色。所以判準是**顏色數**：`SIMCITY.CFG` 的解碼表把 `C`
+// 寫成 CGA Monochrome，原版實跑的招牌畫面（`workplace/dosbox/
+// cgatitle-00-title.png`）整張只有 #000000 與 #ffffff 兩色。
+//
+// 這一支同時驗正解與反例：640 寬的單平面只有兩色，320 寬的兩位元
+// 封裝式會解出兩色以上。
+func TestCGAPPFIsMonochrome(t *testing.T) {
+	dir := dos103Dir(t)
+	raw, err := os.ReadFile(filepath.Join(dir, "CGANTRO.PPF"))
+	if err != nil {
+		t.Skipf("讀不到 CGANTRO.PPF：%v", err)
+	}
+	d, err := DecompressLZSS(raw)
+	if err != nil {
+		t.Fatalf("解壓失敗：%v", err)
+	}
+	im, err := ParsePPFAs(d, nil, "cga")
+	if err != nil {
+		t.Fatalf("CGA 招牌解不開：%v", err)
+	}
+	if w := im.Bounds().Dx(); w != 640 {
+		t.Errorf("CGA 招牌 %d 像素寬，要 640", w)
+	}
+	if n := countColors(im); n != 2 {
+		t.Errorf("CGA 招牌有 %d 種顏色，CGA Monochrome 只能有兩種", n)
+	}
+	// 反例：320 寬的兩位元封裝式。長度照過、畫面看得懂，只有顏色數分得出來。
+	wrong, err := parseWith(d, nil, ppfLayout{"cga4", 320, 80, 0, kindPacked2, 150, 250}, 175)
+	if err != nil {
+		t.Fatalf("反例解不開：%v", err)
+	}
+	if n := countColors(wrong); n <= 2 {
+		t.Errorf("錯的讀法也只解出 %d 種顏色 —— 那這個判準分不出對錯", n)
+	}
+}
+
+func countColors(im *image.RGBA) int {
+	seen := map[uint32]bool{}
+	b := im.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			r, g, bb, a := im.At(x, y).RGBA()
+			seen[r>>8<<24|g>>8<<16|bb>>8<<8|a>>8] = true
+		}
+	}
+	return len(seen)
 }
