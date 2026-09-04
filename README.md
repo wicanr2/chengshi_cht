@@ -818,8 +818,8 @@ tools/playtest.sh                   # 正常玩家路徑實機驗證（真視窗
 tools/screenshot.sh 12 out.png      # 單張截圖，GAME_ARGS／GAME_KEYS 控制情境
 tools/release.sh                    # 打發行包（Linux／Windows／macOS）
 tools/verify_release.sh             # 驗發行包本身（不是驗 build 出來的執行檔）
-tools/package_all.sh v.1.4.1-20260904       # 重建 dist-all/<版本> 的 full／release／promo
-tools/verify_package_all.sh v.1.4.1-20260904 # 另驗 AppImage 招牌入口、滑鼠選單與音訊
+tools/package_all.sh v.1.5.0-20260904       # 重建 dist-all/<版本> 的 full／release／promo
+tools/verify_package_all.sh v.1.5.0-20260904 # 另驗 AppImage 招牌入口、滑鼠選單與音訊
 tools/build-mac.sh                  # 只編 macOS universal ＋ 靜態驗收
 tools/font.sh                       # 改過譯文之後重烘點陣字圖集
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文

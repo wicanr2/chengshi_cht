@@ -824,8 +824,8 @@ tools/go.sh test ./...              # all tests, including wiring and font cover
 tools/playtest.sh                   # the normal player path on a real window
 tools/screenshot.sh 12 out.png      # one screenshot
 tools/release.sh                    # build release packages
-tools/package_all.sh v.1.4.1-20260904
-tools/verify_package_all.sh v.1.4.1-20260904
+tools/package_all.sh v.1.5.0-20260904
+tools/verify_package_all.sh v.1.5.0-20260904
 ```
 
 Tick-for-tick parity additionally needs your own archive of
