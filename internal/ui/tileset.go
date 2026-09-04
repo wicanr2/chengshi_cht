@@ -549,31 +549,6 @@ func shrink(src *ebiten.Image, z int) *ebiten.Image {
 	return dst
 }
 
-// styleNameZH 是六種城市風格的中文名。
-//
-// **軟體世界說明書沒有收這六個名字**（它只講基本玩法），所以這是本專案
-// 新譯，標記見 translations/glossary.md。原名寫在 .PGF 的檔頭裡。
-//
-// 電腦玩家那篇回顧提到資料片系列叫「古城風情系列」與「回到未來系列」，
-// 那是**資料片的商品名**不是各風格的名字，不能拿來當譯名。
-var styleNameZH = map[string]string{
-	"基本":             "基本",
-	"Ancient Asia":   "古代亞洲",
-	"Medieval Times": "中世紀",
-	"Wild West":      "西部拓荒",
-	"Future USA":     "未來美國",
-	"Future Europe":  "未來歐洲",
-	"Moon Colony":    "月球殖民地",
-}
-
-// StyleNameZH 回傳風格的中文名；沒收錄就回原名。
-func StyleNameZH(s string) string {
-	if z, ok := styleNameZH[s]; ok {
-		return z
-	}
-	return s
-}
-
 // readAnyCase 不分大小寫地讀一個檔。兩批 DOS 發行的檔名大小寫不一致
 // （`CEGADAT.PGF` 與 `mcgadat.pgf`），拼字串比對會漏掉一半。
 func readAnyCase(dir, name string) ([]byte, error) {

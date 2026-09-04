@@ -496,22 +496,22 @@ func (g *Game) teDrawConfirm(dst *ebiten.Image) {
 // 這裡只留史實性的工作人員名單，加上本專案自己的授權聲明。
 func (g *Game) teAboutLines() []string {
 	return []string{
-		"地形編輯器 — 照 1990 年磁片版重製",
+		g.txt.UI("te_about_title"),
 		"chengshi_cht " + g.version,
 		"",
-		"原版：SimCity Terrain Editor（Maxis, 1989）",
-		"　構想與設計：Will Wright",
-		"　IBM 版程式：Paul Schmidt、Daniel Goldman",
-		"　城市美術：Don Bayless",
-		"　標題畫面與圖示：Richard Payne",
-		"　說明文件：Michael Bremer",
+		g.txt.UI("te_about_orig"),
+		g.txt.UI("te_about_design"),
+		g.txt.UI("te_about_prog"),
+		g.txt.UI("te_about_art"),
+		g.txt.UI("te_about_title_art"),
+		g.txt.UI("te_about_docs"),
 		"",
-		"本頁的工作人員名單轉錄自原版的關於畫面（史料）。",
-		"SimCity 與 Maxis 是 Electronic Arts 的商標，",
-		"本專案與 EA 無隸屬關係，商標僅作指示性使用。",
+		g.txt.UI("te_about_credits"),
+		g.txt.UI("about_tm2"),
+		g.txt.UI("about_tm3"),
 		"",
 		"Required Notice: Copyright 2026 Wang Chun-Yu (wicanr2)",
-		"授權：RRSAL-1.0（非商業免費，商業洽談）",
+		g.txt.UI("about_lic"),
 	}
 }
 

@@ -68,7 +68,7 @@ func (g *Game) handleSaveAsKeys() {
 func (g *Game) doSaveAs() {
 	name := strings.TrimSpace(string(g.saveAs.name))
 	if name == "" {
-		g.setMessage("檔名不能是空的")
+		g.setMessage(g.txt.UI("band_name_empty"))
 		return
 	}
 	name = filepath.Base(name)
@@ -81,7 +81,7 @@ func (g *Game) doSaveAs() {
 	}
 	p := filepath.Join(dir, name)
 	if err := game.SaveCityAs(p, g.world, g.saveFmt); err != nil {
-		g.setMessage("存檔失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_save_fail") + err.Error())
 		return
 	}
 	g.savePath = p

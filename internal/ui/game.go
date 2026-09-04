@@ -769,9 +769,9 @@ func (g *Game) handleKeys() {
 		case inpututil.IsKeyJustPressed(ebiten.KeyA):
 			g.world.AutoBulldoze = !g.world.AutoBulldoze
 			if g.world.AutoBulldoze {
-				g.setMessage("自動整地：開")
+				g.setMessage(g.txt.UI("band_autodoze_on"))
 			} else {
-				g.setMessage("自動整地：關")
+				g.setMessage(g.txt.UI("band_autodoze_off"))
 			}
 		}
 	}
@@ -1030,7 +1030,7 @@ func (g *Game) applyTool(tx, ty int) {
 	switch r {
 	case sim.ToolOK:
 		if spent := before - g.world.TotalFunds; spent > 0 {
-			g.setMessage(fmt.Sprintf("花費 $%d", spent))
+			g.setMessage(fmt.Sprintf("%s%d", g.txt.UI("band_spent"), spent))
 		}
 	case sim.ToolNoMoney:
 		g.toolMessage(sim.MsgNoMoney)
@@ -1129,7 +1129,7 @@ func (g *Game) drawDemand(dst *ebiten.Image, x, y int) {
 // 冒號，原文是半形——兩種都要認得，不然某些風格會整串擠在左邊。
 func (g *Game) toolNameCost(b toolButton) (string, string) {
 	if b.msgIdx < 0 {
-		return "查詢", ""
+		return g.txt.UI("tool_query"), ""
 	}
 	s := g.txt.S(i18n.SecToolCost, b.msgIdx)
 	if s == "" {
@@ -1145,7 +1145,7 @@ func (g *Game) toolNameCost(b toolButton) (string, string) {
 
 func (g *Game) toolLabel(b toolButton) string {
 	n, _ := g.toolNameCost(b)
-	return "選擇工具：" + n
+	return g.txt.UI("band_tool") + n
 }
 
 // setSpeed 設定模擬速度並回報。
@@ -1159,7 +1159,7 @@ func (g *Game) setSpeed(n int) {
 	}
 	g.speedLevel = n
 	g.world.SimSpeed = simSpeedOf[n]
-	g.setMessage("模擬速度：" + g.speedName(n))
+	g.setMessage(g.txt.UI("band_speed") + g.speedName(n))
 }
 
 // speedName 從功能選單的速度副選單取名稱。
@@ -1210,10 +1210,10 @@ func (g *Game) save() {
 		p = "city.cty"
 	}
 	if err := game.SaveCityAs(p, g.world, g.saveFmt); err != nil {
-		g.setMessage("存檔失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_save_fail") + err.Error())
 		return
 	}
-	g.setMessage("已存檔：" + p)
+	g.setMessage(g.txt.UI("band_saved") + p)
 }
 
 // handleMapIconMouse 處理 City Form 左緣那九個圖層圖示。

@@ -3,12 +3,12 @@ package i18n
 // 譯名表與畫面文字的接線檢查。
 //
 // 有一批玩家看得到的字**不在訊息檔裡**：預算與評估視窗的欄位標題、按鈕、
-// 程度詞。它們硬編碼在 `internal/ui/*.go`（`CLAUDE.md` §3.2 說的第三個
-// 翻譯來源，出自 DOS 執行檔）。訊息檔那批有 `TestGlossaryTerms` 釘著，
+// 程度詞。它們出自 DOS 執行檔（`CLAUDE.md` §3.2 說的第三個翻譯來源），
+// 譯文放在 `messages/ui.tsv`。訊息檔那批有 `TestGlossaryTerms` 釘著，
 // 這批**沒有任何東西釘著**——改了不會有測試變紅，而譯名表會悄悄變成謊言。
 //
-// 這支測試讀 `translations/glossary.md` 的「畫面上實際用的字」欄，
-// 逐條確認那個字串真的出現在 `internal/ui` 的原始碼裡。
+// 這支測試讀 `translations/glossary.md` 的「畫面上實際用的字」欄，逐條確認
+// 那個字串真的出現在 `internal/ui` 的原始碼、`ui.tsv` 或訊息檔裡。
 //
 // 為什麼那一欄存在：說明書 p.43 的表是**原文對照的說明**不是螢幕標籤
 // （「實際撥給金額（＝支付百分比 × 維護需求額）」整串顯然是解釋），
@@ -39,8 +39,18 @@ func TestGlossaryScreenTermsAppearInUI(t *testing.T) {
 		}
 		all.Write(b)
 	}
+	// 畫面上硬編在 Go 裡的字已經搬進 `messages/ui.tsv`（四種語言並排），
+	// 所以那一欄也要算進來。包成 `"…"` 是為了讓底下「拆成兩行」的判斷
+	// 沿用同一個判準——那個判斷找的是 `"前兩字"` 與 `"後兩字"` 兩個字串。
+	if uiText == nil {
+		uiText, _ = parseUI()
+	}
+	for _, v := range uiText[ZhHant] {
+		all.WriteString(`"` + v + `"` + "\n")
+	}
+
 	// 有些畫面用字在訊息檔裡（預算視窗的「稅率」「交通」出自 `.PTF` 第 3 段），
-	// 不在 Go 原始碼裡。兩邊都算。
+	// 不在 Go 原始碼裡。三邊都算。
 	for _, f := range []string{"", "asia", "medi", "west", "fusa", "feur", "moon"} {
 		c, err := Load(f)
 		if err != nil {

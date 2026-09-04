@@ -30,24 +30,24 @@ import (
 // 版本號由 SetVersion 填。
 func (g *Game) aboutLines() []string {
 	return []string{
-		"城市 — 模擬城市繁體中文重製",
+		g.txt.UI("about_title"),
 		"chengshi_cht " + g.version,
 		"",
 		"Required Notice: Copyright 2026 Wang Chun-Yu (wicanr2)",
 		"https://github.com/wicanr2/chengshi_cht",
 		"",
-		"授權：RRSAL-1.0（非商業免費，商業洽談）",
-		"非商業免費，含修改後散布；商業使用請洽 wicanr2@gmail.com。",
-		"全文在發行包的 LICENSE 檔，或上面那個網址。",
-		"原版《SimCity》(1989) 由 Will Wright 設計、Maxis 發行。",
-		"SimCity 與 Maxis 是 Electronic Arts 的商標，",
-		"本專案與 EA 無隸屬關係，商標僅作指示性使用。",
+		g.txt.UI("about_lic"),
+		g.txt.UI("about_lic2"),
+		g.txt.UI("about_lic3"),
+		g.txt.UI("about_tm1"),
+		g.txt.UI("about_tm2"),
+		g.txt.UI("about_tm3"),
 		"",
-		"規則層參考 Micropolis（EA 2008 以 GPL-3.0 釋出的原始碼），",
-		"讀完寫成規格後以 Go 重寫，未複製其程式碼。",
-		"原版執行檔、資料檔、美術、音樂與說明書不隨本專案散布，",
-		"玩家需自備一份合法的原版。",
-		"中文點陣字取自 Noto Sans CJK TC（SIL Open Font License 1.1）。",
+		g.txt.UI("about_mp1"),
+		g.txt.UI("about_mp2"),
+		g.txt.UI("about_orig1"),
+		g.txt.UI("about_orig2"),
+		g.txt.UI("about_font"),
 	}
 }
 
@@ -88,20 +88,20 @@ func (g *Game) printMap() {
 	}
 	p := g.mapImagePath()
 	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-		g.setMessage("存圖失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_map_fail") + err.Error())
 		return
 	}
 	f, err := os.Create(p)
 	if err != nil {
-		g.setMessage("存圖失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_map_fail") + err.Error())
 		return
 	}
 	defer f.Close()
 	if err := png.Encode(f, img); err != nil {
-		g.setMessage("存圖失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_map_fail") + err.Error())
 		return
 	}
-	g.setMessage("地圖存成 " + p)
+	g.setMessage(g.txt.UI("band_map_saved") + p)
 }
 
 // mapImagePath 把地圖圖檔放在存檔旁邊——玩家找得到存檔就找得到它。
@@ -114,5 +114,5 @@ func (g *Game) mapImagePath() string {
 	if name == "" {
 		name = "city"
 	}
-	return filepath.Join(dir, name+"-地圖.png")
+	return filepath.Join(dir, name+g.txt.UI("map_png_suffix")+".png")
 }

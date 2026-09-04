@@ -55,14 +55,15 @@ var sysItems = []struct {
 }
 
 // styleOrder 是圖形集的順序。base 是沒有資料片的原始外觀，排第一。
-var styleOrder = []struct{ key, name string }{
-	{"base", "基本"},
-	{"asia", "古代亞洲"},
-	{"medi", "中世紀"},
-	{"west", "西部拓荒"},
-	{"fusa", "未來美國"},
-	{"feur", "未來歐洲"},
-	{"moon", "月球殖民地"},
+//
+// 名稱走 `ui.tsv` 的 `style_<代號>`，四種語言各一份。**軟體世界說明書
+// 沒有收這六個名字**（它只講基本玩法），所以中文是本專案新譯，
+// 記在 `translations/glossary.md`。原名寫在 `.PGF` 的檔頭裡。
+//
+// ⚠ 電腦玩家那篇回顧提到資料片系列叫「古城風情系列」與「回到未來系列」，
+// 那是**資料片的商品名**不是各風格的名字，不能拿來當譯名。
+var styleOrder = []struct{ key string }{
+	{"base"}, {"asia"}, {"medi"}, {"west"}, {"fusa"}, {"feur"}, {"moon"},
 }
 
 // SetDataDir 告訴呈現層原版資料在哪、目前用的是哪個圖形集。
@@ -131,11 +132,11 @@ func (g *Game) sysMenuLabel(i int) string {
 		}
 		return g.txt.UI("savefmt_bare")
 	case winScenario:
-		return game.ScenarioNameZH(i + 1)
+		return g.txt.UI(fmt.Sprintf("scen%d", i+1))
 	case winStyle:
-		return styleOrder[i].name
+		return g.txt.UI("style_" + styleOrder[i].key)
 	case winMode:
-		return DisplayModes[i].Name
+		return g.txt.UI("mode_" + DisplayModes[i].Key)
 	case winSpeed:
 		return trimMenu(g.txt.S(i18n.SecSpeed, i))
 	case winPower:
@@ -256,12 +257,12 @@ func (g *Game) openLangSettings() {
 // loadScenario 換一個悲情城市。鏡頭重新置中，並顯示劇本簡介。
 func (g *Game) loadScenario(n int) {
 	if g.dataDir == "" {
-		g.setMessage("沒有原版資料目錄，換不了劇本")
+		g.setMessage(g.txt.UI("band_no_data"))
 		return
 	}
 	w, err := game.LoadScenario(g.dataDir, n)
 	if err != nil {
-		g.setMessage("載入失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_load_fail") + err.Error())
 		return
 	}
 	g.swapWorld(w)
@@ -272,19 +273,19 @@ func (g *Game) loadScenario(n int) {
 // 那是原版的設計，只換圖不換字會是半套。
 func (g *Game) loadStyle(key string) {
 	if g.dataDir == "" {
-		g.setMessage("沒有原版資料目錄，換不了圖形集")
+		g.setMessage(g.txt.UI("band_no_data"))
 		return
 	}
 	// ⚠ 要帶著目前的顯示模式重載。用 `LoadTileSet` 的話換圖形集會**順便
 	// 把顯示模式打回 CEGA**，而畫面上看起來只是「圖突然變大了」。
 	ts, err := LoadTileSetMode(g.dataDir, key, g.mode)
 	if err != nil {
-		g.setMessage("圖形集載入失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_style_fail") + err.Error())
 		return
 	}
 	txt, err := i18n.LoadLang(key, g.lang)
 	if err != nil {
-		g.setMessage("文字載入失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_text_fail") + err.Error())
 		return
 	}
 	g.tiles, g.txt, g.style = ts, txt, key
@@ -307,19 +308,19 @@ func (g *Game) loadStyle(key string) {
 // 不丟的話新模式會拿舊尺寸的快取畫，看起來像縮圖解錯了。
 func (g *Game) loadMode(key string) {
 	if g.dataDir == "" {
-		g.setMessage("沒有原版資料目錄，換不了顯示模式")
+		g.setMessage(g.txt.UI("band_no_data"))
 		return
 	}
 	ts, err := LoadTileSetMode(g.dataDir, g.style, key)
 	if err != nil {
-		g.setMessage("顯示模式載入失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_mode_fail") + err.Error())
 		return
 	}
 	g.tiles, g.mode = ts, key
 	setChrome(ts.ModeCode)
 	g.mini = nil
 	g.win = winNone
-	g.setMessage(g.txt.UI("mode_title") + "：" + ModeName(key))
+	g.setMessage(g.txt.UI("mode_title") + "：" + g.txt.UI("mode_"+key))
 	if g.savePrefs != nil {
 		if err := g.savePrefs(g.lang, g.saveFmt.String(), key); err != nil {
 			g.setMessage(fmt.Sprintf(g.txt.UI("settings_save_failed"), err))
@@ -412,7 +413,7 @@ func (g *Game) cityFilesInSaveDir() []string {
 func (g *Game) loadFile(p string) {
 	w, err := game.LoadCity(p)
 	if err != nil {
-		g.setMessage("讀檔失敗：" + err.Error())
+		g.setMessage(g.txt.UI("band_load_fail") + err.Error())
 		return
 	}
 	g.swapWorld(w)

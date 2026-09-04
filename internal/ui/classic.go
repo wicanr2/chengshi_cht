@@ -883,7 +883,7 @@ func (g *Game) drawResizeHint(dst *ebiten.Image) {
 	ew, eh := g.editSize()
 	vector.StrokeRect(dst, s(editX), s(editY), s(ew), s(eh),
 		float32(2*UIScale), colSel, false)
-	msg := "方向鍵調整大小，Enter 或 Esc 結束"
+	msg := g.txt.UI("resize_hint")
 	g.font.Draw(dst, msg, (editX+3)*UIScale, infoTextY*UIScale,
 		colSel)
 }

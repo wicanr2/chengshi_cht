@@ -205,7 +205,7 @@ func (g *Game) drawNewCity(dst *ebiten.Image) {
 	fill(dst, ncX+ncBorder, ncY+ncBorder,
 		ncW-2*ncBorder, ncH-2*ncBorder, colDlgBG)
 
-	g.font.DrawCentered(dst, "市名欄", ncX*UIScale, ncNameLabelY*UIScale,
+	g.font.DrawCentered(dst, g.txt.UI("newcity_name"), ncX*UIScale, ncNameLabelY*UIScale,
 		ncW*UIScale, colDlgLine)
 
 	// 市名欄：底色青、字白，游標是跟著字尾走的底線。
@@ -213,7 +213,7 @@ func (g *Game) drawNewCity(dst *ebiten.Image) {
 	g.font.Draw(dst, string(b.name)+"_",
 		ncFieldTextX*UIScale, ncFieldTextY*UIScale, colDlgLine)
 
-	g.font.DrawCentered(dst, "技術等級", ncX*UIScale, ncLevelLabelY*UIScale,
+	g.font.DrawCentered(dst, g.txt.UI("newcity_level"), ncX*UIScale, ncLevelLabelY*UIScale,
 		ncW*UIScale, colDlgLine)
 
 	for i := range levelKeys {
@@ -231,5 +231,5 @@ func (g *Game) drawNewCity(dst *ebiten.Image) {
 
 	fill(dst, ncOKX, ncOKY, ncOKW, ncOKH, colDlgLine)
 	fill(dst, ncOKX+1, ncOKY+1, ncOKW-2, ncOKH-2, colDlgFill)
-	g.font.Draw(dst, "確定", ncOKTextX*UIScale, ncOKTextY*UIScale, colDlgLine)
+	g.font.Draw(dst, g.txt.UI("ok"), ncOKTextX*UIScale, ncOKTextY*UIScale, colDlgLine)
 }

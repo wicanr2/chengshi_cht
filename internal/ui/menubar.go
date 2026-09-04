@@ -348,7 +348,7 @@ func (g *Game) pickWindow(row int) {
 			g.editFront = !g.editFront
 		}
 	case 7: // 視窗位置：直接拖標題列就好，這裡只提示
-		g.setMessage("拖曳視窗的標題列就可以搬動")
+		g.setMessage(g.txt.UI("band_drag_title"))
 	case 8: // 調整編輯窗大小
 		g.resizing = true
 	}

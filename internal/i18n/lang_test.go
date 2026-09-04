@@ -11,15 +11,30 @@ func TestEachLangHasText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, l := range []Lang{ZhHant, ZhHans} {
+	for _, l := range []Lang{ZhHant, ZhHans, Ja} {
 		if n := c.CountLang(l); n < 200 {
 			t.Errorf("%s 只有 %d 筆，基本檔應該是全譯的", l, n)
 		}
 	}
-	// 日文只做了標籤那幾段（工具、月份、選單、地圖圖層、地物名…），
-	// 訊息與圖片文字走退路。這個數字是**現況**，往上調不要往下調。
-	if n := c.CountLang(Ja); n < 150 {
-		t.Errorf("日文只有 %d 筆，標籤那幾段應該有 150 筆以上", n)
+	// 基本檔三種語言要**逐筆一樣多**。門檻寫成數字的話，漏掉一整段
+	// （狀態訊息 46 筆、圖片訊息 20 筆）仍然過得了關；對齊繁體才擋得住。
+	if n, want := c.CountLang(Ja), c.CountLang(ZhHant); n != want {
+		t.Errorf("日文有 %d 筆、繁體有 %d 筆——基本檔要逐筆對齊", n, want)
+	}
+}
+
+// 資料片的日文是**只填「用字和基本檔不同」的那些**，所以筆數本來就少於
+// 繁體；判準是覆蓋率不是筆數。真正的閘門是
+// `TestStyleFilesDoNotInheritBaseWordingJa`：原文換了字而譯文沒換就會紅。
+func TestStyleFilesHaveJapaneseOverrides(t *testing.T) {
+	for _, style := range []string{"asia", "medi", "west", "fusa", "feur", "moon"} {
+		c, err := LoadLang(style, Ja)
+		if err != nil {
+			t.Fatalf("%s：%v", style, err)
+		}
+		if n := c.CountLang(Ja); n < 60 {
+			t.Errorf("%s 的日文覆寫只有 %d 筆，六個風格各有六十筆以上的自有用字", style, n)
+		}
 	}
 }
 

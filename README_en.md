@@ -58,7 +58,7 @@ This file carries no progress percentages; the single source of truth for status
 <a name="shots"></a>
 ## Screens
 
-![Title screen with Traditional Chinese options](docs/images/title.png)
+![Title screen with Traditional Chinese options](docs/images/en/title.png)
 
 Startup goes to the SIM CITY sign first. The four options are drawn in the current
 language — the first three are the original's, the fourth (Terrain Editor) is added by
@@ -67,7 +67,7 @@ the original layout; only the English text baked into the picture is replaced by
 remake's four-language text layer. The fourth button sits on a patch of sign green that
 was measured to contain **no original artwork**, so it covers nothing up.
 
-![In game: Detroit 1972](docs/images/city.png)
+![In game: Detroit 1972](docs/images/en/city.png)
 
 Detroit 1972, base look (what the game looks like with no expansion disk installed).
 The layout reproduces the DOS original: menu bar, edit window (city name and date in the
@@ -75,7 +75,7 @@ title bar, funds/message band, icon palette, RCI demand indicator, tool band), C
 window and its layer icon column. Character cells follow the original too (one cell for
 Latin, two for Chinese), so a field like `$20,000` is exactly as wide as the original's.
 
-![Terrain editor](docs/images/terrain-editor.png)
+![Terrain editor](docs/images/en/terrain-editor.png)
 
 *SimCity Terrain Editor*, shipped on a floppy in 1990. The original is a separate
 program; the remake implements all of it: three menus (System / Terrain / Parameters),
@@ -106,21 +106,21 @@ displaced). Every one of them compiled, passed tests and played fine.
 
 | | |
 |---|---|
-| ![The same city in the medieval style](docs/images/style-medi.png) | ![Crime layer in the map window](docs/images/maps.png) |
+| ![The same city in the medieval style](docs/images/en/style-medi.png) | ![Crime layer in the map window](docs/images/en/maps.png) |
 | The same city with the medieval expansion. **Tool names change with it** — the power plant becomes a water wheel, the railway a coach road, the stadium a jousting ground. That is the original's design across six expansions, not translator's licence. | The map window, crime layer. All eleven layers are there, switched with 1–9, 0 and `-`. |
 
-![Scenario briefing](docs/images/brief.png)
+![Scenario briefing](docs/images/en/brief.png)
 
 Scenario briefings are rewritten per expansion too: Detroit 1972's crime problem becomes
 "Tiger City, 1563" in the medieval set.
 
-![Evaluation window](docs/images/eval.png)
+![Evaluation window](docs/images/en/eval.png)
 
 The evaluation window: public opinion, the four worst problems, and seven statistics
 (population, migration, assessed value, city class, game level, overall score, annual
 score) — all of it produced by the simulation layer itself.
 
-![Zoomed to 1/4](docs/images/zoom.png)
+![Zoomed to 1/4](docs/images/en/zoom.png)
 
 **Zoom, multiple languages and background music are additions; the original has none of
 them.** The original's edit window is always 16 pixels per cell — that was the EGA
@@ -136,7 +136,7 @@ lo-res EGA colour, Tandy colour, VGA 256-colour, monochrome VGA, and CGA monochr
 (640×200, two colours). All six decode, and all six can be switched inside the game —
 `-mode`, or **SYSTEM → Display mode**.
 
-![The same city in six display modes](docs/images/modes.png)
+![The same city in six display modes](docs/images/en/modes.png)
 
 The same city (Taipei, Ancient Asia expansion) in all six modes. Top row: hi-res EGA
 colour, lo-res EGA colour, Tandy colour. Bottom row: VGA 256-colour, monochrome VGA,
@@ -173,7 +173,18 @@ Japanese or English. The choice is written to `chengshi/settings.json` in the us
 configuration directory and applied on the next start; `-lang` overrides for one run
 without touching the preference.
 
-![Language settings](docs/images/settings.png)
+![Language settings](docs/images/en/settings.png)
+
+All four cover the whole interface and every piece of in-game text: status messages,
+picture messages, the eight scenario briefings, the query panel's grades, the budget
+and evaluation fields, and **the wording each of the six expansion sets uses of its
+own** — the power plant is a Water Wheel in Ancient Asia, the railway a Wagon Track in
+Medieval Times, and the translations have to change with it rather than falling back to
+the base file. A test pins that down (`TestStyleFilesDoNotInheritBaseWording` and its
+Japanese counterpart): if the original changed a word and the translation did not, it
+goes red — that kind of omission is invisible otherwise, because the files are complete,
+nothing is empty, and the screen looks fine. English is not in version control; it is
+read at run time from your own `.PTF`.
 
 **The original has no music.** That was established, with five mutually supporting lines
 of evidence ([`docs/re/19-no-music.md`](docs/re/19-no-music.md)): the official manual's
@@ -404,13 +415,13 @@ Maxis's own demo cities the floppy carries two city files made in Taiwan: `TAIWA
 `KAOHSIUN.CTY`. The `README` on the disk is a single box containing an address and a BBS
 number, (07) 384-8901.
 
-![The Taiwan map 軟體世界 drew in 1990, running in this remake](docs/images/map-taiwan.png)
+![The Taiwan map 軟體世界 drew in 1990, running in this remake](docs/images/en/map-taiwan.png)
 
 The island, the Central Mountain Range, Penghu to the west, Green Island and Orchid Island
 to the south-east. The city name is read from the 128-byte header of the city file; the
 `TAIWAN` in the title bar is the text that was already in the file.
 
-![The Kaohsiung map 軟體世界 drew in 1990](docs/images/map-kaohsiung.png)
+![The Kaohsiung map 軟體世界 drew in 1990](docs/images/en/map-kaohsiung.png)
 
 Kaohsiung is harbour terrain: the long lagoon on the west side and the inland water
 system are both drawn in.
@@ -429,9 +440,9 @@ two different things, and that reservation is written down there.
 軟體世界 drew Taiwan and Kaohsiung; this project drew the rest. These three are the
 project's own work and are freely distributable.
 
-![Taipei](docs/images/map-taipei.png)
-![Taichung](docs/images/map-taichung.png)
-![Tainan](docs/images/map-tainan.png)
+![Taipei](docs/images/en/map-taipei.png)
+![Taichung](docs/images/en/map-taichung.png)
+![Tainan](docs/images/en/map-tainan.png)
 
 **These are stylised terrains, not survey data.** Fitting a city's water system and relief
 into 120×100 cells means widening rivers until they are visible and turning hills into
@@ -541,11 +552,11 @@ of it is in Traditional Chinese.
 
 **Graphics Set #1 (Ancient Cities): Ancient Asia, Medieval, Wild West**
 
-![The three Ancient Cities styles](docs/images/styles-ancient.png)
+![The three Ancient Cities styles](docs/images/en/styles-ancient.png)
 
 **Graphics Set 2 — Future Cities: Future USA, Future Europe, Moon Colony**
 
-![The three Future Cities styles](docs/images/styles-future.png)
+![The three Future Cities styles](docs/images/en/styles-future.png)
 
 All six are **the same city at the same camera position** (Detroit 1972, cell 30,30) with
 only the expansion set changed — so every difference is artwork. Even the tool palette
@@ -556,7 +567,7 @@ the original's design — each graphics set ships its own `*_MSG.PTF`.
 
 **SimCity Terrain Editor: originally a separate program**
 
-![The terrain editor's parameters dialog](docs/images/terrain-params.png)
+![The terrain editor's parameters dialog](docs/images/en/terrain-params.png)
 
 The "terrain parameters" dialog from the original `TERRAIN.EXE` — three percentages for
 tree count, lake count and river curviness, then Start to generate. The layout was
@@ -729,7 +740,7 @@ original and Micropolis, no third party has run these numbers.
 | Simulation rules | 9.5 | two deliberate deviations, both documented; no parity run longer than 8,000 frames |
 | Data formats | 9.5 | `.PGF` banks 8 and 9 unresolved; which of the two `SOUNDDAT.PSF` is read is unknown |
 | Presentation and controls | 9.5 | default window positions are one measurement of one boot; the fifth threshold of the numeric layers is provisional |
-| Localisation and languages | 9.5 | Simplified Chinese is a character-level conversion, not a usage localisation; Japanese is this project's own and covers only the label sections |
+| Localisation and languages | 9.5 | Simplified Chinese is a character-level conversion, not a usage localisation; Japanese is this project's own translation, with no original to check it against |
 | Sound | 8 | sample rate provisional; nobody has compared the timbre against the original |
 | Playable completeness | 8 | Dullsville and San Francisco fail on all five seeds under the automatic player; **nobody has finished a city or a scenario by hand** |
 | Cross-platform release | 8.5 | Windows and macOS have had no hands-on run |

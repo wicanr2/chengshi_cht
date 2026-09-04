@@ -184,7 +184,7 @@ func (g *Game) toggleMusic() {
 		return
 	}
 	if err := g.music.start(g.music.cur); err != nil {
-		g.setMessage("音樂放不出來：" + err.Error())
+		g.setMessage(g.txt.UI("band_music_fail") + err.Error())
 		return
 	}
 	g.setMessage(fmt.Sprintf(g.txt.UI("music_now"), g.music.tracks[g.music.cur]))
@@ -200,7 +200,7 @@ func (g *Game) stepTrack(d int) {
 	m.mode = musicManual
 	if m.on {
 		if err := m.start(m.cur); err != nil {
-			g.setMessage("音樂放不出來：" + err.Error())
+			g.setMessage(g.txt.UI("band_music_fail") + err.Error())
 			return
 		}
 	}

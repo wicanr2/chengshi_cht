@@ -44,17 +44,18 @@ const (
 // 對照驗證：原版截圖那一格是 `Sparse／High／Little／Little／None`，
 // 用這張表與 sim.QueryBuckets 算出來的編號是 0／6／8／12／17，逐項對得上
 // （workplace/dosbox/uq4-60-query-held.png）。
+// 譯文在 `internal/i18n/messages/ui.tsv`，這裡只留鍵。
 var queryWords = [20]string{
 	// 0–3 人口密度：Sparse Low Medium High
-	"稀疏", "低", "中等", "高",
+	"q_dens0", "q_dens1", "q_dens2", "q_dens3",
 	// 4–7 地價：Low Medium High High!
-	"低", "中等", "高", "很高！",
+	"q_val0", "q_val1", "q_val2", "q_val3",
 	// 8–11 犯罪：Little Some Much Severe
-	"很少", "一些", "很多", "嚴重",
+	"q_crime0", "q_crime1", "q_crime2", "q_crime3",
 	// 12–15 汙染：Little Some Much Severe
-	"很少", "一些", "很多", "嚴重",
+	"q_poll0", "q_poll1", "q_poll2", "q_poll3",
 	// 16–19 成長率：Loss None Some Rapid
-	"衰退", "沒有", "緩慢", "快速",
+	"q_grow0", "q_grow1", "q_grow2", "q_grow3",
 }
 
 // drawQueryPanel 畫查詢面板。
@@ -81,7 +82,7 @@ func (g *Game) drawQueryPanel(dst *ebiten.Image) {
 	for i := 0; i < 5; i++ {
 		row := (queryY + 22 + i*17) * UIScale
 		g.font.Draw(dst, trimMenu(g.txt.S(i18n.SecQuery, i)), (queryX+4)*UIScale, row, ink)
-		w := queryWords[b[i]]
+		w := g.txt.UI(queryWords[b[i]])
 		g.font.Draw(dst, w, (queryX+queryW-6)*UIScale-g.font.Measure(w), row, ink)
 	}
 }

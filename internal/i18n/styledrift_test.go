@@ -43,6 +43,19 @@ var driftOK = map[string]string{
 }
 
 func TestStyleFilesDoNotInheritBaseWording(t *testing.T) {
+	driftCheck(t, ZhHant)
+}
+
+// 日文同一道閘門。日文是後補的，補的方式是「照鍵複製再逐條改」——
+// 和當初中文一樣，所以會犯一樣的漏改。沒有這一支的話，`asia` 的
+// 「水車」在日文會靜靜地退回基本檔的「原子力発電所」，而檔案是齊的、
+// 沒有空字串、測試全綠。
+func TestStyleFilesDoNotInheritBaseWordingJa(t *testing.T) {
+	driftCheck(t, Ja)
+}
+
+func driftCheck(t *testing.T, lang Lang) {
+	t.Helper()
 	dir := os.Getenv("SIMCITY_DATA")
 	if dir == "" {
 		dir = "../../workplace/dos110/SIMCITY 1.10"
@@ -52,7 +65,7 @@ func TestStyleFilesDoNotInheritBaseWording(t *testing.T) {
 	if err != nil {
 		t.Skipf("沒有原版資料，跳過：%v", err)
 	}
-	base, err := Load("")
+	base, err := LoadLang("", lang)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +74,7 @@ func TestStyleFilesDoNotInheritBaseWording(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s：%v", style, err)
 		}
-		c, err := Load(style)
+		c, err := LoadLang(style, lang)
 		if err != nil {
 			t.Fatalf("%s（%s）：%v", style, file, err)
 		}
@@ -74,15 +87,15 @@ func TestStyleFilesDoNotInheritBaseWording(t *testing.T) {
 			if !c.Has(sec, idx) || !base.Has(sec, idx) {
 				continue
 			}
-			zh, bzh := strings.TrimSpace(c.S(sec, idx)), strings.TrimSpace(base.S(sec, idx))
-			if zh == "" || zh != bzh {
+			got, bgot := strings.TrimSpace(c.S(sec, idx)), strings.TrimSpace(base.S(sec, idx))
+			if got == "" || got != bgot {
 				continue
 			}
 			if _, ok := driftOK[style+"/"+key]; ok {
 				continue
 			}
-			t.Errorf("%s %s：原文從「%s」換成「%s」，但譯文還是基本檔的「%s」",
-				style, key, strings.TrimSpace(b), strings.TrimSpace(text), zh)
+			t.Errorf("%s %s（%s）：原文從「%s」換成「%s」，但譯文還是基本檔的「%s」",
+				style, key, lang, strings.TrimSpace(b), strings.TrimSpace(text), got)
 		}
 	}
 }

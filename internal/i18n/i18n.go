@@ -101,9 +101,9 @@ type Catalog struct {
 	lang  Lang
 	// text[語言][段落.索引]。英文那一層由 SetEnglish 從玩家的 `.PTF` 填。
 	text map[Lang]map[string]string
-	// base 是基本檔（`message.tsv`）。資料片只覆寫一部分的鍵，
-	// 而**譯文的覆寫率各語言不同**——繁體是全的，日文只做了標籤那幾段。
-	// 沒有這一層的話，載入資料片會讓日文整片退回中文。
+	// base 是基本檔（`message.tsv`）。資料片只覆寫**用詞和基本檔不同**的鍵，
+	// 其餘要從基本檔取；沒有這一層的話，載入資料片會讓非繁體的語言
+	// 整片退回繁中。
 	base map[Lang]map[string]string
 }
 

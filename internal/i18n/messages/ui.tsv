@@ -45,6 +45,7 @@ newcity_name	市名欄	市名栏	都市名	City Name
 newcity_level	技術等級	技术等级	難易度	Game Level
 ok	確定	确定	決定	OK
 resize_hint	方向鍵調整大小，Enter 或 Esc 結束	方向键调整大小，Enter 或 Esc 结束	方向キーでサイズ変更、Enter か Esc で終了	Arrows to resize, Enter or Esc to finish
+brief_continue	繼續	继续	続ける	Continue
 pic_hint	按空白鍵或點一下繼續	按空格键或点一下继续	スペースキーかクリックで続行	Press space or click to continue
 lang_title	語言 / Language	语言 / Language	言語 / Language	Language
 settings_title	設定	设置	設定	Settings
@@ -108,3 +109,94 @@ te_smoothing	平滑中……	平滑中……	整えています…	Smoothing...
 te_citymap	全市地圖	全市地图	全体マップ	City Map
 te_year_bad	年份要四位數，而且要大於 1900	年份要四位数，而且要大于 1900	年は4桁で、1900より後にしてください	Year must be 4 digits and later than 1900
 mode_title	顯示模式	显示模式	表示モード	Display Mode
+band_speed	模擬速度：	模拟速度：	速度：	Speed: 
+band_tool	選擇工具：	选择工具：	ツール：	Tool: 
+band_spent	花費 $	花费 $	支出 $	Spent $
+band_autodoze_on	自動整地：開	自动整地：开	自動整地：オン	Auto-bulldoze: on
+band_autodoze_off	自動整地：關	自动整地：关	自動整地：オフ	Auto-bulldoze: off
+band_saved	已存檔：	已存档：	保存しました：	Saved: 
+band_save_fail	存檔失敗：	存档失败：	保存に失敗：	Save failed: 
+band_load_fail	讀檔失敗：	读档失败：	読み込みに失敗：	Load failed: 
+band_no_data	沒有原版資料目錄	没有原版资料目录	オリジナルのデータフォルダがありません	No original data directory
+band_style_fail	圖形集載入失敗：	图形集载入失败：	グラフィックセットの読み込みに失敗：	Graphics set failed: 
+band_text_fail	文字載入失敗：	文字载入失败：	テキストの読み込みに失敗：	Text load failed: 
+band_mode_fail	顯示模式載入失敗：	显示模式载入失败：	表示モードの読み込みに失敗：	Display mode failed: 
+tool_query	查詢	查询	調査	Query
+win_power	發電廠	发电厂	発電所	Power Plants
+budget_col_item	項目	项目	項目	Item
+budget_col_need1	維護	维护	必要	Amount
+budget_col_need2	需求	需求	金額	Request
+budget_col_give1	實際	实际	支給	Amount
+budget_col_give2	撥給	拨给	金額	Allotted
+budget_col_pct1	編列	编列	配分	Funding
+budget_col_pct2	比例	比例	比率	Level
+budget_cashflow	現金流量	现金流量	収支	Cash Flow
+budget_prev	上年度結存	上年度结存	前年度残高	Previous Fund
+budget_funds	目前資金	目前资金	現在の資金	Current Funds
+q_dens0	稀疏	稀疏	まばら	Sparse
+q_dens1	低	低	低い	Low
+q_dens2	中等	中等	中くらい	Medium
+q_dens3	高	高	高い	High
+q_val0	低	低	低い	Low
+q_val1	中等	中等	中くらい	Medium
+q_val2	高	高	高い	High
+q_val3	很高！	很高！	非常に高い！	High!
+q_crime0	很少	很少	少ない	Little
+q_crime1	一些	一些	やや多い	Some
+q_crime2	很多	很多	多い	Much
+q_crime3	嚴重	严重	深刻	Severe
+q_poll0	很少	很少	少ない	Little
+q_poll1	一些	一些	やや多い	Some
+q_poll2	很多	很多	多い	Much
+q_poll3	嚴重	严重	深刻	Severe
+q_grow0	衰退	衰退	減少	Loss
+q_grow1	沒有	没有	なし	None
+q_grow2	緩慢	缓慢	緩やか	Some
+q_grow3	快速	快速	急速	Rapid
+style_base	基本	基本	基本	Base
+style_asia	古代亞洲	古代亚洲	古代アジア	Ancient Asia
+style_medi	中世紀	中世纪	中世	Medieval Times
+style_west	西部拓荒	西部拓荒	西部開拓時代	Wild West
+style_fusa	未來美國	未来美国	未来のアメリカ	Future USA
+style_feur	未來歐洲	未来欧洲	未来のヨーロッパ	Future Europe
+style_moon	月球殖民地	月球殖民地	月面コロニー	Moon Colony
+mode_cega	EGA 高解析彩色	EGA 高分辨率彩色	EGA 高解像度カラー	EGA Hi-Res Color
+mode_sega	EGA 低解析彩色	EGA 低分辨率彩色	EGA 低解像度カラー	EGA Lo-Res Color
+mode_tdy	Tandy 彩色	Tandy 彩色	Tandy カラー	Tandy Color
+mode_mcga	VGA 256 色	VGA 256 色	VGA 256 色	VGA 256 Color
+mode_mono	單色	单色	モノクロ	Monochrome
+mode_cga	CGA 單色	CGA 单色	CGA モノクロ	CGA Monochrome
+about_title	城市 — 模擬城市繁體中文重製	城市 — 模拟城市繁体中文重制	城市 — シムシティ 繁体字中国語リメイク	City — a Traditional Chinese remake of SimCity
+about_lic	授權：RRSAL-1.0（非商業免費，含修改後散布）	授权：RRSAL-1.0（非商业免费，含修改后散布）	ライセンス：RRSAL-1.0（非商用は改変・再配布とも無償）	Licence: RRSAL-1.0 (free non-commercially, modified copies included)
+about_lic2	商業使用請先洽 wicanr2@gmail.com。	商业使用请先洽 wicanr2@gmail.com。	商用利用は wicanr2@gmail.com へご相談ください。	For commercial use, please ask at wicanr2@gmail.com first.
+about_lic3	全文在發行包的 LICENSE 檔，或上面那個網址。	全文在发行包的 LICENSE 文件，或上面那个网址。	全文はリリースの LICENSE ファイル、または上記の URL に。	Full text: the LICENSE file in the release, or the URL above.
+about_tm1	原版《SimCity》(1989) 由 Will Wright 設計、Maxis 發行。	原版《SimCity》(1989) 由 Will Wright 设计、Maxis 发行。	オリジナルの『SimCity』(1989) は Will Wright 設計、Maxis 発売。	SimCity (1989) was designed by Will Wright and published by Maxis.
+about_tm2	SimCity 與 Maxis 是 Electronic Arts 的商標，	SimCity 与 Maxis 是 Electronic Arts 的商标，	SimCity と Maxis は Electronic Arts の商標であり、	SimCity and Maxis are trademarks of Electronic Arts;
+about_tm3	本專案與 EA 無隸屬關係，商標僅作指示性使用。	本项目与 EA 无隶属关系，商标仅作指示性使用。	本プロジェクトは EA と無関係で、商標は指示的使用にとどまります。	this project is not affiliated with EA and uses them nominatively.
+about_mp1	規則層參考 Micropolis（EA 2008 以 GPL-3.0 釋出的原始碼），	规则层参考 Micropolis（EA 2008 以 GPL-3.0 释出的源代码），	ルール層は Micropolis（EA が 2008 年に GPL-3.0 で公開したソース）を参照し、	The rules follow Micropolis, the source EA released under GPL-3.0 in 2008:
+about_mp2	讀完寫成規格後以 Go 重寫，未複製其程式碼。	读完写成规格后以 Go 重写，未复制其代码。	読んで仕様に起こしたうえで Go で書き直しており、コードは複製していません。	read, written up as a spec, then rewritten in Go — no code was copied.
+about_orig1	原版執行檔、資料檔、美術、音樂與說明書不隨本專案散布，	原版执行档、资料档、美术、音乐与说明书不随本项目散布，	オリジナルの実行ファイル・データ・アート・音楽・マニュアルは同梱しません。	The original executable, data, art, music and manual are not distributed
+about_orig2	玩家需自備一份合法的原版。	玩家需自备一份合法的原版。	正規のオリジナルはプレイヤーがご用意ください。	with this project; you need a legal copy of the original.
+about_font	點陣字取自 Noto Sans CJK TC（SIL Open Font License 1.1）。	点阵字取自 Noto Sans CJK TC（SIL Open Font License 1.1）。	ビットマップ字形は Noto Sans CJK TC（SIL Open Font License 1.1）から。	Bitmap glyphs come from Noto Sans CJK TC (SIL Open Font License 1.1).
+scen1	達斯維利　1900	达斯维利　1900	ダルズビル　1900	Dullsville 1900
+scen2	舊金山　1906	旧金山　1906	サンフランシスコ　1906	San Francisco 1906
+scen3	漢堡　1944	汉堡　1944	ハンブルク　1944	Hamburg 1944
+scen4	伯恩　1965	伯恩　1965	ベルン　1965	Bern 1965
+scen5	東京　1957	东京　1957	東京　1957	Tokyo 1957
+scen6	底特律　1972	底特律　1972	デトロイト　1972	Detroit 1972
+scen7	波士頓　2010	波士顿　2010	ボストン　2010	Boston 2010
+scen8	里約熱內盧　2047	里约热内卢　2047	リオデジャネイロ　2047	Rio de Janeiro 2047
+band_map_fail	存圖失敗：	存图失败：	画像の保存に失敗：	Map save failed: 
+band_map_saved	地圖存成 	地图存成 	地図を保存しました 	Map saved to 
+map_png_suffix	-地圖	-地图	-地図	-map
+band_name_empty	檔名不能是空的	文件名不能是空的	ファイル名が空です	The file name cannot be empty
+band_drag_title	拖曳視窗的標題列就可以搬動	拖曳窗口的标题栏就可以搬动	タイトルバーをドラッグで移動できます	Drag a window's title bar to move it
+te_about_title	地形編輯器 — 照 1990 年磁片版重製	地形编辑器 — 照 1990 年磁片版重制	地形エディタ — 1990 年のフロッピー版のリメイク	Terrain editor — a remake of the 1990 disk version
+te_about_orig	原版：SimCity Terrain Editor（Maxis, 1989）	原版：SimCity Terrain Editor（Maxis, 1989）	オリジナル：SimCity Terrain Editor（Maxis, 1989）	Original: SimCity Terrain Editor (Maxis, 1989)
+te_about_design	　構想與設計：Will Wright	　构想与设计：Will Wright	　企画・デザイン：Will Wright	  Concept and design: Will Wright
+te_about_prog	　IBM 版程式：Paul Schmidt、Daniel Goldman	　IBM 版程序：Paul Schmidt、Daniel Goldman	　IBM 版プログラム：Paul Schmidt、Daniel Goldman	  IBM version programming: Paul Schmidt, Daniel Goldman
+te_about_art	　城市美術：Don Bayless	　城市美术：Don Bayless	　都市アート：Don Bayless	  City art: Don Bayless
+te_about_title_art	　標題畫面與圖示：Richard Payne	　标题画面与图示：Richard Payne	　タイトル画面とアイコン：Richard Payne	  Title screen and icons: Richard Payne
+te_about_docs	　說明文件：Michael Bremer	　说明文件：Michael Bremer	　ドキュメント：Michael Bremer	  Documentation: Michael Bremer
+te_about_credits	本頁的工作人員名單轉錄自原版的關於畫面（史料）。	本页的工作人员名单转录自原版的关于画面（史料）。	このページの制作陣はオリジナルの「about」画面からの転記（史料）。	The credits here are transcribed from the original's about screen (a record).
+band_music_fail	音樂放不出來：	音乐放不出来：	音楽を再生できません：	Music failed: 

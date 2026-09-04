@@ -353,7 +353,7 @@ func (g *Game) drawWindow(dst *ebiten.Image) {
 		title = g.txt.S(i18n.SecOptMenu, 4)
 	case winPower:
 		// 原版沒有這個視窗（見 classic.go 的說明），所以標題是 remake 自己的。
-		title = "發電廠"
+		title = g.txt.UI("win_power")
 	}
 	t := trimMenu(title)
 	g.font.Draw(dst, t, x+w/2-g.font.Measure(t)/2, y+UIScale, colMenuInk)
@@ -797,11 +797,22 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	// 表頭兩行，原版也是兩行（`Amount／Requested`）。
 	//
 	// ⚠ 這四組字被 `translations/glossary.md` §八的「畫面上實際用的字」欄
-	// 釘著（`TestGlossaryScreenTermsAppearInUI`）。說明書 p.43 給的是
+	// 釘著（`TestGlossaryScreenTermsAppearInUI`），譯文在 `ui.tsv`。
+	//
+	// ⚠ **一欄只有 64 原版像素**，英數一個字 8 像素、中日文一個字 16。
+	// 所以英文那一欄最多八個字母：原版自己的 `Requested`／`Allocated`
+	// 有九個，畫下去會壓到隔壁欄的字（原版的表頭另有一組 x，
+	// 這裡的表頭與資料欄共用同一條格線），因此英文取 `Request`／
+	// `Allotted`。要改字先確認寬度。
+	//
+	// 說明書 p.43 給的是
 	// 「維護需求額」「實際撥給金額」「編列（支付）百分比」——那是原文對照的
 	// **說明**不是螢幕標籤，而這裡一欄只放得下四個字。要改先改譯名表。
 	for i, h := range [4][2]string{
-		{"", "項目"}, {"維護", "需求"}, {"實際", "撥給"}, {"編列", "比例"},
+		{"", g.txt.UI("budget_col_item")},
+		{g.txt.UI("budget_col_need1"), g.txt.UI("budget_col_need2")},
+		{g.txt.UI("budget_col_give1"), g.txt.UI("budget_col_give2")},
+		{g.txt.UI("budget_col_pct1"), g.txt.UI("budget_col_pct2")},
 	} {
 		g.font.Draw(dst, h[0], col[i], ty+2*UIScale, white)
 		g.font.Draw(dst, h[1], col[i], ty+2*UIScale+line, white)
@@ -830,9 +841,9 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	// 底下三行摘要，原版是右對齊的數字欄。
 	by := ty + th + line/2
 	for i, s := range [][2]string{
-		{"現金流量", "$" + comma(w0.CashFlow)},
-		{"上年度結存", "$" + comma(w0.TotalFunds-w0.CashFlow)},
-		{"目前資金", "$" + comma(w0.TotalFunds)},
+		{g.txt.UI("budget_cashflow"), "$" + comma(w0.CashFlow)},
+		{g.txt.UI("budget_prev"), "$" + comma(w0.TotalFunds-w0.CashFlow)},
+		{g.txt.UI("budget_funds"), "$" + comma(w0.TotalFunds)},
 	} {
 		g.font.Draw(dst, s[0], x+w/4, by+i*line, colText)
 		g.font.Draw(dst, s[1], x+w*3/4, by+i*line, colText)
@@ -840,7 +851,7 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 
 	// 原版底下有一個「Go with these figures」按鈕。這裡的預算是自動的，
 	// 按鈕做成關閉視窗——按下去就是「照這些數字跑」。
-	btn := "就照這些數字"
+	btn := g.txt.UI("budget_ok")
 	bw := g.font.Measure(btn) + 12*UIScale
 	bx := x + w/2 - bw/2
 	byy := by + 3*line + line/2
@@ -858,8 +869,9 @@ func (g *Game) drawEvalWindow(dst *ebiten.Image, x, y, w, h int) {
 	line := g.font.Line()
 	half := w/2 - 4*UIScale
 	// 左右兩欄的標題，原版是反白的小標。
-	g.font.Draw(dst, g.txt.UI("eval_public"), x+half/2-g.font.Measure("公眾意見")/2, y, colOn)
-	g.font.Draw(dst, g.txt.UI("eval_stats"), x+w/2+half/2-g.font.Measure("統計數據")/2, y, colOn)
+	pubHdr, statHdr := g.txt.UI("eval_public"), g.txt.UI("eval_stats")
+	g.font.Draw(dst, pubHdr, x+half/2-g.font.Measure(pubHdr)/2, y, colOn)
+	g.font.Draw(dst, statHdr, x+w/2+half/2-g.font.Measure(statHdr)/2, y, colOn)
 	// 三個白框。
 	// ⚠ 「嚴重問題」框要 **6 行**：一行標題 ＋ 四個名次，最後一名的字底
 	// 落在 `y+line*10+4`。先前給 5 行，第四名的下緣被框切掉——資訊還在，
@@ -996,7 +1008,7 @@ func (g *Game) drawPicture(dst *ebiten.Image) {
 	for i, l := range lines {
 		g.font.Draw(dst, l, x+40, y+40+i*lh, pictureText)
 	}
-	hint := "按空白鍵或點一下繼續"
+	hint := g.txt.UI("pic_hint")
 	g.font.Draw(dst, hint, x+(w-g.font.Measure(hint))/2, y+h-38, pictureHint)
 }
 
@@ -1010,7 +1022,7 @@ const (
 )
 
 // drawScenarioBrief 依 DOS 1.10 的劇本簡介對話框繪製。矩形量測與生命週期
-// 收據在 docs/spec/ui-layout.md §五之三；繁中只改文字與按鈕寬度，不改外框。
+// 收據在 docs/spec/ui-layout.md §五之三；只改文字與按鈕寬度，不改外框。
 func (g *Game) drawScenarioBrief(dst *ebiten.Image) {
 	fill(dst, briefX, briefY, briefW, briefH, colDlgLine)
 	fill(dst, briefX+briefBorder, briefY+briefBorder,
@@ -1021,10 +1033,18 @@ func (g *Game) drawScenarioBrief(dst *ebiten.Image) {
 			(92+i*15)*UIScale, briefW*UIScale, rampHigh)
 	}
 
-	buttonX := 312 - briefButtonW/2
-	fill(dst, buttonX, briefButtonY, briefButtonW, briefButtonH, colDlgLine)
-	fill(dst, buttonX+1, briefButtonY+1, briefButtonW-2, briefButtonH-2, colDlgFill)
-	g.font.Draw(dst, "繼續", (buttonX+3)*UIScale, (briefButtonY+3)*UIScale, colDlgLine)
+	// 按鈕寬度跟著字走。`briefButtonW` 是繁中「繼續」量出來的寬度，
+	// 英文 `Continue` 與日文「続ける」都比它寬，寫死會把字切掉；
+	// 中心 x=312 是原版量測，不動。
+	label := g.txt.UI("brief_continue")
+	bw := g.font.Measure(label)/UIScale + 6
+	if bw < briefButtonW {
+		bw = briefButtonW
+	}
+	buttonX := 312 - bw/2
+	fill(dst, buttonX, briefButtonY, bw, briefButtonH, colDlgLine)
+	fill(dst, buttonX+1, briefButtonY+1, bw-2, briefButtonH-2, colDlgFill)
+	g.font.Draw(dst, label, (buttonX+3)*UIScale, (briefButtonY+3)*UIScale, colDlgLine)
 }
 
 func splitLines(s string) []string {
