@@ -41,7 +41,7 @@ This file carries no progress percentages; the single source of truth for status
 
 - [Screens](#shots)
 - [Something that never happened](#no-chinese)
-- [What that manual preserved](#manual)
+- [What those manuals preserved](#manual)
 - [What people argued about in 1989](#reception)
 - [Release and memory in the Chinese-speaking world](#gap)
 - [What this project does](#project)
@@ -87,6 +87,12 @@ tool descriptor table shared by the game and the editor; undo is a 5,000-cell ri
 four whole-map snapshots. The exit path follows the original: the editor only saves;
 you load the file from the game.
 
+![The Terrain menu pulled down](docs/images/en/terrain-menu.png)
+
+The Terrain menu. In the Traditional Chinese build every one of these seven commands is
+worded the way 軟體世界's own 1990 booklet for this editor worded it — see
+[Where the Chinese wording comes from](#provenance) below.
+
 **These screens were compared against the original cell by cell, not "looks about
 right".** The remake's frame is scaled back down to 640×350 and diffed byte-wise
 against the original running under DOSBox:
@@ -107,7 +113,7 @@ displaced). Every one of them compiled, passed tests and played fine.
 | | |
 |---|---|
 | ![The same city in the medieval style](docs/images/en/style-medi.png) | ![Crime layer in the map window](docs/images/en/maps.png) |
-| The same city with the medieval expansion. **Tool names change with it** — the power plant becomes a water wheel, the railway a coach road, the stadium a jousting ground. That is the original's design across six expansions, not translator's licence. | The map window, crime layer. All eleven layers are there, switched with 1–9, 0 and `-`. |
+| The same city with the medieval expansion. **Tool names change with it** — the power plant becomes a water wheel, the railway a coach road, the stadium a jousting ground (馬術競技場 in Chinese, the word 電腦休閒世界's 1990s manual used). That is the original's design across six expansions, not translator's licence. | The map window, crime layer. All eleven layers are there, switched with 1–9, 0 and `-`. |
 
 ![Scenario briefing](docs/images/en/brief.png)
 
@@ -119,6 +125,53 @@ Scenario briefings are rewritten per expansion too: Detroit 1972's crime problem
 The evaluation window: public opinion, the four worst problems, and seven statistics
 (population, migration, assessed value, city class, game level, overall score, annual
 score) — all of it produced by the simulation layer itself.
+
+<a name="provenance"></a>
+### Where the Chinese wording comes from
+
+![The Ancient Asia palette and the tool-name field](docs/images/style-tools.png)
+
+*(This one screenshot is the Traditional Chinese build, because it is the point being
+made.)* Ancient Asia expansion; clicking the police cell in the palette puts
+**衙門：$500** in the tool-name field — 衙門 (*yamen*) being the imperial-era term for a
+magistrate's office. The same cell reads 警局 in the medieval set, 警長 ("sheriff") in
+the Wild West, 警防部 in Future Europe and 月球警署 on the Moon. None of those words were
+invented by this project; they are what the Taiwanese publishers printed in the early
+1990s.
+
+The project holds **four** period Chinese manuals, and every noun on screen traces back
+to a page in one of them:
+
+| Words on screen | Which manual | Page |
+|---|---|---|
+| 悲情城市, 明日之都, 市鑰, the eight scenario cities | 軟體世界 Collector's Edition 29 | pp. 13–14 |
+| **大都會區** (`Megalopolis`), 大都會 (`Metropolis`) | 軟體世界 CE 29 | pp. 1, 18 |
+| 推土機, 鐵軌, 全自動整地, the budget and evaluation fields | 軟體世界 CE 29 | pp. 23–58 |
+| **地形編修程式**, 開濶地, 綠地, 航道, 均佈, **回手** (undo), 地形變數, 河流曲率 | 軟體世界 220, *Terrain Editor* | pp. 13–22 |
+| **衙門**, **廟宇**, **摔角場**, **港灣**, 水井灌溉系統 | 電腦休閒世界 022, *Ancient Cities* | p. 56 plate |
+| **警局**, **馬術競技場**, 城堡 / **警長**, **賽馬場**, **金礦區** | 電腦休閒世界 022 | pp. 59, 62 plates |
+| **小鎮**, **首都** and the rest of the city classes | 電腦休閒世界 022 | p. 46 |
+| **警防部**, **雷射競技場**, **水翼船港**, **太空站**, 核子融爐電廠 | 電腦休閒世界 024, *Future Cities* | pp. 17–18 plates |
+| **月球警署**, **自由港**, **太空梭站**, **引力波電廠** | 電腦休閒世界 024 | p. 19 plate |
+
+**Four manuals are not four independent sources.** Part One of 電腦休閒世界 022 and
+軟體世界's Collector's Edition 29 are *the same Chinese text* — menus, tools, window
+fields and all eight scenario briefings match sentence for sentence, down to the figure
+number ("Figure 8, Edit Window") — even though the two were licensed from MAXIS by
+different Taiwanese publishers. Part B of 024 is in turn a reprint of 220. The lineage
+diagram and every term-by-term decision are in
+[`docs/manual-cht/naming-crosswalk.md`](docs/manual-cht/naming-crosswalk.md).
+
+**Where a manual is coarser than the English, the manual still wins — but the gap is
+recorded.** `Sumo arena` is 摔角場 ("wrestling ground", not sumo); `Rodeo` is 賽馬場
+("horse racing"); `Hovercraft Port` is 水翼船港 — **hydrofoil, which is not a hovercraft;
+that is a 1990 mistranslation**, and it is kept, with a note.
+
+Three places deliberately do *not* follow the manual: the Moon's two power plants (024's
+plate contradicts its own body text), the Moon's stadium (following the manual would let
+the string fall back to the base wording, which is exactly what
+`TestStyleFilesDoNotInheritBaseWording` guards against), and `Query` (022 renders it as
+"parliamentary interpellation", which does not describe clicking a tile to inspect it).
 
 ![Zoomed to 1/4](docs/images/en/zoom.png)
 
@@ -229,9 +282,19 @@ it is the first such version anywhere.
 ---
 
 <a name="manual"></a>
-## What that manual preserved
+## What those manuals preserved
 
-The Chinese manual from Collector's Edition 29 was scanned and preserved by oldgame.tw's
+Four period Chinese manuals were printed in Taiwan for this game, and all four are
+transcribed here page by page:
+
+| Manual | Publisher | Covers | Transcription |
+|---|---|---|---|
+| Collector's Edition 29, *SimCity* | 軟體世界 | the game's operations and reference booklets (pp. 1–82) | [`docs/manual-cht/`](docs/manual-cht/) |
+| 220, *SimCity Terrain Editor* | 軟體世界 | the terrain editor (pp. 1–23) | [`sw220-terrain/`](docs/manual-cht/sw220-terrain/) |
+| 022, *Ancient Cities* | 電腦休閒世界 (MAXIS-licensed) | base game + Ancient Asia / Medieval / Wild West (pp. 1–64) | [`chw022-ancient/`](docs/manual-cht/chw022-ancient/) |
+| 024, *Future Cities* | 電腦休閒世界 (MAXIS-licensed) | Future USA / Europe / Moon + a reprint of 220 (pp. 1–40) | [`chw024-future/`](docs/manual-cht/chw024-future/) |
+
+The Collector's Edition 29 one was scanned and preserved by oldgame.tw's
 "Software World manual completion project" — 56 double-page spreads. What it preserves is
 not just the procedures but a whole vocabulary from early-1990s Taiwan:
 
@@ -844,7 +907,7 @@ without it those tests skip rather than fail.
 | [`docs/re/`](docs/re/) | mechanism notes from source and disassembly, with `file:line` |
 | [`docs/spec/`](docs/spec/) | specifications marked `READY`; implementation follows these |
 | [`docs/formats/`](docs/formats/) | DOS data formats: LZSS, `.PGF`, `.PTF`, `.cty` |
-| [`docs/manual-cht/`](docs/manual-cht/) | page-by-page transcription of the Chinese manual |
+| [`docs/manual-cht/`](docs/manual-cht/) | page-by-page transcription of **four** period Chinese manuals, plus [`naming-crosswalk.md`](docs/manual-cht/naming-crosswalk.md): their lineage, the term-by-term comparison and every decision |
 | [`translations/glossary.md`](translations/glossary.md) | glossary, each entry marked as manual-derived or new |
 | [`LICENSE`](LICENSE) | full licence text plus trademark and reference disclosures |
 | [`WORKLOG.md`](WORKLOG.md) | work log, verification commands, packaging records |

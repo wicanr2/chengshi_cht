@@ -36,7 +36,7 @@
 | `Game Year` | 模擬起始年份 |
 
 取捨與衝突記在 [`../naming-crosswalk.md`](../naming-crosswalk.md)，
-定案結果在 [`../../translations/glossary.md`](../../translations/glossary.md) 第十之二節。
+定案結果在 [`translations/glossary.md`](../../../translations/glossary.md) 第十之二節。
 
 ## 掃描與頁碼的對應
 

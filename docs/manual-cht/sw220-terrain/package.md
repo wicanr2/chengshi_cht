@@ -76,4 +76,4 @@ SOFT-WORLD RESEARCH CENTRE
   不再是本專案新譯 —— 見 [`../naming-crosswalk.md`](../naming-crosswalk.md)。
 - **「內附高雄市市地程式檔」**：外盒上的兩張截圖就是那份高雄市地形，
   引線標到鼓山區、塩埕區、旗津區、小港區、左營區、愛河、五福路、大統商區。
-  本專案 `cities/` 收錄的軟體世界地形檔權利狀態見 [`../../cities/README.md`](../../cities/README.md)。
+  本專案 `cities/` 收錄的軟體世界地形檔權利狀態見 [`cities/README.md`](../../../cities/README.md)。

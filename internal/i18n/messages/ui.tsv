@@ -97,8 +97,8 @@ te_tool_dirt	開濶地	开阔地	更地	DIRT
 te_tool_trees	綠地	绿地	森	TREES
 te_tool_river	河流	河流	川	RIVER
 te_tool_channel	航道	航道	水路	CHANNEL
-te_tool_fill	均佈	均布	塗りつぶし	FILL
-te_tool_undo	回手	回手	元に戻す	UNDO
+te_tool_fill	均佈	均布	塗り	FILL
+te_tool_undo	回手	回手	戻す	UNDO
 te_year_prompt	輸入模擬起始年份：	输入模拟起始年份：	開始年を入力：	Enter Game Year:
 te_confirm_new	重新編修會清掉目前這一張市地，確定嗎？	重新编修会清掉目前这一张市地，确定吗？	新規マップで現在の地図を消します。よろしいですか？	Start a new map? The current one will be cleared.
 te_confirm_exit	跳出地形編修程式？沒存的市地會不見。	跳出地形编修程式？没存的市地会不见。	エディタを終了しますか？保存していない地図は失われます。	Exit the terrain editor? Unsaved work will be lost.

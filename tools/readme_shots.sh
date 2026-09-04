@@ -67,6 +67,34 @@ for lang in ${LANGS:-zh-Hant en ja}; do
   # 產完地形回到編輯器本身——編輯器一開機是全空地，直接截會是一片褐色。
   # ⚠ 地形是 `RandomSeed()` 產的，每次跑都不一樣；這張要的是版面不是那張地圖。
   shot terrain-editor.png "-style base -window terrainparams" "Return" 9
+  # 地形編修程式的「地形」選單拉下來。**證據性的一張**：畫面上的字
+  # （開濶地／綠地／河流／航道／均佈／回手、清除非自然物、綠地平滑、
+  # 產生島嶼地形）整組出自軟體世界 220 那本說明書，見
+  # docs/manual-cht/naming-crosswalk.md 第二節。
+  # ⚠ 按住的座標取選單列的**中間三分之一**，這樣三種語言都點得到那一欄。
+  GAME_ARGS="$LARG -window terrain -seed 1990" GAME_HOLD="1040,28" \
+    ./tools/screenshot.sh 9 "_rm.png" >/dev/null 2>&1
+  opt _rm.png terrain-menu.png
+  echo "    terrain-menu.png"
+
+  # 資料片的工具名。點古代亞洲的警察局那一格，視窗左下角的圖形名稱欄
+  # 就會顯示該圖形集自己的名字（「衙門」，出自電腦休閒世界 022 p.56）。
+  #
+  # ⚠ **只在繁中這一輪拍**：這一張是三份 README 共用的，因為它證明的是
+  # 「中文用的是 1990 年代代理商說明書的字」——英日兩份 README 也引用同一張，
+  # 並在圖說裡註明那是繁中版的畫面。拍成英日文的等於證不到任何事。
+  # ⚠ 座標是工具盤第 5 列第 1 欄的格心：CEGA 的格線是
+  # (8+2+29c, 55+5+25r)，UIScale 3 → (69, 513)。
+  if [ "$lang" = zh-Hant ]; then
+    GAME_ARGS="$LARG -scenario 6 -style asia -cam 30,30" GAME_KEYS="space 0" \
+      GAME_CLICKS="69,513" ./tools/screenshot.sh 9 "_st0.png" >/dev/null 2>&1
+    im convert _st0.png -crop 716x950+16+50 +repage \
+      -filter point -resize 66.667% +dither -colors 64 \
+      -define png:compression-level=9 _out.png
+    mv workplace/shots/_out.png "$OUT/style-tools.png"
+    echo "    style-tools.png"
+  fi
+
   # 同一座城市換中世紀資料片。
   shot style-medi.png "-scenario 6 -style medi -cam 30,30" "space 0"
   # 地圖視窗的犯罪率圖層（圖層 6，順序照訊息檔第 10 段）。
