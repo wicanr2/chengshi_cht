@@ -747,7 +747,7 @@ original and Micropolis, no third party has run these numbers.
 | Simulation rules | 9.5 | two deliberate deviations, both documented; no parity run longer than 8,000 frames |
 | Data formats | 9.5 | `.PGF` banks 8 and 9 unresolved; which of the two `SOUNDDAT.PSF` is read is unknown |
 | Presentation and controls | 9.5 | default window positions are one measurement of one boot; the fifth threshold of the numeric layers is provisional |
-| Localisation and languages | 9.5 | Simplified Chinese is a character-level conversion, not a usage localisation; Japanese is this project's own translation, with no original to check it against |
+| Localisation and languages | 9.8 | Simplified Chinese is a character-level conversion, not a usage localisation; Japanese is this project's own translation, with no original to check it against and **no native review yet** |
 | Sound | 8 | sample rate provisional; nobody has compared the timbre against the original |
 | Playable completeness | 8 | Dullsville and San Francisco fail on all five seeds under the automatic player; **nobody has finished a city or a scenario by hand** |
 | Cross-platform release | 8.5 | Windows and macOS have had no hands-on run |
@@ -758,6 +758,19 @@ the point of the project and both are close to full marks. The lost points conce
 two things — the sample rate is still provisional, and **nobody has actually played a city
 or a scenario through by hand** (the automatic player proves the rules allow a win, which
 is not the same thing).
+
+**One row moved this time: localisation, 9.5 → 9.8.** One of its three deductions is gone.
+Japanese used to stop at the interface labels — the status band, the picture messages and
+the eight scenario briefings fell back to Traditional Chinese. All of that is translated
+now, including the wording each of the six expansion sets uses of its own, with tests
+pinning it down. The other two deductions still hold: Simplified Chinese is a literal
+conversion, and the Japanese has had no native review. Hence 9.8 and not 10.
+
+**The other seven rows did not move, even though plenty changed.** The score tracks what
+is still unsolved, not how much work went in: this round the presentation layer had two
+dozen strings routed through the text layer and three new tests added, but none of the
+three open questions in that row (default window positions, how the original builds a
+nuclear plant, the fifth threshold of the numeric layers) got any smaller.
 
 ---
 
