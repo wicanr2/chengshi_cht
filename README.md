@@ -1,5 +1,7 @@
 # 模擬城市 — SimCity 繁體中文重製
 
+**繁體中文** · [English](README_en.md) · [日本語](README_jp.md)
+
 **先當上市長，再去投票選市長。**
 
 台北與高雄的市民第一次投票選出自己的市長，是 1994 年 12 月 3 日。在那之前，
@@ -755,6 +757,7 @@ tools/oracle/drive.sh <tcl> <json>  # 用 pty 驅動 oracle 取狀態
 | [`LICENSE`](LICENSE) | 授權條款全文 ＋ 商標與規格參考揭露 |
 | [`docs/research/`](docs/research/) | 上面那些引文的查證筆記：來源 URL、年份，以及「事實／意見」的分界 |
 | [`WORKLOG.md`](WORKLOG.md) | 工作歷程、驗證命令與封包紀錄；README 不累積逐輪流水帳 |
+| [`README_en.md`](README_en.md)／[`README_jp.md`](README_jp.md) | 英文與日文版的本檔。**繁體中文這一份是正文**，另外兩份是在地化版本，細節略簡 |
 
 ---
 
