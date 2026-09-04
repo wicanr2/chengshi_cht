@@ -55,6 +55,15 @@ var titleButtons = [4]image.Rectangle{
 // RGB 0,170,0）。框線與陰影仍保留原圖，只覆蓋固定在圖裡的英文操作文字。
 var titleButtonFill = color.RGBA{0x00, 0xaa, 0x00, 0xff}
 
+// titleFill／titleFrame 是**目前顯示模式**下招牌按鈕該用的填色與框色。
+// 單色模式的招牌是黑底白字，用招牌綠會在一片黑白裡冒出一塊彩色。
+func titleFill() color.RGBA {
+	if chromeSelDither { // 單色（見 chrome.go）
+		return colInk
+	}
+	return titleButtonFill
+}
+
 func (g *Game) titleButtonLabels() [4]string {
 	return [4]string{
 		g.txt.UI("title_new_city"),
@@ -78,16 +87,20 @@ var (
 func drawTitleAddedButton(dst *ebiten.Image, r image.Rectangle) {
 	x, y, w, h := r.Min.X, r.Min.Y, r.Dx(), r.Dy()
 	// 外圈深灰兩像素。
-	fill(dst, x-2, y-2, w+6, 2, titleBtnDark)
-	fill(dst, x-2, y+h, w+6, 2, titleBtnDark)
-	fill(dst, x-2, y-2, 2, h+4, titleBtnDark)
-	fill(dst, x+w+2, y-2, 2, h+4, titleBtnDark)
+	dark, light, shade := titleBtnDark, titleBtnLight, titleBtnShade
+	if chromeSelDither {
+		dark, light, shade = colInkLight, colInkLight, colInkLight
+	}
+	fill(dst, x-2, y-2, w+6, 2, dark)
+	fill(dst, x-2, y+h, w+6, 2, dark)
+	fill(dst, x-2, y-2, 2, h+4, dark)
+	fill(dst, x+w+2, y-2, 2, h+4, dark)
 	// 內側：底先鋪綠，再壓左上白、右下淺灰。
-	fill(dst, x, y, w+2, h, titleButtonFill)
-	fill(dst, x, y, w, 2, titleBtnLight)
-	fill(dst, x, y, 2, h, titleBtnLight)
-	fill(dst, x+w, y, 2, h, titleBtnShade)
-	fill(dst, x+2, y+h-2, w, 2, titleBtnShade)
+	fill(dst, x, y, w+2, h, titleFill())
+	fill(dst, x, y, w, 2, light)
+	fill(dst, x, y, 2, h, light)
+	fill(dst, x+w, y, 2, h, shade)
+	fill(dst, x+2, y+h-2, w, 2, shade)
 }
 
 func (g *Game) drawTitleButtonLabels(dst *ebiten.Image) {
@@ -99,7 +112,7 @@ func (g *Game) drawTitleButtonLabels(dst *ebiten.Image) {
 		y := (r.Min.Y + inset) * UIScale
 		w := (r.Dx() - inset*2) * UIScale
 		h := (r.Dy() - inset*2) * UIScale
-		vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h), titleButtonFill, false)
+		vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h), titleFill(), false)
 		g.font.DrawCentered(dst, labels[i], x, y+(h-g.font.Height())/2, w, color.White)
 	}
 }
@@ -114,11 +127,11 @@ func scenSlot(i int) image.Rectangle {
 // LoadTitleScreens 讀原版的招牌與劇本選單。讀不到就回錯，呼叫端自己決定
 // 要不要直接進城市——沒有這兩個檔並不妨礙遊戲跑。
 func (g *Game) LoadTitleScreens(dir string) error {
-	ntro, err := loadPPF(dir, "NTRO")
+	ntro, err := loadPPF(dir, "NTRO", g.mode)
 	if err != nil {
 		return err
 	}
-	scen, err := loadPPF(dir, "SCEN")
+	scen, err := loadPPF(dir, "SCEN", g.mode)
 	if err != nil {
 		return err
 	}
@@ -128,25 +141,60 @@ func (g *Game) LoadTitleScreens(dir string) error {
 	return nil
 }
 
-// loadPPF 找 `CEGA/` 底下的 `*NTRO.PPF`／`*SCEN.PPF`。檔名的大小寫在不同
-// 的重打包版本裡不一致，所以掃目錄比對後綴，不寫死檔名。
-func loadPPF(dir, suffix string) (image.Image, error) {
-	sub := filepath.Join(dir, "CEGA")
-	ents, err := os.ReadDir(sub)
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range ents {
-		n := strings.ToUpper(e.Name())
-		if strings.HasSuffix(n, suffix+".PPF") {
-			raw, err := os.ReadFile(filepath.Join(sub, e.Name()))
-			if err != nil {
-				return nil, err
+// loadPPF 讀 `*NTRO.PPF`／`*SCEN.PPF`。檔名的大小寫在不同的重打包版本裡
+// 不一致，所以掃目錄比對後綴，不寫死檔名。
+//
+// **先找選定顯示模式的目錄，尺寸不是 640×350 就退回 CEGA 的。**
+//
+// ⚠ 退回不是偷懶，是必要的：招牌上三個按鈕的**點擊區**
+// （`titleButtons`）是照 CEGA 那幅 640×350 的美術量出來的，而
+// sega／tdy／mcga／CGA 的招牌是 320×200 或 640×200——拉大填滿之後
+// 按鈕會整個錯位，而畫面看起來只是「圖有點糊」。單色那一幅本來就是
+// 640×350，所以換得過去。
+func loadPPF(dir, suffix, mode string) (image.Image, error) {
+	// as 是 `.PPF` 的顯示模式名。**單色與 CGA 的長度分不出版面**
+	// （兩者每列都是 80 個位元組），一定要指名，見 assets.ParsePPFAs。
+	try := func(sub, as string) (image.Image, error) {
+		d := filepath.Join(dir, sub)
+		ents, err := os.ReadDir(d)
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range ents {
+			n := strings.ToUpper(e.Name())
+			if strings.HasSuffix(n, suffix+".PPF") {
+				raw, err := os.ReadFile(filepath.Join(d, e.Name()))
+				if err != nil {
+					return nil, err
+				}
+				if as == "" {
+					return assets.LoadPPF(raw, nil)
+				}
+				body, err := assets.DecompressLZSS(raw)
+				if err != nil {
+					return nil, err
+				}
+				return assets.ParsePPFAs(body, nil, as)
 			}
-			return assets.LoadPPF(raw, nil)
+		}
+		return nil, os.ErrNotExist
+	}
+	if mode != "" && !strings.EqualFold(mode, ModeCEGA) {
+		for _, g := range graphicsDirs {
+			if !strings.EqualFold(g.dir, mode) {
+				continue
+			}
+			if im, err := try(g.dir, strings.ToLower(mode)); err == nil {
+				// 只有**滿版寬**的才換得過去，高度可以短一點
+				// （單色的招牌是 640×336、劇本選單 640×348，
+				// 兩幅都比 CEGA 的 640×350 矮，畫面下緣會露出桌面色）。
+				if im.Bounds().Dx() == OrigW {
+					return im, nil
+				}
+			}
 		}
 	}
-	return nil, os.ErrNotExist
+	return try("CEGA", "")
 }
 
 // drawTitle 把招牌或劇本選單鋪滿畫布。兩幅都是 640×350，與原版畫面同尺寸，
@@ -159,8 +207,18 @@ func (g *Game) drawTitle(dst *ebiten.Image) {
 	if pic == nil {
 		return
 	}
+	// ⚠ **短的招牌要貼齊下緣，不是上緣。** 單色那兩幅比 CEGA 矮
+	// （招牌 640×336、劇本選單 640×348，CEGA 是 640×350），而少掉的
+	// 是**上面**那幾列——貼齊上緣的話整幅圖往上跑十四列，
+	// 三顆按鈕的點擊區就全部落在按鈕下方，而畫面看起來只是
+	// 「中文標籤有點偏低」。
+	dy := OrigH - pic.Bounds().Dy()
+	if dy < 0 {
+		dy = 0
+	}
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(UIScale, UIScale)
+	op.GeoM.Translate(0, float64(dy*UIScale))
 	dst.DrawImage(pic, op)
 	if g.screen == scrTitle {
 		g.drawTitleButtonLabels(dst)

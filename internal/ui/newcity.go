@@ -69,12 +69,6 @@ var (
 	colTEFill = color.RGBA{0x00, 0xaa, 0xff, 0xff}
 )
 
-var (
-	colDlgLine = color.RGBA{0x55, 0x55, 0xff, 0xff}
-	colDlgFill = color.RGBA{0x55, 0xff, 0xff, 0xff}
-	colDlgBG   = color.RGBA{0xff, 0xff, 0xff, 0xff}
-)
-
 // levelName 是三個技術等級。繁中譯名出自說明書 p.11，其餘語言在 ui.tsv。
 var levelKeys = [3]string{"level_easy", "level_medium", "level_hard"}
 

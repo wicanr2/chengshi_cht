@@ -508,6 +508,9 @@ func (g *Game) layerColor(x, y int) color.RGBA {
 		case v < -100:
 			return color.RGBA{0x55, 0x55, 0xff, 0xff}
 		case v < -20:
+			// ⚠ 這是**圖層色階**（資料編碼），不是介面配色，
+			// 所以不跟著顯示模式換——單色模式底下換成黑白會讓
+			// 「輕微負值」與「重度負值」變成同一格。
 			return color.RGBA{0xff, 0xff, 0x55, 0xff}
 		}
 		return cityFormColor(t)
@@ -628,8 +631,7 @@ func (g *Game) drawGraphWindow(dst *ebiten.Image, x, y, w, h int) {
 			continue
 		}
 		cx, cy := g.graphCell(x/UIScale, y/UIScale, i)
-		vector.StrokeRect(dst, s(cx), s(cy), s(u.grfCellW), s(u.grfCellH),
-			float32(UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
+		strokeSel(dst, cx, cy, u.grfCellW, u.grfCellH)
 	}
 
 	// 右側曲線圖。
@@ -771,11 +773,13 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	rev := fmt.Sprintf(g.txt.UI("tax_rev"), comma(w0.TaxFund))
 	g.font.Draw(dst, rev, x+w/2-g.font.Measure(rev)/2, y+line*3, colText)
 
-	// 表格框：原版是藍底、白框。
+	// 表格框：原版是藍底、白框。單色模式沒有藍，底改成黑
+	// （`colTableBG`，跟著顯示模式換）——留著亮藍的話，一片黑白畫面裡
+	// 會突然冒出一塊彩色，而那是這個視窗唯一還沒換的顏色。
 	tx, ty := x+2*UIScale, y+line*4
 	tw, th := w-4*UIScale, line*6
 	vector.DrawFilledRect(dst, float32(tx), float32(ty), float32(tw), float32(th),
-		color.RGBA{0x55, 0x55, 0xff, 0xff}, false)
+		colTableBG, false)
 	vector.StrokeRect(dst, float32(tx), float32(ty), float32(tw), float32(th),
 		float32(UIScale), colMenuBar, false)
 
@@ -804,13 +808,22 @@ func (g *Game) drawBudgetWindow(dst *ebiten.Image, x, y, w, h int) {
 	}
 	for i, r := range rows {
 		yy := ty + 2*UIScale + (i+2)*line
-		c := white
+		c, plain := white, white
 		if i == g.budgetRow {
-			c = color.RGBA{0xff, 0xff, 0x55, 0xff}
+			if chromeSelDither {
+				// 單色模式只有黑白：選中那一列改成**反白**
+				// （整列填白、字轉黑）。拿亮黃當高亮在這裡不成立，
+				// 而兩色都用白的話「選中」與「沒選中」長得一模一樣。
+				vector.DrawFilledRect(dst, float32(tx+UIScale), float32(yy),
+					float32(tw-2*UIScale), float32(line), white, false)
+				c, plain = colInk, colInk
+			} else {
+				c = color.RGBA{0xff, 0xff, 0x55, 0xff}
+			}
 		}
 		g.font.Draw(dst, r.label, col[0], yy, c)
-		g.font.Draw(dst, "$"+comma(r.req), col[1], yy, white)
-		g.font.Draw(dst, "$"+comma(int(float64(r.req)*r.pct)), col[2], yy, white)
+		g.font.Draw(dst, "$"+comma(r.req), col[1], yy, plain)
+		g.font.Draw(dst, "$"+comma(int(float64(r.req)*r.pct)), col[2], yy, plain)
 		g.font.Draw(dst, fmt.Sprintf("◀%d%%▶", int(r.pct*100+0.5)), col[3], yy, c)
 	}
 

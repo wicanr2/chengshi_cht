@@ -275,7 +275,9 @@ func (g *Game) loadStyle(key string) {
 		g.setMessage("沒有原版資料目錄，換不了圖形集")
 		return
 	}
-	ts, err := LoadTileSet(g.dataDir, key)
+	// ⚠ 要帶著目前的顯示模式重載。用 `LoadTileSet` 的話換圖形集會**順便
+	// 把顯示模式打回 CEGA**，而畫面上看起來只是「圖突然變大了」。
+	ts, err := LoadTileSetMode(g.dataDir, key, g.mode)
 	if err != nil {
 		g.setMessage("圖形集載入失敗：" + err.Error())
 		return
@@ -297,8 +299,10 @@ func (g *Game) loadStyle(key string) {
 
 // loadMode 換顯示模式（remake 加的）。
 //
-// **只換地圖美術，版面不換**：介面美術一律留 CEGA 的，理由見
-// `tileset.go` 的 DisplayModes。換完要把 City Form 的縮圖快取丟掉——
+// **美術全換，版面不換**：地圖圖塊、精靈與介面美術都換成該模式自己的，
+// 換不掉的是那一套 640×350 的座標，理由見 `tileset.go` 的 DisplayModes。
+// 配色也跟著換（`setChrome`）——單色與 CGA 的原版畫面只有黑白兩色。
+// 換完要把 City Form 的縮圖快取丟掉——
 // 每個模式的縮圖尺寸不一樣（CEGA／MONO 3×3、sega 3×1、mcga 1×1），
 // 不丟的話新模式會拿舊尺寸的快取畫，看起來像縮圖解錯了。
 func (g *Game) loadMode(key string) {
@@ -312,6 +316,7 @@ func (g *Game) loadMode(key string) {
 		return
 	}
 	g.tiles, g.mode = ts, key
+	setChrome(ts.ModeCode)
 	g.mini = nil
 	g.win = winNone
 	g.setMessage(g.txt.UI("mode_title") + "：" + ModeName(key))

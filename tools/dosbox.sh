@@ -23,6 +23,9 @@ mkdir -p "$ROOT/workplace/dosbox"
 # 預設給動作腳本的時間加上開機與收尾的餘裕。
 # EXTRA 是額外要複製進遊戲目錄的來源（相對 repo 根目錄），給地形編輯器這種
 # 「另一個產品、但要跟遊戲放在同一個目錄」的東西用。
+# ORIG 換掉遊戲目錄的來源（相對 repo 根目錄，預設 workplace/dos110）。
+# 六種顯示模式的資料不在同一份發行裡（1.10 沒有 CGA 與 Tandy），
+# 要跑那兩種就得指到自己拼起來的目錄。
 EXTRA_MOUNT=()
 if [ -n "${EXTRA:-}" ]; then
   [ -d "$ROOT/$EXTRA" ] || { echo "找不到額外來源 $ROOT/$EXTRA"; exit 1; }
@@ -34,7 +37,7 @@ exec timeout "${TIMEOUT:-600}" docker run --rm \
   -u "$(id -u):$(id -g)" \
   --memory 2g --cpus 2 --pids-limit 256 \
   --network none \
-  -v "$ROOT/workplace/dos110:/orig:ro" \
+  -v "$ROOT/${ORIG:-workplace/dos110}:/orig:ro" \
   "${EXTRA_MOUNT[@]}" \
   -v "$ROOT/workplace/dosbox:/out" \
   -v "$ROOT/${CONF:-tools/dosbox/dosbox-x.conf}:/conf/dosbox.conf:ro" \

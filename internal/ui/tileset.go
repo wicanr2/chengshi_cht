@@ -35,6 +35,8 @@ type TileSet struct {
 	// Geom 是這個顯示模式的介面格線（工具盤、統計圖、圖層圖示、需求長條）。
 	// 六個模式各一組量測值，見 uigeom.go。
 	Geom uiGeom
+	// ModeCode 是 `.PGF` 檔頭的顯示模式碼，介面配色靠它決定（chrome.go）。
+	ModeCode byte
 	// MapIcons 是庫 5 切出來的九張圖層圖示。**切開再排**是因為六個模式的
 	// 排法不一樣（直的一欄／兩欄五列／橫的九欄），而 remake 的圖示欄
 	// 只有 30 像素寬，塞不下兩欄。
@@ -272,7 +274,7 @@ func buildTileSet(g *assets.PGF) (*TileSet, error) {
 	for i := range b0.Images {
 		ts.Tiles = append(ts.Tiles, imageFromOpaque(&b0, i, pal, vs))
 	}
-	ts.Geom = geomFor(g.Mode)
+	ts.Geom, ts.ModeCode = geomFor(g.Mode), g.Mode
 	ts.bank0 = b0
 	ts.invPal = invertPalette(pal, len(g.Palette))
 	// 其餘圖形庫原樣收著，精靈與介面美術都在裡面。兩份，透明處理不同。

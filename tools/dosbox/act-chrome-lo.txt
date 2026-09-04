@@ -1,0 +1,13 @@
+wait 3
+click 208 220
+wait 1
+wait 4
+click 320 261
+wait 1
+wait 8
+key Return
+wait 3
+click 311 188
+wait 1
+wait 3
+shot 00-ingame

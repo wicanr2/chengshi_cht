@@ -133,21 +133,7 @@ var menuTitles = []struct {
 	{554, 3}, // WINDOWS
 }
 
-// EGA 十六色裡本版面用得到的幾個。值取自原版截圖的實際位元組
-// （不是教科書上的 0x55／0xaa，見 docs/formats/03-pgf-graphics.md §3）。
-var (
-	colDesktop  = color.RGBA{0xaa, 0xaa, 0xaa, 0xff} // 桌面灰
-	colMenuBar  = color.RGBA{0x55, 0xff, 0xff, 0xff} // 選單列亮青
-	colMenuInk  = color.RGBA{0x00, 0x00, 0xaa, 0xff} // 選單字深藍
-	colEditFrm  = color.RGBA{0x00, 0x00, 0xaa, 0xff} // 編輯視窗框深藍
-	colMapFrm   = color.RGBA{0xff, 0x55, 0x55, 0xff} // 地圖視窗框亮紅
-	colInfoBand = color.RGBA{0x55, 0x55, 0x55, 0xff} // 資金帶深灰
-	colTitleBar = color.RGBA{0xaa, 0xaa, 0xaa, 0xff} // 標題列灰
-	colMapFrmD  = color.RGBA{0xaa, 0x00, 0x00, 0xff} // 地圖視窗框外圈暗紅
-	colMapGreen = color.RGBA{0x00, 0xaa, 0x00, 0xff} // 圖層圖示欄的綠邊
-	colInk      = color.RGBA{0x00, 0x00, 0x00, 0xff}
-	colInkLight = color.RGBA{0xff, 0xff, 0xff, 0xff}
-)
+// 這個版面用到的顏色全部在 chrome.go，跟著顯示模式換。
 
 // s 把原版座標換成螢幕像素。
 func s(v int) float32 { return float32(v * UIScale) }
@@ -303,7 +289,7 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	//
 	// ⚠ 欄位是**量出來的字格**，不是估的：`Funds:` 在 x 8、金額在 64、
 	// 訊息在 136（原版 8 像素一格，量自 workplace/dosbox/ui-04-windows.png）。
-	g.font.Draw(dst, g.fundsText(), fundsTextX*UIScale, infoTextY*UIScale, colInkLight)
+	g.font.Draw(dst, g.fundsText(), fundsTextX*UIScale, infoTextY*UIScale, colInfoInk)
 	if g.message != "" {
 		g.font.Draw(dst, g.message, msgTextX*UIScale, infoTextY*UIScale, colInkLight)
 	}
@@ -340,11 +326,11 @@ func (g *Game) drawEditWindow(dst *ebiten.Image) {
 	if tw := g.font.Measure(toolText) / UIScale; tw > 0 {
 		fill(dst, toolTextX, toolY, tw, editToolH, colInkLight)
 	}
-	g.font.Draw(dst, toolText, toolTextX*UIScale, toolY*UIScale, colEditFrm)
+	g.font.Draw(dst, toolText, toolTextX*UIScale, toolY*UIScale, colBandInk)
 	// 右下角的 `+` 是原版的改變大小把手（CP437 0x2B，8×8 字型），
 	// 同樣是白底藍字（原版量到白底 x 567–576）。
 	fill(dst, editX+ew-14, toolY+2, 10, 8, colInkLight)
-	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+2, colEditFrm)
+	drawGlyph8(dst, glyphPlus, editX+ew-13, toolY+2, colBandInk)
 }
 
 // 需求指標的三根長條。**順序是 C·R·I**（洋紅條上的字就是這個順序），
@@ -450,14 +436,14 @@ func drawToolBandBG(dst *ebiten.Image, x0, y0, w int) {
 	fill(dst, x0, y0, w, 1, colInkLight)
 	for y := 1; y <= 10; y++ {
 		for x := 0; x < w; x++ {
-			c := colEditFrm
+			c := colBandInk
 			if (x0+x+y0+y)%2 == 0 {
 				c = colInkLight
 			}
 			fill(dst, x0+x, y0+y, 1, 1, c)
 		}
 	}
-	fill(dst, x0, y0+11, w, 3, colEditFrm)
+	fill(dst, x0, y0+11, w, 3, colBandInk)
 }
 
 // drawEditViewFrame 畫地圖區四周那一圈**一像素白框**。
@@ -618,7 +604,10 @@ func (g *Game) cursorBuf(w int) *ebiten.Image {
 }
 
 // drawToolHighlight 把目前選的工具那一格框起來。
-// 原版是把該格的外框畫成黃色（見 workplace/dosbox/ui-00-clean.png）。
+// 原版彩色模式是把該格的外框畫成黃色（`workplace/dosbox/ui-00-clean.png`）；
+// **單色模式沒有黃色可用，原版改畫網點外框**
+// （`workplace/dosbox/chrome-mono-00-ingame.png`、`chrome-cga-*`：
+// 選中那一格的框是斜紋／棋盤，不是實線）。兩種都在 `strokeSel`。
 func (g *Game) drawToolHighlight(dst *ebiten.Image) {
 	i := paletteIndexOf(g.tool)
 	if i < 0 {
@@ -626,8 +615,7 @@ func (g *Game) drawToolHighlight(dst *ebiten.Image) {
 	}
 	x, y := g.paletteCell(i)
 	u := g.tiles.Geom
-	vector.StrokeRect(dst, s(x), s(y), s(u.palCellW), s(u.palCellH),
-		float32(UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
+	strokeSel(dst, x, y, u.palCellW, u.palCellH)
 }
 
 // 工具盤是 2 欄 × 7 列。**格子大小與列距每個顯示模式都不一樣**
@@ -711,11 +699,7 @@ func ditherRect(dst *ebiten.Image, x, y, w, h int, a, b color.RGBA) {
 func (g *Game) drawMapIconState(dst *ebiten.Image) {
 	if int(g.layer) < mapIconCount {
 		y := mapIconY + mapIconH*int(g.layer)
-		c := color.RGBA{0xff, 0xff, 0x55, 0xff}
-		fill(dst, 247, y, 21, 2, c)
-		fill(dst, 247, y+21, 21, 2, c)
-		fill(dst, 247, y, 2, 23, c)
-		fill(dst, 266, y, 2, 23, c)
+		selRect(dst, 247, y, 21, 23, 2)
 	}
 	// 網點從綠邊底下第二列就開始（量自原版：圖示到 268、綠邊 269–270、
 	// 271 起是網點）。
@@ -898,10 +882,10 @@ func (g *Game) dateText() string {
 func (g *Game) drawResizeHint(dst *ebiten.Image) {
 	ew, eh := g.editSize()
 	vector.StrokeRect(dst, s(editX), s(editY), s(ew), s(eh),
-		float32(2*UIScale), color.RGBA{0xff, 0xff, 0x55, 0xff}, false)
+		float32(2*UIScale), colSel, false)
 	msg := "方向鍵調整大小，Enter 或 Esc 結束"
 	g.font.Draw(dst, msg, (editX+3)*UIScale, infoTextY*UIScale,
-		color.RGBA{0xff, 0xff, 0x55, 0xff})
+		colSel)
 }
 
 // resizeEdit 依方向鍵改編輯視窗的大小。一次一格（16 原版像素），

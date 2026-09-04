@@ -287,7 +287,8 @@ func (g *Game) teDrawPalette(dst *ebiten.Image) {
 	// 外框：白 2 像素，內一圈黑。
 	fill(dst, tePalX, tePalY, tePalW, tePalH, colInkLight)
 	fill(dst, tePalX+2, tePalY+2, tePalW-4, tePalH-4, colInk)
-	fill(dst, tePalBtnX, tePalY+2, tePalBtnW, tePalH-4, colTeSep)
+	teSep, teSel, teFill, teFillIn, teUndo := teColors()
+	fill(dst, tePalBtnX, tePalY+2, tePalBtnW, tePalH-4, teSep)
 
 	for i, t := range teTools {
 		y0 := teBtnY0 + i*teBtnPitch
@@ -307,27 +308,27 @@ func (g *Game) teDrawPalette(dst *ebiten.Image) {
 				}
 			}
 		case t.id == 5:
-			fill(dst, tePalBtnX, y0, tePalBtnW, teBtnH, colTeFill)
+			fill(dst, tePalBtnX, y0, tePalBtnW, teBtnH, teFill)
 			for y := 0; y < teBtnH; y++ {
 				for x := 0; x < tePalBtnW; x++ {
 					if (x+y)%7 == 0 {
-						fill(dst, tePalBtnX+x, y0+y, 1, 1, colTeFillIn)
+						fill(dst, tePalBtnX+x, y0+y, 1, 1, teFillIn)
 					}
 				}
 			}
 		default:
-			fill(dst, tePalBtnX, y0, tePalBtnW, teBtnH, colTeUndo)
+			fill(dst, tePalBtnX, y0, tePalBtnW, teBtnH, teUndo)
 			// 沒得復原時原版是紅白網點（按鈕看起來被停用）。
 			if !ts.ed.CanUndo() {
-				ditherRect(dst, tePalBtnX, y0, tePalBtnW, teBtnH, colInkLight, colTeUndo)
+				ditherRect(dst, tePalBtnX, y0, tePalBtnW, teBtnH, colInkLight, teUndo)
 			}
 		}
-		g.teDrawLabel(dst, g.txt.UI(t.key), tePalBtnX, y0, tePalBtnW, teBtnH, t.ink)
+		g.teDrawLabel(dst, g.txt.UI(t.key), tePalBtnX, y0, tePalBtnW, teBtnH, teInk(i))
 		if sim.EditorTool(t.id) == ts.ed.Tool || (t.id == 5 && ts.ed.Fill) {
-			fill(dst, tePalBtnX, y0, tePalBtnW, 2, colTeSel)
-			fill(dst, tePalBtnX, y0+teBtnH-2, tePalBtnW, 2, colTeSel)
-			fill(dst, tePalBtnX, y0, 2, teBtnH, colTeSel)
-			fill(dst, tePalBtnX+tePalBtnW-2, y0, 2, teBtnH, colTeSel)
+			fill(dst, tePalBtnX, y0, tePalBtnW, 2, teSel)
+			fill(dst, tePalBtnX, y0+teBtnH-2, tePalBtnW, 2, teSel)
+			fill(dst, tePalBtnX, y0, 2, teBtnH, teSel)
+			fill(dst, tePalBtnX+tePalBtnW-2, y0, 2, teBtnH, teSel)
 		}
 	}
 }
@@ -379,8 +380,9 @@ func (g *Game) teDrawCursor(dst *ebiten.Image) {
 	px := g.tileSize() * tileScale
 	cx := (mx-editViewX*UIScale)/px*px + editViewX*UIScale
 	cy := (my-editViewY*UIScale)/px*px + editViewY*UIScale
+	_, teSel, _, _, _ := teColors()
 	vector.StrokeRect(dst, float32(cx), float32(cy), float32(px), float32(px),
-		float32(2*UIScale), colTeSel, false)
+		float32(2*UIScale), teSel, false)
 }
 
 // teDrawCityMap 畫右邊的 City Map 視窗。
@@ -517,7 +519,8 @@ func (g *Game) teDrawAbout(dst *ebiten.Image) {
 	lines := g.teAboutLines()
 	w, h := 460, len(lines)*16+24
 	x, y := (OrigW-w)/2, (OrigH-h)/2
-	fill(dst, x-teBorder, y-teBorder, w+2*teBorder, h+2*teBorder, colTeSel)
+	_, teSel, _, _, _ := teColors()
+	fill(dst, x-teBorder, y-teBorder, w+2*teBorder, h+2*teBorder, teSel)
 	fill(dst, x, y, w, h, colDlgBG)
 	for i, s := range lines {
 		g.font.Draw(dst, s, (x+10)*UIScale, (y+12+i*16)*UIScale, colTELine)

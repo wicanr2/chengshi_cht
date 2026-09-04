@@ -41,22 +41,8 @@ const (
 // ⚠ 換過一次：舊版是深底亮字，換成原版版面之後客戶區變白，
 // 亮字會整片看不見，而且畫面上「有東西」（框、標題都在），
 // 看起來像資料沒算出來，不像顏色錯了。
+// 資料視窗與需求長條的顏色全部在 chrome.go，跟著顯示模式換。
 var (
-	colBG     = color.RGBA{0xaa, 0xaa, 0xaa, 0xff} // 桌面灰
-	colPanel  = color.RGBA{0xff, 0xff, 0xff, 0xff}
-	colLine   = color.RGBA{0x00, 0x00, 0xaa, 0xff}
-	colText   = color.RGBA{0x00, 0x00, 0x00, 0xff}
-	colDim    = color.RGBA{0x55, 0x55, 0x55, 0xff}
-	colOn     = color.RGBA{0x00, 0x00, 0xaa, 0xff}
-	colMoneyN = color.RGBA{0xaa, 0x00, 0x00, 0xff}
-	colDemR   = color.RGBA{0x00, 0xaa, 0x00, 0xff}
-	// 需求長條的三個顏色，量自原版：商業亮藍、住宅亮綠、工業亮黃。
-	colDemBarC = color.RGBA{0x55, 0x55, 0xff, 0xff}
-	colDemBarR = color.RGBA{0x55, 0xff, 0x55, 0xff}
-	colDemBarI = color.RGBA{0xff, 0xff, 0x55, 0xff}
-	colDemC    = color.RGBA{0x00, 0x00, 0xaa, 0xff}
-	colDemI    = color.RGBA{0xaa, 0x55, 0x00, 0xff}
-
 	// 圖片訊息目前以深色遮罩顯示文字，不能沿用一般資料視窗的黑字配色。
 	// 採 EGA 亮色，讓劇本簡介與災難通知在任何底圖上都清楚可讀。
 	pictureBG     = color.RGBA{0x14, 0x18, 0x22, 0xf8}
@@ -270,6 +256,9 @@ func (g *Game) SetSavePath(p string) { g.savePath = p }
 
 // NewGame 建一個新遊戲。
 func NewGame(w *sim.World, ts *TileSet, f *Font, txt *i18n.Catalog) *Game {
+	// 介面配色跟著顯示模式走（chrome.go）。單色與 CGA 的原版畫面只有
+	// 黑白兩色，用 EGA 的深藍畫視窗框會與美術對不起來。
+	setChrome(ts.ModeCode)
 	g := &Game{world: w, tiles: ts, font: f, txt: txt, tool: sim.ToolResidential,
 		animate: true, fastAnimate: true, menuRow: -1, graphYears: 10,
 		backX: -1, zoom: 1, mapPopup: -1, lang: i18n.ZhHant}

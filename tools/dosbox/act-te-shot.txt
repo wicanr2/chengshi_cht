@@ -1,0 +1,16 @@
+# 原版地形編輯器的介面截圖，給「配色跟著顯示模式換」量色用。
+#
+# 換模式的辦法：**TERRAIN.CFG 的第 0 個位元組就是螢幕模式**
+# （與 SIMCITY.CFG 同一組代碼 H/C/T/M/e/E/V/2），所以
+#   PREP="printf 'V' | dd of=TERRAIN.CFG bs=1 seek=0 count=1 conv=notrunc"
+# 就能跑單色版。用法例：
+#   ORIG=workplace/allmodes EXTRA=workplace/te-modes RUN=terrain \
+#   ACTIONS=$PWD/tools/dosbox/act-te-shot.txt MACHINE=vgaonly \
+#   PREP="..." tools/dosbox.sh 10 te-mono
+wait 10
+key Return
+wait 2
+click 320 175
+wait 1
+wait 6
+shot 00-ui

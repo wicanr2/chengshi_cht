@@ -63,7 +63,7 @@ var teTools = [6]struct {
 	{6, "te_tool_undo", -1, color.RGBA{0x00, 0x00, 0x00, 0xff}},
 }
 
-// 工具盤的配色，量自原版。
+// 工具盤的配色，量自原版的彩色模式。
 var (
 	colTeSep    = color.RGBA{0x55, 0x55, 0x55, 0xff} // 按鈕之間的深灰分隔
 	colTeSel    = color.RGBA{0xff, 0xff, 0x00, 0xff} // 選取的黃框
@@ -71,6 +71,43 @@ var (
 	colTeFillIn = color.RGBA{0x00, 0x00, 0xff, 0xff} // 上面那些藍斜線
 	colTeUndo   = color.RGBA{0xff, 0x00, 0x00, 0xff} // 復原按鈕的紅底
 )
+
+// 單色模式的那一套，量自原版跑 `V`（單色 VGA）的地形編輯器
+// （`workplace/dosbox/te-mono-00-ui.png`，TERRAIN.CFG 第 0 個位元組
+// 就是螢幕模式，與 SIMCITY.CFG 同一組代碼）：
+//
+//	DIRT／TREES／RIVER／CHANNEL  白字（黑外框），底是地圖圖塊本身
+//	FILL                        淺網點底、白字
+//	UNDO                        **白底黑字**
+//	選取框                      白
+//	按鈕之間的分隔               黑
+var (
+	monoTeSep    = color.RGBA{0x00, 0x00, 0x00, 0xff}
+	monoTeSel    = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	monoTeFill   = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	monoTeFillIn = color.RGBA{0x00, 0x00, 0x00, 0xff}
+	monoTeUndo   = color.RGBA{0xff, 0xff, 0xff, 0xff}
+)
+
+// teColors 回傳目前顯示模式該用的工具盤配色。
+func teColors() (sep, sel, fillBG, fillIn, undo color.RGBA) {
+	if chromeSelDither { // 單色（見 chrome.go）
+		return monoTeSep, monoTeSel, monoTeFill, monoTeFillIn, monoTeUndo
+	}
+	return colTeSep, colTeSel, colTeFill, colTeFillIn, colTeUndo
+}
+
+// teInk 回傳第 i 個工具的字色。單色模式只有黑白：四個畫筆與油漆桶是
+// 白字（畫在深色的圖塊底上），復原是黑字（它的底是白的）。
+func teInk(i int) color.RGBA {
+	if !chromeSelDither {
+		return teTools[i].ink
+	}
+	if teTools[i].id == 6 { // UNDO
+		return color.RGBA{0x00, 0x00, 0x00, 0xff}
+	}
+	return color.RGBA{0xff, 0xff, 0xff, 0xff}
+}
 
 // teItem 是選單裡的一列。key 是空字串代表分隔線。
 type teItem struct {
