@@ -45,6 +45,7 @@ This file carries no progress percentages; the single source of truth for status
 - [What people argued about in 1989](#reception)
 - [Release and memory in the Chinese-speaking world](#gap)
 - [What this project does](#project)
+- [What this remake brings together](#integration)
 - [Source material and known risks](#assets)
 - [Status](#status)
 - [Running it](#run)
@@ -512,6 +513,67 @@ was added.
 > the source says `SimWidth 120` / `SimHeight 100`, and the save size 120 × 100 × 2 =
 > 24000 agrees. **First-hand beats second-hand**, even when the second-hand source is a
 > magazine of the period.
+
+---
+
+<a name="integration"></a>
+## What this remake brings together
+
+At the time these were **four separately sold products**. Collecting them meant buying
+three or more disks, running each one's `INSTALL.EXE` to copy files into the game
+directory — and the terrain editor still had to be launched separately, outside the game.
+
+| Product | Published | Contents |
+|---|---|---|
+| SimCity | 1989, Brøderbund / Maxis | one base look |
+| **Graphics Set #1 (Ancient Cities)** | Brøderbund | Ancient Asia, Medieval, Wild West |
+| **Graphics Set 2 — Future Cities** | Maxis | Future USA, Future Europe, Moon Colony |
+| **SimCity Terrain Editor** | Maxis; repackaged in Taiwan by **軟體世界 Research Center (Kaohsiung)** in 1990 | a separate executable, `TERRAIN.EXE` |
+
+⚠ The years for the two expansion disks (1990 / 1991) come only from the packager's
+`file_id.diz`, which is **second-hand**; the file timestamps on the disks range from 1990
+to 1993 and do not agree with it. What is certain is that **the publisher changed hands**:
+Set #1 is credited to Brøderbund, Set 2 to Maxis.
+
+Now they are one program. The system menu switches between seven looks (base plus the six
+expansion sets), the fourth button on the title screen opens the terrain editor, and all
+of it is in Traditional Chinese.
+
+### What the original already did, and what this project added
+
+Drawing that line matters more than listing features. **What the original already did is
+not a contribution:**
+
+| Feature | Whose |
+|---|---|
+| Switching graphics sets in game | **the original** — entry 3 of message section 17 is "load graphics set" |
+| Text changing with the set (tool names, messages, scenario briefings) | **the original** — each set ships its own `*_MSG.PTF` |
+| **The terrain editor inside the game** | this remake. The original is a separate program you had to leave the game to run |
+| **Switching display mode in game** | this remake. The original required `SETTINGS.EXE` to rewrite `SIMCITY.CFG` and a restart — which is what the expansion disks' own `README` tells you to do: "use the Settings program" |
+| **Traditional Chinese** | this remake. The original never had a Chinese version (see [above](#no-chinese)) |
+| Zoom, multiple languages, background music | this remake |
+
+So "brings together" here means that **the six expansion sets' artwork and text, the
+terrain editor and the six display modes are all reachable from one program** — and all of
+it in Traditional Chinese. The terrain editor especially: it was an English-only separate
+program, and this is the first time it has had a Chinese interface. The six sets come to
+695 translated strings, and tool names change with the set (the medieval power plant is a
+"water wheel") — that is the original's design, and the translation follows it.
+
+### ⚠ What is brought together is the program, not the assets
+
+The artwork and text of all six sets still come from the player's own disks. This project
+distributes none of it.
+
+And **no single original release contains all of the assets**:
+
+- DOS 1.10 has the six expansion sets and mcga, but **no CGA and no Tandy**.
+- DOS 1.03 has the base look in all six display modes, but **no mcga and no expansions**.
+- The two expansion disks carry all six modes of their own artwork, but **no base look**.
+
+Having all six display modes across all seven looks requires owning 1.03 *and* both
+expansion disks. Where a piece is missing, the game reports it plainly for that
+combination rather than silently falling back to another mode.
 
 ---
 
