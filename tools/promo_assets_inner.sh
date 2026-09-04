@@ -30,9 +30,12 @@ B="workplace/dos110/SIMCITY 1.10"
 /tmp/simtool ppf -file $A/MONONTRO.PPF -mode mono -out "$P/modes/5-mono.png" >/dev/null
 # 疊成 3×2。**不要用 montage**：它預設會畫檔名標籤，需要字型，
 # 而這個 image 沒有可寫的 fontconfig 快取，會直接 core dump。
+# ⚠ 格子的尺寸被**字卡的高度**綁住：09-grid 那張卡是「對照圖 ＋ 三語說明」，
+# 三行說明佔 162 像素，扣掉上下兩條橫線之後圖只剩 248 可用。兩列 ＝ 一格
+# 最多 124 高。放大回去的話 `promocard` 會直接失敗（它會擋，不會靜靜切掉）。
 for n in 1-cga 6-sega 3-cega 2-tdy 4-mcga 5-mono; do
-  convert "$P/modes/$n.png" -filter point -resize 260x164 \
-    -background black -gravity center -extent 280x180 "/tmp/$n-c.png"
+  convert "$P/modes/$n.png" -filter point -resize 186x114 \
+    -background black -gravity center -extent 200x124 "/tmp/$n-c.png"
 done
 convert /tmp/1-cga-c.png /tmp/6-sega-c.png /tmp/3-cega-c.png +append /tmp/row1.png
 convert /tmp/2-tdy-c.png /tmp/4-mcga-c.png /tmp/5-mono-c.png +append /tmp/row2.png
@@ -40,23 +43,41 @@ convert /tmp/row1.png /tmp/row2.png -append "$P/modes/grid.png"
 identify "$P/modes/grid.png"
 
 # 三、字卡。用遊戲自己那套點陣字，字卡與實機畫面的字才會是同一套。
+#
+# 文字來自 `translations/promo_cards.tsv`（繁中／日文／英文並排）。放在
+# `translations/` 是有原因的：`tools/build_font.py` 只掃
+# `translations`／`internal/i18n`／`internal/ui`／`docs/manual-cht`，
+# 字卡的日文字若寫在這支 `.sh` 裡，圖集不會烘那些字，畫出來會是空格。
+#
+# 一張卡三行：繁中白、日文青、英文綠。`promocard` 放不下會直接失敗，
+# 不會靜靜地把字切掉。
 echo "== 字卡 =="
-card() { /tmp/promocard -out "$P/cards/$1.png" "${@:2}" >/dev/null; }
-card 00-open  -big "城　市" \
-  -line "模擬城市　1989　繁體中文重製版" \
-  -line "Micropolis 原始碼當規格書，用 Go 重寫"
-card 01-cht   -line "這款遊戲當年沒有中文版" -line "台灣代理的是英文遊戲 ＋ 中文說明書"
-card 02-swmap -line "1990 年，軟體世界在高雄" -line "畫了台灣與高雄兩張地圖"
-card 03-newmap -line "台北、台中、台南" -line "這一版補上"
-card 03b-terr -line "1990 年隨磁片附的地形編輯器" -line "三個旋鈕，一張新地圖"
-card 04-build -line "從一片空地開始"
-card 05-disast -big "天災" -line "火災、洪水、空難、龍捲風、地震、怪獸"
-card 06-data  -line "預算、統計、評估" -line "每一個欄位都讀得懂"
-card 07-scen  -line "八個悲情城市"
-card 08-modes -line "CGA、Tandy、EGA、VGA、Mono" -line "六種顯示模式全部解得開"
-card 09-grid  -image "$P/modes/grid.png" -line "同一幅招牌，六種顯示卡"
-card 10-end   -big "城　市" \
-  -line "github.com/wicanr2/chengshi_cht" \
-  -line "RRSAL-1.0 授權　非商業免費" \
-  -line "遊戲資料請自備合法原版"
+CARDS=translations/promo_cards.tsv
+tri() { # 卡名 → 依序印出該卡的三語行，每行前面帶顏色
+  awk -F'\t' -v c="$1" '
+    $1 ~ "^"c"\\.[0-9]+$" {
+      printf "#FFFFFF|%s\n#55FFFF|%s\n#55FF55|%s\n", $2, $3, $4
+    }' "$CARDS"
+}
+card() { # 卡名 [額外參數…]
+  local name=$1; shift
+  local args=()
+  local ln
+  while IFS= read -r ln; do args+=(-line "$ln"); done < <(tri "$name")
+  [ "${#args[@]}" -gt 0 ] || { echo "字卡 $name 在 $CARDS 裡沒有文字" >&2; exit 1; }
+  /tmp/promocard -out "$P/cards/$name.png" "$@" "${args[@]}" >/dev/null
+}
+card 00-open   -big "城　市"
+card 01-cht
+card 01b-lang
+card 02-swmap
+card 03-newmap
+card 03b-terr
+card 04-build
+card 05-disast -big "天　災"
+card 06-data
+card 07-scen
+card 08-modes
+card 09-grid   -image "$P/modes/grid.png"
+card 10-end    -big "城　市" -line "#FFFF55|github.com/wicanr2/chengshi_cht"
 ls "$P/cards" | tr '\n' ' '; echo

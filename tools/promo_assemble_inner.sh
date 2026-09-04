@@ -51,31 +51,37 @@ live() {
 
 echo "== 編段落 =="
 # 音效編號：0 塞車、1 爆炸、2 怪獸、3 警笛、4 船笛、5 小工具、6 大工具、7 失敗。
-card 00-open   3.2  0.5,4,1.0
+# ⚠ 字卡的秒數是照**三種語言**訂的：一張卡上有三行（或六行），
+# 觀眾只讀自己那一種，但要先掃過去找到它。所以比單語版每張多約一秒。
+card 00-open   4.4  0.5,4,1.0
 live title          0.2,6,0.4
-card 01-cht    2.4  0.1,5,0.5
+card 01-cht    3.6  0.1,5,0.5
 live menu           0.2,6,0.4
-card 02-swmap  2.6  0.1,5,0.5
+card 01b-lang  3.6  0.1,5,0.5
+live lang           0.2,6,0.4
+live brief_ja
+live brief_en       0.4,6,0.4
+card 02-swmap  3.6  0.1,5,0.5
 live taiwan         0.3,4,0.7
 live kaohsiung      0.3,0,0.5
-card 03-newmap 2.2  0.1,5,0.5
+card 03-newmap 3.4  0.1,5,0.5
 live taipei
 live taichung
 live tainan         0.4,6,0.4
-card 03b-terr  2.4  0.1,5,0.5
+card 03b-terr  3.6  0.1,5,0.5
 live terrain        0.3,5,0.5 1.4,5,0.5 2.6,6,0.7
-card 04-build  2.0  0.1,5,0.5
+card 04-build  2.8  0.1,5,0.5
 live build          0.3,6,0.7 1.3,6,0.7 2.3,6,0.7
-card 05-disast 2.2  0.2,3,0.8
+card 05-disast 3.2  0.2,3,0.8
 live disaster       0.3,1,0.9 1.8,1,0.9 3.3,2,0.9 5.0,3,0.8 6.5,1,0.9 8.0,2,0.9
-card 06-data   2.2  0.1,5,0.5
+card 06-data   3.4  0.1,5,0.5
 live windows        0.2,6,0.4
 live layers         0.2,5,0.4
-card 07-scen   2.0  0.1,5,0.5
+card 07-scen   2.8  0.1,5,0.5
 live scen           0.3,3,0.6
-card 08-modes  2.4  0.1,5,0.5
-card 09-grid   3.4  0.1,6,0.4
-card 10-end    4.2  0.4,4,1.0
+card 08-modes  3.6  0.1,5,0.5
+card 09-grid   4.2  0.1,6,0.4
+card 10-end    5.0  0.4,4,1.0
 
 echo "共 $NSEG 段，$TIME 秒"
 

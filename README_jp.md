@@ -375,13 +375,18 @@ reptilian creature rose from Tokyo Bay" としか書かず、CGW も「都市を
 
 ### 動画
 
-![城市 —— シムシティ 1989 繁体字中国語リメイク](docs/images/promo.gif)
+![城市 —— シムシティ 1989 リメイク](docs/images/promo.gif)
 
-57 秒で今どこまでできているかを一通り：オリジナルの看板、繁体字中国語のインターフェイス、
+77 秒で今どこまでできているかを一通り：オリジナルの看板、繁体字中国語のインターフェイス、
+**四つの言語**（言語ウィンドウと、同じシナリオ説明が日本語と英語で一度ずつ）、
 軟體世界が 1990 年に描いた台湾と高雄、本プロジェクトが足した台北・台中・台南、
 **1990 年のあの地形エディタ**、更地から築いた都市、六種類の災害、予算／統計／評価の三つの
 情報ウィンドウ、八つの悲情城市、そして最後に同じ看板を CGA／Tandy／EGA／VGA／モノクロで
 並べたところ。
+
+**字幕カードは三言語同時**——繁体字は白、日本語は水色、英語は緑で、同じ一文を三行
+並べてある。テキストは [`translations/promo_cards.tsv`](translations/promo_cards.tsv)
+にあり、ゲーム内テキストと同じく一行に三言語が並ぶ形式。
 
 画面のタイルも音もプレイヤー自身のオリジナルから来ており、動画そのものはこのリメイクが
 動いているところである。`promo.mp4` の音は**オリジナルの効果音 8 本**だ——このゲームには
@@ -763,8 +768,8 @@ tools/go.sh test ./...              # 全テスト（配線チェックとフォ
 tools/playtest.sh                   # 実ウィンドウ・実キー・実マウスでの通常プレイ経路
 tools/screenshot.sh 12 out.png      # スクリーンショット 1 枚
 tools/release.sh                    # 配布パッケージのビルド
-tools/package_all.sh v.1.4.0-20260904
-tools/verify_package_all.sh v.1.4.0-20260904
+tools/package_all.sh v.1.4.1-20260904
+tools/verify_package_all.sh v.1.4.1-20260904
 ```
 
 tick 単位の突き合わせには、別途 [Micropolis](https://github.com/SimHacker/micropolis) の

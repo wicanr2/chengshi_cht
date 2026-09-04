@@ -35,6 +35,10 @@ grab() {
 # grabs <幾格>：連續擷取，每格之前清一次訊息框。
 grabs() { local i; for i in $(seq 1 "$1"); do xdotool key --clearmodifiers space; grab; done; }
 
+# still <幾格>：只擷取，不送任何鍵。對話框與劇本簡介要用這個——
+# `grabs` 的空白鍵在簡介上是「關掉」，在對話框裡是「按下選取的控制項」。
+still() { local i; for i in $(seq 1 "${1:-1}"); do grab; done; }
+
 # combo <修飾鍵> <鍵>：把修飾鍵按住跨畫格再送，見檔頭第一個坑。
 combo() {
   xdotool keydown "$1"; sleep 0.2
@@ -87,6 +91,17 @@ xdotool key --clearmodifiers 0; sleep 0.4
 combo alt d
 grabs 16; done_seg
 
+# 二之二、四種語言。先給語言視窗，再讓同一則劇本簡介在日文與英文底下各出現
+#         一次——那是畫面上文字最多的一幕，換了語言一眼看得出來。
+start_seg lang; launch -window language -seed 7
+still 12; done_seg
+
+start_seg brief_ja; launch -lang ja -scenario 6 -style medi
+still 16; done_seg
+
+start_seg brief_en; launch -lang en -scenario 6 -style medi
+still 16; done_seg
+
 # 三、地形巡覽（暫停，按住方向鍵連續運鏡）。
 pan() {
   start_seg "$1"; launch -load "cities/$2" -cam "$3"
@@ -108,7 +123,6 @@ pan tainan    TAINAN.CTY    0,28 14
 # 「按下目前選取的控制項」——會把參數改掉，甚至直接按到開始。
 # 座標是原版像素 ×3（UIScale）：對話框原點 (172,95)，`►` 在第 10／21 欄、
 # 第 5 列，`開始` 在第 3 欄、第 8 列。
-still() { local i; for i in $(seq 1 "${1:-1}"); do grab; done; }
 poke() { xdotool mousemove "$1" "$2" click 1; sleep 0.12; grab; }
 start_seg terrain; launch -window terrain -seed 7
 still 5

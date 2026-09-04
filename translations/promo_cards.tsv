@@ -1,0 +1,23 @@
+key	zh_hant	ja	en
+00-open.1	模擬城市　1989　重製版	シムシティ　1989　リメイク	SimCity 1989, remade in Go
+00-open.2	Micropolis 原始碼當規格書，用 Go 重寫	Micropolis を仕様書として書き直した	Micropolis as a spec, not as code
+01-cht.1	這款遊戲當年沒有中文版，也沒有日文版	当時、中国語版も日本語版もなかった	It shipped in neither language
+01-cht.2	台灣代理的是英文遊戲 ＋ 中文說明書	台湾では英語版と中国語の説明書だけ	Taiwan got the English game only
+01b-lang.1	繁體中文・简体中文・日本語・English	繁体字・簡体字・日本語・英語の四言語	Four languages, switchable in game
+01b-lang.2	遊戲內文字全譯，連資料片的用詞都換	拡張ディスクごとの言い回しも訳し分け	Each expansion keeps its own wording
+02-swmap.1	1990 年，軟體世界在高雄	1990 年、軟體世界が高雄で	In 1990, in Kaohsiung,
+02-swmap.2	畫了台灣與高雄兩張地圖	台湾と高雄の地図を描いた	軟體世界 drew Taiwan and Kaohsiung
+03-newmap.1	台北、台中、台南	台北・台中・台南は	Taipei, Taichung and Tainan
+03-newmap.2	這一版補上	このリメイクで追加した	were added by this remake
+03b-terr.1	1990 年隨磁片附的地形編輯器	1990 年のフロッピー版地形エディタ	The terrain editor from the 1990 disk
+03b-terr.2	三個旋鈕，一張新地圖	つまみ三つで新しい地図	Three dials, one new map
+04-build.1	從一片空地開始	更地から始める	Starting from empty land
+05-disast.1	火災、洪水、空難、龍捲風、地震、怪獸	火事・洪水・墜落・竜巻・地震・怪獣	Six disasters, from fire to monster
+06-data.1	預算、統計、評估	予算・統計・評価	Budget, graphs, evaluation
+06-data.2	每一個欄位都讀得懂	どの項目も読める	every field readable
+07-scen.1	八個悲情城市	八つのシナリオ	The eight scenarios
+08-modes.1	CGA、Tandy、EGA、VGA、Mono	CGA・Tandy・EGA・VGA・モノクロ	CGA, Tandy, EGA, VGA and mono
+08-modes.2	六種顯示模式全部解得開	六つの表示モードすべてを解読	All six display modes decoded
+09-grid.1	同一幅招牌，六種顯示卡	同じ看板を六種類の表示モードで	The same title screen on six cards
+10-end.1	RRSAL-1.0 授權　非商業免費	RRSAL-1.0　非商用は無償	RRSAL-1.0, free non-commercially
+10-end.2	遊戲資料請自備合法原版	ゲームデータは正規版をご用意ください	Bring your own legal original

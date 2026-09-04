@@ -7,7 +7,9 @@
 //
 // 用法：
 //
-//	promocard -out card.png -big "城　市" -line "副標" -line "第二行"
+//	promocard -out card.png -big "城　市" -line "副標" -line "#55FFFF|第二行"
+//
+// 每一行可以用 `#RRGGBB|` 開頭指定顏色；放不下畫布就直接失敗。
 package main
 
 import (
@@ -135,16 +137,53 @@ func main() {
 		}
 	}
 
+	// ⚠ **放不下就失敗**。字卡是一次性算出來的圖，畫超出畫布不會有任何
+	// 錯誤——影片編完才會看到最後幾個字被切掉，而那時候要重跑整條管線。
+	// 三種語言並排之後，英文那一行最容易超出去（半形一格 24 像素，
+	// 960 寬只放得下 40 個）。
+	const margin = 24
+	for _, s := range ls {
+		t := s
+		if i := strings.IndexByte(t, '|'); i == 7 && strings.HasPrefix(t, "#") {
+			t = t[i+1:]
+		}
+		if got := a.Measure(t); got > *w-2*margin {
+			fmt.Fprintf(os.Stderr, "字卡放不下：%q 寬 %d，上限 %d（%s）\n",
+				t, got, *w-2*margin, *out)
+			os.Exit(1)
+		}
+	}
+	if *big != "" && a.Measure(*big)*2 > *w-2*margin {
+		fmt.Fprintf(os.Stderr, "主標放不下：%q（%s）\n", *big, *out)
+		os.Exit(1)
+	}
+
 	// 版面：嵌圖、主標與內文整組垂直置中。
-	lineH := a.Height + 16
-	total := 0
+	//
+	// ⚠ 行距是**算出來的不是寫死的**。三種語言並排之後一張卡最多七行，
+	// 用固定的 16 會撐到上下兩條橫線外面去——而那不會報錯，要編完影片
+	// 才看得到最後一行被線切過。所以由寬鬆往緊縮試，都放不下才失敗。
+	fixed := 0
 	if embedded != nil {
-		total += embedded.Bounds().Dy() + 18
+		fixed += embedded.Bounds().Dy() + 18
 	}
 	if *big != "" {
-		total += a.Height*2 + 28
+		fixed += a.Height*2 + 28
 	}
-	total += len(ls) * lineH
+	avail := *h - 2*(34+3) - 16 // 兩條橫線之間再留一點餘裕
+	lineH, total := 0, 0
+	for _, gap := range []int{16, 12, 10, 8, 6, 4} {
+		lineH = a.Height + gap
+		total = fixed + len(ls)*lineH
+		if total <= avail {
+			break
+		}
+	}
+	if total > avail {
+		fmt.Fprintf(os.Stderr, "字卡塞不下：%d 行加主標共 %d 像素，可用 %d（%s）\n",
+			len(ls), total, avail, *out)
+		os.Exit(1)
+	}
 	y := (*h - total) / 2
 
 	if embedded != nil {
@@ -159,7 +198,12 @@ func main() {
 		y += a.Height*2 + 28
 	}
 	for _, s := range ls {
-		drawText(s, (*w-a.Measure(s))/2, y, 1, hex(*fgLine, color.RGBA{0xff, 0xff, 0xff, 0xff}))
+		c := hex(*fgLine, color.RGBA{0xff, 0xff, 0xff, 0xff})
+		// `#RRGGBB|文字` 讓同一張卡的三種語言各有自己的顏色。
+		if i := strings.IndexByte(s, '|'); i == 7 && strings.HasPrefix(s, "#") {
+			c, s = hex(s[:i], c), s[i+1:]
+		}
+		drawText(s, (*w-a.Measure(s))/2, y, 1, c)
 		y += lineH
 	}
 

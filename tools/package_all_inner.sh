@@ -243,7 +243,7 @@ cat >"$DEST/promo/README.md" <<EOF
 - 畫面：README 目前引用的 remake 截圖；圖中原版美術只作專案說明。
 - 音訊：本目錄不含 SimCity 或 SimCity 2000 音樂。promo.mp4 的聲音是**原版那八段音效**（從玩家自備的 SOUNDDAT.PSF 解出）——這款遊戲沒有背景音樂（docs/re/19-no-music.md），所以不配旋律，也不自己合成一段頂替。promo.gif 沒有聲音。
 - 影片：$( [ "$PROMO_VIDEO" = 1 ] \
-    && echo "promo.mp4 與 promo.gif ＝ 約 51 秒的段落片：原版招牌、繁中介面、五張台灣地圖（台灣／台北／台中／台南／高雄）、從空地蓋起一座城市、六種天災、三個資料視窗、八個悲情城市，結尾是同一幅招牌在 CGA／Tandy／EGA／VGA／Mono 底下的對照。由 tools/promo_video.sh 產生。畫面上的圖塊與聲音都來自玩家自備的原版。" \
+    && echo "promo.mp4 與 promo.gif ＝ 約 77 秒的段落片，字卡是繁中／日文／英文三語同步：原版招牌、四種語言（語言視窗與同一則劇本簡介的日文與英文）、五張台灣地圖（台灣／台北／台中／台南／高雄）、1990 年的地形編輯器、從空地蓋起一座城市、六種天災、三個資料視窗、八個悲情城市，結尾是同一幅招牌在 CGA／Tandy／EGA／VGA／Mono 底下的對照。由 tools/promo_video.sh 產生，字卡文字在 translations/promo_cards.tsv。畫面上的圖塊與聲音都來自玩家自備的原版。" \
     || echo "本版尚未建立推廣影片；不得把本目錄冒稱為影片驗收完成。" )
 EOF
 

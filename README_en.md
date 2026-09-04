@@ -394,13 +394,20 @@ grades and sources:
 
 ### Video
 
-![City — SimCity 1989 Traditional Chinese remake](docs/images/promo.gif)
+![City — a SimCity 1989 remake](docs/images/promo.gif)
 
-Fifty-seven seconds through what works today: the original title screen, the Chinese
-interface, the Taiwan and Kaohsiung maps drawn by 軟體世界 in 1990, the Taipei/Taichung/
-Tainan maps this project added, **the 1990 terrain editor**, a city built from empty land,
-six kinds of disaster, the budget/graph/evaluation windows, the eight scenarios, and
-finally the same title screen under CGA, Tandy, EGA, VGA and mono.
+Seventy-seven seconds through what works today: the original title screen, the Chinese
+interface, **all four languages** (the language window, and the same scenario briefing
+once in Japanese and once in English), the Taiwan and Kaohsiung maps drawn by 軟體世界 in
+1990, the Taipei/Taichung/Tainan maps this project added, **the 1990 terrain editor**, a
+city built from empty land, six kinds of disaster, the budget/graph/evaluation windows,
+the eight scenarios, and finally the same title screen under CGA, Tandy, EGA, VGA and
+mono.
+
+**The caption cards carry all three languages at once** — Traditional Chinese in white,
+Japanese in cyan, English in green, the same sentence on three stacked lines. The text
+lives in [`translations/promo_cards.tsv`](translations/promo_cards.tsv), one row per
+caption with the three languages side by side, the same shape as the in-game text.
 
 The tiles and sounds come from the player's own original; the video itself is this remake
 running. The audio in `promo.mp4` is **the original's eight sound effects** — this game
@@ -804,8 +811,8 @@ tools/go.sh test ./...              # all tests, including wiring and font cover
 tools/playtest.sh                   # the normal player path on a real window
 tools/screenshot.sh 12 out.png      # one screenshot
 tools/release.sh                    # build release packages
-tools/package_all.sh v.1.4.0-20260904
-tools/verify_package_all.sh v.1.4.0-20260904
+tools/package_all.sh v.1.4.1-20260904
+tools/verify_package_all.sh v.1.4.1-20260904
 ```
 
 Tick-for-tick parity additionally needs your own archive of

@@ -355,12 +355,17 @@ iThome 引述 EA 台灣分公司，估計 2000 代在台銷量約四至五萬片
 
 ### 影片
 
-![城市 —— 模擬城市 1989 繁體中文重製版](docs/images/promo.gif)
+![城市 —— 模擬城市 1989 重製版](docs/images/promo.gif)
 
-五十七秒走一遍現在做到哪裡：原版招牌、繁中介面、軟體世界 1990 年畫的台灣與高雄、
+七十七秒走一遍現在做到哪裡：原版招牌、繁中介面、**四種語言**（語言視窗，
+以及同一則劇本簡介在日文與英文底下各出現一次）、軟體世界 1990 年畫的台灣與高雄、
 本專案補的台北台中台南、**1990 年那支地形編輯器**、從一片空地蓋起一座城市、
 六種天災、預算統計評估三個資料視窗、八個悲情城市，最後是同一幅招牌在
 CGA／Tandy／EGA／VGA／Mono 底下的樣子。
+
+**字卡是三語同步的**：繁中白、日文青、英文綠，同一句話三行並排。
+文字放在 [`translations/promo_cards.tsv`](translations/promo_cards.tsv)，
+和遊戲內文字一樣一列一筆三種語言。
 
 畫面上的圖塊與聲音都來自玩家自備的原版，影片本身是本重製版跑出來的。
 `promo.mp4` 的聲音是**原版那八段音效**——這款遊戲沒有背景音樂
@@ -806,8 +811,8 @@ tools/playtest.sh                   # 正常玩家路徑實機驗證（真視窗
 tools/screenshot.sh 12 out.png      # 單張截圖，GAME_ARGS／GAME_KEYS 控制情境
 tools/release.sh                    # 打發行包（Linux／Windows／macOS）
 tools/verify_release.sh             # 驗發行包本身（不是驗 build 出來的執行檔）
-tools/package_all.sh v.1.4.0-20260904       # 重建 dist-all/<版本> 的 full／release／promo
-tools/verify_package_all.sh v.1.4.0-20260904 # 另驗 AppImage 招牌入口、滑鼠選單與音訊
+tools/package_all.sh v.1.4.1-20260904       # 重建 dist-all/<版本> 的 full／release／promo
+tools/verify_package_all.sh v.1.4.1-20260904 # 另驗 AppImage 招牌入口、滑鼠選單與音訊
 tools/build-mac.sh                  # 只編 macOS universal ＋ 靜態驗收
 tools/font.sh                       # 改過譯文之後重烘點陣字圖集
 tools/i18n.sh                       # 重新合併七份訊息檔的譯文
