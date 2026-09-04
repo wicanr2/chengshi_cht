@@ -539,6 +539,31 @@ Now they are one program. The system menu switches between seven looks (base plu
 expansion sets), the fourth button on the title screen opens the terrain editor, and all
 of it is in Traditional Chinese.
 
+**Graphics Set #1 (Ancient Cities): Ancient Asia, Medieval, Wild West**
+
+![The three Ancient Cities styles](docs/images/styles-ancient.png)
+
+**Graphics Set 2 — Future Cities: Future USA, Future Europe, Moon Colony**
+
+![The three Future Cities styles](docs/images/styles-future.png)
+
+All six are **the same city at the same camera position** (Detroit 1972, cell 30,30) with
+only the expansion set changed — so every difference is artwork. Even the tool palette
+icons on the left change with it, and so do the tool **names**: the medieval railway is a
+"coach road" and the power plant a "water wheel"; in Future USA the road is a "transport
+tube" and the railway a "maglev track"; on the Moon the railway is just a "rail". That is
+the original's design — each graphics set ships its own `*_MSG.PTF`.
+
+**SimCity Terrain Editor: originally a separate program**
+
+![The terrain editor's parameters dialog](docs/images/terrain-params.png)
+
+The "terrain parameters" dialog from the original `TERRAIN.EXE` — three percentages for
+tree count, lake count and river curviness, then Start to generate. The layout was
+measured **pixel by pixel** from the original running; all six spinner columns and four
+rows agree. The three percentages are `s_gen.c`'s `TreeLevel` / `LakeLevel` / `CurveLevel`
+themselves. The editor's main screen is [above](#shots).
+
 ### What the original already did, and what this project added
 
 Drawing that line matters more than listing features. **What the original already did is
