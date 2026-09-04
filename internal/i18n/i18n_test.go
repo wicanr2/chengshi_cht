@@ -76,7 +76,7 @@ func TestGlossaryTerms(t *testing.T) {
 		{SecDisaster, 3}:  " 龍捲風",
 		{SecTileName, 24}: "體育館",
 		{SecTileName, 19}: "海港",
-		{SecClass, 5}:     "超級都會",
+		{SecClass, 5}:     "大都會區",
 		{SecSpeed, 4}:     " 暫停  0",
 	}
 	for k, v := range want {
@@ -109,8 +109,8 @@ func TestPictureLookup(t *testing.T) {
 		200: "彈劾",
 		21:  "怪獸",
 		10:  "污染",
-		39:  "超級都會",
-		35:  "城鎮",
+		39:  "大都會區",
+		35:  "小鎮",
 	}
 	for msg, want := range cases {
 		got := c.Picture(msg)

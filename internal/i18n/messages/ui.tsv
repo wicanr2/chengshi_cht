@@ -2,7 +2,7 @@ key	zh_hant	zh_hans	ja	en
 title_new_city	建立新城市	建立新城市	新しい都市	START NEW CITY
 title_load_city	載入城市	载入城市	都市をロード	LOAD A CITY
 title_scenario	選擇劇本	选择剧本	シナリオ選択	SELECT SCENARIO
-title_terrain	地形編輯器	地形编辑器	地形エディタ	TERRAIN EDITOR
+title_terrain	地形編修程式	地形编修程式	地形エディタ	TERRAIN EDITOR
 funds	資金 $%s	资金 $%s	資金 $%s	Funds: $%s
 demand	需求	需求	需要	Demand
 demand_r	住	住	住	R
@@ -66,47 +66,47 @@ map_saved	地圖存成 %s	地图存成 %s	地図を %s に保存しました	Map
 level_easy	簡易	简易	かんたん	Easy
 level_medium	適中	适中	ふつう	Medium
 level_hard	艱難	艰难	むずかしい	Hard
-terrain_menu	地形編輯器	地形编辑器	地形エディタ	Terrain Editor
-terrain_title	地形參數	地形参数	地形パラメータ	Terrain Parameters
-terrain_trees	樹木數量	树木数量	木の数	Trees
-terrain_lakes	湖泊數量	湖泊数量	湖の数	Lakes
-terrain_curve	河流彎曲	河流弯曲	曲がり	Curviness
+terrain_menu	地形編修程式	地形编修程式	地形エディタ	Terrain Editor
+terrain_title	地形變數	地形变数	地形パラメータ	Terrain Parameters
+terrain_trees	綠地比例	绿地比例	木の数	Trees
+terrain_lakes	湖泊比例	湖泊比例	湖の数	Lakes
+terrain_curve	河流曲率	河流曲率	曲がり	Curviness
 terrain_go	開始	开始	開始	Go
 terrain_cancel	取消	取消	取消	Cancel
 te_sys	系統	系统	システム	SYSTEM
 te_terrain	地形	地形	地形	TERRAIN
-te_params	參數	参数	パラメータ	PARAMETERS
-te_about	關於地形編輯器	关于地形编辑器	地形エディタについて	About TERRAIN
+te_params	變數	变数	パラメータ	PARAMETERS
+te_about	關於本遊戲	关于本游戏	地形エディタについて	About TERRAIN
 te_print	印表	印表	印刷	Print
-te_new	開新地圖	开新地图	新規マップ	Start New City
-te_load	讀取城市  Ctrl-L	读取城市  Ctrl-L	都市をロード Ctrl-L	Load City  Ctrl-L
+te_new	重新編修	重新编修	新規マップ	Start New City
+te_load	讀取舊有檔案  Ctrl-L	读取旧有档案  Ctrl-L	都市をロード Ctrl-L	Load City  Ctrl-L
 te_saveas	以……檔名儲存	以……档名储存	名前を付けて保存	Save City as ...
 te_save	儲存城市  Ctrl-S	储存城市  Ctrl-S	都市を保存 Ctrl-S	Save City  Ctrl-S
-te_exit	離開編輯器  Ctrl-X	离开编辑器  Ctrl-X	エディタ終了 Ctrl-X	Exit  Ctrl-X
+te_exit	跳出遊戲  Ctrl-X	跳出游戏  Ctrl-X	エディタ終了 Ctrl-X	Exit  Ctrl-X
 te_clear	清除地圖  Ctrl-C	清除地图  Ctrl-C	マップを消去 Ctrl-C	Clear Map  Ctrl-C
-te_clear_art	清除人造物	清除人造物	人工物を消去	Clear Unnatural Objects
+te_clear_art	清除非自然物	清除非自然物	人工物を消去	Clear Unnatural Objects
 te_random	產生隨機地形  Ctrl-T	产生随机地形  Ctrl-T	ランダム地形 Ctrl-T	Create Random Terrain  Ctrl-T
-te_smooth_trees	平滑樹林	平滑树林	森を整える	Smooth Trees
-te_smooth_rivers	平滑河流	平滑河流	川を整える	Smooth Rivers
+te_smooth_trees	綠地平滑	绿地平滑	森を整える	Smooth Trees
+te_smooth_rivers	水區平滑	水区平滑	川を整える	Smooth Rivers
 te_smooth_all	全部平滑  Ctrl-A	全部平滑  Ctrl-A	すべて整える Ctrl-A	Smooth Everything  Ctrl-A
-te_island	造島  Ctrl-I	造岛  Ctrl-I	島を作る Ctrl-I	Create Island  Ctrl-I
+te_island	產生島嶼地形  Ctrl-I	产生岛屿地形  Ctrl-I	島を作る Ctrl-I	Create Island  Ctrl-I
 te_name_level	市名與難度	市名与难度	都市名と難易度	Name & Level
-te_year	遊戲年份	游戏年份	開始年	Game Year
+te_year	模擬起始年份	模拟起始年份	開始年	Game Year
 te_sound	音效	音效	サウンド	Sound
-te_tool_dirt	空地	空地	更地	DIRT
-te_tool_trees	樹林	树林	森	TREES
+te_tool_dirt	開濶地	开阔地	更地	DIRT
+te_tool_trees	綠地	绿地	森	TREES
 te_tool_river	河流	河流	川	RIVER
-te_tool_channel	水道	水道	水路	CHANNEL
-te_tool_fill	填滿	填满	塗りつぶし	FILL
-te_tool_undo	復原	复原	元に戻す	UNDO
-te_year_prompt	輸入遊戲年份：	输入游戏年份：	開始年を入力：	Enter Game Year:
-te_confirm_new	開新地圖會清掉目前這一張，確定嗎？	开新地图会清掉目前这一张，确定吗？	新規マップで現在の地図を消します。よろしいですか？	Start a new map? The current one will be cleared.
-te_confirm_exit	離開地形編輯器？沒存的地圖會不見。	离开地形编辑器？没存的地图会不见。	エディタを終了しますか？保存していない地図は失われます。	Exit the terrain editor? Unsaved work will be lost.
+te_tool_channel	航道	航道	水路	CHANNEL
+te_tool_fill	均佈	均布	塗りつぶし	FILL
+te_tool_undo	回手	回手	元に戻す	UNDO
+te_year_prompt	輸入模擬起始年份：	输入模拟起始年份：	開始年を入力：	Enter Game Year:
+te_confirm_new	重新編修會清掉目前這一張市地，確定嗎？	重新编修会清掉目前这一张市地，确定吗？	新規マップで現在の地図を消します。よろしいですか？	Start a new map? The current one will be cleared.
+te_confirm_exit	跳出地形編修程式？沒存的市地會不見。	跳出地形编修程式？没存的市地会不见。	エディタを終了しますか？保存していない地図は失われます。	Exit the terrain editor? Unsaved work will be lost.
 te_yes	確定	确定	はい	OK
 te_no	取消	取消	キャンセル	Cancel
 te_terraforming	正在造地形	正在造地形	地形生成中	Now terraforming
 te_smoothing	平滑中……	平滑中……	整えています…	Smoothing...
-te_citymap	全市地圖	全市地图	全体マップ	City Map
+te_citymap	地圖視窗	地图视窗	全体マップ	City Map
 te_year_bad	年份要四位數，而且要大於 1900	年份要四位数，而且要大于 1900	年は4桁で、1900より後にしてください	Year must be 4 digits and later than 1900
 mode_title	顯示模式	显示模式	表示モード	Display Mode
 band_speed	模擬速度：	模拟速度：	速度：	Speed: 
@@ -153,7 +153,7 @@ q_grow0	衰退	衰退	減少	Loss
 q_grow1	沒有	没有	なし	None
 q_grow2	緩慢	缓慢	緩やか	Some
 q_grow3	快速	快速	急速	Rapid
-style_base	基本	基本	基本	Base
+style_base	現代	现代	基本	Base
 style_asia	古代亞洲	古代亚洲	古代アジア	Ancient Asia
 style_medi	中世紀	中世纪	中世	Medieval Times
 style_west	西部拓荒	西部拓荒	西部開拓時代	Wild West
@@ -191,7 +191,7 @@ band_map_saved	地圖存成 	地图存成 	地図を保存しました 	Map save
 map_png_suffix	-地圖	-地图	-地図	-map
 band_name_empty	檔名不能是空的	文件名不能是空的	ファイル名が空です	The file name cannot be empty
 band_drag_title	拖曳視窗的標題列就可以搬動	拖曳窗口的标题栏就可以搬动	タイトルバーをドラッグで移動できます	Drag a window's title bar to move it
-te_about_title	地形編輯器 — 照 1990 年磁片版重製	地形编辑器 — 照 1990 年磁片版重制	地形エディタ — 1990 年のフロッピー版のリメイク	Terrain editor — a remake of the 1990 disk version
+te_about_title	地形編修程式 — 照 1990 年磁片版重製	地形编修程式 — 照 1990 年磁片版重制	地形エディタ — 1990 年のフロッピー版のリメイク	Terrain editor — a remake of the 1990 disk version
 te_about_orig	原版：SimCity Terrain Editor（Maxis, 1989）	原版：SimCity Terrain Editor（Maxis, 1989）	オリジナル：SimCity Terrain Editor（Maxis, 1989）	Original: SimCity Terrain Editor (Maxis, 1989)
 te_about_design	　構想與設計：Will Wright	　构想与设计：Will Wright	　企画・デザイン：Will Wright	  Concept and design: Will Wright
 te_about_prog	　IBM 版程式：Paul Schmidt、Daniel Goldman	　IBM 版程序：Paul Schmidt、Daniel Goldman	　IBM 版プログラム：Paul Schmidt、Daniel Goldman	  IBM version programming: Paul Schmidt, Daniel Goldman

@@ -11,7 +11,7 @@ type Evaluation struct {
 	CityPop         int // 城市人口
 	DeltaCityPop    int // 與上次的差
 	CityAssValue    int // 資產價值
-	CityClass       int // 0…5：村莊 / 小鎮 / 城市 / 首府 / 大都會 / 巨型都會
+	CityClass       int // 0…5：村莊 / 小鎮 / 城市 / 首都 / 大都會 / 大都會區
 	CityScore       int // 0…1000
 	DeltaCityScore  int //
 	ProblemTable    [ProbNum]int

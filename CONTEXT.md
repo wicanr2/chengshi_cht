@@ -167,6 +167,9 @@ ALSA 檔案裝置確認 OGG 經 Ebiten／oto 送出非零音訊。這是技術�
 | DOS 版 1.10（69 檔）| 已盤點。`.PGF`／`.PTF`／`.PSN`／`.PSF` 全部解得開，是呈現層與中文化語料的來源 |
 | DUX X11 版（SGI／SunOS／Solaris）| 已列內容：30 個 Tcl、154 個 XPM、46 個 au、23 個 `.cty`，無 C 原始碼 |
 | 軟體世界珍藏版 29 說明書 | 56 張跨頁掃描已解開；本文 p.1–82 逐頁轉錄成 `docs/manual-cht/`，另含《模擬城市參考附表》。只有附贈的密碼表不轉錄 |
+| 軟體世界 220《地形編修程式》說明書 | 18 張掃描；p.1–23 全文轉錄成 `docs/manual-cht/sw220-terrain/`。**地形編輯器整組譯名的一手來源** |
+| 電腦休閒世界 022《古城風情系列》說明書 | 45 張掃描；p.1–64 全文轉錄成 `docs/manual-cht/chw022-ancient/`。古亞／中世紀／西部三集建築名的一手來源 |
+| 電腦休閒世界 024《回到未來系列》說明書 | 37 張掃描；p.1–40 轉錄成 `docs/manual-cht/chw024-future/`（PART B 是 220 的重印，只記差異）。美國／歐洲／月球三集建築名的一手來源 |
 
 ### 驗證入口
 
@@ -242,7 +245,7 @@ Micropolis 原始碼 > DOS 1.10 資料檔 > X11 Tcl／XPM > DOS 反組譯／DOSB
 | [`docs/re/`](docs/re/) | 機制筆記（讀 Micropolis 與反組譯的產物）。入口是 `00-master-index.md`、`00-function-index.md`、`00-wiring-status.md` |
 | [`docs/formats/`](docs/formats/) | 資料格式規格：`.PGF`／`.PPF`／`.PSN`／`.PTF`／`.PSF`／`.cty`／DOS 存檔 |
 | [`docs/spec/`](docs/spec/) | 可實作規格，只有標 READY 的能動工 |
-| [`docs/manual-cht/`](docs/manual-cht/) | 軟體世界珍藏版 29 說明書**逐頁完整轉錄**（保存用，p.1–82 ＋ 參考附表）|
+| [`docs/manual-cht/`](docs/manual-cht/) | **四本**中文說明書的逐頁完整轉錄（珍 029、220 地形編修程式、電腦休閒世界 022／024）。譯名怎麼來、四本衝突怎麼取捨看 [`naming-crosswalk.md`](docs/manual-cht/naming-crosswalk.md) |
 | [`docs/manual/`](docs/manual/) | 官方英文手冊（IBM PC 版）的繁中整理。**只整理機制章節並與原始碼逐節對照**，不做全書轉錄——理由（用途與授權）寫在該目錄的 README |
 | [`docs/walkthrough/`](docs/walkthrough/) | 繁中攻略。**以讀出來的原始碼為根據**，不是翻譯社群攻略（理由寫在該目錄的 README）：成長迴圈、八個劇本的真實過關條件、七條常見錯誤說法的訂正 |
 | [`translations/glossary.md`](translations/glossary.md) | 譯名表，唯一真相 |
@@ -587,6 +590,26 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     日文筆數改成與繁體逐筆對齊。截圖在 `docs/images/`（繁中）、
     `docs/images/en/`、`docs/images/ja/`，由 `tools/readme_shots.sh` 的
     語言迴圈產生；`panels.png`（純圖示）與 `promo.gif`（只有中文版）三份共用。
+
+45. ~~另外三本中文說明書轉錄 ＋ 譯名對齊~~ **完成**（2026-09-04）：
+    軟體世界 220《地形編修程式》、電腦休閒世界 022《古城風情系列》、
+    024《回到未來系列》逐頁轉錄成 `docs/manual-cht/` 的三個子目錄，
+    對照與取捨寫在 [`docs/manual-cht/naming-crosswalk.md`](docs/manual-cht/naming-crosswalk.md)。
+    **原本標「新譯」的三組現在有一手來源**：地形編修程式整組（220）、
+    六種城市風格與六個圖形集的專屬建築（休 022／024）、城市類別六個級距（休 022）。
+    遊戲字串跟著改：`ui.tsv` 24 列、六個風格檔 116 列、城市類別 53 列。
+    幾個值得記的：
+    - **休 022 的第一部份與珍 029 是同一份中文稿**（逐句相同，連圖號都對得上），
+      休 024 的 PART B 是 220 的重印——**四本不是四份獨立證據**。
+    - `Megalopolis` 珍 029 p.1 與 p.18 都寫「**大都會區**」，原本的「超級都會」
+      是本專案新譯，已換掉；`Capital` 換成休 022 的「首都」、`Town` 換成「小鎮」。
+    - 地形編輯器對玩家的名字改成 **「地形編修程式」**（220 封面），
+      工具盤四個畫筆改成 **開濶地／綠地／河流／航道**，油漆桶是**均佈**、
+      復原是**回手**。
+    - 三處刻意沒採說明書：月球的兩座電廠（說明書圖版與正文自相矛盾）、
+      月球的體育館（採用會讓字串退回基本檔，正是漏改檢查在擋的）。
+    - 說明書比原文粗的四處照採並記明落差：摔角場（Sumo）、賽馬場（Rodeo）、
+      水翼船港（**Hovercraft 其實是氣墊船**）、足球場（3-D）。
 
 38. **issue #1 第三項（雪花亂碼卡死）**：程式流程分析寫在
     [`docs/playtest/issue1-freeze-analysis-2026-09-03.md`](docs/playtest/issue1-freeze-analysis-2026-09-03.md)。
