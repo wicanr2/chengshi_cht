@@ -842,8 +842,8 @@ tools/go.sh test ./...              # 全テスト（配線チェックとフォ
 tools/playtest.sh                   # 実ウィンドウ・実キー・実マウスでの通常プレイ経路
 tools/screenshot.sh 12 out.png      # スクリーンショット 1 枚
 tools/release.sh                    # 配布パッケージのビルド
-tools/package_all.sh v.1.5.0-20260904
-tools/verify_package_all.sh v.1.5.0-20260904
+tools/package_all.sh v.1.5.1-20260904
+tools/verify_package_all.sh v.1.5.1-20260904
 ```
 
 tick 単位の突き合わせには、別途 [Micropolis](https://github.com/SimHacker/micropolis) の

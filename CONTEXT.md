@@ -14,7 +14,7 @@
 Linux tar.gz／AppImage、Windows、macOS 三個平台的發行包都打得出來，正常玩家路徑有實機驗證。
 正式版號固定使用 `v.<主版>.<次版>.<修訂版>-YYYYMMDD`；Git tag、GitHub Release、
 程式版本字串、`dist-all/<版本>/` 與 checksum 必須完全一致。目前最新版是
-`v.1.5.0-20260904`，舊 `20260901` Release 與 tag 已依使用者決定刪除，不得復用。
+`v.1.5.1-20260904`，舊 `20260901` Release 與 tag 已依使用者決定刪除，不得復用。
 
 **逐次元對拍收斂了，精靈也在內。** 四份實驗、每份 8000 個 frame（400 個的
 短版一份）全部逐 frame 完全一致：空城 13 954 次抽樣、**Dullsville 劇本
