@@ -591,6 +591,12 @@ DOS 版多出來的那一級門檻沒有量到，`internal/ui/windows.go` 的 `r
     `docs/images/en/`、`docs/images/ja/`，由 `tools/readme_shots.sh` 的
     語言迴圈產生；`panels.png`（純圖示）與 `promo.gif`（只有中文版）三份共用。
 
+46. ~~交付 `v.1.5.0-20260904`~~ **完成**：內容是三本說明書的轉錄與譯名整組對齊。
+    四個平台 × 公開／完整兩個變體，`tools/verify_package_all.sh` 全過
+    （執行檔版本字串確認為 `v.1.5.0-20260904`），GitHub release 已發布
+    （七個附件，含 `promo.mp4`）。tag 指到建置那一個 commit `8ebefab`。
+    **完整版只留本機**（`dist-all/v.1.5.0-20260904/full/`），裡面有原版資料與音樂。
+
 45. ~~另外三本中文說明書轉錄 ＋ 譯名對齊~~ **完成**（2026-09-04）：
     軟體世界 220《地形編修程式》、電腦休閒世界 022《古城風情系列》、
     024《回到未來系列》逐頁轉錄成 `docs/manual-cht/` 的三個子目錄，

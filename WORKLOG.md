@@ -3519,3 +3519,30 @@ LANGS=zh-Hant tools/readme_shots.sh
 024 寫「本遊戲需和 No.22 產品合用」；220 的外盒文案拿吳伯雄、吳敦義、蘇南成
 當笑點，並附一份高雄市市地檔（引線標到鼓山區、塩埕區、旗津區、愛河、大統商區）。
 024 的磁片標籤把 `TERRAIN EDITOR` 印成 `TERRAIN EDITOK`。
+
+## 2026-09-04（續三）— 交付 v.1.5.0-20260904
+
+**命令**：
+
+```bash
+git push
+tools/package_all.sh v.1.5.0-20260904
+tools/verify_package_all.sh v.1.5.0-20260904
+gh release create v.1.5.0-20260904 --target <完整 SHA> …
+```
+
+**版號**：1.4.1 → **1.5.0**。引擎行為沒變，但**玩家看得到的名字整組換了**
+（地形編修程式、六個資料片的建築、城市類別四個級距），份量與 1.4.0 的日文補完
+同級，所以走次版而不是修訂版。
+
+**踩到的坑**：`gh release create --target 8ebefab` 回 **HTTP 422
+`Release.target_commitish is invalid`**——`target_commitish` 只吃**完整 40 字元
+SHA 或分支名**，短 SHA 不算。改成 `git rev-parse HEAD` 的完整值才過。
+（WORKLOG 先前記過「tag 要指到建置那一個 commit」，這一次是同一件事的另一面：
+指定得出來，但格式要對。）
+
+**驗證**：`verify_package_all.sh` 全 pass，含公開包裡沒有原版資料與音樂、
+完整版 AppImage 有 `SIMCITY 1.10/DATA/MESSAGE.PTF` 與 `music/`、
+執行檔版本字串 `城市（chengshi_cht） v.1.5.0-20260904`。
+release 附了四個平台的包 ＋ `SHA256SUMS` ＋ `MANIFEST.json` ＋ `promo.mp4`；
+**完整版沒有上傳**，只留 `dist-all/v.1.5.0-20260904/full/`。
