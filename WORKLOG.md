@@ -3393,3 +3393,12 @@ tools/font.sh                                  # 2719 字，日文假名與漢�
 LANGS="en ja" tools/readme_shots.sh            # 兩套截圖
 tools/go.sh test ./...                         # internal/ui 與 cmd/chengshi 要 Xvfb
 ```
+
+### 交付 `v.1.4.0-20260904`
+
+```bash
+tools/package_all.sh v.1.4.0-20260904
+tools/verify_package_all.sh v.1.4.0-20260904
+git push origin main
+gh release create v.1.4.0-20260904 --target main …   # target 要傳分支名，不是 SHA
+```
